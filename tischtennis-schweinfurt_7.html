@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TableTennis SW – Finde dein Spiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ======= DESIGN TOKENS ======= */
+:root {
+  /* Light Mode – from Figma */
+  --bg:          #F4F6FB;
+  --bg2:         #EAECF5;
+  --surface:     #FFFFFF;
+  --surface2:    #F0F2FA;
+  --border:      #DDE1F0;
+  --text:        #1A1D2E;
+  --text-dim:    #6B7280;
+  --text-xdim:   #9CA3AF;
+  --primary:     #3B7CF4;
+  --primary-d:   #2563EB;
+  --primary-bg:  #EBF2FF;
+  --primary-mid: rgba(59,124,244,0.12);
+  --accent:      #EF4444;
+  --accent-bg:   #FEF2F2;
+  --green:       #22C55E;
+  --green-bg:    #F0FDF4;
+  --gold:        #F59E0B;
+  --gold-bg:     #FFFBEB;
+  --silver:      #64748B;
+  --bronze:      #D97706;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm:   8px;
+  --radius:      14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --font-head:   'Outfit', sans-serif;
+  --font-body:   'Nunito', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg:          #0F1117;
+  --bg2:         #171B26;
+  --surface:     #1C2133;
+  --surface2:    #242B40;
+  --border:      #2E3650;
+  --text:        #EDF0FA;
+  --text-dim:    #8892B0;
+  --text-xdim:   #4E5A78;
+  --primary:     #4D8EF8;
+  --primary-d:   #3B7CF4;
+  --primary-bg:  rgba(59,124,244,0.15);
+  --primary-mid: rgba(59,124,244,0.1);
+  --accent:      #F87171;
+  --accent-bg:   rgba(239,68,68,0.12);
+  --green:       #4ADE80;
+  --green-bg:    rgba(34,197,94,0.1);
+  --gold:        #FCD34D;
+  --gold-bg:     rgba(245,158,11,0.1);
+  --silver:      #94A3B8;
+  --bronze:      #FBA94C;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ======= RESET ======= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ======= LAYOUT ======= */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--bg);
+  /* On desktop: show phone frame */
+}
+
+@media (min-width: 600px) {
+  body { background: var(--bg2); padding: 24px 0 100px; }
+  .app-shell {
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+    min-height: calc(100vh - 48px);
+  }
+  .desktop-bar {
+    display: flex !important;
+  }
+}
+
+.desktop-bar {
+  display: none;
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ======= TOP BAR ======= */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.topbar-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-head);
+  font-weight: 800; font-size: 1.05rem;
+  color: var(--text);
+  cursor: pointer; text-decoration: none;
+  letter-spacing: -0.3px;
+}
+
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-d));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59,124,244,0.3);
+}
+
+.topbar-right { display: flex; align-items: center; gap: 6px; }
+
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem;
+  transition: background 0.2s, border-color 0.2s;
+  color: var(--text-dim);
+}
+.icon-btn:hover { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+
+/* Dark mode toggle */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem;
+  transition: all 0.3s;
+}
+.theme-toggle:hover { background: var(--gold-bg); border-color: var(--gold); }
+
+/* ======= BOTTOM NAV ======= */
+.bottom-nav {
+  position: sticky; bottom: 0; z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 4px 8px; cursor: pointer;
+  gap: 3px; transition: all 0.2s;
+  border: none; background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-icon {
+  width: 24px; height: 24px; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.2rem; transition: transform 0.2s;
+}
+
+.nav-label {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.3px; color: var(--text-xdim);
+  text-transform: uppercase; transition: color 0.2s;
+  font-family: var(--font-body);
+}
+
+.nav-item .nav-icon { color: var(--text-xdim); }
+.nav-item.active .nav-icon { transform: scale(1.1); color: var(--primary); }
+.nav-item.active .nav-label { color: var(--primary); }
+.nav-item.active { position: relative; }
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 3px;
+  background: var(--primary);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ======= PAGES ======= */
+.page { display: none; flex: 1; overflow-y: auto; overflow-x: visible; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ======= PAGE: HOME (SPLASH ADAPTED) ======= */
+.home-hero {
+  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 100%);
+  padding: 32px 20px 28px;
+  position: relative; overflow: visible;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='2'/%3E%3Ccircle cx='30' cy='30' r='18' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='2'/%3E%3C/svg%3E") repeat;
+  background-size: 60px 60px;
+}
+
+.home-hero::after {
+  content: '';
+  position: absolute; right: -10px; bottom: -20px;
+  width: 200px; height: 200px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='13' cy='12' rx='8.5' ry='9.5' fill='white'/%3E%3Crect x='10.5' y='20' width='5' height='8' rx='2.5' fill='white'/%3E%3Ccircle cx='26' cy='6' r='4.5' fill='white' opacity='.9'/%3E%3Cline x1='4.5' y1='12' x2='21.5' y2='12' stroke='white' stroke-width='1.5' opacity='.4'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.12;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+.hero-greeting {
+  font-size: 0.82rem; color: rgba(255,255,255,0.75);
+  font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: 4px; position: relative; z-index: 1;
+}
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: 1.9rem; font-weight: 800;
+  color: #fff; line-height: 1.15;
+  position: relative; z-index: 1; letter-spacing: -0.5px;
+}
+
+.hero-title span { opacity: 0.85; font-weight: 400; display: block; font-size: 1rem; margin-top: 4px; }
+
+.hero-search {
+  margin-top: 20px; position: relative; z-index: 1;
+  display: flex; gap: 8px;
+}
+
+.hero-search-input {
+  flex: 1; height: 44px;
+  background: rgba(255,255,255,0.95);
+  border: none; border-radius: var(--radius-sm);
+  padding: 0 14px 0 38px;
+  font-family: var(--font-body); font-size: 0.88rem;
+  color: var(--text); outline: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.hero-search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim); font-size: 1rem; pointer-events: none;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 10px; padding: 16px 20px;
+}
+
+.stat-card {
+  flex: 1; background: var(--surface);
+  border-radius: var(--radius); padding: 14px 12px;
+  text-align: center; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.stat-val { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.stat-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+/* Section header */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 20px 12px;
+}
+.section-title {
+  font-family: var(--font-head); font-size: 1rem;
+  font-weight: 700; color: var(--text);
+}
+.section-link {
+  font-size: 0.8rem; color: var(--primary); font-weight: 700;
+  cursor: pointer; text-decoration: none;
+}
+
+/* Nearby tables horizontal scroll */
+.cards-scroll {
+  display: flex; gap: 12px; padding: 0 20px 20px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cards-scroll::-webkit-scrollbar { display: none; }
+
+.map-thumb-card {
+  flex: 0 0 170px; background: var(--surface);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s;
+}
+.map-thumb-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.map-thumb-img {
+  height: 90px; background: linear-gradient(135deg, var(--primary-bg), #d1e3ff);
+  display: flex; align-items: center; justify-content: center; font-size: 2.4rem;
+  position: relative;
+}
+
+.map-thumb-badge {
+  position: absolute; top: 8px; right: 8px;
+  padding: 3px 8px; border-radius: 20px; font-size: 0.65rem;
+  font-weight: 700; letter-spacing: 0.3px;
+}
+.badge-out { background: var(--green-bg); color: var(--green); }
+.badge-in { background: var(--primary-bg); color: var(--primary); }
+.badge-ev { background: var(--accent-bg); color: var(--accent); }
+
+.map-thumb-body { padding: 10px 12px; }
+.map-thumb-name { font-weight: 700; font-size: 0.82rem; color: var(--text); margin-bottom: 2px; line-height: 1.3; }
+.map-thumb-dist { font-size: 0.72rem; color: var(--text-dim); }
+.map-thumb-ev { margin-top: 6px; font-size: 0.7rem; color: var(--accent); font-weight: 700; }
+
+/* Upcoming events vertical list */
+.event-list-item {
+  display: flex; gap: 14px; align-items: center;
+  padding: 14px 20px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+}
+.event-list-item:hover { background: var(--surface2); }
+
+.ev-date-box {
+  flex-shrink: 0; width: 44px; text-align: center;
+  background: var(--primary-bg); border-radius: var(--radius-sm);
+  padding: 6px 4px;
+}
+.ev-day { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.ev-mon { font-size: 0.6rem; text-transform: uppercase; color: var(--primary); font-weight: 700; letter-spacing: 0.5px; }
+
+.ev-info { flex: 1; min-width: 0; }
+.ev-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+.ev-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+.ev-type-pill {
+  flex-shrink: 0; padding: 4px 10px; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
+}
+.pill-casual { background: var(--green-bg); color: var(--green); }
+.pill-ranked { background: var(--accent-bg); color: var(--accent); }
+.pill-turnier { background: var(--gold-bg); color: var(--gold); }
+
+/* ======= PAGE: MAP ======= */
+.map-page-layout { display: flex; flex-direction: column; flex: 1; }
+
+.map-container { height: 280px; position: relative; }
+#map { width: 100%; height: 100%; }
+
+.map-overlay-btns {
+  position: absolute; top: 10px; right: 10px; z-index: 400;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.map-fab {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface); box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; transition: all 0.2s;
+}
+.map-fab:hover { background: var(--primary-bg); border-color: var(--primary); }
+
+.map-list { flex: 1; overflow-y: auto; }
+
+.map-list-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+  background: var(--surface);
+}
+.map-list-item:hover, .map-list-item.selected { background: var(--primary-bg); }
+
+.map-list-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  background: var(--primary-bg); display: flex;
+  align-items: center; justify-content: center; font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.map-list-info { flex: 1; min-width: 0; }
+.map-list-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.map-list-sub { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+.map-list-ev { font-size: 0.72rem; color: var(--accent); font-weight: 700; margin-top: 3px; }
+
+.map-list-chevron { color: var(--text-xdim); font-size: 1rem; flex-shrink: 0; }
+
+/* ======= PAGE: EVENTS ======= */
+.events-header {
+  padding: 20px 20px 0;
+}
+.events-header h1 {
+  font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
+  color: var(--text); letter-spacing: -0.3px;
+}
+.events-header p { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+
+.filter-pills {
+  display: flex; gap: 8px; padding: 14px 20px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.filter-pills::-webkit-scrollbar { display: none; }
+
+.filter-pill {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 700;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.filter-pill.active, .filter-pill:hover {
+  border-color: var(--primary); color: var(--primary); background: var(--primary-bg);
+}
+
+.events-grid-list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+
+.event-card-big {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.2s;
+}
+.event-card-big:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.ecb-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 14px 14px 0;
+}
+
+.ecb-date-box {
+  background: var(--primary-bg); border-radius: var(--radius-sm);
+  padding: 8px 12px; text-align: center; min-width: 52px;
+}
+.ecb-day { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.ecb-mon { font-size: 0.64rem; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+
+.ecb-body { padding: 10px 14px 14px; }
+.ecb-title { font-weight: 800; font-size: 0.98rem; color: var(--text); margin-bottom: 3px; }
+.ecb-location { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+.ecb-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.ecb-participants { font-size: 0.78rem; color: var(--text-dim); }
+.ecb-participants b { color: var(--text); }
+
+/* ======= PAGE: RANKED ======= */
+.ranked-hero-section {
+  background: linear-gradient(160deg, var(--primary) 0%, #1d4ed8 100%);
+  padding: 24px 20px; color: #fff; position: relative; overflow: hidden;
+}
+.ranked-hero-section::after {
+  content: ''; position: absolute; right: -8px; bottom: -12px;
+  width: 150px; height: 150px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z'/%3E%3Cpath d='M7 8H3v2a4 4 0 004 4M17 8h4v2a4 4 0 01-4 4'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.18; transform: rotate(-10deg);
+}
+.ranked-hero-section h1 {
+  font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
+  color: #fff; position: relative; z-index: 1;
+}
+.ranked-hero-section p { font-size: 0.82rem; color: rgba(255,255,255,0.75); margin-top: 4px; position: relative; z-index: 1; }
+
+/* My rank card */
+.my-rank-card {
+  margin: 16px 20px; background: var(--surface);
+  border-radius: var(--radius); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); padding: 16px;
+}
+.myrank-row {
+  display: flex; align-items: center; gap: 12px;
+}
+.myrank-badge {
+  width: 52px; height: 52px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; flex-shrink: 0;
+}
+.myrank-bronze { background: rgba(217,119,6,0.12); }
+.myrank-silver { background: rgba(100,116,139,0.12); }
+.myrank-gold { background: rgba(245,158,11,0.12); }
+
+.myrank-info { flex: 1; }
+.myrank-name { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+.myrank-tier { font-size: 0.78rem; color: var(--text-dim); }
+.myrank-elo { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+
+.rank-progress { margin-top: 12px; }
+.rp-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; }
+.rp-bar { height: 8px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+.rp-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--primary), #60a5fa); transition: width 1s ease; }
+
+/* Leagues cards row */
+.leagues-scroll {
+  display: flex; gap: 10px; padding: 0 20px 16px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.leagues-scroll::-webkit-scrollbar { display: none; }
+
+.league-mini {
+  flex: 0 0 120px; border-radius: var(--radius); padding: 14px 12px;
+  text-align: center; border: 2px solid;
+}
+.league-mini.bronze-card { border-color: var(--bronze); background: var(--gold-bg); }
+.league-mini.silver-card { border-color: var(--silver); background: var(--surface2); }
+.league-mini.gold-card { border-color: var(--gold); background: var(--gold-bg); }
+.lm-icon { font-size: 2rem; margin-bottom: 4px; display: block; }
+.lm-name { font-family: var(--font-head); font-size: 0.95rem; font-weight: 800; }
+.lm-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+.bronze-card .lm-name { color: var(--bronze); }
+.silver-card .lm-name { color: var(--silver); }
+.gold-card .lm-name { color: var(--gold); }
+
+/* Leaderboard */
+.lb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; background: var(--surface);
+}
+.lb-row:hover { background: var(--surface2); }
+.lb-row.top1 { background: rgba(245,158,11,0.06); }
+.lb-row.top2 { background: rgba(100,116,139,0.04); }
+.lb-row.top3 { background: rgba(217,119,6,0.04); }
+.lb-row.me { border-left: 3px solid var(--primary); }
+
+.lb-rank { width: 28px; text-align: center; font-family: var(--font-head); font-size: 1rem; font-weight: 800; flex-shrink: 0; }
+.lb-rank.g { color: var(--gold); }
+.lb-rank.s { color: var(--silver); }
+.lb-rank.b { color: var(--bronze); }
+
+.lb-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary-bg); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; border: 2px solid var(--border);
+}
+
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.lb-tier { font-size: 0.72rem; color: var(--text-dim); }
+
+.lb-elo { font-family: var(--font-head); font-weight: 800; font-size: 0.95rem; color: var(--primary); }
+.lb-wr { font-size: 0.7rem; color: var(--text-dim); text-align: right; }
+
+/* ======= PAGE: PROFILE ======= */
+.profile-top {
+  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 100%);
+  padding: 28px 20px 24px; color: #fff; text-align: center; position: relative;
+}
+.profile-top::before {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 24px; background: var(--bg); border-radius: 24px 24px 0 0;
+}
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 10px;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem; border: 3px solid rgba(255,255,255,0.5);
+  position: relative; z-index: 1;
+}
+.profile-name { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: #fff; position: relative; z-index: 1; }
+.profile-sub { font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 2px; position: relative; z-index: 1; }
+.profile-rank-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.2); border-radius: 20px;
+  padding: 5px 14px; margin-top: 10px; font-size: 0.8rem; font-weight: 700; color: #fff;
+  border: 1px solid rgba(255,255,255,0.3); position: relative; z-index: 1;
+}
+
+.profile-stats-row {
+  display: flex; gap: 1px; background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.pstat {
+  flex: 1; background: var(--surface); padding: 14px 8px;
+  text-align: center;
+}
+.pstat-val { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.pstat-val.green { color: var(--green); }
+.pstat-val.red { color: var(--accent); }
+.pstat-val.blue { color: var(--primary); }
+.pstat-label { font-size: 0.62rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; }
+
+/* Profile sections */
+.profile-section {
+  background: var(--surface); margin: 12px 20px;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.ps-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  font-weight: 800; font-size: 0.9rem; color: var(--text);
+  font-family: var(--font-head); display: flex; align-items: center; gap: 8px;
+}
+
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px; }
+.skill-opt {
+  border-radius: var(--radius-sm); padding: 12px 8px; text-align: center;
+  border: 2px solid var(--border); cursor: pointer; transition: all 0.2s;
+  background: var(--surface2);
+}
+.skill-opt:hover { border-color: var(--primary); }
+.skill-opt.active { border-color: var(--primary); background: var(--primary-bg); }
+.skill-opt-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 4px; color: var(--text-dim); }
+.skill-opt-name { font-weight: 700; font-size: 0.75rem; color: var(--text); }
+.skill-opt-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
+
+/* Match history */
+.match-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.match-row:last-child { border-bottom: none; }
+.match-res {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+}
+.win { background: var(--green-bg); color: var(--green); }
+.loss { background: var(--accent-bg); color: var(--accent); }
+.match-opp { flex: 1; font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.match-sets { font-size: 0.72rem; color: var(--text-dim); }
+.match-elo { font-family: var(--font-head); font-size: 0.88rem; font-weight: 800; }
+.match-elo.pos { color: var(--green); }
+.match-elo.neg { color: var(--accent); }
+.match-date { font-size: 0.68rem; color: var(--text-xdim); text-align: right; }
+
+/* Settings list */
+.settings-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: background 0.15s;
+}
+.settings-item:last-child { border-bottom: none; }
+.settings-item:hover { background: var(--surface2); }
+.si-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.si-text { flex: 1; font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.si-sub { font-size: 0.72rem; color: var(--text-dim); }
+.si-arrow { color: var(--text-xdim); font-size: 0.9rem; }
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative; width: 44px; height: 24px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--border); border-radius: 24px;
+  cursor: pointer; transition: 0.3s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background: white; border-radius: 50%; transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ======= BOTTOM SHEET MODAL ======= */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.45);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
+
+.bottom-sheet {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+  width: 100%; max-width: 430px; z-index: 600;
+  background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 90vh; overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-sheet.open { transform: translateX(-50%) translateY(0); }
+
+.sheet-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 10px auto 0;
+}
+.sheet-header {
+  padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sheet-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; color: var(--text); }
+.sheet-close { font-size: 1.4rem; cursor: pointer; color: var(--text-dim); }
+
+.sheet-body { padding: 16px 20px; }
+
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 11px 14px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font-body); font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-mid);
+}
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { appearance: none; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 20px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; border: none;
+  letter-spacing: 0.2px; text-decoration: none;
+}
+.btn-primary {
+  background: var(--primary); color: #fff;
+  box-shadow: 0 4px 12px rgba(59,124,244,0.3);
+}
+.btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(59,124,244,0.35); }
+.btn-secondary {
+  background: var(--surface2); color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-full { width: 100%; }
+.btn-sm { padding: 7px 14px; font-size: 0.78rem; }
+
+/* FAB button */
+.fab {
+  position: fixed; bottom: 80px; right: 50%;
+  transform: translateX(calc(50% + 185px));
+  width: 52px; height: 52px; border-radius: 16px;
+  background: var(--primary); color: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(59,124,244,0.4);
+  transition: all 0.2s; z-index: 90;
+}
+.fab:hover { transform: translateX(calc(50% + 185px)) translateY(-2px) scale(1.05); }
+
+@media (max-width: 599px) {
+  .fab { right: 20px; transform: none; }
+  .fab:hover { transform: translateY(-2px) scale(1.05); }
+}
+
+/* Toast notification */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--bg); border-radius: var(--radius);
+  padding: 12px 20px; font-size: 0.85rem; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: all 0.3s; white-space: nowrap;
+  z-index: 999; display: flex; align-items: center; gap: 8px;
+  box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Table detail image placeholder */
+.table-detail-hero {
+  height: 160px;
+  background: linear-gradient(135deg, var(--primary-bg), #c7d9ff);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5rem;
+}
+
+/* Spacer for bottom nav */
+.pb-safe { padding-bottom: 16px; }
+
+/* ======= LEAFLET OVERRIDES ======= */
+.leaflet-container { background: var(--bg2) !important; font-family: var(--font-body) !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-control-zoom a {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* ======= ANIMATIONS ======= */
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+.fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+.fade-up-2 { animation-delay: 0.1s; opacity: 0; }
+.fade-up-3 { animation-delay: 0.15s; opacity: 0; }
+
+/* ======= DARK MODE MAP TILE ======= */
+[data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
+
+/* Misc */
+.divider { height: 1px; background: var(--border); }
+.text-center { text-align: center; }
+.pb-20 { padding-bottom: 20px; }
+
+/* ======= AUTH TABS ======= */
+.auth-tab {
+  flex: 1; padding: 9px 8px; border-radius: 8px; border: none;
+  font-family: var(--font-body); font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
+  background: transparent; color: var(--text-dim);
+}
+.auth-tab.auth-tab-active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59,124,244,0.25);
+}
+
+/* ======= SEARCH AUTOCOMPLETE ======= */
+.hero-search { position: relative; }
+
+.search-dropdown {
+  position: fixed;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 99999;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none;
+  border: 1px solid var(--border);
+  width: 100%;
+}
+[data-theme="dark"] .search-dropdown {
+  background: var(--surface);
+}
+.search-dropdown.open { display: block; }
+
+.search-dropdown-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.search-dropdown-item:last-child { border-bottom: none; }
+.search-dropdown-item:hover, .search-dropdown-item:focus {
+  background: var(--primary-bg);
+  outline: none;
+}
+.sdi-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 1rem;
+}
+.sdi-icon.table  { background: var(--primary-bg); }
+.sdi-icon.place  { background: var(--surface2); }
+.sdi-main  { font-weight: 700; font-size: 0.88rem; color: var(--text); line-height: 1.3; }
+.sdi-sub   { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+
+.search-loading {
+  padding: 14px 16px; font-size: 0.84rem;
+  color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+}
+.search-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.search-empty {
+  padding: 16px; font-size: 0.84rem; color: var(--text-dim); text-align: center;
+}
+
+/* Highlight matched text */
+.sdi-main mark {
+  background: rgba(59,124,244,0.18);
+  color: var(--primary); border-radius: 3px;
+  padding: 0 2px; font-weight: 800;
+}
+</style>
+</head>
+<body>
+
+<!-- Desktop top hint bar -->
+<div class="desktop-bar">
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+    </svg>
+    TableTennis Schweinfurt
+  </span>
+  <span style="color:var(--border)">|</span>
+  <span style="color:var(--primary);font-weight:800;">Mobile App Preview</span>
+</div>
+
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a class="topbar-logo" onclick="showPage('home')">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="13" cy="12" rx="8.5" ry="9.5" fill="white" opacity="0.95"/>
+          <rect x="10.5" y="20" width="5" height="8" rx="2.5" fill="white" opacity="0.95"/>
+          <line x1="4.5" y1="12" x2="21.5" y2="12" stroke="rgba(59,124,244,0.55)" stroke-width="1.5"/>
+          <circle cx="26" cy="6" r="4.5" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+      <div>TABLE<span style="color:var(--primary)">TENNIS</span></div>
+    </a>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Dark Mode">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="topbar-profile-btn" onclick="sb.isLoggedIn()?openSheet('profile-sheet'):openSheet('auth-sheet')" title="Account">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- PAGES -->
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="home-hero">
+      <div class="hero-greeting">Willkommen zurück 👋</div>
+      <div class="hero-title">Finde dein nächstes<span>Spiel in Schweinfurt</span></div>
+      <div class="hero-search" id="search-wrapper">
+        <span class="hero-search-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input class="hero-search-input"
+               placeholder="Platte, Ort oder Adresse suchen…"
+               id="home-search"
+               autocomplete="off"
+               oninput="onSearchInput()"
+               onkeydown="onSearchKey(event)"
+               onfocus="if(this.value.length>1) openDropdown()"
+        >
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row fade-up">
+      <div class="stat-card">
+        <div class="stat-val" id="c-tables">9</div>
+        <div class="stat-label">Platten</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="c-events">14</div>
+        <div class="stat-label">Events</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="c-players">83</div>
+        <div class="stat-label">Spieler</div>
+      </div>
+    </div>
+
+    <!-- Nearby tables -->
+    <div class="section-header">
+      <div class="section-title">Platten in der Nähe</div>
+      <a class="section-link" onclick="showPage('map')">Alle sehen →</a>
+    </div>
+    <div class="cards-scroll" id="home-tables-scroll"></div>
+
+    <!-- Upcoming events -->
+    <div class="section-header">
+      <div class="section-title">Kommende Events</div>
+      <a class="section-link" onclick="showPage('events')">Alle →</a>
+    </div>
+    <div id="home-events-list"></div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- MAP -->
+  <div class="page" id="page-map">
+    <div class="map-page-layout">
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="map-overlay-btns">
+          <div class="map-fab" onclick="centerMap()" title="Mein Standort">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="map-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</div>
+        </div>
+      </div>
+      <div class="map-list" id="map-list-container"></div>
+    </div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="page" id="page-events">
+    <div class="events-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h1>Events</h1>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">+ Erstellen</button>
+      </div>
+      <p>Verabredungen & Turniere in Schweinfurt</p>
+    </div>
+    <div class="filter-pills" id="event-filter-pills">
+      <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
+      <button class="filter-pill" onclick="filterEvents('casual',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
+          <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/>
+        </svg> Casual
+      </button>
+      <button class="filter-pill" onclick="filterEvents('ranked',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
+          <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
+        </svg> Ranked
+      </button>
+      <button class="filter-pill" onclick="filterEvents('turnier',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
+          <polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/>
+        </svg> Turnier
+      </button>
+    </div>
+    <div class="events-grid-list" id="events-list"></div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- RANKED -->
+  <div class="page" id="page-ranked">
+    <div class="ranked-hero-section">
+      <h1>Rangliste</h1>
+      <p>Steige von Bronze bis Gold auf</p>
+    </div>
+
+    <!-- My rank -->
+    <div class="my-rank-card">
+      <div class="myrank-row">
+        <div class="myrank-badge myrank-silver">🥈</div>
+        <div class="myrank-info">
+          <div class="myrank-name">Max Mustermann</div>
+          <div class="myrank-tier">Silber Division</div>
+        </div>
+        <div class="myrank-elo">520</div>
+      </div>
+      <div class="rank-progress">
+        <div class="rp-labels">
+          <span>Silber · 400 ELO</span>
+          <span>Gold ab 800 ELO</span>
+        </div>
+        <div class="rp-bar"><div class="rp-fill" style="width:30%"></div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/>
+          </svg>
+          Match eintragen
+        </button>
+        <button class="btn btn-secondary btn-sm btn-full" onclick="showPage('profile')">Mein Profil</button>
+      </div>
+    </div>
+
+    <!-- League cards -->
+    <div class="section-header">
+      <div class="section-title">Ligen</div>
+    </div>
+    <div class="leagues-scroll">
+      <div class="league-mini bronze-card">
+        <span class="lm-icon">🥉</span>
+        <div class="lm-name">BRONZE</div>
+        <div class="lm-count">0–399 ELO · <b>34</b> Spieler</div>
+      </div>
+      <div class="league-mini silver-card">
+        <span class="lm-icon">🥈</span>
+        <div class="lm-name">SILBER</div>
+        <div class="lm-count">400–799 ELO · <b>31</b> Spieler</div>
+      </div>
+      <div class="league-mini gold-card">
+        <span class="lm-icon">🥇</span>
+        <div class="lm-name">GOLD</div>
+        <div class="lm-count">800+ ELO · <b>18</b> Spieler</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Top Spieler</div>
+    </div>
+    <div id="leaderboard-list"></div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="profile-top">
+      <div class="profile-avatar">😎</div>
+      <div class="profile-name">Max Mustermann</div>
+      <div class="profile-sub">Schweinfurt · Mitglied seit März 2025</div>
+      <div class="profile-rank-pill">🥈 Silber · 520 ELO</div>
+    </div>
+
+    <div class="profile-stats-row">
+      <div class="pstat">
+        <div class="pstat-val green">23</div>
+        <div class="pstat-label">Siege</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val red">11</div>
+        <div class="pstat-label">Niederlagen</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">34</div>
+        <div class="pstat-label">Spiele</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val blue">68%</div>
+        <div class="pstat-label">Win-Rate</div>
+      </div>
+    </div>
+
+    <!-- Skill Level -->
+    <div class="profile-section" style="margin-top:16px;">
+      <div class="ps-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+        </svg>
+        Mein Spielniveau
+      </div>
+      <div class="skill-grid">
+        <div class="skill-opt" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5"/>
+            </svg>
+          </span>
+          <div class="skill-opt-name">Anfänger</div>
+          <div class="skill-opt-desc">Ich lerne noch</div>
+        </div>
+        <div class="skill-opt active" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <ellipse cx="13" cy="12" rx="7.5" ry="8.5" stroke="currentColor" stroke-width="1.8"/>
+              <rect x="11" y="19.5" width="4" height="6.5" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <line x1="5.5" y1="12" x2="20.5" y2="12" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+              <circle cx="24" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </span>
+          <div class="skill-opt-name">Fortgeschritten</div>
+          <div class="skill-opt-desc">Regelmäßig am Spielen</div>
+        </div>
+        <div class="skill-opt" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </span>
+          <div class="skill-opt-name">Profi</div>
+          <div class="skill-opt-desc">Vereinserfahrung</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match History -->
+    <div class="profile-section">
+      <div class="ps-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Match History
+      </div>
+      <div id="profile-match-history"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="profile-section">
+      <div class="ps-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        Einstellungen
+      </div>
+      <div class="settings-item" onclick="toggleTheme()">
+        <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+          </svg>
+        </div>
+        <div class="si-text">Dark Mode<div class="si-sub">Augenschonend spielen</div></div>
+        <label class="toggle-switch" onclick="event.stopPropagation()">
+          <input type="checkbox" id="dm-toggle" onchange="toggleTheme()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-item">
+        <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </div>
+        <div class="si-text">Benachrichtigungen<div class="si-sub">Events & Matches</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-item" onclick="openSheet('profile-edit-sheet')">
+        <div class="si-icon" style="background:var(--green-bg);color:var(--green);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+          </svg>
+        </div>
+        <div class="si-text">Profil bearbeiten<div class="si-sub">Name, Avatar, Wohnort</div></div>
+        <span class="si-arrow">›</span>
+      </div>
+      <div class="settings-item">
+        <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
+        <span class="si-arrow">›</span>
+      </div>
+    </div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="showPage('home')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div class="nav-label">Home</div>
+    </button>
+    <button class="nav-item" id="nav-map" onclick="showPage('map')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+      </div>
+      <div class="nav-label">Karte</div>
+    </button>
+    <button class="nav-item" id="nav-events" onclick="showPage('events')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div class="nav-label">Events</div>
+    </button>
+    <button class="nav-item" id="nav-ranked" onclick="showPage('ranked')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/>
+        </svg>
+      </div>
+      <div class="nav-label">Rangliste</div>
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="nav-label">Profil</div>
+    </button>
+  </nav>
+</div>
+
+<!-- FAB (only on events/home pages) -->
+<button class="fab" id="main-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</button>
+
+<!-- ======= BOTTOM SHEETS ======= -->
+<div class="sheet-overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- TABLE DETAIL SHEET -->
+<div class="bottom-sheet" id="table-detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="tds-title">Platte</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div id="tds-body"></div>
+</div>
+
+<!-- CREATE EVENT SHEET -->
+<div class="bottom-sheet" id="create-event-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Event erstellen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Event Name</label>
+      <input class="form-input" placeholder="z.B. Casual Runde für alle" id="ev-name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Platte</label>
+      <select class="form-select" id="ev-table"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Datum</label>
+        <input class="form-input" type="date" id="ev-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Uhrzeit</label>
+        <input class="form-input" type="time" value="15:00" id="ev-time">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Spielmodus</label>
+      <select class="form-select" id="ev-mode">
+        <option value="casual">Casual – Spaß für alle</option>
+        <option value="ranked">Ranked – zählt für die Rangliste</option>
+        <option value="turnier">Mini-Turnier</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Max. Teilnehmer</label>
+      <input class="form-input" type="number" value="4" min="2" max="16">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung (optional)</label>
+      <textarea class="form-textarea" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="submitCreateEvent()">Event erstellen</button>
+  </div>
+</div>
+
+<!-- REPORT MATCH SHEET -->
+<div class="bottom-sheet" id="report-match-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Match eintragen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:16px;">Trage ein gespieltes Ranked Match ein. Beide Spieler erhalten eine Bestätigungsanfrage.</p>
+    <div class="form-group">
+      <label class="form-label">Gegner</label>
+      <select class="form-select">
+        <option>Jonas K. (Silber · 610 ELO)</option>
+        <option>Laura M. (Gold · 840 ELO)</option>
+        <option>Stefan W. (Bronze · 280 ELO)</option>
+        <option>Anna R. (Silber · 450 ELO)</option>
+        <option>Tobias L. (Gold · 920 ELO)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ergebnis</label>
+      <select class="form-select">
+        <option value="win">Ich habe gewonnen</option>
+        <option value="loss">Ich habe verloren</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sätze (z.B. 3:1)</label>
+        <input class="form-input" placeholder="3:1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Platte</label>
+        <select class="form-select" id="match-table-sel"></select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="submitMatch()">Eintragen & Anfrage senden</button>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS SHEET -->
+<div class="bottom-sheet" id="notif-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Benachrichtigungen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="padding:0;">
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--green-bg);color:var(--green);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="si-text">Jonas K. hat dein Match bestätigt<div class="si-sub">Vor 2 Stunden</div></div>
+    </div>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="si-text">Neues Event: "Sunset Ping Pong"<div class="si-sub">Mainkai · 16. Mai 18:30</div></div>
+    </div>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/></svg>
+      </div>
+      <div class="si-text">Du bist auf Platz 6 der Rangliste!<div class="si-sub">Heute</div></div>
+    </div>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/></svg>
+      </div>
+      <div class="si-text">Laura M. fordert dich zum Ranked Match<div class="si-sub">Gestern 20:15</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE EDIT SHEET -->
+<div class="bottom-sheet" id="profile-edit-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Profil bearbeiten</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Anzeigename</label>
+      <input class="form-input" id="edit-name" value="Max Mustermann">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Wohnort</label>
+      <input class="form-input" id="edit-city" value="Schweinfurt">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Über mich</label>
+      <textarea class="form-textarea" id="edit-bio" placeholder="Kurze Beschreibung…">Spiele seit 3 Jahren Tischtennis, suche Gleichgesinnte!</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Avatar (Emoji)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">😎</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🏓</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">⚡</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🔥</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">💪</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🎯</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🦅</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🌟</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeAllSheets();showToast('✅ Profil gespeichert!')">Speichern</button>
+  </div>
+</div>
+
+<!-- PROFILE/LOGIN SHEET -->
+<div class="bottom-sheet" id="profile-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Account</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div style="text-align:center;padding:16px 0 20px;">
+      <div style="font-size:3rem;margin-bottom:8px;">😎</div>
+      <div style="font-weight:800;font-size:1.1rem;font-family:var(--font-head);">Max Mustermann</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:2px;">🥈 Silber · 520 ELO</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeAllSheets();showPage('profile')">Zum Profil</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-secondary btn-full" id="profile-signout-btn" onclick="doSignOut()">Abmelden</button>
+  </div>
+</div>
+
+
+<!-- AUTH SHEET (Login / Registrierung) -->
+<div class="bottom-sheet" id="auth-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="auth-sheet-title">Anmelden</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:16px;">
+      <button id="auth-tab-login" onclick="setAuthMode('login')" class="auth-tab auth-tab-active">Anmelden</button>
+      <button id="auth-tab-reg"   onclick="setAuthMode('register')" class="auth-tab">Registrieren</button>
+    </div>
+    <div id="auth-login-fields">
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort</label>
+        <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
+      </div>
+    </div>
+    <div id="auth-reg-fields" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Spielername</label>
+        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort (min. 6 Zeichen)</label>
+        <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">Anmelden</button>
+    <p style="text-align:center;font-size:0.75rem;color:var(--text-xdim);margin-top:12px;">
+      Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen.
+    </p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-text">Erfolgreich!</span>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           SUPABASE CONFIG                                    ║
+// ╚══════════════════════════════════════════════════════════════╝
+const SUPABASE_URL  = 'https://quelfdpqvzgnnvpuwljq.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_pe9d7oJngP6p5vc5Y-ARgA_sd-zye12';
+
+// Kleines Supabase-Client ohne npm – direkte fetch()-Wrapper
+const sb = {
+  // --- AUTH ---
+  async signUp(email, password, username) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method:'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, password, data:{ username } })
+    });
+    return r.json();
+  },
+  async signIn(email, password) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, password })
+    });
+    const data = await r.json();
+    if(data.access_token) {
+      localStorage.setItem('sb_token',   data.access_token);
+      localStorage.setItem('sb_user_id', data.user.id);
+      localStorage.setItem('sb_email',   data.user.email);
+    }
+    return data;
+  },
+  async signOut() {
+    const token = localStorage.getItem('sb_token');
+    if(token) await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+      method:'POST', headers: authHeaders(token)
+    });
+    localStorage.removeItem('sb_token');
+    localStorage.removeItem('sb_user_id');
+    localStorage.removeItem('sb_email');
+    currentUser = null;
+  },
+  getToken()  { return localStorage.getItem('sb_token'); },
+  getUserId() { return localStorage.getItem('sb_user_id'); },
+  isLoggedIn(){ return !!localStorage.getItem('sb_token'); },
+
+  // --- DB (REST) ---
+  async from(table) {
+    return new QueryBuilder(table);
+  }
+};
+
+class QueryBuilder {
+  constructor(table) {
+    this.table = table;
+    this._select = '*';
+    this._filters = [];
+    this._order = null;
+    this._limit = null;
+  }
+  select(s)           { this._select = s; return this; }
+  eq(col, val)        { this._filters.push(`${col}=eq.${val}`); return this; }
+  order(col, desc=false){ this._order = `${col}.${desc?'desc':'asc'}`; return this; }
+  limit(n)            { this._limit = n; return this; }
+
+  async execute() {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}?select=${encodeURIComponent(this._select)}`;
+    this._filters.forEach(f => url += '&' + f);
+    if(this._order) url += `&order=${this._order}`;
+    if(this._limit) url += `&limit=${this._limit}`;
+    const r = await fetch(url, { headers: dbHeaders() });
+    const data = await r.json();
+    return { data: Array.isArray(data) ? data : [], error: data.error || null };
+  }
+
+  async insert(body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${this.table}`, {
+      method:'POST',
+      headers: { ...dbHeaders(), 'Prefer':'return=representation' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    return { data, error: r.ok ? null : data };
+  }
+
+  async update(body) {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}?`;
+    this._filters.forEach((f,i) => url += (i?'&':'')+f);
+    const r = await fetch(url, {
+      method:'PATCH',
+      headers: { ...dbHeaders(), 'Prefer':'return=representation' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    return { data, error: r.ok ? null : data };
+  }
+}
+
+function authHeaders(token) {
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_ANON,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+}
+function dbHeaders() {
+  const token = sb.getToken();
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${token || SUPABASE_ANON}`
+  };
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           APP STATE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+let currentUser   = null;  // eingeloggtes Profil aus profiles-Tabelle
+let tables        = [];    // aus Supabase geladen
+let allEvents     = [];    // aus Supabase geladen (mit table-Join)
+let allPlayers    = [];    // Rangliste aus Supabase
+let myMatches     = [];    // Match-History des eingeloggten Users
+let currentFilter = 'all';
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           NAVIGATION                                         ║
+// ╚══════════════════════════════════════════════════════════════╝
+const pages = ['home','map','events','ranked','profile'];
+let currentPage = 'home';
+let mapInit = false;
+
+function showPage(name) {
+  // Auth-Gate: Profil, Events erstellen nur wenn eingeloggt
+  if((name==='profile') && !sb.isLoggedIn()) {
+    openSheet('auth-sheet');
+    return;
+  }
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('active', p===name);
+    document.getElementById('nav-'+p)?.classList.toggle('active', p===name);
+  });
+  currentPage = name;
+  document.getElementById('main-fab').style.display =
+    (name==='home'||name==='events') ? 'flex' : 'none';
+  if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
+  if(name==='profile') renderProfile();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           DARK MODE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+const SVG_MOON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
+const SVG_SUN  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+let isDark = localStorage.getItem('tt_dark')==='1';
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
+  document.getElementById('theme-btn').innerHTML = isDark ? SVG_SUN : SVG_MOON;
+  const t = document.getElementById('dm-toggle');
+  if(t) t.checked = isDark;
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('tt_dark', isDark?'1':'0');
+  applyTheme();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           BOTTOM SHEETS                                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+let openSheetId = null;
+function openSheet(id) {
+  if(openSheetId) closeAllSheets();
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById(id).classList.add('open');
+  openSheetId = id;
+}
+function closeAllSheets() {
+  document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
+  document.getElementById('overlay').classList.remove('open');
+  openSheetId = null;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           TOAST                                              ║
+// ╚══════════════════════════════════════════════════════════════╝
+function showToast(text, icon='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           AUTH  (Login / Registrierung)                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+let authMode = 'login'; // 'login' | 'register'
+
+function setAuthMode(mode) {
+  authMode = mode;
+  // Felder ein-/ausblenden
+  document.getElementById('auth-login-fields').style.display = mode==='login' ? 'block' : 'none';
+  document.getElementById('auth-reg-fields').style.display   = mode==='register' ? 'block' : 'none';
+  // Titel
+  document.getElementById('auth-sheet-title').textContent = mode==='login' ? 'Anmelden' : 'Registrieren';
+  // Submit-Button Label
+  document.getElementById('auth-submit-btn').textContent = mode==='login' ? 'Anmelden' : 'Konto erstellen';
+  // Tab-Styling: active = blau, inaktiv = grau
+  const tabLogin = document.getElementById('auth-tab-login');
+  const tabReg   = document.getElementById('auth-tab-reg');
+  tabLogin.classList.toggle('auth-tab-active', mode==='login');
+  tabReg.classList.toggle('auth-tab-active',   mode==='register');
+}
+
+async function submitAuth() {
+  const btn = document.getElementById('auth-submit-btn');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    if(authMode === 'login') {
+      const email    = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-pw').value;
+      if(!email || !password) { showToast('Bitte E-Mail und Passwort eingeben','⚠️'); return; }
+
+      const res = await sb.signIn(email, password);
+      if(res.error || !res.access_token) {
+        showToast(res.error?.message || 'Anmeldung fehlgeschlagen','❌');
+        return;
+      }
+      await loadCurrentUser();
+      closeAllSheets();
+      showToast(`Willkommen zurück, ${currentUser?.username || 'Spieler'}! 👋`);
+      updateTopBarForUser();
+
+    } else {
+      const username = document.getElementById('auth-username').value.trim();
+      const email    = document.getElementById('auth-reg-email').value.trim();
+      const password = document.getElementById('auth-reg-pw').value;
+      if(!username || !email || !password) { showToast('Alle Felder ausfüllen','⚠️'); return; }
+      if(password.length < 6) { showToast('Passwort mindestens 6 Zeichen','⚠️'); return; }
+
+      const res = await sb.signUp(email, password, username);
+      if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','❌'); return; }
+      closeAllSheets();
+      showToast('🎉 Willkommen! Bitte E-Mail bestätigen, dann einloggen.','🎉');
+      setAuthMode('login');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode==='login' ? 'Anmelden' : 'Konto erstellen';
+  }
+}
+
+async function loadCurrentUser() {
+  const uid = sb.getUserId();
+  if(!uid) return;
+  const qb = new QueryBuilder('profiles');
+  const {data} = await qb.eq('id', uid).execute();
+  if(data && data[0]) currentUser = data[0];
+}
+
+function updateTopBarForUser() {
+  // SVG icon stays regardless of login state
+}
+
+async function doSignOut() {
+  await sb.signOut();
+  closeAllSheets();
+  showToast('Bis bald!');
+  showPage('home');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           DATEN LADEN (Supabase)                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function loadTables() {
+  const qb = new QueryBuilder('tables');
+  const {data, error} = await qb.order('name').execute();
+  if(error || !data.length) return;
+  // Mappe Supabase-Format auf App-Format
+  tables = data.map(t => ({
+    id: t.id, name: t.name, addr: t.address,
+    lat: t.lat, lng: t.lng,
+    type: t.type, icon: t.icon || '🏓',
+    events: [] // werden separat geladen
+  }));
+  // Fill selects
+  const opts = tables.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+}
+
+async function loadEvents() {
+  // Events mit Tischtennis-Platte und Ersteller-Profil joinen
+  const qb = new QueryBuilder('events');
+  qb._select = `id,title,event_date,event_time,mode,max_participants,description,
+    tables(id,name,icon),
+    profiles(username,avatar_emoji),
+    event_participants(count)`;
+  const {data} = await qb.order('event_date').execute();
+  if(!data) return;
+
+  allEvents = data.map(e => {
+    const d = new Date(e.event_date);
+    const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
+    return {
+      id:      e.id,
+      name:    e.title,
+      day:     String(d.getDate()).padStart(2,'0'),
+      mon:     months[d.getMonth()],
+      time:    e.event_time?.slice(0,5) || '??:??',
+      type:    e.mode,
+      tname:   e.tables?.name || '?',
+      ticon:   e.tables?.icon || '🏓',
+      tid:     e.tables?.id,
+      creator: e.profiles?.username || 'Anonym',
+      p:       e.event_participants?.[0]?.count || 0,
+      max:     e.max_participants
+    };
+  });
+
+  // Events den Platten zuordnen (für Karte)
+  tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
+}
+
+async function loadPlayers() {
+  const qb = new QueryBuilder('profiles');
+  qb._select = 'id,username,avatar_emoji,elo,wins,losses';
+  const {data} = await qb.order('elo', true).limit(20).execute();
+  if(data) allPlayers = data;
+}
+
+async function loadMyMatches() {
+  if(!sb.isLoggedIn()) return;
+  const uid = sb.getUserId();
+  // Matches wo ich Gewinner oder Verlierer bin
+  const qb = new QueryBuilder('matches');
+  qb._select = `id,score_winner,score_loser,elo_change,confirmed,played_at,
+    winner:profiles!winner_id(username),
+    loser:profiles!loser_id(username)`;
+  qb.order('played_at', true);
+  qb.limit(10);
+  const {data} = await qb.execute();
+  if(!data) return;
+  const myId = uid;
+  myMatches = data
+    .filter(m => m.winner?.username || m.loser?.username)
+    .map(m => {
+      const iWon = m.winner_id === myId;
+      return {
+        opp:  iWon ? m.loser?.username  : m.winner?.username,
+        res:  iWon ? 'win' : 'loss',
+        elo:  iWon ? +(m.elo_change) : -(m.elo_change),
+        sets: `${m.score_winner}:${m.score_loser}`,
+        date: new Date(m.played_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'})
+      };
+    });
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           HOME                                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderHome() {
+  // Begrüßung personalisieren
+  if(currentUser) {
+    document.querySelector('.hero-greeting').textContent =
+      `Hallo, ${currentUser.username}! 👋`;
+  }
+
+  // Counter
+  animateCount(document.getElementById('c-tables'),  tables.length    || 9);
+  animateCount(document.getElementById('c-events'),  allEvents.length || 0);
+  animateCount(document.getElementById('c-players'), allPlayers.length|| 0);
+
+  // Platten-Karten
+  const scroll = document.getElementById('home-tables-scroll');
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  scroll.innerHTML = src.slice(0,6).map(t=>`
+    <div class="map-thumb-card" onclick="showTableDetail(${t.id})">
+      <div class="map-thumb-img">
+        ${t.icon}
+        <span class="map-thumb-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
+        ${t.events?.length?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">📅 ${t.events.length}</span>`:''}
+      </div>
+      <div class="map-thumb-body">
+        <div class="map-thumb-name">${t.name}</div>
+        <div class="map-thumb-dist">📍 ${(t.addr||'').split(',')[0]}</div>
+        ${t.events?.length?`<div class="map-thumb-ev">📅 ${t.events.length} Event${t.events.length>1?'s':''}</div>`:''}
+      </div>
+    </div>
+  `).join('');
+
+  // Events
+  const evSrc = allEvents.length ? allEvents : [];
+  const evList = document.getElementById('home-events-list');
+  if(!evSrc.length) {
+    evList.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-size:0.85rem;">Noch keine Events –<br>erstelle das erste! 🏓</div>`;
+    return;
+  }
+  evList.innerHTML = evSrc.slice(0,5).map(e=>`
+    <div class="event-list-item" onclick="showPage('events')">
+      <div class="ev-date-box">
+        <div class="ev-day">${e.day}</div>
+        <div class="ev-mon">${e.mon}</div>
+      </div>
+      <div class="ev-info">
+        <div class="ev-title">${e.name}</div>
+        <div class="ev-meta">📍 ${e.tname} · ⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+      </div>
+      <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</div>
+    </div>
+  `).join('');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           MAP                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+let leafletMap, markers=[];
+function initMap() {
+  leafletMap = L.map('map',{center:[50.0490,10.2310],zoom:14,zoomControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap', maxZoom:19
+  }).addTo(leafletMap);
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  src.forEach(t => addMarker(t));
+  renderMapList(src);
+}
+
+function addMarker(t) {
+  const color = t.type==='indoor'?'#3B7CF4':'#22C55E';
+  const evCount = t.events?.length || 0;
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:1rem;
+      box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
+      🏓${evCount?`<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+        color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
+        display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>`:''}
+    </div>`,
+    iconSize:[36,36], iconAnchor:[18,18]
+  });
+  const m = L.marker([t.lat,t.lng],{icon}).addTo(leafletMap);
+  m.on('click',()=>{ showTableDetail(t.id); selectMapItem(t.id); });
+  markers.push({id:t.id,m});
+}
+
+function centerMap() {
+  if(leafletMap) leafletMap.setView([50.0490,10.2310],14,{animate:true});
+}
+
+function selectMapItem(id) {
+  document.querySelectorAll('.map-list-item').forEach(el=>
+    el.classList.toggle('selected', el.dataset.id==id));
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x=>x.id===id);
+  if(t && leafletMap) leafletMap.setView([t.lat,t.lng],16,{animate:true});
+}
+
+function renderMapList(list) {
+  const c = document.getElementById('map-list-container');
+  c.innerHTML = list.map(t=>`
+    <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
+      <div class="map-list-icon">${t.icon}</div>
+      <div class="map-list-info">
+        <div class="map-list-name">${t.name}</div>
+        <div class="map-list-sub">${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
+        ${t.events?.length?`<div class="map-list-ev">📅 ${t.events.length} Event${t.events.length>1?'s':''} geplant</div>`:''}
+      </div>
+      <div class="map-list-chevron">›</div>
+    </div>
+  `).join('');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           TABLE DETAIL                                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+function showTableDetail(id) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('tds-title').textContent = t.icon+' '+t.name;
+  const evArr = t.events || [];
+  const evHtml = evArr.length===0
+    ? `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
+        Noch keine Events –<br>Sei der Erste! 🏓<br><br>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Event erstellen</button>
+       </div>`
+    : evArr.map(e=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
+        <div class="ev-date-box"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
+          <div style="font-size:0.74rem;color:var(--text-dim);">⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+        </div>
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</span>
+        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Dabei</button>
+      </div>`).join('');
+
+  document.getElementById('tds-body').innerHTML = `
+    <div class="table-detail-hero">${t.icon}</div>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
+        <span style="font-size:0.78rem;color:var(--text-dim);">📍 ${t.addr||''}</span>
+      </div>
+    </div>
+    <div style="padding:12px 20px 6px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">📅 Events</div>
+    ${evHtml}
+    <div style="padding:16px 20px;">
+      <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();
+        document.getElementById('ev-table').value='${t.id}';
+        openSheet('create-event-sheet')">+ Event hier erstellen</button>
+    </div>`;
+  openSheet('table-detail-sheet');
+}
+
+async function joinEvent(eventId, btn) {
+  if(!sb.isLoggedIn()) { openSheet('auth-sheet'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  const qb = new QueryBuilder('event_participants');
+  const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
+  if(error && error.code === '23505') {
+    showToast('Du nimmst bereits teil','ℹ️');
+  } else if(error) {
+    showToast('Fehler: '+JSON.stringify(error),'❌');
+    btn.disabled=false; btn.textContent='Dabei';
+  } else {
+    btn.textContent='✅'; btn.style.background='var(--green)';
+    showToast('🏓 Du nimmst am Event teil!');
+    await loadEvents(); // Zähler aktualisieren
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           EVENTS                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderEvents(filter='all') {
+  const list = filter==='all' ? allEvents : allEvents.filter(e=>e.type===filter);
+  const c = document.getElementById('events-list');
+  if(!list.length) {
+    c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
+      ${allEvents.length===0?'Lade Events…':'Keine Events in dieser Kategorie.'}
+    </div>`; return;
+  }
+  c.innerHTML = list.map(e=>`
+    <div class="event-card-big fade-up">
+      <div class="ecb-top">
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier'}</span>
+        <div class="ecb-date-box">
+          <div class="ecb-day">${e.day}</div>
+          <div class="ecb-mon">${e.mon}</div>
+        </div>
+      </div>
+      <div class="ecb-body">
+        <div class="ecb-title">${e.name}</div>
+        <div class="ecb-location">📍 ${e.tname} · ⏰ ${e.time} Uhr · von ${e.creator}</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">${
+          e.type==='ranked'?'Offizielles Match – zählt für die ELO-Rangliste.':
+          e.type==='turnier'?'K.O.-Runden mit Siegerehrung!':
+          'Entspannte Runde für alle Level – einfach Spaß!'}</div>
+      </div>
+      <div class="ecb-footer">
+        <div class="ecb-participants">👥 <b>${e.p}</b>/${e.max} Teilnehmer</div>
+        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Teilnehmen</button>
+      </div>
+    </div>`).join('');
+}
+
+function filterEvents(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents(type);
+}
+
+async function submitCreateEvent() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const title   = document.getElementById('ev-name').value.trim();
+  const tableId = document.getElementById('ev-table').value;
+  const date    = document.getElementById('ev-date').value;
+  const time    = document.getElementById('ev-time').value;
+  const mode    = document.getElementById('ev-mode').value;
+  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
+
+  const qb = new QueryBuilder('events');
+  const {error} = await qb.insert({
+    title, table_id: parseInt(tableId),
+    creator_id: sb.getUserId(),
+    event_date: date, event_time: time, mode
+  });
+  if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+  closeAllSheets();
+  showToast('🎉 Event erstellt!','🎉');
+  await loadEvents();
+  renderEvents(currentFilter);
+  renderHome();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           RANGLISTE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+function getLeague(elo) {
+  if(elo >= 800) return {name:'🥇 Gold', cls:'g'};
+  if(elo >= 400) return {name:'🥈 Silber', cls:'s'};
+  return {name:'🥉 Bronze', cls:'b'};
+}
+
+function renderLeaderboard() {
+  const myId = sb.getUserId();
+  const src = allPlayers.length ? allPlayers : [];
+  if(!src.length) {
+    document.getElementById('leaderboard-list').innerHTML =
+      `<div style="text-align:center;padding:32px;color:var(--text-dim);">Rangliste wird geladen…</div>`;
+    return;
+  }
+  const c = document.getElementById('leaderboard-list');
+  c.innerHTML = src.map((p,i)=>{
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const cls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const rcls = i===0?'g':i===1?'s':i===2?'b':'';
+    const league = getLeague(p.elo);
+    const total = (p.wins||0)+(p.losses||0);
+    const wr = total ? Math.round((p.wins||0)/total*100) : 0;
+    const isMe = p.id === myId;
+    return `<div class="lb-row ${cls} ${isMe?'me':''}">
+      <div class="lb-rank ${rcls}">${medal}</div>
+      <div class="lb-avatar">${p.avatar_emoji||'🏓'}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.username||'Spieler'}${isMe?' <span style="font-size:0.7rem;color:var(--primary);font-weight:700;">(Du)</span>':''}</div>
+        <div class="lb-tier">${league.name}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="lb-elo">${p.elo} <span style="font-size:0.7rem;color:var(--text-dim);">ELO</span></div>
+        <div class="lb-wr">${p.wins||0}W / ${p.losses||0}L · ${wr}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Mein Rank-Card aktualisieren falls eingeloggt
+  if(currentUser) {
+    const myRank = src.findIndex(p=>p.id===myId)+1;
+    const league = getLeague(currentUser.elo||200);
+    document.querySelector('.myrank-name').textContent = currentUser.username;
+    document.querySelector('.myrank-elo').textContent  = currentUser.elo || 200;
+    document.querySelector('.myrank-tier').textContent = `${league.name} · Platz ${myRank||'?'}`;
+    // Progress bar Silber: 400-800, hier 400 offset
+    const elo = currentUser.elo || 200;
+    const pct = elo < 400 ? (elo/400*100)
+               : elo < 800 ? ((elo-400)/400*100) : 100;
+    document.querySelector('.rp-fill').style.width = Math.min(pct,100)+'%';
+    // Liga-Label
+    if(elo<400) { document.querySelector('.rp-labels span:first-child').textContent='Bronze · 0 ELO';
+                  document.querySelector('.rp-labels span:last-child').textContent='Silber ab 400 ELO'; }
+    else if(elo<800) { document.querySelector('.rp-labels span:first-child').textContent=`Silber · ${elo} ELO`;
+                       document.querySelector('.rp-labels span:last-child').textContent='Gold ab 800 ELO'; }
+    else { document.querySelector('.rp-labels span:first-child').textContent=`Gold · ${elo} ELO`;
+           document.querySelector('.rp-labels span:last-child').textContent='🏆 Höchste Liga!'; }
+  }
+}
+
+async function submitMatch() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const opponentSel = document.querySelector('#report-match-sheet select');
+  const resultSel   = document.querySelectorAll('#report-match-sheet select')[1];
+  const scoreInput  = document.querySelector('#report-match-sheet input[placeholder="3:1"]');
+  const tableSel    = document.getElementById('match-table-sel');
+
+  const scores = scoreInput.value.split(':').map(Number);
+  const isWin  = resultSel.value === 'win';
+  const myId   = sb.getUserId();
+
+  // Für jetzt: Wir brauchen eine richtige Spieler-Suche – erstmal als Demo-Flow
+  const qb = new QueryBuilder('matches');
+  const {error} = await qb.insert({
+    winner_id:    isWin ? myId : null,
+    loser_id:     isWin ? null : myId,
+    reported_by:  myId,
+    score_winner: scores[0]||0,
+    score_loser:  scores[1]||0,
+    table_id:     parseInt(tableSel.value)||1,
+    elo_change:   15,
+    confirmed:    false
+  });
+  closeAllSheets();
+  if(error) { showToast('Fehler beim Eintragen','❌'); return; }
+  showToast('🎮 Match eingereicht – warte auf Bestätigung!','🎮');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           PROFIL                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderProfile() {
+  if(!currentUser) return;
+  const league = getLeague(currentUser.elo||200);
+  const total  = (currentUser.wins||0)+(currentUser.losses||0);
+  const wr     = total ? Math.round((currentUser.wins||0)/total*100) : 0;
+  // Avatar & Name oben
+  document.querySelector('.profile-avatar').textContent    = currentUser.avatar_emoji||'😎';
+  document.querySelector('.profile-name').textContent      = currentUser.username||'Spieler';
+  document.querySelector('.profile-rank-pill').textContent = `${league.name} · ${currentUser.elo||200} ELO`;
+  // Stats
+  document.querySelectorAll('.pstat-val')[0].textContent = currentUser.wins||0;
+  document.querySelectorAll('.pstat-val')[1].textContent = currentUser.losses||0;
+  document.querySelectorAll('.pstat-val')[2].textContent = total;
+  document.querySelectorAll('.pstat-val')[3].textContent = wr+'%';
+  // Skill level
+  const skill = currentUser.skill_level || 'anfaenger';
+  document.querySelectorAll('.skill-opt').forEach((el,i)=>{
+    const vals=['anfaenger','fortgeschritten','profi'];
+    el.classList.toggle('active', vals[i]===skill);
+  });
+  // Match History
+  renderMatchHistory();
+  // Sign-out button
+  document.querySelector('#profile-signout-btn') &&
+    (document.querySelector('#profile-signout-btn').onclick = doSignOut);
+}
+
+function renderMatchHistory() {
+  const c = document.getElementById('profile-match-history');
+  if(!myMatches.length) {
+    c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
+      Noch keine Ranked Matches gespielt.</div>`;
+    return;
+  }
+  c.innerHTML = myMatches.map(m=>`
+    <div class="match-row">
+      <div class="match-res ${m.res}">${m.res==='win'?'W':'L'}</div>
+      <div style="flex:1;">
+        <div class="match-opp">vs. ${m.opp||'?'}</div>
+        <div class="match-sets">Sätze: ${m.sets}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="match-elo ${m.elo>0?'pos':'neg'}">${m.elo>0?'+':''}${m.elo} ELO</div>
+        <div class="match-date">${m.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function selectSkill(el) {
+  const vals=['anfaenger','fortgeschritten','profi'];
+  document.querySelectorAll('.skill-opt').forEach((o,i)=>{
+    o.classList.toggle('active', o===el);
+  });
+  const skill = vals[Array.from(document.querySelectorAll('.skill-opt')).indexOf(el)];
+  if(sb.isLoggedIn() && skill) {
+    const qb = new QueryBuilder('profiles');
+    await qb.eq('id', sb.getUserId()).update({ skill_level: skill });
+    if(currentUser) currentUser.skill_level = skill;
+  }
+  showToast('✅ Spielniveau gespeichert!');
+}
+
+async function saveProfile() {
+  if(!sb.isLoggedIn()) return;
+  const name   = document.getElementById('edit-name').value.trim();
+  const city   = document.getElementById('edit-city').value.trim();
+  const bio    = document.getElementById('edit-bio').value.trim();
+  const qb = new QueryBuilder('profiles');
+  const {error} = await qb.eq('id', sb.getUserId()).update({
+    username: name||currentUser.username,
+    city: city||currentUser.city
+  });
+  if(error) { showToast('Fehler beim Speichern','❌'); return; }
+  if(currentUser) { currentUser.username=name||currentUser.username; currentUser.city=city||currentUser.city; }
+  closeAllSheets();
+  showToast('✅ Profil gespeichert!');
+  renderProfile();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           HILFSFUNKTIONEN                                    ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ── SEARCH AUTOCOMPLETE ──────────────────────────────────────────────
+let searchTimer = null;
+let dropdownItems = [];
+let activeIdx = -1;
+
+function onSearchInput() {
+  const q = document.getElementById('home-search').value.trim();
+  clearTimeout(searchTimer);
+  activeIdx = -1;
+  if(q.length < 2) { closeDropdown(); return; }
+  showDropdownLoading();
+  // Debounce: 350ms nach letztem Tastendruck
+  searchTimer = setTimeout(() => runSearch(q), 350);
+}
+
+async function runSearch(q) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+
+  // 1. Lokale Platten sofort matchen
+  const localMatches = src.filter(t =>
+    t.name.toLowerCase().includes(q.toLowerCase()) ||
+    (t.addr||'').toLowerCase().includes(q.toLowerCase())
+  );
+
+  // 2. Nominatim (OSM Geocoding) für Orte/Adressen
+  let geoResults = [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(q + ' Schweinfurt')}&format=json&limit=4` +
+      `&addressdetails=1&countrycodes=de&accept-language=de`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+    const data = await res.json();
+    geoResults = data.slice(0,4);
+  } catch(e) { /* Offline oder Rate-limit */ }
+
+  renderDropdown(q, localMatches, geoResults);
+}
+
+function highlight(text, q) {
+  if(!q) return text;
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function renderDropdown(q, localMatches, geoResults) {
+  const dd = document.getElementById('search-dropdown');
+  dropdownItems = [];
+  let html = '';
+
+  // Lokale Platten
+  if(localMatches.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      🏓 Tischtennisplatten</div>`;
+    localMatches.slice(0,3).forEach(t => {
+      const idx = dropdownItems.length;
+      dropdownItems.push({ type:'table', data:t });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="selectDropdownItem(${idx})"
+        onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
+        id="sdi-${idx}">
+        <div class="sdi-icon table">${t.icon}</div>
+        <div>
+          <div class="sdi-main">${highlight(t.name, q)}</div>
+          <div class="sdi-sub">📍 ${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // OSM Geo-Ergebnisse
+  if(geoResults.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      📍 Orte & Adressen</div>`;
+    geoResults.forEach(r => {
+      const idx = dropdownItems.length;
+      const name = r.name || r.display_name.split(',')[0];
+      const sub  = r.display_name.split(',').slice(1,3).join(',').trim();
+      dropdownItems.push({ type:'geo', data:r });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="selectDropdownItem(${idx})"
+        onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
+        id="sdi-${idx}">
+        <div class="sdi-icon place"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div>
+          <div class="sdi-main">${highlight(name, q)}</div>
+          <div class="sdi-sub">${sub}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if(!html) {
+    html = `<div class="search-empty">Keine Ergebnisse für „${q}"</div>`;
+  }
+
+  dd.innerHTML = html;
+  openDropdown();
+}
+
+function showDropdownLoading() {
+  const dd = document.getElementById('search-dropdown');
+  dd.innerHTML = `<div class="search-loading">
+    <div class="search-spinner"></div> Suche läuft…
+  </div>`;
+  openDropdown();
+}
+
+function openDropdown() {
+  const input = document.getElementById('home-search');
+  const dd    = document.getElementById('search-dropdown');
+  const rect  = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 6) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  dd.classList.add('open');
+}
+
+function closeDropdown() {
+  document.getElementById('search-dropdown').classList.remove('open');
+  activeIdx = -1;
+}
+
+function selectDropdownItem(idx) {
+  const item = dropdownItems[idx];
+  if(!item) return;
+  closeDropdown();
+
+  if(item.type === 'table') {
+    // Direkt zur Platte navigieren
+    const t = item.data;
+    document.getElementById('home-search').value = t.name;
+    showPage('map');
+    setTimeout(() => {
+      selectMapItem(t.id);
+      showTableDetail(t.id);
+    }, 100);
+
+  } else if(item.type === 'geo') {
+    // Auf der Karte zu Koordinaten zoomen
+    const lat = parseFloat(item.data.lat);
+    const lng = parseFloat(item.data.lon);
+    const name = item.data.name || item.data.display_name.split(',')[0];
+    document.getElementById('home-search').value = name;
+    showPage('map');
+    setTimeout(() => {
+      if(leafletMap) leafletMap.setView([lat, lng], 15, { animate: true });
+    }, 100);
+  }
+}
+
+// Tastaturnavigation im Dropdown (↑ ↓ Enter Escape)
+function onSearchKey(e) {
+  const items = document.querySelectorAll('.search-dropdown-item');
+  if(!items.length) return;
+  if(e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeIdx = Math.min(activeIdx + 1, items.length - 1);
+    items[activeIdx]?.focus();
+  } else if(e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeIdx = Math.max(activeIdx - 1, -1);
+    if(activeIdx === -1) document.getElementById('home-search').focus();
+    else items[activeIdx]?.focus();
+  } else if(e.key === 'Escape') {
+    closeDropdown();
+    document.getElementById('home-search').blur();
+  }
+}
+
+// Dropdown schließen wenn man woanders klickt
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('search-wrapper');
+  const dd = document.getElementById('search-dropdown');
+  if(!wrapper?.contains(e.target) && !dd?.contains(e.target)) {
+    closeDropdown();
+  }
+});
+
+// Dropdown-Position bei Scroll/Resize aktualisieren
+function repositionDropdown() {
+  const dd = document.getElementById('search-dropdown');
+  if(!dd?.classList.contains('open')) return;
+  const input = document.getElementById('home-search');
+  if(!input) return;
+  const rect = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 6) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+}
+window.addEventListener('scroll', repositionDropdown, true);
+window.addEventListener('resize', repositionDropdown);
+
+
+function animateCount(el, target) {
+  if(!el) return;
+  let n=0; const step=Math.max(1,Math.ceil(target/30));
+  const t=setInterval(()=>{ n=Math.min(n+step,target); el.textContent=n; if(n>=target)clearInterval(t); },40);
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           FALLBACK-DATEN (falls Supabase noch leer)          ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FALLBACK_TABLES = [
+  {id:1,name:"Stadtpark",addr:"Stadtpark Schweinfurt",lat:50.0497,lng:10.2322,type:"outdoor",icon:"🌳",events:[]},
+  {id:2,name:"Obere Marktstraße",addr:"Obere Marktstraße, SW",lat:50.0521,lng:10.2352,type:"outdoor",icon:"🏙️",events:[]},
+  {id:3,name:"TTC Halle Bellevue",addr:"Turnhalle Bellevue, SW",lat:50.0448,lng:10.2280,type:"indoor",icon:"🏢",events:[]},
+  {id:4,name:"Schillerplatz",addr:"Schillerplatz, SW",lat:50.0535,lng:10.2398,type:"outdoor",icon:"🌆",events:[]},
+  {id:5,name:"Willy-Sachs-Stadion",addr:"Stadionring, SW",lat:50.0418,lng:10.2265,type:"outdoor",icon:"⚽",events:[]},
+  {id:6,name:"Jugendtreff Haardt",addr:"Haardt, SW",lat:50.0575,lng:10.2420,type:"indoor",icon:"🎮",events:[]},
+  {id:7,name:"Bürgerpark Ost",addr:"Bürgerpark, SW-Ost",lat:50.0460,lng:10.2450,type:"outdoor",icon:"🌿",events:[]},
+  {id:8,name:"Sportanlage Oberndorf",addr:"Sportanlage Oberndorf",lat:50.0380,lng:10.2180,type:"outdoor",icon:"🏅",events:[]},
+  {id:9,name:"Mainkai",addr:"Mainkai, SW",lat:50.0500,lng:10.2200,type:"outdoor",icon:"🌊",events:[]}
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           STARTUP                                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+window.addEventListener('load', async () => {
+  applyTheme();
+
+  // 1. Sofort Fallback zeigen damit App nicht leer wirkt
+  tables = FALLBACK_TABLES;
+  renderHome();
+  renderEvents('all');
+  renderLeaderboard();
+
+  // 2. Supabase-Daten laden (parallel)
+  try {
+    await Promise.all([loadTables(), loadEvents(), loadPlayers()]);
+    // Wenn eingeloggt: User-Daten laden
+    if(sb.isLoggedIn()) {
+      await loadCurrentUser();
+      await loadMyMatches();
+      updateTopBarForUser();
+    }
+    // UI mit echten Daten aktualisieren
+    renderHome();
+    renderEvents(currentFilter);
+    renderLeaderboard();
+    renderMatchHistory();
+    // Select-Optionen befüllen
+    const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+  } catch(e) {
+    console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
+  }
+});
+</script>
+<div class="search-dropdown" id="search-dropdown"></div>
+</body>
+</html>
