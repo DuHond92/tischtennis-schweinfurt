@@ -211,8 +211,7 @@ body {
   font-family: var(--font-body);
 }
 
-.nav-item .nav-icon { color: var(--text-xdim); }
-.nav-item.active .nav-icon { transform: scale(1.1); color: var(--primary); }
+.nav-item.active .nav-icon { transform: scale(1.1); }
 .nav-item.active .nav-label { color: var(--primary); }
 .nav-item.active { position: relative; }
 .nav-item.active::after {
@@ -244,11 +243,9 @@ body {
 }
 
 .home-hero::after {
-  content: '';
+  content: '🏓';
   position: absolute; right: -10px; bottom: -20px;
-  width: 200px; height: 200px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='13' cy='12' rx='8.5' ry='9.5' fill='white'/%3E%3Crect x='10.5' y='20' width='5' height='8' rx='2.5' fill='white'/%3E%3Ccircle cx='26' cy='6' r='4.5' fill='white' opacity='.9'/%3E%3Cline x1='4.5' y1='12' x2='21.5' y2='12' stroke='white' stroke-width='1.5' opacity='.4'/%3E%3C/svg%3E") center/contain no-repeat;
-  opacity: 0.12;
+  font-size: 9rem; opacity: 0.08;
   transform: rotate(-15deg);
   pointer-events: none;
 }
@@ -493,10 +490,8 @@ body {
   padding: 24px 20px; color: #fff; position: relative; overflow: hidden;
 }
 .ranked-hero-section::after {
-  content: ''; position: absolute; right: -8px; bottom: -12px;
-  width: 150px; height: 150px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z'/%3E%3Cpath d='M7 8H3v2a4 4 0 004 4M17 8h4v2a4 4 0 01-4 4'/%3E%3C/svg%3E") center/contain no-repeat;
-  opacity: 0.18; transform: rotate(-10deg);
+  content: '🏆'; position: absolute; right: -8px; bottom: -12px;
+  font-size: 7rem; opacity: 0.08; transform: rotate(-10deg);
 }
 .ranked-hero-section h1 {
   font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
@@ -643,7 +638,7 @@ body {
 }
 .skill-opt:hover { border-color: var(--primary); }
 .skill-opt.active { border-color: var(--primary); background: var(--primary-bg); }
-.skill-opt-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 4px; color: var(--text-dim); }
+.skill-opt-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
 .skill-opt-name { font-weight: 700; font-size: 0.75rem; color: var(--text); }
 .skill-opt-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
 
@@ -926,12 +921,7 @@ body {
 
 <!-- Desktop top hint bar -->
 <div class="desktop-bar">
-  <span style="display:flex;align-items:center;gap:6px;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
-    </svg>
-    TableTennis Schweinfurt
-  </span>
+  <span>📱 TableTennis Schweinfurt</span>
   <span style="color:var(--border)">|</span>
   <span style="color:var(--primary);font-weight:800;">Mobile App Preview</span>
 </div>
@@ -941,32 +931,13 @@ body {
   <!-- TOP BAR -->
   <header class="topbar">
     <a class="topbar-logo" onclick="showPage('home')">
-      <div class="logo-icon">
-        <svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="13" cy="12" rx="8.5" ry="9.5" fill="white" opacity="0.95"/>
-          <rect x="10.5" y="20" width="5" height="8" rx="2.5" fill="white" opacity="0.95"/>
-          <line x1="4.5" y1="12" x2="21.5" y2="12" stroke="rgba(59,124,244,0.55)" stroke-width="1.5"/>
-          <circle cx="26" cy="6" r="4.5" fill="white" opacity="0.9"/>
-        </svg>
-      </div>
+      <div class="logo-icon">🏓</div>
       <div>TABLE<span style="color:var(--primary)">TENNIS</span></div>
     </a>
     <div class="topbar-right">
-      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-        </svg>
-      </button>
-      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Dark Mode">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-        </svg>
-      </button>
-      <button class="icon-btn" id="topbar-profile-btn" onclick="sb.isLoggedIn()?openSheet('profile-sheet'):openSheet('auth-sheet')" title="Account">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-      </button>
+      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen">🔔</button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Dark Mode">🌙</button>
+      <button class="icon-btn" id="topbar-profile-btn" onclick="sb.isLoggedIn()?openSheet('profile-sheet'):openSheet('auth-sheet')" title="Account">👤</button>
     </div>
   </header>
 
@@ -978,11 +949,7 @@ body {
       <div class="hero-greeting">Willkommen zurück 👋</div>
       <div class="hero-title">Finde dein nächstes<span>Spiel in Schweinfurt</span></div>
       <div class="hero-search" id="search-wrapper">
-        <span class="hero-search-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-        </span>
+        <span class="hero-search-icon">🔍</span>
         <input class="hero-search-input"
                placeholder="Platte, Ort oder Adresse suchen…"
                id="home-search"
@@ -1032,11 +999,7 @@ body {
       <div class="map-container">
         <div id="map"></div>
         <div class="map-overlay-btns">
-          <div class="map-fab" onclick="centerMap()" title="Mein Standort">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
-          </div>
+          <div class="map-fab" onclick="centerMap()" title="Mein Standort">📍</div>
           <div class="map-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</div>
         </div>
       </div>
@@ -1055,21 +1018,9 @@ body {
     </div>
     <div class="filter-pills" id="event-filter-pills">
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
-      <button class="filter-pill" onclick="filterEvents('casual',this)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
-          <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/>
-        </svg> Casual
-      </button>
-      <button class="filter-pill" onclick="filterEvents('ranked',this)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
-          <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
-        </svg> Ranked
-      </button>
-      <button class="filter-pill" onclick="filterEvents('turnier',this)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px">
-          <polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/>
-        </svg> Turnier
-      </button>
+      <button class="filter-pill" onclick="filterEvents('casual',this)">🎮 Casual</button>
+      <button class="filter-pill" onclick="filterEvents('ranked',this)">⚔️ Ranked</button>
+      <button class="filter-pill" onclick="filterEvents('turnier',this)">🏆 Turnier</button>
     </div>
     <div class="events-grid-list" id="events-list"></div>
     <div class="pb-safe"></div>
@@ -1078,7 +1029,7 @@ body {
   <!-- RANKED -->
   <div class="page" id="page-ranked">
     <div class="ranked-hero-section">
-      <h1>Rangliste</h1>
+      <h1>🏆 Rangliste</h1>
       <p>Steige von Bronze bis Gold auf</p>
     </div>
 
@@ -1100,12 +1051,7 @@ body {
         <div class="rp-bar"><div class="rp-fill" style="width:30%"></div></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/>
-          </svg>
-          Match eintragen
-        </button>
+        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')">🎮 Match eintragen</button>
         <button class="btn btn-secondary btn-sm btn-full" onclick="showPage('profile')">Mein Profil</button>
       </div>
     </div>
@@ -1169,40 +1115,20 @@ body {
 
     <!-- Skill Level -->
     <div class="profile-section" style="margin-top:16px;">
-      <div class="ps-header">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-        </svg>
-        Mein Spielniveau
-      </div>
+      <div class="ps-header">🎯 Mein Spielniveau</div>
       <div class="skill-grid">
         <div class="skill-opt" onclick="selectSkill(this)">
-          <span class="skill-opt-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5"/>
-            </svg>
-          </span>
+          <span class="skill-opt-icon">🐣</span>
           <div class="skill-opt-name">Anfänger</div>
           <div class="skill-opt-desc">Ich lerne noch</div>
         </div>
         <div class="skill-opt active" onclick="selectSkill(this)">
-          <span class="skill-opt-icon">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <ellipse cx="13" cy="12" rx="7.5" ry="8.5" stroke="currentColor" stroke-width="1.8"/>
-              <rect x="11" y="19.5" width="4" height="6.5" rx="2" stroke="currentColor" stroke-width="1.8"/>
-              <line x1="5.5" y1="12" x2="20.5" y2="12" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
-              <circle cx="24" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
-            </svg>
-          </span>
+          <span class="skill-opt-icon">🏓</span>
           <div class="skill-opt-name">Fortgeschritten</div>
           <div class="skill-opt-desc">Regelmäßig am Spielen</div>
         </div>
         <div class="skill-opt" onclick="selectSkill(this)">
-          <span class="skill-opt-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-          </span>
+          <span class="skill-opt-icon">⚡</span>
           <div class="skill-opt-name">Profi</div>
           <div class="skill-opt-desc">Vereinserfahrung</div>
         </div>
@@ -1211,29 +1137,15 @@ body {
 
     <!-- Match History -->
     <div class="profile-section">
-      <div class="ps-header">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        Match History
-      </div>
+      <div class="ps-header">📜 Match History</div>
       <div id="profile-match-history"></div>
     </div>
 
     <!-- Settings -->
     <div class="profile-section">
-      <div class="ps-header">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-        </svg>
-        Einstellungen
-      </div>
+      <div class="ps-header">⚙️ Einstellungen</div>
       <div class="settings-item" onclick="toggleTheme()">
-        <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-          </svg>
-        </div>
+        <div class="si-icon" style="background:var(--gold-bg);">🌙</div>
         <div class="si-text">Dark Mode<div class="si-sub">Augenschonend spielen</div></div>
         <label class="toggle-switch" onclick="event.stopPropagation()">
           <input type="checkbox" id="dm-toggle" onchange="toggleTheme()">
@@ -1241,11 +1153,7 @@ body {
         </label>
       </div>
       <div class="settings-item">
-        <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-          </svg>
-        </div>
+        <div class="si-icon" style="background:var(--primary-bg);">🔔</div>
         <div class="si-text">Benachrichtigungen<div class="si-sub">Events & Matches</div></div>
         <label class="toggle-switch">
           <input type="checkbox" checked>
@@ -1253,20 +1161,12 @@ body {
         </label>
       </div>
       <div class="settings-item" onclick="openSheet('profile-edit-sheet')">
-        <div class="si-icon" style="background:var(--green-bg);color:var(--green);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-          </svg>
-        </div>
+        <div class="si-icon" style="background:var(--green-bg);">✏️</div>
         <div class="si-text">Profil bearbeiten<div class="si-sub">Name, Avatar, Wohnort</div></div>
         <span class="si-arrow">›</span>
       </div>
       <div class="settings-item">
-        <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </div>
+        <div class="si-icon" style="background:var(--accent-bg);">🚪</div>
         <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
         <span class="si-arrow">›</span>
       </div>
@@ -1277,43 +1177,23 @@ body {
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-item active" id="nav-home" onclick="showPage('home')">
-      <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      </div>
+      <div class="nav-icon">🏠</div>
       <div class="nav-label">Home</div>
     </button>
     <button class="nav-item" id="nav-map" onclick="showPage('map')">
-      <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
-        </svg>
-      </div>
+      <div class="nav-icon">🗺</div>
       <div class="nav-label">Karte</div>
     </button>
     <button class="nav-item" id="nav-events" onclick="showPage('events')">
-      <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      </div>
+      <div class="nav-icon">📅</div>
       <div class="nav-label">Events</div>
     </button>
     <button class="nav-item" id="nav-ranked" onclick="showPage('ranked')">
-      <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/>
-        </svg>
-      </div>
+      <div class="nav-icon">🏆</div>
       <div class="nav-label">Rangliste</div>
     </button>
     <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
-      <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-      </div>
+      <div class="nav-icon">👤</div>
       <div class="nav-label">Profil</div>
     </button>
   </nav>
@@ -1339,7 +1219,7 @@ body {
 <div class="bottom-sheet" id="create-event-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">Event erstellen</div>
+    <div class="sheet-title">📅 Event erstellen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -1364,9 +1244,9 @@ body {
     <div class="form-group">
       <label class="form-label">Spielmodus</label>
       <select class="form-select" id="ev-mode">
-        <option value="casual">Casual – Spaß für alle</option>
-        <option value="ranked">Ranked – zählt für die Rangliste</option>
-        <option value="turnier">Mini-Turnier</option>
+        <option value="casual">🎮 Casual – Spaß für alle</option>
+        <option value="ranked">⚔️ Ranked – zählt für die Rangliste</option>
+        <option value="turnier">🏆 Mini-Turnier</option>
       </select>
     </div>
     <div class="form-group">
@@ -1377,7 +1257,7 @@ body {
       <label class="form-label">Beschreibung (optional)</label>
       <textarea class="form-textarea" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
     </div>
-    <button class="btn btn-primary btn-full" onclick="submitCreateEvent()">Event erstellen</button>
+    <button class="btn btn-primary btn-full" onclick="submitCreateEvent()">Event erstellen 🏓</button>
   </div>
 </div>
 
@@ -1385,7 +1265,7 @@ body {
 <div class="bottom-sheet" id="report-match-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">Match eintragen</div>
+    <div class="sheet-title">🎮 Match eintragen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -1403,8 +1283,8 @@ body {
     <div class="form-group">
       <label class="form-label">Ergebnis</label>
       <select class="form-select">
-        <option value="win">Ich habe gewonnen</option>
-        <option value="loss">Ich habe verloren</option>
+        <option value="win">✅ Ich habe gewonnen</option>
+        <option value="loss">❌ Ich habe verloren</option>
       </select>
     </div>
     <div class="form-row">
@@ -1425,32 +1305,24 @@ body {
 <div class="bottom-sheet" id="notif-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">Benachrichtigungen</div>
+    <div class="sheet-title">🔔 Benachrichtigungen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body" style="padding:0;">
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--green-bg);color:var(--green);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
+      <div class="si-icon" style="background:var(--green-bg);">✅</div>
       <div class="si-text">Jonas K. hat dein Match bestätigt<div class="si-sub">Vor 2 Stunden</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      </div>
+      <div class="si-icon" style="background:var(--primary-bg);">📅</div>
       <div class="si-text">Neues Event: "Sunset Ping Pong"<div class="si-sub">Mainkai · 16. Mai 18:30</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 8H3v2a4 4 0 004 4"/><path d="M17 8h4v2a4 4 0 01-4 4"/></svg>
-      </div>
+      <div class="si-icon" style="background:var(--gold-bg);">🏆</div>
       <div class="si-text">Du bist auf Platz 6 der Rangliste!<div class="si-sub">Heute</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/></svg>
-      </div>
+      <div class="si-icon" style="background:var(--accent-bg);">⚔️</div>
       <div class="si-text">Laura M. fordert dich zum Ranked Match<div class="si-sub">Gestern 20:15</div></div>
     </div>
   </div>
@@ -1460,7 +1332,7 @@ body {
 <div class="bottom-sheet" id="profile-edit-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">Profil bearbeiten</div>
+    <div class="sheet-title">✏️ Profil bearbeiten</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -1517,7 +1389,7 @@ body {
 <div class="bottom-sheet" id="auth-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="auth-sheet-title">Anmelden</div>
+    <div class="sheet-title" id="auth-sheet-title">👤 Anmelden</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -1711,13 +1583,10 @@ function showPage(name) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           DARK MODE                                          ║
 // ╚══════════════════════════════════════════════════════════════╝
-const SVG_MOON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
-const SVG_SUN  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
-
 let isDark = localStorage.getItem('tt_dark')==='1';
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
-  document.getElementById('theme-btn').innerHTML = isDark ? SVG_SUN : SVG_MOON;
+  document.getElementById('theme-btn').textContent = isDark?'☀️':'🌙';
   const t = document.getElementById('dm-toggle');
   if(t) t.checked = isDark;
 }
@@ -1765,7 +1634,7 @@ function setAuthMode(mode) {
   document.getElementById('auth-login-fields').style.display = mode==='login' ? 'block' : 'none';
   document.getElementById('auth-reg-fields').style.display   = mode==='register' ? 'block' : 'none';
   // Titel
-  document.getElementById('auth-sheet-title').textContent = mode==='login' ? 'Anmelden' : 'Registrieren';
+  document.getElementById('auth-sheet-title').textContent = mode==='login' ? '👤 Anmelden' : '🏓 Registrieren';
   // Submit-Button Label
   document.getElementById('auth-submit-btn').textContent = mode==='login' ? 'Anmelden' : 'Konto erstellen';
   // Tab-Styling: active = blau, inaktiv = grau
@@ -1824,13 +1693,15 @@ async function loadCurrentUser() {
 }
 
 function updateTopBarForUser() {
-  // SVG icon stays regardless of login state
+  const btn = document.getElementById('topbar-profile-btn');
+  if(btn && currentUser) btn.textContent = currentUser.avatar_emoji || '😎';
 }
 
 async function doSignOut() {
   await sb.signOut();
   closeAllSheets();
-  showToast('Bis bald!');
+  showToast('👋 Bis bald!');
+  document.getElementById('topbar-profile-btn').textContent = '👤';
   showPage('home');
 }
 
@@ -1932,7 +1803,7 @@ function renderHome() {
 
   // Counter
   animateCount(document.getElementById('c-tables'),  tables.length    || 9);
-  animateCount(document.getElementById('c-events'),  allEvents.length || 0);
+  animateCount(document.getElementById('c-events'),  (allEvents.length || FALLBACK_EVENTS.length));
   animateCount(document.getElementById('c-players'), allPlayers.length|| 0);
 
   // Platten-Karten
@@ -1943,7 +1814,7 @@ function renderHome() {
       <div class="map-thumb-img">
         ${t.icon}
         <span class="map-thumb-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
-        ${t.events?.length?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">📅 ${t.events.length}</span>`:''}
+        ${(t.events?.length||FALLBACK_EVENTS.filter(e=>e.tid===t.id).length)?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">📅 ${t.events?.length||FALLBACK_EVENTS.filter(e=>e.tid===t.id).length}</span>`:''}
       </div>
       <div class="map-thumb-body">
         <div class="map-thumb-name">${t.name}</div>
@@ -1954,12 +1825,8 @@ function renderHome() {
   `).join('');
 
   // Events
-  const evSrc = allEvents.length ? allEvents : [];
+  const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
-  if(!evSrc.length) {
-    evList.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-size:0.85rem;">Noch keine Events –<br>erstelle das erste! 🏓</div>`;
-    return;
-  }
   evList.innerHTML = evSrc.slice(0,5).map(e=>`
     <div class="event-list-item" onclick="showPage('events')">
       <div class="ev-date-box">
@@ -2079,19 +1946,28 @@ function showTableDetail(id) {
 }
 
 async function joinEvent(eventId, btn) {
-  if(!sb.isLoggedIn()) { openSheet('auth-sheet'); return; }
   btn.disabled = true; btn.textContent = '…';
+  // Fallback-Events: kein DB-Eintrag nötig
+  const isFallback = eventId >= 101;
+  if(isFallback || !sb.isLoggedIn()) {
+    setTimeout(()=>{
+      btn.textContent='✅'; btn.style.background='var(--green)';
+      showToast('🏓 Du nimmst am Event teil!');
+    }, 400);
+    return;
+  }
   const qb = new QueryBuilder('event_participants');
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
   if(error && error.code === '23505') {
     showToast('Du nimmst bereits teil','ℹ️');
+    btn.textContent='✅'; btn.style.background='var(--green)';
   } else if(error) {
-    showToast('Fehler: '+JSON.stringify(error),'❌');
+    showToast('Fehler beim Beitreten','❌');
     btn.disabled=false; btn.textContent='Dabei';
   } else {
     btn.textContent='✅'; btn.style.background='var(--green)';
     showToast('🏓 Du nimmst am Event teil!');
-    await loadEvents(); // Zähler aktualisieren
+    await loadEvents();
   }
 }
 
@@ -2099,11 +1975,13 @@ async function joinEvent(eventId, btn) {
 // ║           EVENTS                                             ║
 // ╚══════════════════════════════════════════════════════════════╝
 function renderEvents(filter='all') {
-  const list = filter==='all' ? allEvents : allEvents.filter(e=>e.type===filter);
+  // Fallback-Events verwenden wenn Supabase noch keine hat
+  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const list = filter==='all' ? src : src.filter(e=>e.type===filter);
   const c = document.getElementById('events-list');
   if(!list.length) {
     c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
-      ${allEvents.length===0?'Lade Events…':'Keine Events in dieser Kategorie.'}
+      Keine Events in dieser Kategorie.
     </div>`; return;
   }
   c.innerHTML = list.map(e=>`
@@ -2420,7 +2298,7 @@ function renderDropdown(q, localMatches, geoResults) {
         onmousedown="selectDropdownItem(${idx})"
         onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
         id="sdi-${idx}">
-        <div class="sdi-icon place"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="sdi-icon place">📍</div>
         <div>
           <div class="sdi-main">${highlight(name, q)}</div>
           <div class="sdi-sub">${sub}</div>
@@ -2550,6 +2428,21 @@ const FALLBACK_TABLES = [
   {id:7,name:"Bürgerpark Ost",addr:"Bürgerpark, SW-Ost",lat:50.0460,lng:10.2450,type:"outdoor",icon:"🌿",events:[]},
   {id:8,name:"Sportanlage Oberndorf",addr:"Sportanlage Oberndorf",lat:50.0380,lng:10.2180,type:"outdoor",icon:"🏅",events:[]},
   {id:9,name:"Mainkai",addr:"Mainkai, SW",lat:50.0500,lng:10.2200,type:"outdoor",icon:"🌊",events:[]}
+];
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           FALLBACK-EVENTS (solange DB leer ist)              ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FALLBACK_EVENTS = [
+  {id:101,name:"Casual Runde für alle",day:"03",mon:"JUL",time:"15:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"michaeltroster",p:3,max:6},
+  {id:102,name:"Ranked 1v1 Challenge",day:"04",mon:"JUL",time:"16:00",type:"ranked",tname:"Obere Marktstraße",ticon:"🏙️",tid:2,creator:"michaeltroster",p:2,max:2},
+  {id:103,name:"Mini-Turnier Bronze",day:"11",mon:"JUL",time:"13:00",type:"turnier",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"michaeltroster",p:8,max:16},
+  {id:104,name:"Anfänger Willkommen",day:"10",mon:"JUL",time:"14:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"michaeltroster",p:1,max:8},
+  {id:105,name:"Ranked Night",day:"18",mon:"JUL",time:"19:00",type:"ranked",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"michaeltroster",p:4,max:6},
+  {id:106,name:"Sunset Ping Pong",day:"16",mon:"JUL",time:"18:30",type:"casual",tname:"Mainkai",ticon:"🌊",tid:9,creator:"michaeltroster",p:6,max:12},
+  {id:107,name:"Jugend Casual",day:"07",mon:"JUL",time:"16:00",type:"casual",tname:"Jugendtreff Haardt",ticon:"🎮",tid:6,creator:"michaeltroster",p:4,max:10},
+  {id:108,name:"Ranked Challenge",day:"09",mon:"JUL",time:"10:00",type:"ranked",tname:"Sportanlage Oberndorf",ticon:"🏅",tid:8,creator:"michaeltroster",p:2,max:2},
 ];
 
 // ╔══════════════════════════════════════════════════════════════╗
