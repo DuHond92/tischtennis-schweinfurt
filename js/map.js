@@ -104,17 +104,24 @@ function renderMapList(list) {
     c.innerHTML = `<div class="osm-loading"><div class="search-spinner"></div>Lade Platten von OpenStreetMap…</div>`;
     return;
   }
-  c.innerHTML = list.map(t=>`
+  const PH = 'images/placeholders/placeholder-plate.webp';
+  c.innerHTML = list.map(t=>{
+    const thumb = (t.photos && t.photos.length) ? t.photos[0] : PLATE_TEST_IMAGES[0];
+    const evCount = t.events?.length || 0;
+    return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
-      <div class="map-list-icon">${t.icon}</div>
+      <div class="mli-thumb">
+        <img src="${thumb}" onerror="this.src='${PH}'" loading="lazy">
+      </div>
       <div class="map-list-info">
-        <div class="map-list-name">${t.name}</div>
-        <div class="map-list-sub">${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
-        ${t.distance!=null?`<div class="map-dist">📍 ${formatDistance(t.distance)} entfernt</div>`:''}
-        ${t.osmId?`<span class="osm-badge" style="margin-top:3px;display:inline-flex;">🗺 OpenStreetMap</span>`:''}
-        ${t.events?.length?`<div class="map-list-ev">📅 ${t.events.length} Event${t.events.length>1?'s':''} geplant</div>`:''}
+        <div class="mli-title-row">
+          <div class="map-list-name">${t.name}</div>
+          <span class="mli-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
+        </div>
+        <div class="map-list-sub">📍 ${t.addr||'Schweinfurt'}${t.distance!=null?' · '+formatDistance(t.distance)+' entfernt':''}</div>
+        ${evCount?`<div class="map-list-ev">📅 ${evCount} Event${evCount>1?'s':''} geplant</div>`:''}
       </div>
       <div class="map-list-chevron">›</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }

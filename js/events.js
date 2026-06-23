@@ -37,28 +37,27 @@ function renderEvents(filter='all') {
       Keine Events in dieser Kategorie.
     </div>`; return;
   }
-  c.innerHTML = list.map(e=>`
-    <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})" style="cursor:pointer;">
-      <div class="ecb-top">
-        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier'}</span>
-        <div class="ecb-date-box">
-          <div class="ecb-day">${e.day}</div>
-          <div class="ecb-mon">${e.mon}</div>
+  const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
+  const EV_PH  = 'images/placeholders/placeholder-plate.webp';
+  c.innerHTML = list.map((e, idx)=>{
+    const thumb = EV_IMGS[idx % EV_IMGS.length];
+    const typeLabel = e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier';
+    return `
+    <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
+      <img class="ecb-thumb" src="${thumb}" onerror="this.src='${EV_PH}'" loading="lazy">
+      <div class="ecb-info">
+        <div class="ecb-title-row">
+          <span class="ev-type-pill pill-${e.type}">${typeLabel}</span>
+          <span style="font-size:0.72rem;color:var(--text-dim);">📅 ${e.day}. ${e.mon}</span>
         </div>
-      </div>
-      <div class="ecb-body">
         <div class="ecb-title">${e.name}</div>
-        <div class="ecb-location">📍 ${e.tname} · ⏰ ${e.time} Uhr · von ${e.creator}</div>
-        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">${
-          e.type==='ranked'?'Offizielles Match – zählt für die ELO-Rangliste.':
-          e.type==='turnier'?'K.O.-Runden mit Siegerehrung!':
-          'Entspannte Runde für alle Level – einfach Spaß!'}</div>
+        <div class="ecb-meta">⏰ ${e.time} Uhr · von ${e.creator}</div>
+        <div class="ecb-location">📍 ${e.tname}</div>
+        <div class="ecb-participants">👥 ${e.p}/${e.max} Teilnehmer</div>
       </div>
-      <div class="ecb-footer">
-        <div class="ecb-participants">👥 <b>${e.p}</b>/${e.max} Teilnehmer</div>
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showEventDetail(${e.id})">Details →</button>
-      </div>
-    </div>`).join('');
+      <div class="ecb-chevron">›</div>
+    </div>`;
+  }).join('');
 }
 
 function filterEvents(type, btn) {
