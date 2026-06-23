@@ -28,7 +28,6 @@ function showPage(name) {
 let isDark = localStorage.getItem('tt_dark')==='1';
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
-  document.getElementById('theme-btn').textContent = isDark?'☀️':'🌙';
   const t = document.getElementById('dm-toggle');
   if(t) t.checked = isDark;
 }

@@ -68,14 +68,12 @@ async function loadCurrentUser() {
 }
 
 function updateTopBarForUser() {
-  const btn = document.getElementById('topbar-profile-btn');
-  if(btn && currentUser) btn.textContent = currentUser.avatar_emoji || '😎';
+  // topbar-profile-btn removed; avatar shown on profile page only
 }
 
 async function doSignOut() {
   await sb.signOut();
   closeAllSheets();
   showToast('👋 Bis bald!');
-  document.getElementById('topbar-profile-btn').textContent = '👤';
   showPage('home');
 }
