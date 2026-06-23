@@ -65,6 +65,7 @@
   gap: 3px; transition: all 0.2s;
   border: none; background: none;
   -webkit-tap-highlight-color: transparent;
+  color: var(--text-xdim);
 }
 
 .nav-icon {
@@ -76,14 +77,14 @@
 
 .nav-label {
   font-size: 0.62rem; font-weight: 700;
-  letter-spacing: 0.3px; color: var(--text-xdim);
+  letter-spacing: 0.3px; color: currentColor;
   text-transform: uppercase; transition: color 0.2s;
   font-family: var(--font-body);
 }
 
+.nav-item.active { position: relative; color: var(--primary); }
 .nav-item.active .nav-icon { transform: scale(1.1); }
 .nav-item.active .nav-label { color: var(--primary); }
-.nav-item.active { position: relative; }
 .nav-item.active::after {
   content: '';
   position: absolute;
