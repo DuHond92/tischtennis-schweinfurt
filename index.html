@@ -296,10 +296,30 @@
 </div>
 
 <!-- FAB (only on events/home pages) -->
-<button class="fab" id="main-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</button>
+<button class="fab fab-labeled" id="main-fab" onclick="openSheet('create-choice-sheet')">
+  <span style="font-size:1.4rem;line-height:1;">+</span>
+  <span class="fab-label">Erstellen</span>
+</button>
 
 <!-- ======= BOTTOM SHEETS ======= -->
 <div class="sheet-overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- CREATE CHOICE SHEET -->
+<div class="bottom-sheet" id="create-choice-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Was möchtest du erstellen?</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="display:flex;flex-direction:column;gap:12px;padding:8px 20px 28px;">
+    <button class="btn btn-primary btn-full choice-btn" onclick="closeAllSheets();openSheet('create-event-sheet')">
+      📅 Event erstellen
+    </button>
+    <button class="btn btn-secondary btn-full choice-btn" onclick="closeAllSheets();openSheet('report-match-sheet')">
+      ⚔️ Match melden
+    </button>
+  </div>
+</div>
 
 <!-- TABLE DETAIL SHEET -->
 <div class="bottom-sheet" id="table-detail-sheet">

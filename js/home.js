@@ -47,7 +47,8 @@ function renderHome() {
       </div>
       <div class="ev-info">
         <div class="ev-title">${e.name}</div>
-        <div class="ev-meta">📍 ${e.tname} · ⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+        <div class="ev-meta-loc">📍 ${e.tname}</div>
+        <div class="ev-meta-time">⏰ ${e.time} &nbsp;·&nbsp; 👥 ${e.p}/${e.max}</div>
       </div>
       <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</div>
     </div>

@@ -123,6 +123,11 @@
   .fab:hover { transform: translateY(-2px) scale(1.05); }
 }
 
+.fab-labeled { width: auto; padding: 0 18px 0 14px; gap: 7px; border-radius: 26px; font-size: inherit; }
+.fab-label { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.2px; }
+
+.choice-btn { font-size: 1rem; padding: 15px 20px; border-radius: 14px; }
+
 /* Toast notification */
 .toast {
   position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
