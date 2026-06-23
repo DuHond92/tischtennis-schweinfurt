@@ -32,7 +32,7 @@
       <div>TABLE<span style="color:var(--primary)">TENNIS</span></div>
     </a>
     <div class="topbar-right">
-      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen">🔔</button>
+      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -44,7 +44,7 @@
       <div class="hero-greeting">Willkommen zurück 👋</div>
       <div class="hero-title">Finde dein nächstes<span>Spiel in Schweinfurt</span></div>
       <div class="hero-search" id="search-wrapper">
-        <span class="hero-search-icon">🔍</span>
+        <span class="hero-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
         <input class="hero-search-input"
                placeholder="Platte, Ort oder Adresse suchen…"
                id="home-search"
@@ -94,7 +94,7 @@
       <div class="map-container">
         <div id="map"></div>
         <div class="map-overlay-btns">
-          <div class="map-fab" id="locate-btn" onclick="locateUser()" title="Mein Standort">📍</div>
+          <div class="map-fab" id="locate-btn" onclick="locateUser()" title="Mein Standort"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
           <div class="map-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</div>
         </div>
         <div id="osm-status" style="position:absolute;bottom:10px;left:10px;z-index:400;"></div>
@@ -114,9 +114,9 @@
     </div>
     <div class="filter-pills" id="event-filter-pills">
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
-      <button class="filter-pill" onclick="filterEvents('casual',this)">🎮 Casual</button>
-      <button class="filter-pill" onclick="filterEvents('ranked',this)">⚔️ Ranked</button>
-      <button class="filter-pill" onclick="filterEvents('turnier',this)">🏆 Turnier</button>
+      <button class="filter-pill" onclick="filterEvents('casual',this)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="17" y1="13" y2="13"/><path d="M6 12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M6 20H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> Casual</button>
+      <button class="filter-pill" onclick="filterEvents('ranked',this)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="3" y1="17" y2="21"/></svg> Ranked</button>
+      <button class="filter-pill" onclick="filterEvents('turnier',this)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Turnier</button>
     </div>
     <div class="events-grid-list" id="events-list"></div>
     <div class="pb-safe"></div>
@@ -147,7 +147,7 @@
         <div class="rp-bar"><div class="rp-fill" style="width:30%"></div></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;">
-        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')">🎮 Match eintragen</button>
+        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="17" y1="13" y2="13"/><path d="M6 12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M6 20H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> Match eintragen</button>
         <button class="btn btn-secondary btn-sm btn-full" onclick="showPage('profile')">Mein Profil</button>
       </div>
     </div>
@@ -211,7 +211,7 @@
 
     <!-- Skill Level -->
     <div class="profile-section" style="margin-top:16px;">
-      <div class="ps-header">🎯 Mein Spielniveau</div>
+      <div class="ps-header"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg> Mein Spielniveau</div>
       <div class="skill-grid">
         <div class="skill-opt" onclick="selectSkill(this)">
           <span class="skill-opt-icon">🐣</span>
@@ -239,9 +239,9 @@
 
     <!-- Settings -->
     <div class="profile-section">
-      <div class="ps-header">⚙️ Einstellungen</div>
+      <div class="ps-header"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Einstellungen</div>
       <div class="settings-item" onclick="toggleTheme()">
-        <div class="si-icon" style="background:var(--gold-bg);">🌙</div>
+        <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></div>
         <div class="si-text">Dark Mode<div class="si-sub">Augenschonend spielen</div></div>
         <label class="toggle-switch" onclick="event.stopPropagation()">
           <input type="checkbox" id="dm-toggle" onchange="toggleTheme()">
@@ -249,7 +249,7 @@
         </label>
       </div>
       <div class="settings-item">
-        <div class="si-icon" style="background:var(--primary-bg);">🔔</div>
+        <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
         <div class="si-text">Benachrichtigungen<div class="si-sub">Events & Matches</div></div>
         <label class="toggle-switch">
           <input type="checkbox" checked>
@@ -262,7 +262,7 @@
         <span class="si-arrow">›</span>
       </div>
       <div class="settings-item">
-        <div class="si-icon" style="background:var(--accent-bg);">🚪</div>
+        <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></div>
         <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
         <span class="si-arrow">›</span>
       </div>
@@ -313,10 +313,10 @@
   </div>
   <div class="sheet-body" style="display:flex;flex-direction:column;gap:12px;padding:8px 20px 28px;">
     <button class="btn btn-primary btn-full choice-btn" onclick="closeAllSheets();openSheet('create-event-sheet')">
-      📅 Event erstellen
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg> Event erstellen
     </button>
     <button class="btn btn-secondary btn-full choice-btn" onclick="closeAllSheets();openSheet('report-match-sheet')">
-      ⚔️ Match melden
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="3" y1="17" y2="21"/></svg> Match melden
     </button>
   </div>
 </div>
@@ -331,7 +331,7 @@
 <div class="bottom-sheet" id="create-event-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">📅 Event erstellen</div>
+    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg> Event erstellen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -377,7 +377,7 @@
 <div class="bottom-sheet" id="report-match-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">🎮 Match eintragen</div>
+    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="17" y1="13" y2="13"/><path d="M6 12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M6 20H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> Match eintragen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -417,7 +417,7 @@
 <div class="bottom-sheet" id="notif-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">🔔 Benachrichtigungen</div>
+    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Benachrichtigungen</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body" style="padding:0;">
@@ -426,15 +426,15 @@
       <div class="si-text">Jonas K. hat dein Match bestätigt<div class="si-sub">Vor 2 Stunden</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--primary-bg);">📅</div>
+      <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg></div>
       <div class="si-text">Neues Event: "Sunset Ping Pong"<div class="si-sub">Mainkai · 16. Mai 18:30</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--gold-bg);">🏆</div>
+      <div class="si-icon" style="background:var(--gold-bg);color:var(--gold);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
       <div class="si-text">Du bist auf Platz 6 der Rangliste!<div class="si-sub">Heute</div></div>
     </div>
     <div class="settings-item">
-      <div class="si-icon" style="background:var(--accent-bg);">⚔️</div>
+      <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="3" y1="17" y2="21"/></svg></div>
       <div class="si-text">Laura M. fordert dich zum Ranked Match<div class="si-sub">Gestern 20:15</div></div>
     </div>
   </div>
@@ -501,7 +501,7 @@
 <div class="bottom-sheet" id="auth-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="auth-sheet-title">👤 Anmelden</div>
+    <div class="sheet-title" id="auth-sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Anmelden</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
@@ -648,7 +648,7 @@
 <div class="bottom-sheet" id="comment-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="comment-sheet-title">💬 Kommentare</div>
+    <div class="sheet-title" id="comment-sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Kommentare</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div id="comment-list" style="max-height:300px;overflow-y:auto;"></div>
@@ -675,7 +675,7 @@
   <div class="edi-actions" id="eds-actions"></div>
   <!-- Participants -->
   <div class="participants-section">
-    <div class="section-label">👥 Teilnehmer</div>
+    <div class="section-label"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Teilnehmer</div>
     <div class="participants-row" id="eds-participants">
       <div class="participants-empty">Lade…</div>
     </div>
@@ -683,7 +683,7 @@
   <!-- Chat -->
   <div class="chat-section">
     <div class="chat-section-header">
-      <div class="section-label">💬 Event-Chat</div>
+      <div class="section-label"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Event-Chat</div>
     </div>
     <div class="chat-feed" id="eds-chat-feed">
       <div class="chat-empty">Lade Nachrichten…</div>
@@ -699,6 +699,7 @@
 <div class="search-dropdown" id="search-dropdown"></div>
 
 <!-- JS: load order matters — globals must be defined before consumers -->
+<script src="js/icons.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/state.js"></script>
 <script src="js/fallback.js"></script>

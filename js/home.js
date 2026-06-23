@@ -25,11 +25,11 @@ function renderHome() {
       <div class="map-thumb-img">
         <img src="${thumb}" onerror="this.src='${PH}'" loading="lazy">
         <span class="map-thumb-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
-        ${evCount?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">📅 ${evCount}</span>`:''}
+        ${evCount?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">${ic('calendar',12)} ${evCount}</span>`:''}
       </div>
       <div class="map-thumb-body">
         <div class="map-thumb-name">${t.name}</div>
-        <div class="map-thumb-dist">📍 ${(t.addr||'').split(',')[0]}${t.distance!=null?' · '+formatDistance(t.distance)+' entfernt':''}</div>
+        <div class="map-thumb-dist">${ic('pin')} ${(t.addr||'').split(',')[0]}${t.distance!=null?' · '+formatDistance(t.distance)+' entfernt':''}</div>
       </div>
     </div>`;
   }).join('');
@@ -47,8 +47,8 @@ function renderHome() {
       </div>
       <div class="ev-info">
         <div class="ev-title">${e.name}</div>
-        <div class="ev-meta-loc">📍 ${e.tname}</div>
-        <div class="ev-meta-time">⏰ ${e.time} &nbsp;·&nbsp; 👥 ${e.p}/${e.max}</div>
+        <div class="ev-meta-loc">${ic('pin')} ${e.tname}</div>
+        <div class="ev-meta-time">${ic('clock')} ${e.time} &nbsp;·&nbsp; ${ic('users')} ${e.p}/${e.max}</div>
       </div>
       <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</div>
     </div>

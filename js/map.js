@@ -118,8 +118,8 @@ function renderMapList(list) {
           <div class="map-list-name">${t.name}</div>
           <span class="mli-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
         </div>
-        <div class="map-list-sub">📍 ${t.addr||'Schweinfurt'}${t.distance!=null?' · '+formatDistance(t.distance)+' entfernt':''}</div>
-        ${evCount?`<div class="map-list-ev">📅 ${evCount} Event${evCount>1?'s':''} geplant</div>`:''}
+        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}${t.distance!=null?' · '+formatDistance(t.distance)+' entfernt':''}</div>
+        ${evCount?`<div class="map-list-ev">${ic('calendar',13)} ${evCount} Event${evCount>1?'s':''} geplant</div>`:''}
       </div>
       <div class="map-list-chevron">›</div>
     </div>`;

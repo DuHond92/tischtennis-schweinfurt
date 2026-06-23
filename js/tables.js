@@ -15,7 +15,7 @@ function showTableDetail(id) {
 
   // Distanz
   const distHtml = t.distance != null
-    ? `<span class="distance-badge">📍 ${formatDistance(t.distance)} entfernt</span>` : '';
+    ? `<span class="distance-badge">${ic('pin',12)} ${formatDistance(t.distance)} entfernt</span>` : '';
 
   // OSM Badge
   const osmHtml = t.osmId
@@ -43,7 +43,7 @@ function showTableDetail(id) {
         <div class="ev-date-box"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
         <div style="flex:1;">
           <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
-          <div style="font-size:0.74rem;color:var(--text-dim);">⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+          <div style="font-size:0.74rem;color:var(--text-dim);">${ic('clock')} ${e.time} · ${ic('users')} ${e.p}/${e.max}</div>
         </div>
         <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</span>
         <button class="btn btn-primary btn-sm" onclick="showEventDetail(${e.id})">Details →</button>
@@ -57,7 +57,7 @@ function showTableDetail(id) {
         <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
         ${distHtml} ${osmHtml}
       </div>
-      <div class="ds-address">📍 ${t.addr||'Schweinfurt'}</div>
+      <div class="ds-address">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
     </div>
     ${extraHtml}
     <!-- Rating Summary -->
@@ -80,13 +80,13 @@ function showTableDetail(id) {
 
     <!-- Action Buttons -->
     <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
-      <button class="btn btn-secondary btn-sm btn-full" onclick="openComments(${t.id})">💬 Kommentare</button>
-      <button class="btn btn-secondary btn-sm btn-full" onclick="openMapsDirections(${t.lat},${t.lng})">🗺 Route</button>
+      <button class="btn btn-secondary btn-sm btn-full" onclick="openComments(${t.id})">${ic('chat',14)} Kommentare</button>
+      <button class="btn btn-secondary btn-sm btn-full" onclick="openMapsDirections(${t.lat},${t.lng})">${ic('navigate',14)} Route</button>
     </div>
     <div style="padding:8px 20px;border-bottom:1px solid var(--border);">
       <button class="btn btn-primary btn-full btn-sm" onclick="openRating(${t.id},'${t.name}')">⭐ Platte bewerten</button>
     </div>
-    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">📅 Events</div>
+    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">${ic('calendar',15)} Events</div>
     ${evHtml}
     <div style="padding:14px 20px;">
       <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();

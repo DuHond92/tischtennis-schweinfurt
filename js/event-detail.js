@@ -59,13 +59,13 @@ function showEventDetail(eventId) {
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill
-  const typeLabel = ev.type==='casual' ? '🎮 Casual' : ev.type==='ranked' ? '⚔️ Ranked' : '🏆 Turnier';
+  const typeLabel = ev.type==='casual' ? ic('gamepad',13)+' Casual' : ev.type==='ranked' ? ic('swords',13)+' Ranked' : ic('trophy',13)+' Turnier';
   document.getElementById('eds-type-pill').innerHTML =
     `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel}</span>`;
 
   // Meta
   document.getElementById('eds-meta').innerHTML =
-    `📅 ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ⏰ ${ev.time} Uhr<br>📍 ${ev.tname} &nbsp;·&nbsp; 👤 von <b>${ev.creator}</b><br>👥 ${ev.p}/${ev.max} Teilnehmer`;
+    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von <b>${ev.creator}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
 
   // Description
   const descEl = document.getElementById('eds-desc');

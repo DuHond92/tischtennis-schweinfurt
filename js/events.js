@@ -41,19 +41,19 @@ function renderEvents(filter='all') {
   const EV_PH  = 'images/placeholders/placeholder-plate.webp';
   c.innerHTML = list.map((e, idx)=>{
     const thumb = EV_IMGS[idx % EV_IMGS.length];
-    const typeLabel = e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier';
+    const typeLabel = e.type==='casual'?ic('gamepad',13)+' Casual':e.type==='ranked'?ic('swords',13)+' Ranked':ic('trophy',13)+' Turnier';
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
       <img class="ecb-thumb" src="${thumb}" onerror="this.src='${EV_PH}'" loading="lazy">
       <div class="ecb-info">
         <div class="ecb-title-row">
           <span class="ev-type-pill pill-${e.type}">${typeLabel}</span>
-          <span style="font-size:0.72rem;color:var(--text-dim);">📅 ${e.day}. ${e.mon}</span>
+          <span style="font-size:0.72rem;color:var(--text-dim);">${ic('calendar',12)} ${e.day}. ${e.mon}</span>
         </div>
         <div class="ecb-title">${e.name}</div>
-        <div class="ecb-meta">⏰ ${e.time} Uhr · von ${e.creator}</div>
-        <div class="ecb-location">📍 ${e.tname}</div>
-        <div class="ecb-participants">👥 ${e.p}/${e.max} Teilnehmer</div>
+        <div class="ecb-meta">${ic('clock')} ${e.time} Uhr · von ${e.creator}</div>
+        <div class="ecb-location">${ic('pin')} ${e.tname}</div>
+        <div class="ecb-participants">${ic('users')} ${e.p}/${e.max} Teilnehmer</div>
       </div>
       <div class="ecb-chevron">›</div>
     </div>`;

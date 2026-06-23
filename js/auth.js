@@ -9,7 +9,9 @@ function setAuthMode(mode) {
   document.getElementById('auth-login-fields').style.display = mode==='login' ? 'block' : 'none';
   document.getElementById('auth-reg-fields').style.display   = mode==='register' ? 'block' : 'none';
   // Titel
-  document.getElementById('auth-sheet-title').textContent = mode==='login' ? '👤 Anmelden' : '🏓 Registrieren';
+  document.getElementById('auth-sheet-title').innerHTML = mode==='login'
+    ? `${ic('user',18)} Anmelden`
+    : '🏓 Registrieren';
   // Submit-Button Label
   document.getElementById('auth-submit-btn').textContent = mode==='login' ? 'Anmelden' : 'Konto erstellen';
   // Tab-Styling: active = blau, inaktiv = grau

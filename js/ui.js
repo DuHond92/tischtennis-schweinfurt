@@ -131,7 +131,7 @@ function renderDropdown(q, localMatches, geoResults) {
         <div class="sdi-icon table">${t.icon}</div>
         <div>
           <div class="sdi-main">${highlight(t.name, q)}</div>
-          <div class="sdi-sub">📍 ${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
+          <div class="sdi-sub">${ic('pin')} ${t.addr||''} · ${t.type==='indoor'?'Indoor':'Outdoor'}</div>
         </div>
       </div>`;
     });
@@ -141,7 +141,7 @@ function renderDropdown(q, localMatches, geoResults) {
   if(geoResults.length) {
     html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
       color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
-      📍 Orte & Adressen</div>`;
+      ${ic('pin')} Orte & Adressen</div>`;
     geoResults.forEach(r => {
       const idx = dropdownItems.length;
       const name = r.name || r.display_name.split(',')[0];
@@ -151,7 +151,7 @@ function renderDropdown(q, localMatches, geoResults) {
         onmousedown="selectDropdownItem(${idx})"
         onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
         id="sdi-${idx}">
-        <div class="sdi-icon place">📍</div>
+        <div class="sdi-icon place">${ic('pin',18)}</div>
         <div>
           <div class="sdi-main">${highlight(name, q)}</div>
           <div class="sdi-sub">${sub}</div>
