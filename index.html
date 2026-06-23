@@ -1,918 +1,1349 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PingMeet Schweinfurt – Tischtennis Community</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TableTennis SW – Finde dein Spiel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+/* ======= DESIGN TOKENS ======= */
 :root {
-  --bg: #0d0f14;
-  --surface: #161921;
-  --surface2: #1e2330;
-  --surface3: #252c3d;
-  --border: #2a3147;
-  --primary: #00e5ff;
-  --primary-dim: rgba(0,229,255,0.12);
-  --accent: #ff4d6d;
-  --gold: #ffd700;
-  --silver: #c0c0c0;
-  --bronze: #cd7f32;
-  --text: #e8eaf0;
-  --text-dim: #8892a4;
-  --green: #00c896;
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --font-mono: 'Space Mono', monospace;
+  /* Light Mode – from Figma */
+  --bg:          #F4F6FB;
+  --bg2:         #EAECF5;
+  --surface:     #FFFFFF;
+  --surface2:    #F0F2FA;
+  --border:      #DDE1F0;
+  --text:        #1A1D2E;
+  --text-dim:    #6B7280;
+  --text-xdim:   #9CA3AF;
+  --primary:     #3B7CF4;
+  --primary-d:   #2563EB;
+  --primary-bg:  #EBF2FF;
+  --primary-mid: rgba(59,124,244,0.12);
+  --accent:      #EF4444;
+  --accent-bg:   #FEF2F2;
+  --green:       #22C55E;
+  --green-bg:    #F0FDF4;
+  --gold:        #F59E0B;
+  --gold-bg:     #FFFBEB;
+  --silver:      #64748B;
+  --bronze:      #D97706;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm:   8px;
+  --radius:      14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --font-head:   'Outfit', sans-serif;
+  --font-body:   'Nunito', sans-serif;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+[data-theme="dark"] {
+  --bg:          #0F1117;
+  --bg2:         #171B26;
+  --surface:     #1C2133;
+  --surface2:    #242B40;
+  --border:      #2E3650;
+  --text:        #EDF0FA;
+  --text-dim:    #8892B0;
+  --text-xdim:   #4E5A78;
+  --primary:     #4D8EF8;
+  --primary-d:   #3B7CF4;
+  --primary-bg:  rgba(59,124,244,0.15);
+  --primary-mid: rgba(59,124,244,0.1);
+  --accent:      #F87171;
+  --accent-bg:   rgba(239,68,68,0.12);
+  --green:       #4ADE80;
+  --green-bg:    rgba(34,197,94,0.1);
+  --gold:        #FCD34D;
+  --gold-bg:     rgba(245,158,11,0.1);
+  --silver:      #94A3B8;
+  --bronze:      #FBA94C;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ======= RESET ======= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
 
 body {
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-body);
   min-height: 100vh;
-  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
 }
 
-/* ===== NAVIGATION ===== */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-  background: rgba(13,15,20,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 2rem; height: 64px;
+/* ======= LAYOUT ======= */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--bg);
+  /* On desktop: show phone frame */
 }
 
-.nav-logo {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  letter-spacing: 2px;
-  color: var(--primary);
-  display: flex; align-items: center; gap: 10px;
-  cursor: pointer;
-}
-.nav-logo span { color: var(--accent); }
-
-.nav-tabs {
-  display: flex; gap: 4px;
-}
-
-.nav-tab {
-  padding: 8px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  transition: all 0.2s;
-  border: none; background: none;
-  letter-spacing: 0.5px;
-}
-.nav-tab:hover { color: var(--text); background: var(--surface2); }
-.nav-tab.active { color: var(--primary); background: var(--primary-dim); }
-
-.nav-right { display: flex; align-items: center; gap: 12px; }
-
-.btn {
-  padding: 9px 20px; border-radius: 8px; border: none;
-  cursor: pointer; font-family: var(--font-body); font-weight: 600;
-  font-size: 0.85rem; transition: all 0.2s; letter-spacing: 0.3px;
-}
-.btn-primary { background: var(--primary); color: #000; }
-.btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
-.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
-.btn-accent { background: var(--accent); color: #fff; }
-.btn-accent:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-small { padding: 6px 14px; font-size: 0.8rem; }
-
-/* ===== PAGES ===== */
-.page { display: none; padding-top: 64px; min-height: 100vh; }
-.page.active { display: block; }
-
-/* ===== HERO ===== */
-#page-home .hero {
-  min-height: calc(100vh - 64px);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center; padding: 2rem;
-  position: relative; overflow: hidden;
+@media (min-width: 600px) {
+  body { background: var(--bg2); padding: 24px 0 100px; }
+  .app-shell {
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+    min-height: calc(100vh - 48px);
+  }
+  .desktop-bar {
+    display: flex !important;
+  }
 }
 
-.hero-bg {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,77,109,0.06) 0%, transparent 50%);
-}
-
-.hero-ping {
-  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
-}
-
-.ping-dot {
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--primary);
-  opacity: 0;
-  animation: pingFly 8s infinite;
-}
-
-@keyframes pingFly {
-  0% { transform: translate(0,0) scale(0); opacity: 0; }
-  10% { opacity: 0.8; transform: scale(1); }
-  90% { opacity: 0.2; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
-}
-
-.hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(4rem, 10vw, 9rem);
-  line-height: 0.9;
-  letter-spacing: 4px;
-  position: relative; z-index: 1;
-  background: linear-gradient(135deg, var(--text) 0%, var(--primary) 60%, var(--text-dim) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero h1 span {
-  background: linear-gradient(135deg, var(--accent), #ff8fa3);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero-sub {
-  font-size: 1.15rem; color: var(--text-dim);
-  margin: 1.5rem 0 2.5rem;
-  position: relative; z-index: 1; max-width: 520px;
-  line-height: 1.7;
-}
-
-.hero-ctas {
-  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-  position: relative; z-index: 1;
-}
-
-.hero-stats {
-  display: flex; gap: 3rem; margin-top: 5rem;
-  position: relative; z-index: 1;
-}
-
-.stat { text-align: center; }
-.stat-val { font-family: var(--font-display); font-size: 2.5rem; color: var(--primary); }
-.stat-label { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
-
-/* ===== MAP PAGE ===== */
-#page-map { padding-top: 64px; }
-
-.map-layout {
-  display: grid; grid-template-columns: 360px 1fr;
-  height: calc(100vh - 64px);
-}
-
-.map-sidebar {
+.desktop-bar {
+  display: none;
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  gap: 12px;
+  align-items: center;
   background: var(--surface);
-  border-right: 1px solid var(--border);
-  overflow-y: auto; display: flex; flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
-.sidebar-header {
-  padding: 1.25rem 1.5rem;
+/* ======= TOP BAR ======= */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
-  position: sticky; top: 0;
-  background: var(--surface); z-index: 10;
-}
-
-.sidebar-header h2 {
-  font-family: var(--font-display);
-  font-size: 1.4rem; letter-spacing: 2px; color: var(--primary);
-  margin-bottom: 0.75rem;
-}
-
-.search-box {
-  width: 100%; padding: 9px 14px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text);
-  font-family: var(--font-body); font-size: 0.85rem;
-  outline: none; transition: border-color 0.2s;
-}
-.search-box:focus { border-color: var(--primary); }
-
-.table-list { padding: 0.75rem; flex: 1; }
-
-.table-card {
-  padding: 1rem; border-radius: 10px;
-  background: var(--surface2); border: 1px solid var(--border);
-  margin-bottom: 0.6rem; cursor: pointer; transition: all 0.2s;
-}
-.table-card:hover, .table-card.selected {
-  border-color: var(--primary);
-  background: var(--surface3);
-}
-
-.table-card-header {
+  padding: 0 20px;
+  height: 60px;
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 0.5rem;
+  transition: background 0.3s, border-color 0.3s;
 }
 
-.table-name { font-weight: 600; font-size: 0.95rem; }
-
-.badge {
-  padding: 3px 9px; border-radius: 20px; font-size: 0.72rem;
-  font-weight: 600; letter-spacing: 0.5px;
+.topbar-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-head);
+  font-weight: 800; font-size: 1.05rem;
+  color: var(--text);
+  cursor: pointer; text-decoration: none;
+  letter-spacing: -0.3px;
 }
-.badge-outdoor { background: rgba(0,200,150,0.15); color: var(--green); }
-.badge-indoor { background: rgba(0,229,255,0.15); color: var(--primary); }
-.badge-event { background: rgba(255,77,109,0.15); color: var(--accent); }
 
-.table-meta { font-size: 0.8rem; color: var(--text-dim); }
-.table-events { margin-top: 0.5rem; font-size: 0.78rem; color: var(--accent); }
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-d));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59,124,244,0.3);
+}
 
+.topbar-right { display: flex; align-items: center; gap: 6px; }
+
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem;
+  transition: background 0.2s, border-color 0.2s;
+  color: var(--text-dim);
+}
+.icon-btn:hover { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+
+/* Dark mode toggle */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem;
+  transition: all 0.3s;
+}
+.theme-toggle:hover { background: var(--gold-bg); border-color: var(--gold); }
+
+/* ======= BOTTOM NAV ======= */
+.bottom-nav {
+  position: sticky; bottom: 0; z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 4px 8px; cursor: pointer;
+  gap: 3px; transition: all 0.2s;
+  border: none; background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-icon {
+  width: 24px; height: 24px; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.2rem; transition: transform 0.2s;
+}
+
+.nav-label {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.3px; color: var(--text-xdim);
+  text-transform: uppercase; transition: color 0.2s;
+  font-family: var(--font-body);
+}
+
+.nav-item.active .nav-icon { transform: scale(1.1); }
+.nav-item.active .nav-label { color: var(--primary); }
+.nav-item.active { position: relative; }
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 3px;
+  background: var(--primary);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ======= PAGES ======= */
+.page { display: none; flex: 1; overflow-y: auto; overflow-x: visible; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ======= PAGE: HOME (SPLASH ADAPTED) ======= */
+.home-hero {
+  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 100%);
+  padding: 32px 20px 28px;
+  position: relative; overflow: visible;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='2'/%3E%3Ccircle cx='30' cy='30' r='18' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='2'/%3E%3C/svg%3E") repeat;
+  background-size: 60px 60px;
+}
+
+.home-hero::after {
+  content: '🏓';
+  position: absolute; right: -10px; bottom: -20px;
+  font-size: 9rem; opacity: 0.08;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+.hero-greeting {
+  font-size: 0.82rem; color: rgba(255,255,255,0.75);
+  font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: 4px; position: relative; z-index: 1;
+}
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: 1.9rem; font-weight: 800;
+  color: #fff; line-height: 1.15;
+  position: relative; z-index: 1; letter-spacing: -0.5px;
+}
+
+.hero-title span { opacity: 0.85; font-weight: 400; display: block; font-size: 1rem; margin-top: 4px; }
+
+.hero-search {
+  margin-top: 20px; position: relative; z-index: 1;
+  display: flex; gap: 8px;
+}
+
+.hero-search-input {
+  flex: 1; height: 44px;
+  background: rgba(255,255,255,0.95);
+  border: none; border-radius: var(--radius-sm);
+  padding: 0 14px 0 38px;
+  font-family: var(--font-body); font-size: 0.88rem;
+  color: var(--text); outline: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.hero-search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim); font-size: 1rem; pointer-events: none;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 10px; padding: 16px 20px;
+}
+
+.stat-card {
+  flex: 1; background: var(--surface);
+  border-radius: var(--radius); padding: 14px 12px;
+  text-align: center; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.stat-val { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.stat-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+/* Section header */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 20px 12px;
+}
+.section-title {
+  font-family: var(--font-head); font-size: 1rem;
+  font-weight: 700; color: var(--text);
+}
+.section-link {
+  font-size: 0.8rem; color: var(--primary); font-weight: 700;
+  cursor: pointer; text-decoration: none;
+}
+
+/* Nearby tables horizontal scroll */
+.cards-scroll {
+  display: flex; gap: 12px; padding: 0 20px 20px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cards-scroll::-webkit-scrollbar { display: none; }
+
+.map-thumb-card {
+  flex: 0 0 170px; background: var(--surface);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s;
+}
+.map-thumb-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.map-thumb-img {
+  height: 90px; background: linear-gradient(135deg, var(--primary-bg), #d1e3ff);
+  display: flex; align-items: center; justify-content: center; font-size: 2.4rem;
+  position: relative;
+}
+
+.map-thumb-badge {
+  position: absolute; top: 8px; right: 8px;
+  padding: 3px 8px; border-radius: 20px; font-size: 0.65rem;
+  font-weight: 700; letter-spacing: 0.3px;
+}
+.badge-out { background: var(--green-bg); color: var(--green); }
+.badge-in { background: var(--primary-bg); color: var(--primary); }
+.badge-ev { background: var(--accent-bg); color: var(--accent); }
+
+.map-thumb-body { padding: 10px 12px; }
+.map-thumb-name { font-weight: 700; font-size: 0.82rem; color: var(--text); margin-bottom: 2px; line-height: 1.3; }
+.map-thumb-dist { font-size: 0.72rem; color: var(--text-dim); }
+.map-thumb-ev { margin-top: 6px; font-size: 0.7rem; color: var(--accent); font-weight: 700; }
+
+/* Upcoming events vertical list */
+.event-list-item {
+  display: flex; gap: 14px; align-items: center;
+  padding: 14px 20px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+}
+.event-list-item:hover { background: var(--surface2); }
+
+.ev-date-box {
+  flex-shrink: 0; width: 44px; text-align: center;
+  background: var(--primary-bg); border-radius: var(--radius-sm);
+  padding: 6px 4px;
+}
+.ev-day { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.ev-mon { font-size: 0.6rem; text-transform: uppercase; color: var(--primary); font-weight: 700; letter-spacing: 0.5px; }
+
+.ev-info { flex: 1; min-width: 0; }
+.ev-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+.ev-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+.ev-type-pill {
+  flex-shrink: 0; padding: 4px 10px; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
+}
+.pill-casual { background: var(--green-bg); color: var(--green); }
+.pill-ranked { background: var(--accent-bg); color: var(--accent); }
+.pill-turnier { background: var(--gold-bg); color: var(--gold); }
+
+/* ======= PAGE: MAP ======= */
+.map-page-layout { display: flex; flex-direction: column; flex: 1; }
+
+.map-container { height: 280px; position: relative; }
 #map { width: 100%; height: 100%; }
 
-/* Map popup */
-.leaflet-popup-content-wrapper {
-  background: var(--surface2) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
-  color: var(--text) !important;
+.map-overlay-btns {
+  position: absolute; top: 10px; right: 10px; z-index: 400;
+  display: flex; flex-direction: column; gap: 6px;
 }
-.leaflet-popup-tip { background: var(--surface2) !important; }
 
-.popup-content { min-width: 240px; }
-.popup-img {
-  width: 100%; height: 130px; object-fit: cover;
-  border-radius: 8px; margin-bottom: 10px;
-  background: var(--surface3);
+.map-fab {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--surface); box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-size: 3rem;
+  cursor: pointer; font-size: 1rem; transition: all 0.2s;
 }
-.popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-.popup-sub { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; }
-.popup-actions { display: flex; gap: 8px; }
+.map-fab:hover { background: var(--primary-bg); border-color: var(--primary); }
 
-/* ===== MODAL ===== */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+.map-list { flex: 1; overflow-y: auto; }
+
+.map-list-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+  background: var(--surface);
+}
+.map-list-item:hover, .map-list-item.selected { background: var(--primary-bg); }
+
+.map-list-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  background: var(--primary-bg); display: flex;
+  align-items: center; justify-content: center; font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.map-list-info { flex: 1; min-width: 0; }
+.map-list-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.map-list-sub { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+.map-list-ev { font-size: 0.72rem; color: var(--accent); font-weight: 700; margin-top: 3px; }
+
+.map-list-chevron { color: var(--text-xdim); font-size: 1rem; flex-shrink: 0; }
+
+/* ======= PAGE: EVENTS ======= */
+.events-header {
+  padding: 20px 20px 0;
+}
+.events-header h1 {
+  font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
+  color: var(--text); letter-spacing: -0.3px;
+}
+.events-header p { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+
+.filter-pills {
+  display: flex; gap: 8px; padding: 14px 20px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.filter-pills::-webkit-scrollbar { display: none; }
+
+.filter-pill {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 700;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.filter-pill.active, .filter-pill:hover {
+  border-color: var(--primary); color: var(--primary); background: var(--primary-bg);
+}
+
+.events-grid-list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+
+.event-card-big {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.2s;
+}
+.event-card-big:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.ecb-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 14px 14px 0;
+}
+
+.ecb-date-box {
+  background: var(--primary-bg); border-radius: var(--radius-sm);
+  padding: 8px 12px; text-align: center; min-width: 52px;
+}
+.ecb-day { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.ecb-mon { font-size: 0.64rem; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+
+.ecb-body { padding: 10px 14px 14px; }
+.ecb-title { font-weight: 800; font-size: 0.98rem; color: var(--text); margin-bottom: 3px; }
+.ecb-location { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+.ecb-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.ecb-participants { font-size: 0.78rem; color: var(--text-dim); }
+.ecb-participants b { color: var(--text); }
+
+/* ======= PAGE: RANKED ======= */
+.ranked-hero-section {
+  background: linear-gradient(160deg, var(--primary) 0%, #1d4ed8 100%);
+  padding: 24px 20px; color: #fff; position: relative; overflow: hidden;
+}
+.ranked-hero-section::after {
+  content: '🏆'; position: absolute; right: -8px; bottom: -12px;
+  font-size: 7rem; opacity: 0.08; transform: rotate(-10deg);
+}
+.ranked-hero-section h1 {
+  font-family: var(--font-head); font-size: 1.5rem; font-weight: 800;
+  color: #fff; position: relative; z-index: 1;
+}
+.ranked-hero-section p { font-size: 0.82rem; color: rgba(255,255,255,0.75); margin-top: 4px; position: relative; z-index: 1; }
+
+/* My rank card */
+.my-rank-card {
+  margin: 16px 20px; background: var(--surface);
+  border-radius: var(--radius); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); padding: 16px;
+}
+.myrank-row {
+  display: flex; align-items: center; gap: 12px;
+}
+.myrank-badge {
+  width: 52px; height: 52px; border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  font-size: 1.8rem; flex-shrink: 0;
 }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
+.myrank-bronze { background: rgba(217,119,6,0.12); }
+.myrank-silver { background: rgba(100,116,139,0.12); }
+.myrank-gold { background: rgba(245,158,11,0.12); }
 
-.modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 2rem; max-width: 560px; width: 100%;
-  max-height: 90vh; overflow-y: auto;
-  transform: translateY(20px); transition: transform 0.2s;
+.myrank-info { flex: 1; }
+.myrank-name { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+.myrank-tier { font-size: 0.78rem; color: var(--text-dim); }
+.myrank-elo { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+
+.rank-progress { margin-top: 12px; }
+.rp-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; }
+.rp-bar { height: 8px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+.rp-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--primary), #60a5fa); transition: width 1s ease; }
+
+/* Leagues cards row */
+.leagues-scroll {
+  display: flex; gap: 10px; padding: 0 20px 16px;
+  overflow-x: auto; scrollbar-width: none;
 }
-.modal-overlay.open .modal { transform: translateY(0); }
+.leagues-scroll::-webkit-scrollbar { display: none; }
 
-.modal-title {
-  font-family: var(--font-display); font-size: 1.8rem;
-  letter-spacing: 2px; margin-bottom: 1.5rem;
-  color: var(--primary);
+.league-mini {
+  flex: 0 0 120px; border-radius: var(--radius); padding: 14px 12px;
+  text-align: center; border: 2px solid;
 }
-
-.form-group { margin-bottom: 1rem; }
-.form-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
-.form-input, .form-select, .form-textarea {
-  width: 100%; padding: 10px 14px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text);
-  font-family: var(--font-body); font-size: 0.9rem;
-  outline: none; transition: border-color 0.2s;
-}
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
-.form-textarea { resize: vertical; min-height: 80px; }
-.form-select { appearance: none; }
-
-.modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; justify-content: flex-end; }
-
-/* ===== TABLE DETAIL ===== */
-.table-detail-modal .modal { max-width: 700px; }
-
-.table-detail-img {
-  width: 100%; height: 200px;
-  background: linear-gradient(135deg, var(--surface2), var(--surface3));
-  border-radius: 12px; margin-bottom: 1.5rem;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 5rem; position: relative; overflow: hidden;
-}
-
-.events-list { margin-top: 1.5rem; }
-.events-list h3 {
-  font-family: var(--font-display); font-size: 1.2rem;
-  letter-spacing: 1px; margin-bottom: 1rem; color: var(--primary);
-}
-
-.event-card {
-  padding: 1rem; border-radius: 10px;
-  background: var(--surface2); border: 1px solid var(--border);
-  margin-bottom: 0.6rem;
-  display: flex; align-items: center; gap: 1rem;
-}
-.event-date-box {
-  background: var(--primary-dim); border: 1px solid rgba(0,229,255,0.3);
-  border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 60px;
-}
-.event-day { font-family: var(--font-display); font-size: 1.5rem; color: var(--primary); line-height: 1; }
-.event-month { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
-.event-info { flex: 1; }
-.event-name { font-weight: 600; font-size: 0.9rem; }
-.event-meta { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
-.event-type-badge { margin-left: auto; }
-
-/* ===== RANKED PAGE ===== */
-#page-ranked { padding: 64px 0 0; }
-
-.ranked-hero {
-  background: linear-gradient(180deg, rgba(0,229,255,0.05) 0%, transparent 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 3rem 2rem; text-align: center;
-}
-
-.ranked-hero h1 {
-  font-family: var(--font-display);
-  font-size: 4rem; letter-spacing: 4px; color: var(--text);
-}
-.ranked-hero p { color: var(--text-dim); margin-top: 0.5rem; font-size: 1rem; }
-
-.leagues-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem; padding: 3rem 2rem; max-width: 1100px; margin: 0 auto;
-}
-
-.league-card {
-  border-radius: 16px; padding: 2rem;
-  border: 2px solid; text-align: center;
-  position: relative; overflow: hidden;
-  transition: transform 0.2s;
-}
-.league-card:hover { transform: translateY(-4px); }
-
-.league-card.bronze {
-  background: linear-gradient(135deg, rgba(205,127,50,0.1), rgba(205,127,50,0.05));
-  border-color: var(--bronze);
-}
-.league-card.silver {
-  background: linear-gradient(135deg, rgba(192,192,192,0.1), rgba(192,192,192,0.05));
-  border-color: var(--silver);
-}
-.league-card.gold {
-  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
-  border-color: var(--gold);
-}
-
-.league-icon { font-size: 3.5rem; margin-bottom: 1rem; display: block; }
-.league-name { font-family: var(--font-display); font-size: 2.2rem; letter-spacing: 3px; }
-.league-card.bronze .league-name { color: var(--bronze); }
-.league-card.silver .league-name { color: var(--silver); }
-.league-card.gold .league-name { color: var(--gold); }
-.league-range { font-size: 0.85rem; color: var(--text-dim); margin: 0.5rem 0 1rem; }
-.league-players { font-size: 1.8rem; font-family: var(--font-mono); }
-.league-players-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.league-mini.bronze-card { border-color: var(--bronze); background: var(--gold-bg); }
+.league-mini.silver-card { border-color: var(--silver); background: var(--surface2); }
+.league-mini.gold-card { border-color: var(--gold); background: var(--gold-bg); }
+.lm-icon { font-size: 2rem; margin-bottom: 4px; display: block; }
+.lm-name { font-family: var(--font-head); font-size: 0.95rem; font-weight: 800; }
+.lm-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+.bronze-card .lm-name { color: var(--bronze); }
+.silver-card .lm-name { color: var(--silver); }
+.gold-card .lm-name { color: var(--gold); }
 
 /* Leaderboard */
-.leaderboard-section {
-  max-width: 800px; margin: 0 auto; padding: 0 2rem 3rem;
+.lb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; background: var(--surface);
 }
+.lb-row:hover { background: var(--surface2); }
+.lb-row.top1 { background: rgba(245,158,11,0.06); }
+.lb-row.top2 { background: rgba(100,116,139,0.04); }
+.lb-row.top3 { background: rgba(217,119,6,0.04); }
+.lb-row.me { border-left: 3px solid var(--primary); }
 
-.leaderboard-section h2 {
-  font-family: var(--font-display); font-size: 2rem;
-  letter-spacing: 2px; margin-bottom: 1.5rem;
-  display: flex; align-items: center; gap: 10px;
-}
+.lb-rank { width: 28px; text-align: center; font-family: var(--font-head); font-size: 1rem; font-weight: 800; flex-shrink: 0; }
+.lb-rank.g { color: var(--gold); }
+.lb-rank.s { color: var(--silver); }
+.lb-rank.b { color: var(--bronze); }
 
-.leaderboard-row {
-  display: grid; grid-template-columns: 50px 1fr auto auto;
-  align-items: center; gap: 1rem;
-  padding: 1rem 1.25rem; border-radius: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  margin-bottom: 0.5rem; transition: all 0.2s;
-}
-.leaderboard-row:hover { border-color: var(--border); background: var(--surface2); }
-.leaderboard-row.top1 { border-color: var(--gold); background: rgba(255,215,0,0.05); }
-.leaderboard-row.top2 { border-color: var(--silver); background: rgba(192,192,192,0.03); }
-.leaderboard-row.top3 { border-color: var(--bronze); background: rgba(205,127,50,0.05); }
-
-.rank-num { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; text-align: center; }
-.rank-num.gold { color: var(--gold); }
-.rank-num.silver { color: var(--silver); }
-.rank-num.bronze { color: var(--bronze); }
-
-.player-info { display: flex; align-items: center; gap: 12px; }
-.player-avatar {
+.lb-avatar {
   width: 36px; height: 36px; border-radius: 50%;
-  background: var(--surface3);
+  background: var(--primary-bg); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; border: 2px solid var(--border);
+}
+
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.lb-tier { font-size: 0.72rem; color: var(--text-dim); }
+
+.lb-elo { font-family: var(--font-head); font-weight: 800; font-size: 0.95rem; color: var(--primary); }
+.lb-wr { font-size: 0.7rem; color: var(--text-dim); text-align: right; }
+
+/* ======= PAGE: PROFILE ======= */
+.profile-top {
+  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 100%);
+  padding: 28px 20px 24px; color: #fff; text-align: center; position: relative;
+}
+.profile-top::before {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 24px; background: var(--bg); border-radius: 24px 24px 0 0;
+}
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 10px;
+  background: rgba(255,255,255,0.2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem;
+  font-size: 2.2rem; border: 3px solid rgba(255,255,255,0.5);
+  position: relative; z-index: 1;
 }
-.player-name { font-weight: 600; font-size: 0.95rem; }
-.player-league { font-size: 0.75rem; color: var(--text-dim); }
-
-.player-elo { font-family: var(--font-mono); font-size: 0.95rem; color: var(--primary); font-weight: 700; }
-
-.wl-ratio { font-size: 0.82rem; color: var(--text-dim); text-align: right; }
-.wl-win { color: var(--green); }
-.wl-loss { color: var(--accent); }
-
-/* ===== PROFILE PAGE ===== */
-#page-profile { padding: 64px 0 0; }
-
-.profile-layout {
-  max-width: 900px; margin: 0 auto; padding: 3rem 2rem;
-  display: grid; grid-template-columns: 280px 1fr; gap: 2rem;
+.profile-name { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; color: #fff; position: relative; z-index: 1; }
+.profile-sub { font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 2px; position: relative; z-index: 1; }
+.profile-rank-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.2); border-radius: 20px;
+  padding: 5px 14px; margin-top: 10px; font-size: 0.8rem; font-weight: 700; color: #fff;
+  border: 1px solid rgba(255,255,255,0.3); position: relative; z-index: 1;
 }
 
-.profile-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 2rem; text-align: center;
-  height: fit-content;
+.profile-stats-row {
+  display: flex; gap: 1px; background: var(--border);
+  border-bottom: 1px solid var(--border);
 }
-
-.profile-avatar-big {
-  width: 90px; height: 90px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-dim), var(--surface3));
-  border: 3px solid var(--primary);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 3rem; margin: 0 auto 1rem;
-}
-
-.profile-name { font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; }
-.profile-level { font-size: 0.85rem; color: var(--text-dim); margin: 0.25rem 0 1rem; }
-
-.rank-badge-big {
-  display: inline-block; padding: 8px 20px;
-  border-radius: 30px; font-family: var(--font-display);
-  font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 1.5rem;
-}
-.rank-badge-big.bronze { background: rgba(205,127,50,0.2); color: var(--bronze); border: 1px solid var(--bronze); }
-.rank-badge-big.silver { background: rgba(192,192,192,0.2); color: var(--silver); border: 1px solid var(--silver); }
-.rank-badge-big.gold { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid var(--gold); }
-
-.profile-stats-mini {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.5rem;
-}
-
-.mini-stat {
-  background: var(--surface2); border-radius: 8px; padding: 0.75rem;
+.pstat {
+  flex: 1; background: var(--surface); padding: 14px 8px;
   text-align: center;
 }
-.mini-stat-val { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700; }
-.mini-stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.pstat-val { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.pstat-val.green { color: var(--green); }
+.pstat-val.red { color: var(--accent); }
+.pstat-val.blue { color: var(--primary); }
+.pstat-label { font-size: 0.62rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; }
 
-.profile-right { display: flex; flex-direction: column; gap: 1.5rem; }
-
+/* Profile sections */
 .profile-section {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 1.5rem;
+  background: var(--surface); margin: 12px 20px;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.ps-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  font-weight: 800; font-size: 0.9rem; color: var(--text);
+  font-family: var(--font-head); display: flex; align-items: center; gap: 8px;
 }
 
-.profile-section h3 {
-  font-family: var(--font-display); font-size: 1.3rem;
-  letter-spacing: 1.5px; color: var(--primary); margin-bottom: 1.25rem;
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px; }
+.skill-opt {
+  border-radius: var(--radius-sm); padding: 12px 8px; text-align: center;
+  border: 2px solid var(--border); cursor: pointer; transition: all 0.2s;
+  background: var(--surface2);
 }
-
-/* Skill selector */
-.skill-selector {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
-}
-
-.skill-option {
-  padding: 1rem; border-radius: 10px;
-  background: var(--surface2); border: 2px solid var(--border);
-  text-align: center; cursor: pointer; transition: all 0.2s;
-}
-.skill-option:hover { border-color: var(--primary); }
-.skill-option.selected { border-color: var(--primary); background: var(--primary-dim); }
-.skill-option .skill-icon { font-size: 1.8rem; margin-bottom: 0.25rem; }
-.skill-option .skill-name { font-size: 0.8rem; font-weight: 600; }
-.skill-option .skill-desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
-
-/* ELO Progress */
-.elo-progress-bar {
-  background: var(--surface2); border-radius: 20px; height: 10px;
-  overflow: hidden; margin: 0.75rem 0;
-}
-.elo-fill {
-  height: 100%; border-radius: 20px;
-  background: linear-gradient(90deg, var(--primary), #00b8d9);
-  transition: width 1s ease;
-}
+.skill-opt:hover { border-color: var(--primary); }
+.skill-opt.active { border-color: var(--primary); background: var(--primary-bg); }
+.skill-opt-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+.skill-opt-name { font-weight: 700; font-size: 0.75rem; color: var(--text); }
+.skill-opt-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
 
 /* Match history */
-.match-item {
-  display: flex; align-items: center; gap: 1rem;
-  padding: 0.75rem; border-radius: 8px;
-  background: var(--surface2); margin-bottom: 0.5rem;
+.match-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
-.match-result {
-  width: 28px; height: 28px; border-radius: 6px;
+.match-row:last-child { border-bottom: none; }
+.match-res {
+  width: 30px; height: 30px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.75rem;
+  font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
 }
-.match-result.win { background: rgba(0,200,150,0.2); color: var(--green); }
-.match-result.loss { background: rgba(255,77,109,0.2); color: var(--accent); }
-.match-opponent { flex: 1; font-size: 0.85rem; }
-.match-elo-change { font-family: var(--font-mono); font-size: 0.82rem; }
-.match-elo-change.pos { color: var(--green); }
-.match-elo-change.neg { color: var(--accent); }
-.match-date { font-size: 0.75rem; color: var(--text-dim); }
+.win { background: var(--green-bg); color: var(--green); }
+.loss { background: var(--accent-bg); color: var(--accent); }
+.match-opp { flex: 1; font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.match-sets { font-size: 0.72rem; color: var(--text-dim); }
+.match-elo { font-family: var(--font-head); font-size: 0.88rem; font-weight: 800; }
+.match-elo.pos { color: var(--green); }
+.match-elo.neg { color: var(--accent); }
+.match-date { font-size: 0.68rem; color: var(--text-xdim); text-align: right; }
 
-/* ===== EVENTS PAGE ===== */
-#page-events { padding: 64px 0 0; }
-
-.events-layout {
-  max-width: 1100px; margin: 0 auto; padding: 3rem 2rem;
+/* Settings list */
+.settings-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: background 0.15s;
 }
+.settings-item:last-child { border-bottom: none; }
+.settings-item:hover { background: var(--surface2); }
+.si-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.si-text { flex: 1; font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.si-sub { font-size: 0.72rem; color: var(--text-dim); }
+.si-arrow { color: var(--text-xdim); font-size: 0.9rem; }
 
-.events-layout h1 {
-  font-family: var(--font-display); font-size: 3rem;
-  letter-spacing: 3px; margin-bottom: 0.5rem;
+/* Toggle switch */
+.toggle-switch {
+  position: relative; width: 44px; height: 24px;
 }
-.events-layout p.events-sub { color: var(--text-dim); margin-bottom: 2rem; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--border); border-radius: 24px;
+  cursor: pointer; transition: 0.3s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background: white; border-radius: 50%; transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-.events-filters {
-  display: flex; gap: 8px; margin-bottom: 2rem; flex-wrap: wrap;
+/* ======= BOTTOM SHEET MODAL ======= */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.45);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
-.filter-btn {
-  padding: 7px 16px; border-radius: 20px;
-  border: 1px solid var(--border); background: var(--surface);
-  color: var(--text-dim); cursor: pointer; font-size: 0.82rem;
-  font-family: var(--font-body); transition: all 0.2s;
-}
-.filter-btn:hover, .filter-btn.active {
-  border-color: var(--primary); color: var(--primary); background: var(--primary-dim);
-}
+.sheet-overlay.open { opacity: 1; pointer-events: all; }
 
-.events-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+.bottom-sheet {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+  width: 100%; max-width: 430px; z-index: 600;
+  background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 90vh; overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom);
 }
+.bottom-sheet.open { transform: translateX(-50%) translateY(0); }
 
-.event-big-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; overflow: hidden; transition: all 0.2s;
+.sheet-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 10px auto 0;
 }
-.event-big-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-
-.event-card-header {
-  padding: 1.25rem 1.25rem 0;
-  display: flex; align-items: flex-start; justify-content: space-between;
-}
-
-.event-big-date {
-  background: var(--primary-dim); border: 1px solid rgba(0,229,255,0.3);
-  border-radius: 10px; padding: 10px 14px; text-align: center; min-width: 58px;
-}
-.event-big-day { font-family: var(--font-display); font-size: 2rem; color: var(--primary); line-height: 1; }
-.event-big-month { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; }
-
-.event-card-body { padding: 1.25rem; }
-.event-big-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
-.event-big-location { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 4px; }
-.event-big-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
-
-.event-card-footer {
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border);
+.sheet-header {
+  padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
 }
+.sheet-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; color: var(--text); }
+.sheet-close { font-size: 1.4rem; cursor: pointer; color: var(--text-dim); }
 
-.participants { font-size: 0.8rem; color: var(--text-dim); }
-.participants span { color: var(--text); font-weight: 600; }
+.sheet-body { padding: 16px 20px; }
 
-/* ===== NOTIFICATION ===== */
-.notif {
-  position: fixed; bottom: 2rem; right: 2rem; z-index: 3000;
-  background: var(--surface2); border: 1px solid var(--green);
-  border-radius: 12px; padding: 1rem 1.5rem;
-  display: flex; align-items: center; gap: 10px;
-  transform: translateY(100px); opacity: 0; transition: all 0.3s;
-  max-width: 320px;
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 11px 14px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font-body); font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.notif.show { transform: translateY(0); opacity: 1; }
-.notif-icon { font-size: 1.3rem; }
-.notif-text { font-size: 0.88rem; }
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* ===== ANIMATIONS ===== */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-mid);
 }
-.fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { appearance: none; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.leaflet-container { background: #1a1f2e !important; }
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 20px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; border: none;
+  letter-spacing: 0.2px; text-decoration: none;
+}
+.btn-primary {
+  background: var(--primary); color: #fff;
+  box-shadow: 0 4px 12px rgba(59,124,244,0.3);
+}
+.btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(59,124,244,0.35); }
+.btn-secondary {
+  background: var(--surface2); color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-full { width: 100%; }
+.btn-sm { padding: 7px 14px; font-size: 0.78rem; }
 
-/* Divider */
-.divider { height: 1px; background: var(--border); margin: 0.75rem 0; }
+/* FAB button */
+.fab {
+  position: fixed; bottom: 80px; right: 50%;
+  transform: translateX(calc(50% + 185px));
+  width: 52px; height: 52px; border-radius: 16px;
+  background: var(--primary); color: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(59,124,244,0.4);
+  transition: all 0.2s; z-index: 90;
+}
+.fab:hover { transform: translateX(calc(50% + 185px)) translateY(-2px) scale(1.05); }
+
+@media (max-width: 599px) {
+  .fab { right: 20px; transform: none; }
+  .fab:hover { transform: translateY(-2px) scale(1.05); }
+}
+
+/* Toast notification */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--bg); border-radius: var(--radius);
+  padding: 12px 20px; font-size: 0.85rem; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: all 0.3s; white-space: nowrap;
+  z-index: 999; display: flex; align-items: center; gap: 8px;
+  box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Table detail image placeholder */
+.table-detail-hero {
+  height: 160px;
+  background: linear-gradient(135deg, var(--primary-bg), #c7d9ff);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5rem;
+}
+
+/* Spacer for bottom nav */
+.pb-safe { padding-bottom: 16px; }
+
+/* ======= LEAFLET OVERRIDES ======= */
+.leaflet-container { background: var(--bg2) !important; font-family: var(--font-body) !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-control-zoom a {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* ======= ANIMATIONS ======= */
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+.fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+.fade-up-2 { animation-delay: 0.1s; opacity: 0; }
+.fade-up-3 { animation-delay: 0.15s; opacity: 0; }
+
+/* ======= DARK MODE MAP TILE ======= */
+[data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
+
+/* Misc */
+.divider { height: 1px; background: var(--border); }
+.text-center { text-align: center; }
+.pb-20 { padding-bottom: 20px; }
+
+/* ======= AUTH TABS ======= */
+.auth-tab {
+  flex: 1; padding: 9px 8px; border-radius: 8px; border: none;
+  font-family: var(--font-body); font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
+  background: transparent; color: var(--text-dim);
+}
+.auth-tab.auth-tab-active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59,124,244,0.25);
+}
+
+/* ======= SEARCH AUTOCOMPLETE ======= */
+.hero-search { position: relative; }
+
+.search-dropdown {
+  position: fixed;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 99999;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none;
+  border: 1px solid var(--border);
+  width: 100%;
+}
+[data-theme="dark"] .search-dropdown {
+  background: var(--surface);
+}
+.search-dropdown.open { display: block; }
+
+.search-dropdown-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.search-dropdown-item:last-child { border-bottom: none; }
+.search-dropdown-item:hover, .search-dropdown-item:focus {
+  background: var(--primary-bg);
+  outline: none;
+}
+.sdi-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 1rem;
+}
+.sdi-icon.table  { background: var(--primary-bg); }
+.sdi-icon.place  { background: var(--surface2); }
+.sdi-main  { font-weight: 700; font-size: 0.88rem; color: var(--text); line-height: 1.3; }
+.sdi-sub   { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+
+.search-loading {
+  padding: 14px 16px; font-size: 0.84rem;
+  color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+}
+.search-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.search-empty {
+  padding: 16px; font-size: 0.84rem; color: var(--text-dim); text-align: center;
+}
+
+/* Highlight matched text */
+.sdi-main mark {
+  background: rgba(59,124,244,0.18);
+  color: var(--primary); border-radius: 3px;
+  padding: 0 2px; font-weight: 800;
+}
+
+/* ======= OSM / DISTANCE / PHOTOS ======= */
+.distance-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.72rem; font-weight: 700; color: var(--primary);
+  background: var(--primary-bg); border-radius: 20px;
+  padding: 3px 9px;
+}
+.osm-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 700; color: var(--green);
+  background: var(--green-bg); border-radius: 20px;
+  padding: 3px 8px;
+}
+
+/* Foto Slider */
+.photo-slider {
+  position: relative; width: 100%; height: 180px;
+  overflow: hidden; background: var(--surface2);
+}
+.photo-slider-inner {
+  display: flex; height: 100%;
+  transition: transform 0.35s ease;
+}
+.photo-slide {
+  flex-shrink: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 4rem; background: linear-gradient(135deg, var(--primary-bg), #c7d9ff);
+}
+.photo-slide img { width: 100%; height: 100%; object-fit: cover; }
+.photo-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(0,0,0,0.45); color: #fff; border: none;
+  font-size: 1rem; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.photo-nav:hover { background: rgba(0,0,0,0.7); }
+.photo-nav.prev { left: 8px; }
+.photo-nav.next { right: 8px; }
+.photo-counter {
+  position: absolute; bottom: 8px; right: 10px;
+  background: rgba(0,0,0,0.5); color: #fff;
+  font-size: 0.7rem; font-weight: 700; border-radius: 10px;
+  padding: 2px 8px;
+}
+.photo-dots {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px;
+}
+.photo-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.5); transition: background 0.2s;
+}
+.photo-dot.active { background: #fff; }
+
+/* Kommentare */
+.comment-item {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.comment-item:last-child { border-bottom: none; }
+.comment-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.comment-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary-bg); display: flex;
+  align-items: center; justify-content: center; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.comment-author { font-weight: 700; font-size: 0.82rem; color: var(--text); }
+.comment-date { font-size: 0.7rem; color: var(--text-xdim); margin-left: auto; }
+.comment-text { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+/* OSM Loading state */
+.osm-loading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 20px; color: var(--text-dim); font-size: 0.85rem;
+}
+
+/* Map height bigger on map page */
+#page-map .map-container { height: 320px; }
+
+/* Locate me button pulse */
+@keyframes locatePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(59,124,244,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(59,124,244,0); }
+}
+.locating { animation: locatePulse 1s infinite; }
+
+/* Map list distance */
+.map-dist { 
+  font-size: 0.7rem; color: var(--primary); font-weight: 700;
+  margin-top: 2px;
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo" onclick="showPage('home')">🏓 PING<span>MEET</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('home')" id="tab-home">Home</button>
-    <button class="nav-tab" onclick="showPage('map')" id="tab-map">🗺 Karte</button>
-    <button class="nav-tab" onclick="showPage('events')" id="tab-events">📅 Events</button>
-    <button class="nav-tab" onclick="showPage('ranked')" id="tab-ranked">🏆 Rangliste</button>
-    <button class="nav-tab" onclick="showPage('profile')" id="tab-profile">👤 Profil</button>
-  </div>
-  <div class="nav-right">
-    <button class="btn btn-ghost" onclick="openModal('login-modal')">Anmelden</button>
-    <button class="btn btn-primary" onclick="openModal('register-modal')">Registrieren</button>
-  </div>
-</nav>
-
-<!-- ===== HOME PAGE ===== -->
-<div id="page-home" class="page active">
-  <div class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-ping" id="hero-ping"></div>
-    <h1>PING<br><span>MEET</span><br>SCHWEINFURT</h1>
-    <p class="hero-sub">Finde Tischtennis-Partner in deiner Nähe, verabrede dich an Platten in Schweinfurt und steige in der Rangliste auf.</p>
-    <div class="hero-ctas">
-      <button class="btn btn-primary" onclick="showPage('map')" style="padding:12px 28px;font-size:1rem;">Platten entdecken</button>
-      <button class="btn btn-ghost" onclick="showPage('events')" style="padding:12px 28px;font-size:1rem;">Events ansehen</button>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-val" id="stat-tables">9</div><div class="stat-label">Platten</div></div>
-      <div class="stat"><div class="stat-val" id="stat-events">14</div><div class="stat-label">Events</div></div>
-      <div class="stat"><div class="stat-val" id="stat-players">83</div><div class="stat-label">Spieler</div></div>
-    </div>
-  </div>
+<!-- Desktop top hint bar -->
+<div class="desktop-bar">
+  <span>📱 TableTennis Schweinfurt</span>
+  <span style="color:var(--border)">|</span>
+  <span style="color:var(--primary);font-weight:800;">Mobile App Preview</span>
 </div>
 
-<!-- ===== MAP PAGE ===== -->
-<div id="page-map" class="page">
-  <div class="map-layout">
-    <div class="map-sidebar">
-      <div class="sidebar-header">
-        <h2>🏓 PLATTEN IN SW</h2>
-        <input class="search-box" type="text" placeholder="Platte suchen..." id="table-search" oninput="filterTables()">
-      </div>
-      <div class="table-list" id="table-list"></div>
-    </div>
-    <div id="map"></div>
-  </div>
-</div>
+<div class="app-shell">
 
-<!-- ===== EVENTS PAGE ===== -->
-<div id="page-events" class="page">
-  <div class="events-layout">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
-      <div>
-        <h1>EVENTS</h1>
-        <p class="events-sub">Verabredungen, Turniere und Casual-Games in Schweinfurt</p>
-      </div>
-      <button class="btn btn-accent" onclick="openCreateEventModal()">+ Event erstellen</button>
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a class="topbar-logo" onclick="showPage('home')">
+      <div class="logo-icon">🏓</div>
+      <div>TABLE<span style="color:var(--primary)">TENNIS</span></div>
+    </a>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="openSheet('notif-sheet')" title="Benachrichtigungen">🔔</button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Dark Mode">🌙</button>
+      <button class="icon-btn" id="topbar-profile-btn" onclick="sb.isLoggedIn()?openSheet('profile-sheet'):openSheet('auth-sheet')" title="Account">👤</button>
     </div>
-    <div class="events-filters">
-      <button class="filter-btn active" onclick="filterEvents('all',this)">Alle</button>
-      <button class="filter-btn" onclick="filterEvents('casual',this)">Casual</button>
-      <button class="filter-btn" onclick="filterEvents('ranked',this)">Ranked</button>
-      <button class="filter-btn" onclick="filterEvents('turnier',this)">Turnier</button>
-    </div>
-    <div class="events-grid" id="events-grid"></div>
-  </div>
-</div>
+  </header>
 
-<!-- ===== RANKED PAGE ===== -->
-<div id="page-ranked" class="page">
-  <div class="ranked-hero">
-    <h1>🏆 RANGLISTE</h1>
-    <p>Beweise dein Können – steige von Bronze bis Gold auf</p>
-  </div>
+  <!-- PAGES -->
 
-  <div class="leagues-grid">
-    <div class="league-card bronze">
-      <span class="league-icon">🥉</span>
-      <div class="league-name">BRONZE</div>
-      <div class="league-range">0 – 399 ELO-Punkte</div>
-      <div class="league-players" id="lp-bronze">34</div>
-      <div class="league-players-label">Spieler</div>
-    </div>
-    <div class="league-card silver">
-      <span class="league-icon">🥈</span>
-      <div class="league-name">SILBER</div>
-      <div class="league-range">400 – 799 ELO-Punkte</div>
-      <div class="league-players" id="lp-silver">31</div>
-      <div class="league-players-label">Spieler</div>
-    </div>
-    <div class="league-card gold">
-      <span class="league-icon">🥇</span>
-      <div class="league-name">GOLD</div>
-      <div class="league-range">800+ ELO-Punkte</div>
-      <div class="league-players" id="lp-gold">18</div>
-      <div class="league-players-label">Spieler</div>
-    </div>
-  </div>
-
-  <div class="leaderboard-section">
-    <h2>📊 TOP SPIELER</h2>
-    <div id="leaderboard"></div>
-    <div style="text-align:center;margin-top:1.5rem;">
-      <button class="btn btn-ghost" onclick="openModal('report-match-modal')">🎮 Match eintragen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== PROFILE PAGE ===== -->
-<div id="page-profile" class="page">
-  <div class="profile-layout">
-    <div>
-      <div class="profile-card">
-        <div class="profile-avatar-big">😎</div>
-        <div class="profile-name">Max Mustermann</div>
-        <div class="profile-level">Schweinfurt · seit März 2025</div>
-        <div class="rank-badge-big silver">🥈 SILBER</div>
-        <div style="margin-top:0.5rem;">
-          <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-dim);margin-bottom:4px;">
-            <span>ELO: 520</span><span>Silber → Gold: 800</span>
-          </div>
-          <div class="elo-progress-bar"><div class="elo-fill" style="width:30%"></div></div>
-          <div style="font-size:0.72rem;color:var(--text-dim);text-align:center;">280 Punkte bis Gold</div>
-        </div>
-        <div class="profile-stats-mini">
-          <div class="mini-stat">
-            <div class="mini-stat-val" style="color:var(--green)">23</div>
-            <div class="mini-stat-label">Siege</div>
-          </div>
-          <div class="mini-stat">
-            <div class="mini-stat-val" style="color:var(--accent)">11</div>
-            <div class="mini-stat-label">Niederlagen</div>
-          </div>
-          <div class="mini-stat">
-            <div class="mini-stat-val">34</div>
-            <div class="mini-stat-label">Spiele</div>
-          </div>
-          <div class="mini-stat">
-            <div class="mini-stat-val" style="color:var(--primary)">68%</div>
-            <div class="mini-stat-label">Winrate</div>
-          </div>
-        </div>
-        <div style="margin-top:1.5rem;display:flex;gap:8px;justify-content:center;">
-          <button class="btn btn-primary btn-small">Profil bearbeiten</button>
-          <button class="btn btn-ghost btn-small" onclick="openModal('report-match-modal')">Match melden</button>
-        </div>
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="home-hero">
+      <div class="hero-greeting">Willkommen zurück 👋</div>
+      <div class="hero-title">Finde dein nächstes<span>Spiel in Schweinfurt</span></div>
+      <div class="hero-search" id="search-wrapper">
+        <span class="hero-search-icon">🔍</span>
+        <input class="hero-search-input"
+               placeholder="Platte, Ort oder Adresse suchen…"
+               id="home-search"
+               autocomplete="off"
+               oninput="onSearchInput()"
+               onkeydown="onSearchKey(event)"
+               onfocus="if(this.value.length>1) openDropdown()"
+        >
       </div>
     </div>
 
-    <div class="profile-right">
-      <div class="profile-section">
-        <h3>🎯 MEIN SPIELNIVEAU</h3>
-        <div class="skill-selector" id="skill-selector">
-          <div class="skill-option" onclick="selectSkill(this,'anfaenger')">
-            <div class="skill-icon">🐣</div>
-            <div class="skill-name">Anfänger</div>
-            <div class="skill-desc">Ich lerne noch die Grundlagen</div>
-          </div>
-          <div class="skill-option selected" onclick="selectSkill(this,'fortgeschritten')">
-            <div class="skill-icon">🏓</div>
-            <div class="skill-name">Fortgeschritten</div>
-            <div class="skill-desc">Ich spiele regelmäßig</div>
-          </div>
-          <div class="skill-option" onclick="selectSkill(this,'profi')">
-            <div class="skill-icon">⚡</div>
-            <div class="skill-name">Profi</div>
-            <div class="skill-desc">Vereinserfahrung / Turnier</div>
-          </div>
-        </div>
-        <div style="margin-top:1rem;">
-          <label class="form-label">Ich spiele bevorzugt</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
-              <input type="checkbox" checked style="accent-color:var(--primary)"> Casual
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
-              <input type="checkbox" checked style="accent-color:var(--primary)"> Ranked
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
-              <input type="checkbox" style="accent-color:var(--primary)"> Turniere
-            </label>
-          </div>
-        </div>
+    <!-- Stats -->
+    <div class="stats-row fade-up">
+      <div class="stat-card">
+        <div class="stat-val" id="c-tables">9</div>
+        <div class="stat-label">Platten</div>
       </div>
-
-      <div class="profile-section">
-        <h3>📜 MATCH HISTORY</h3>
-        <div id="match-history"></div>
+      <div class="stat-card">
+        <div class="stat-val" id="c-events">14</div>
+        <div class="stat-label">Events</div>
       </div>
-
-      <div class="profile-section">
-        <h3>📅 MEINE EVENTS</h3>
-        <div style="color:var(--text-dim);font-size:0.85rem;">Du nimmst an 2 kommenden Events teil.</div>
-        <div style="margin-top:1rem;display:flex;gap:8px;">
-          <div style="flex:1;padding:0.75rem;background:var(--surface2);border-radius:8px;">
-            <div style="font-size:0.8rem;font-weight:600;">Casual Runde am Stadtpark</div>
-            <div style="font-size:0.75rem;color:var(--text-dim);">Sa. 03. Mai · 15:00 Uhr</div>
-          </div>
-          <div style="flex:1;padding:0.75rem;background:var(--surface2);border-radius:8px;">
-            <div style="font-size:0.8rem;font-weight:600;">Ranked 1v1 Challenge</div>
-            <div style="font-size:0.75rem;color:var(--text-dim);">So. 11. Mai · 14:00 Uhr</div>
-          </div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-val" id="c-players">83</div>
+        <div class="stat-label">Spieler</div>
       </div>
     </div>
+
+    <!-- Nearby tables -->
+    <div class="section-header">
+      <div class="section-title">Platten in der Nähe</div>
+      <a class="section-link" onclick="showPage('map')">Alle sehen →</a>
+    </div>
+    <div class="cards-scroll" id="home-tables-scroll"></div>
+
+    <!-- Upcoming events -->
+    <div class="section-header">
+      <div class="section-title">Kommende Events</div>
+      <a class="section-link" onclick="showPage('events')">Alle →</a>
+    </div>
+    <div id="home-events-list"></div>
+    <div class="pb-safe"></div>
   </div>
-</div>
 
-<!-- ===== MODALS ===== -->
-
-<!-- Login -->
-<div class="modal-overlay" id="login-modal">
-  <div class="modal">
-    <div class="modal-title">ANMELDEN</div>
-    <div class="form-group">
-      <label class="form-label">E-Mail</label>
-      <input class="form-input" type="email" placeholder="deine@email.de">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Passwort</label>
-      <input class="form-input" type="password" placeholder="••••••••">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('login-modal')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="closeModal('login-modal');showNotif('✅','Willkommen zurück, Max!')">Anmelden</button>
-    </div>
-  </div>
-</div>
-
-<!-- Register -->
-<div class="modal-overlay" id="register-modal">
-  <div class="modal">
-    <div class="modal-title">REGISTRIEREN</div>
-    <div class="form-group">
-      <label class="form-label">Name / Nickname</label>
-      <input class="form-input" type="text" placeholder="Dein Spielername">
-    </div>
-    <div class="form-group">
-      <label class="form-label">E-Mail</label>
-      <input class="form-input" type="email" placeholder="deine@email.de">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Passwort</label>
-      <input class="form-input" type="password" placeholder="Mindestens 8 Zeichen">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Spielniveau</label>
-      <select class="form-select">
-        <option>Anfänger – ich lerne noch</option>
-        <option>Fortgeschritten – ich spiele regelmäßig</option>
-        <option>Profi – Vereinserfahrung</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('register-modal')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="closeModal('register-modal');showNotif('🎉','Account erstellt! Willkommen!')">Konto erstellen</button>
+  <!-- MAP -->
+  <div class="page" id="page-map">
+    <div class="map-page-layout">
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="map-overlay-btns">
+          <div class="map-fab" id="locate-btn" onclick="locateUser()" title="Mein Standort">📍</div>
+          <div class="map-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</div>
+        </div>
+        <div id="osm-status" style="position:absolute;bottom:10px;left:10px;z-index:400;"></div>
+      </div>
+      <div class="map-list" id="map-list-container"></div>
     </div>
   </div>
+
+  <!-- EVENTS -->
+  <div class="page" id="page-events">
+    <div class="events-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h1>Events</h1>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">+ Erstellen</button>
+      </div>
+      <p>Verabredungen & Turniere in Schweinfurt</p>
+    </div>
+    <div class="filter-pills" id="event-filter-pills">
+      <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
+      <button class="filter-pill" onclick="filterEvents('casual',this)">🎮 Casual</button>
+      <button class="filter-pill" onclick="filterEvents('ranked',this)">⚔️ Ranked</button>
+      <button class="filter-pill" onclick="filterEvents('turnier',this)">🏆 Turnier</button>
+    </div>
+    <div class="events-grid-list" id="events-list"></div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- RANKED -->
+  <div class="page" id="page-ranked">
+    <div class="ranked-hero-section">
+      <h1>🏆 Rangliste</h1>
+      <p>Steige von Bronze bis Gold auf</p>
+    </div>
+
+    <!-- My rank -->
+    <div class="my-rank-card">
+      <div class="myrank-row">
+        <div class="myrank-badge myrank-silver">🥈</div>
+        <div class="myrank-info">
+          <div class="myrank-name">Max Mustermann</div>
+          <div class="myrank-tier">Silber Division</div>
+        </div>
+        <div class="myrank-elo">520</div>
+      </div>
+      <div class="rank-progress">
+        <div class="rp-labels">
+          <span>Silber · 400 ELO</span>
+          <span>Gold ab 800 ELO</span>
+        </div>
+        <div class="rp-bar"><div class="rp-fill" style="width:30%"></div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm btn-full" onclick="openSheet('report-match-sheet')">🎮 Match eintragen</button>
+        <button class="btn btn-secondary btn-sm btn-full" onclick="showPage('profile')">Mein Profil</button>
+      </div>
+    </div>
+
+    <!-- League cards -->
+    <div class="section-header">
+      <div class="section-title">Ligen</div>
+    </div>
+    <div class="leagues-scroll">
+      <div class="league-mini bronze-card">
+        <span class="lm-icon">🥉</span>
+        <div class="lm-name">BRONZE</div>
+        <div class="lm-count">0–399 ELO · <b>34</b> Spieler</div>
+      </div>
+      <div class="league-mini silver-card">
+        <span class="lm-icon">🥈</span>
+        <div class="lm-name">SILBER</div>
+        <div class="lm-count">400–799 ELO · <b>31</b> Spieler</div>
+      </div>
+      <div class="league-mini gold-card">
+        <span class="lm-icon">🥇</span>
+        <div class="lm-name">GOLD</div>
+        <div class="lm-count">800+ ELO · <b>18</b> Spieler</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Top Spieler</div>
+    </div>
+    <div id="leaderboard-list"></div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="profile-top">
+      <div class="profile-avatar">😎</div>
+      <div class="profile-name">Max Mustermann</div>
+      <div class="profile-sub">Schweinfurt · Mitglied seit März 2025</div>
+      <div class="profile-rank-pill">🥈 Silber · 520 ELO</div>
+    </div>
+
+    <div class="profile-stats-row">
+      <div class="pstat">
+        <div class="pstat-val green">23</div>
+        <div class="pstat-label">Siege</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val red">11</div>
+        <div class="pstat-label">Niederlagen</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">34</div>
+        <div class="pstat-label">Spiele</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val blue">68%</div>
+        <div class="pstat-label">Win-Rate</div>
+      </div>
+    </div>
+
+    <!-- Skill Level -->
+    <div class="profile-section" style="margin-top:16px;">
+      <div class="ps-header">🎯 Mein Spielniveau</div>
+      <div class="skill-grid">
+        <div class="skill-opt" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">🐣</span>
+          <div class="skill-opt-name">Anfänger</div>
+          <div class="skill-opt-desc">Ich lerne noch</div>
+        </div>
+        <div class="skill-opt active" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">🏓</span>
+          <div class="skill-opt-name">Fortgeschritten</div>
+          <div class="skill-opt-desc">Regelmäßig am Spielen</div>
+        </div>
+        <div class="skill-opt" onclick="selectSkill(this)">
+          <span class="skill-opt-icon">⚡</span>
+          <div class="skill-opt-name">Profi</div>
+          <div class="skill-opt-desc">Vereinserfahrung</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match History -->
+    <div class="profile-section">
+      <div class="ps-header">📜 Match History</div>
+      <div id="profile-match-history"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="profile-section">
+      <div class="ps-header">⚙️ Einstellungen</div>
+      <div class="settings-item" onclick="toggleTheme()">
+        <div class="si-icon" style="background:var(--gold-bg);">🌙</div>
+        <div class="si-text">Dark Mode<div class="si-sub">Augenschonend spielen</div></div>
+        <label class="toggle-switch" onclick="event.stopPropagation()">
+          <input type="checkbox" id="dm-toggle" onchange="toggleTheme()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-item">
+        <div class="si-icon" style="background:var(--primary-bg);">🔔</div>
+        <div class="si-text">Benachrichtigungen<div class="si-sub">Events & Matches</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-item" onclick="openSheet('profile-edit-sheet')">
+        <div class="si-icon" style="background:var(--green-bg);">✏️</div>
+        <div class="si-text">Profil bearbeiten<div class="si-sub">Name, Avatar, Wohnort</div></div>
+        <span class="si-arrow">›</span>
+      </div>
+      <div class="settings-item">
+        <div class="si-icon" style="background:var(--accent-bg);">🚪</div>
+        <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
+        <span class="si-arrow">›</span>
+      </div>
+    </div>
+    <div class="pb-safe"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="showPage('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+    </button>
+    <button class="nav-item" id="nav-map" onclick="showPage('map')">
+      <div class="nav-icon">🗺</div>
+      <div class="nav-label">Karte</div>
+    </button>
+    <button class="nav-item" id="nav-events" onclick="showPage('events')">
+      <div class="nav-icon">📅</div>
+      <div class="nav-label">Events</div>
+    </button>
+    <button class="nav-item" id="nav-ranked" onclick="showPage('ranked')">
+      <div class="nav-icon">🏆</div>
+      <div class="nav-label">Rangliste</div>
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Profil</div>
+    </button>
+  </nav>
 </div>
 
-<!-- Create Event -->
-<div class="modal-overlay" id="create-event-modal">
-  <div class="modal">
-    <div class="modal-title">EVENT ERSTELLEN</div>
+<!-- FAB (only on events/home pages) -->
+<button class="fab" id="main-fab" onclick="openSheet('create-event-sheet')" title="Event erstellen">+</button>
+
+<!-- ======= BOTTOM SHEETS ======= -->
+<div class="sheet-overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- TABLE DETAIL SHEET -->
+<div class="bottom-sheet" id="table-detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="tds-title">Platte</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div id="tds-body"></div>
+</div>
+
+<!-- CREATE EVENT SHEET -->
+<div class="bottom-sheet" id="create-event-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">📅 Event erstellen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
     <div class="form-group">
       <label class="form-label">Event Name</label>
-      <input class="form-input" type="text" placeholder="z.B. Casual Runde für Anfänger">
+      <input class="form-input" placeholder="z.B. Casual Runde für alle" id="ev-name">
     </div>
     <div class="form-group">
       <label class="form-label">Platte</label>
-      <select class="form-select" id="event-table-select"></select>
+      <select class="form-select" id="ev-table"></select>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+    <div class="form-row">
       <div class="form-group">
         <label class="form-label">Datum</label>
-        <input class="form-input" type="date">
+        <input class="form-input" type="date" id="ev-date">
       </div>
       <div class="form-group">
         <label class="form-label">Uhrzeit</label>
-        <input class="form-input" type="time" value="15:00">
+        <input class="form-input" type="time" value="15:00" id="ev-time">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Art des Spiels</label>
-      <select class="form-select">
-        <option value="casual">🎮 Casual – zum Spaß</option>
-        <option value="ranked">⚔️ Ranked – für die Rangliste</option>
+      <label class="form-label">Spielmodus</label>
+      <select class="form-select" id="ev-mode">
+        <option value="casual">🎮 Casual – Spaß für alle</option>
+        <option value="ranked">⚔️ Ranked – zählt für die Rangliste</option>
         <option value="turnier">🏆 Mini-Turnier</option>
       </select>
     </div>
@@ -922,20 +1353,21 @@ nav {
     </div>
     <div class="form-group">
       <label class="form-label">Beschreibung (optional)</label>
-      <textarea class="form-textarea" placeholder="Bringt eure eigenen Schläger mit..."></textarea>
+      <textarea class="form-textarea" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('create-event-modal')">Abbrechen</button>
-      <button class="btn btn-accent" onclick="createEvent()">Event erstellen 🏓</button>
-    </div>
+    <button class="btn btn-primary btn-full" onclick="submitCreateEvent()">Event erstellen 🏓</button>
   </div>
 </div>
 
-<!-- Report Match -->
-<div class="modal-overlay" id="report-match-modal">
-  <div class="modal">
-    <div class="modal-title">MATCH EINTRAGEN</div>
-    <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1.5rem;">Trage dein gespieltes Ranked Match ein. Beide Spieler müssen bestätigen.</p>
+<!-- REPORT MATCH SHEET -->
+<div class="bottom-sheet" id="report-match-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">🎮 Match eintragen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:16px;">Trage ein gespieltes Ranked Match ein. Beide Spieler erhalten eine Bestätigungsanfrage.</p>
     <div class="form-group">
       <label class="form-label">Gegner</label>
       <select class="form-select">
@@ -953,466 +1385,1486 @@ nav {
         <option value="loss">❌ Ich habe verloren</option>
       </select>
     </div>
-    <div class="form-group">
-      <label class="form-label">Sätze (optional, z.B. 3:1)</label>
-      <input class="form-input" type="text" placeholder="3:1">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sätze (z.B. 3:1)</label>
+        <input class="form-input" placeholder="3:1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Platte</label>
+        <select class="form-select" id="match-table-sel"></select>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Platte</label>
-      <select class="form-select" id="match-table-select"></select>
+    <button class="btn btn-primary btn-full" onclick="submitMatch()">Eintragen & Anfrage senden</button>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS SHEET -->
+<div class="bottom-sheet" id="notif-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">🔔 Benachrichtigungen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="padding:0;">
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--green-bg);">✅</div>
+      <div class="si-text">Jonas K. hat dein Match bestätigt<div class="si-sub">Vor 2 Stunden</div></div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('report-match-modal')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="closeModal('report-match-modal');showNotif('🎮','Match eingetragen! Warte auf Bestätigung.')">Eintragen & senden</button>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--primary-bg);">📅</div>
+      <div class="si-text">Neues Event: "Sunset Ping Pong"<div class="si-sub">Mainkai · 16. Mai 18:30</div></div>
+    </div>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--gold-bg);">🏆</div>
+      <div class="si-text">Du bist auf Platz 6 der Rangliste!<div class="si-sub">Heute</div></div>
+    </div>
+    <div class="settings-item">
+      <div class="si-icon" style="background:var(--accent-bg);">⚔️</div>
+      <div class="si-text">Laura M. fordert dich zum Ranked Match<div class="si-sub">Gestern 20:15</div></div>
     </div>
   </div>
 </div>
 
-<!-- Table Detail Modal -->
-<div class="modal-overlay table-detail-modal" id="table-detail-modal">
-  <div class="modal" style="max-width:680px;" id="table-detail-content"></div>
+<!-- PROFILE EDIT SHEET -->
+<div class="bottom-sheet" id="profile-edit-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">✏️ Profil bearbeiten</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Anzeigename</label>
+      <input class="form-input" id="edit-name" value="Max Mustermann">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Wohnort</label>
+      <input class="form-input" id="edit-city" value="Schweinfurt">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Über mich</label>
+      <textarea class="form-textarea" id="edit-bio" placeholder="Kurze Beschreibung…">Spiele seit 3 Jahren Tischtennis, suche Gleichgesinnte!</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Avatar (Emoji)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">😎</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🏓</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">⚡</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🔥</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">💪</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🎯</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🦅</span>
+        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🌟</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeAllSheets();showToast('✅ Profil gespeichert!')">Speichern</button>
+  </div>
 </div>
 
-<!-- Notification -->
-<div class="notif" id="notif">
-  <div class="notif-icon" id="notif-icon">✅</div>
-  <div class="notif-text" id="notif-text">Aktion erfolgreich!</div>
+<!-- PROFILE/LOGIN SHEET -->
+<div class="bottom-sheet" id="profile-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Account</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div style="text-align:center;padding:16px 0 20px;">
+      <div style="font-size:3rem;margin-bottom:8px;">😎</div>
+      <div style="font-weight:800;font-size:1.1rem;font-family:var(--font-head);">Max Mustermann</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:2px;">🥈 Silber · 520 ELO</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeAllSheets();showPage('profile')">Zum Profil</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-secondary btn-full" id="profile-signout-btn" onclick="doSignOut()">Abmelden</button>
+  </div>
+</div>
+
+
+<!-- AUTH SHEET (Login / Registrierung) -->
+<div class="bottom-sheet" id="auth-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="auth-sheet-title">👤 Anmelden</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:16px;">
+      <button id="auth-tab-login" onclick="setAuthMode('login')" class="auth-tab auth-tab-active">Anmelden</button>
+      <button id="auth-tab-reg"   onclick="setAuthMode('register')" class="auth-tab">Registrieren</button>
+    </div>
+    <div id="auth-login-fields">
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort</label>
+        <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
+      </div>
+    </div>
+    <div id="auth-reg-fields" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Spielername</label>
+        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort (min. 6 Zeichen)</label>
+        <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">Anmelden</button>
+    <p style="text-align:center;font-size:0.75rem;color:var(--text-xdim);margin-top:12px;">
+      Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen.
+    </p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-text">Erfolgreich!</span>
 </div>
 
 <script>
-// ===== DATA =====
-const tables = [
-  {
-    id: 1, name: "Stadtpark – Tischtennis", lat: 50.0497, lng: 10.2322,
-    type: "outdoor", address: "Stadtpark Schweinfurt",
-    desc: "2 Outdoor-Platten im Stadtpark, gut erhalten. Beliebt bei Familien und Jugendlichen.",
-    icon: "🌳", events: [
-      { name: "Casual Runde", date: "03", month: "MAI", time: "15:00", type: "casual", participants: 3, max: 6 },
-      { name: "Anfänger Welcome", date: "10", month: "MAI", time: "14:00", type: "casual", participants: 1, max: 8 }
-    ]
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           SUPABASE CONFIG                                    ║
+// ╚══════════════════════════════════════════════════════════════╝
+const SUPABASE_URL  = 'https://quelfdpqvzgnnvpuwljq.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_pe9d7oJngP6p5vc5Y-ARgA_sd-zye12';
+
+// Kleines Supabase-Client ohne npm – direkte fetch()-Wrapper
+const sb = {
+  // --- AUTH ---
+  async signUp(email, password, username) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method:'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, password, data:{ username } })
+    });
+    return r.json();
   },
-  {
-    id: 2, name: "Obere Marktstraße", lat: 50.0521, lng: 10.2352,
-    type: "outdoor", address: "Obere Marktstraße, Schweinfurt",
-    desc: "Einzelne Platte in der Innenstadt. Zentraler Treffpunkt.",
-    icon: "🏙️", events: [
-      { name: "Ranked 1v1", date: "04", month: "MAI", time: "16:00", type: "ranked", participants: 2, max: 2 }
-    ]
+  async signIn(email, password) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, password })
+    });
+    const data = await r.json();
+    if(data.access_token) {
+      localStorage.setItem('sb_token',   data.access_token);
+      localStorage.setItem('sb_user_id', data.user.id);
+      localStorage.setItem('sb_email',   data.user.email);
+    }
+    return data;
   },
-  {
-    id: 3, name: "TTC Schweinfurt – Halle", lat: 50.0448, lng: 10.2280,
-    type: "indoor", address: "Turnhalle Bellevue, Schweinfurt",
-    desc: "Vereinshalle mit 6 Profi-Platten. Geeignet für ernsthafte Matches und Turniere.",
-    icon: "🏢", events: [
-      { name: "Mini-Turnier Ranked", date: "11", month: "MAI", time: "13:00", type: "turnier", participants: 8, max: 16 },
-      { name: "Ranked Night", date: "18", month: "MAI", time: "19:00", type: "ranked", participants: 4, max: 6 }
-    ]
+  async signOut() {
+    const token = localStorage.getItem('sb_token');
+    if(token) await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+      method:'POST', headers: authHeaders(token)
+    });
+    localStorage.removeItem('sb_token');
+    localStorage.removeItem('sb_user_id');
+    localStorage.removeItem('sb_email');
+    currentUser = null;
   },
-  {
-    id: 4, name: "Schillerplatz", lat: 50.0535, lng: 10.2398,
-    type: "outdoor", address: "Schillerplatz, Schweinfurt",
-    desc: "Outdoor-Platte mit guter Beleuchtung für Abendspiele.",
-    icon: "🌆", events: []
-  },
-  {
-    id: 5, name: "Willy-Sachs-Stadion Umfeld", lat: 50.0418, lng: 10.2265,
-    type: "outdoor", address: "Stadionring, Schweinfurt",
-    desc: "2 Platten am Stadion, oft genutzt nach Sportevents.",
-    icon: "⚽", events: [
-      { name: "Casual Session", date: "05", month: "MAI", time: "17:00", type: "casual", participants: 2, max: 4 }
-    ]
-  },
-  {
-    id: 6, name: "Jugendtreff Haardt", lat: 50.0575, lng: 10.2420,
-    type: "indoor", address: "Haardt, Schweinfurt",
-    desc: "Indoor-Platte im Jugendtreff. Entspannte Atmosphäre.",
-    icon: "🎮", events: [
-      { name: "Jugend Casual", date: "07", month: "MAI", time: "16:00", type: "casual", participants: 4, max: 10 }
-    ]
-  },
-  {
-    id: 7, name: "Bürgerpark Ost", lat: 50.0460, lng: 10.2450,
-    type: "outdoor", address: "Bürgerpark, Schweinfurt-Ost",
-    desc: "Ruhige Lage mit einer Platte. Ideal für entspannte Nachmittage.",
-    icon: "🌿", events: []
-  },
-  {
-    id: 8, name: "Sportanlage Oberndorf", lat: 50.0380, lng: 10.2180,
-    type: "outdoor", address: "Sportanlage Oberndorf, Schweinfurt",
-    desc: "Platte auf der Sportanlage, gut gepflegt.",
-    icon: "🏅", events: [
-      { name: "Ranked Challenge", date: "09", month: "MAI", time: "10:00", type: "ranked", participants: 2, max: 2 }
-    ]
-  },
-  {
-    id: 9, name: "Mainkai Freifläche", lat: 50.0500, lng: 10.2200,
-    type: "outdoor", address: "Mainkai, Schweinfurt",
-    desc: "Platte direkt am Main. Toller Ausblick, perfekt für Sommerspiele.",
-    icon: "🌊", events: [
-      { name: "Sunset Ping Pong", date: "16", month: "MAI", time: "18:30", type: "casual", participants: 6, max: 12 }
-    ]
+  getToken()  { return localStorage.getItem('sb_token'); },
+  getUserId() { return localStorage.getItem('sb_user_id'); },
+  isLoggedIn(){ return !!localStorage.getItem('sb_token'); },
+
+  // --- DB (REST) ---
+  async from(table) {
+    return new QueryBuilder(table);
   }
-];
+};
 
-const players = [
-  { name: "Tobias L.", avatar: "⚡", elo: 920, league: "gold", wins: 58, losses: 14 },
-  { name: "Laura M.", avatar: "🔥", elo: 840, league: "gold", wins: 44, losses: 18 },
-  { name: "Markus B.", avatar: "💪", elo: 810, league: "gold", wins: 38, losses: 20 },
-  { name: "Sabrina K.", avatar: "🎯", elo: 780, league: "silver", wins: 35, losses: 22 },
-  { name: "Jonas K.", avatar: "🏓", elo: 610, league: "silver", wins: 28, losses: 18 },
-  { name: "Max Mustermann", avatar: "😎", elo: 520, league: "silver", wins: 23, losses: 11 },
-  { name: "Anna R.", avatar: "✨", elo: 450, league: "silver", wins: 19, losses: 15 },
-  { name: "Felix W.", avatar: "🦅", elo: 380, league: "bronze", wins: 12, losses: 14 },
-  { name: "Nina P.", avatar: "🌟", elo: 290, league: "bronze", wins: 9, losses: 16 },
-  { name: "David H.", avatar: "🎮", elo: 180, league: "bronze", wins: 5, losses: 18 },
-];
+class QueryBuilder {
+  constructor(table) {
+    this.table = table;
+    this._select = '*';
+    this._filters = [];
+    this._order = null;
+    this._limit = null;
+  }
+  select(s)           { this._select = s; return this; }
+  eq(col, val)        { this._filters.push(`${col}=eq.${val}`); return this; }
+  order(col, desc=false){ this._order = `${col}.${desc?'desc':'asc'}`; return this; }
+  limit(n)            { this._limit = n; return this; }
 
-const matchHistory = [
-  { opponent: "Jonas K.", result: "win", eloChange: +18, sets: "3:1", date: "28. Apr 2025" },
-  { opponent: "Felix W.", result: "win", eloChange: +12, sets: "3:0", date: "25. Apr 2025" },
-  { opponent: "Laura M.", result: "loss", eloChange: -8, sets: "1:3", date: "22. Apr 2025" },
-  { opponent: "Anna R.", result: "win", eloChange: +15, sets: "3:2", date: "19. Apr 2025" },
-  { opponent: "Sabrina K.", result: "loss", eloChange: -10, sets: "0:3", date: "15. Apr 2025" },
-];
+  async execute() {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}?select=${encodeURIComponent(this._select)}`;
+    this._filters.forEach(f => url += '&' + f);
+    if(this._order) url += `&order=${this._order}`;
+    if(this._limit) url += `&limit=${this._limit}`;
+    const r = await fetch(url, { headers: dbHeaders() });
+    const data = await r.json();
+    return { data: Array.isArray(data) ? data : [], error: data.error || null };
+  }
 
-// ===== PAGE NAVIGATION =====
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('tab-' + page).classList.add('active');
-  if (page === 'map' && !mapInitialized) initMap();
+  async insert(body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${this.table}`, {
+      method:'POST',
+      headers: { ...dbHeaders(), 'Prefer':'return=representation' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    return { data, error: r.ok ? null : data };
+  }
+
+  async update(body) {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}?`;
+    this._filters.forEach((f,i) => url += (i?'&':'')+f);
+    const r = await fetch(url, {
+      method:'PATCH',
+      headers: { ...dbHeaders(), 'Prefer':'return=representation' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    return { data, error: r.ok ? null : data };
+  }
 }
 
-// ===== MODALS =====
-function openModal(id) {
+function authHeaders(token) {
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_ANON,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+}
+function dbHeaders() {
+  const token = sb.getToken();
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${token || SUPABASE_ANON}`
+  };
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           APP STATE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+let currentUser   = null;  // eingeloggtes Profil aus profiles-Tabelle
+let tables        = [];    // aus Supabase + OSM geladen
+let allEvents     = [];    // aus Supabase geladen (mit table-Join)
+let allPlayers    = [];    // Rangliste aus Supabase
+let myMatches     = [];    // Match-History des eingeloggten Users
+let currentFilter = 'all';
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           NAVIGATION                                         ║
+// ╚══════════════════════════════════════════════════════════════╝
+const pages = ['home','map','events','ranked','profile'];
+let currentPage = 'home';
+let mapInit = false;
+
+function showPage(name) {
+  // Auth-Gate: Profil, Events erstellen nur wenn eingeloggt
+  if((name==='profile') && !sb.isLoggedIn()) {
+    openSheet('auth-sheet');
+    return;
+  }
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('active', p===name);
+    document.getElementById('nav-'+p)?.classList.toggle('active', p===name);
+  });
+  currentPage = name;
+  document.getElementById('main-fab').style.display =
+    (name==='home'||name==='events') ? 'flex' : 'none';
+  if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
+  if(name==='profile') renderProfile();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           DARK MODE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+let isDark = localStorage.getItem('tt_dark')==='1';
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
+  document.getElementById('theme-btn').textContent = isDark?'☀️':'🌙';
+  const t = document.getElementById('dm-toggle');
+  if(t) t.checked = isDark;
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('tt_dark', isDark?'1':'0');
+  applyTheme();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           BOTTOM SHEETS                                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+let openSheetId = null;
+function openSheet(id) {
+  if(openSheetId) closeAllSheets();
+  document.getElementById('overlay').classList.add('open');
   document.getElementById(id).classList.add('open');
+  openSheetId = id;
 }
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// ===== NOTIFICATION =====
-function showNotif(icon, text) {
-  const n = document.getElementById('notif');
-  document.getElementById('notif-icon').textContent = icon;
-  document.getElementById('notif-text').textContent = text;
-  n.classList.add('show');
-  setTimeout(() => n.classList.remove('show'), 3500);
+function closeAllSheets() {
+  document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
+  document.getElementById('overlay').classList.remove('open');
+  openSheetId = null;
 }
 
-// ===== MAP =====
-let mapInitialized = false;
-let leafletMap, markers = [];
-let selectedTableId = null;
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           TOAST                                              ║
+// ╚══════════════════════════════════════════════════════════════╝
+function showToast(text, icon='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-text').textContent = text;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
 
-function initMap() {
-  mapInitialized = true;
-  leafletMap = L.map('map', {
-    center: [50.0497, 10.2322],
-    zoom: 14,
-    zoomControl: true
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           AUTH  (Login / Registrierung)                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+let authMode = 'login'; // 'login' | 'register'
+
+function setAuthMode(mode) {
+  authMode = mode;
+  // Felder ein-/ausblenden
+  document.getElementById('auth-login-fields').style.display = mode==='login' ? 'block' : 'none';
+  document.getElementById('auth-reg-fields').style.display   = mode==='register' ? 'block' : 'none';
+  // Titel
+  document.getElementById('auth-sheet-title').textContent = mode==='login' ? '👤 Anmelden' : '🏓 Registrieren';
+  // Submit-Button Label
+  document.getElementById('auth-submit-btn').textContent = mode==='login' ? 'Anmelden' : 'Konto erstellen';
+  // Tab-Styling: active = blau, inaktiv = grau
+  const tabLogin = document.getElementById('auth-tab-login');
+  const tabReg   = document.getElementById('auth-tab-reg');
+  tabLogin.classList.toggle('auth-tab-active', mode==='login');
+  tabReg.classList.toggle('auth-tab-active',   mode==='register');
+}
+
+async function submitAuth() {
+  const btn = document.getElementById('auth-submit-btn');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    if(authMode === 'login') {
+      const email    = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-pw').value;
+      if(!email || !password) { showToast('Bitte E-Mail und Passwort eingeben','⚠️'); return; }
+
+      const res = await sb.signIn(email, password);
+      if(res.error || !res.access_token) {
+        showToast(res.error?.message || 'Anmeldung fehlgeschlagen','❌');
+        return;
+      }
+      await loadCurrentUser();
+      closeAllSheets();
+      showToast(`Willkommen zurück, ${currentUser?.username || 'Spieler'}! 👋`);
+      updateTopBarForUser();
+
+    } else {
+      const username = document.getElementById('auth-username').value.trim();
+      const email    = document.getElementById('auth-reg-email').value.trim();
+      const password = document.getElementById('auth-reg-pw').value;
+      if(!username || !email || !password) { showToast('Alle Felder ausfüllen','⚠️'); return; }
+      if(password.length < 6) { showToast('Passwort mindestens 6 Zeichen','⚠️'); return; }
+
+      const res = await sb.signUp(email, password, username);
+      if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','❌'); return; }
+      closeAllSheets();
+      showToast('🎉 Willkommen! Bitte E-Mail bestätigen, dann einloggen.','🎉');
+      setAuthMode('login');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode==='login' ? 'Anmelden' : 'Konto erstellen';
+  }
+}
+
+async function loadCurrentUser() {
+  const uid = sb.getUserId();
+  if(!uid) return;
+  const qb = new QueryBuilder('profiles');
+  const {data} = await qb.eq('id', uid).execute();
+  if(data && data[0]) currentUser = data[0];
+}
+
+function updateTopBarForUser() {
+  const btn = document.getElementById('topbar-profile-btn');
+  if(btn && currentUser) btn.textContent = currentUser.avatar_emoji || '😎';
+}
+
+async function doSignOut() {
+  await sb.signOut();
+  closeAllSheets();
+  showToast('👋 Bis bald!');
+  document.getElementById('topbar-profile-btn').textContent = '👤';
+  showPage('home');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           DATEN LADEN (Supabase)                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function loadTables() {
+  // 1. Supabase laden
+  try {
+    const qb = new QueryBuilder('tables');
+    const {data} = await qb.order('name').execute();
+    if(data && data.length) {
+      tables = data.map(t => ({
+        id: t.id, name: t.name, addr: t.address,
+        lat: t.lat, lng: t.lng,
+        type: t.type, icon: t.icon || '🏓',
+        photos: [], comments: [], osmId: null, events: []
+      }));
+    }
+  } catch(e) { console.warn('Supabase tables error', e); }
+
+  // 2. OSM Overpass API: echte Platten in Schweinfurt laden
+  await loadOSMTables();
+
+  // Fill selects
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const opts = src.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+}
+
+async function loadOSMTables() {
+  try {
+    // Overpass Query: alle Tischtennis-Platten im Umkreis Schweinfurt
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["leisure"="table_tennis"](49.85,10.05,50.15,10.45);
+        way["leisure"="table_tennis"](49.85,10.05,50.15,10.45);
+      );
+      out body center;
+    `;
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await res.json();
+    if(!data.elements || !data.elements.length) {
+      console.log('Keine OSM-Platten gefunden, nutze Fallback');
+      return;
+    }
+
+    // OSM-Elemente in App-Format konvertieren
+    const osmTables = data.elements.map((el, i) => {
+      const lat = el.lat || el.center?.lat;
+      const lng = el.lon || el.center?.lon;
+      const tags = el.tags || {};
+      const name = tags.name || tags['name:de'] || `Tischtennis-Platte ${i+1}`;
+      const isIndoor = tags.indoor === 'yes' || tags.location === 'indoor';
+      const addr = [
+        tags['addr:street'], tags['addr:housenumber'], tags['addr:city']
+      ].filter(Boolean).join(' ') || 'Schweinfurt';
+
+      return {
+        id: 10000 + el.id % 9000, // eindeutige ID
+        osmId: el.id,
+        name, addr, lat, lng,
+        type: isIndoor ? 'indoor' : 'outdoor',
+        icon: isIndoor ? '🏢' : '🏓',
+        photos: tags.image ? [tags.image] : [],
+        surface: tags.surface || null,
+        access: tags.access || 'public',
+        operator: tags.operator || null,
+        events: [],
+        comments: []
+      };
+    }).filter(t => t.lat && t.lng);
+
+    if(osmTables.length > 0) {
+      // OSM-Platten mit Supabase-Daten mergen
+      // (Supabase-Einträge haben Vorrang falls doppelt)
+      const supabaseIds = new Set(tables.map(t => t.osmId).filter(Boolean));
+      const newOSM = osmTables.filter(t => !supabaseIds.has(t.osmId));
+      tables = [...tables, ...newOSM];
+      console.log(`✅ ${osmTables.length} Platten von OSM geladen`);
+
+      // OSM-Status anzeigen
+      const statusEl = document.getElementById('osm-status');
+      if(statusEl) {
+        statusEl.innerHTML = `<div style="background:rgba(34,197,94,0.9);color:#fff;
+          border-radius:8px;padding:5px 10px;font-size:0.72rem;font-weight:700;">
+          ✅ ${osmTables.length} Platten von OpenStreetMap
+        </div>`;
+        setTimeout(() => statusEl.innerHTML = '', 4000);
+      }
+    }
+  } catch(e) {
+    console.warn('OSM Overpass nicht erreichbar:', e);
+  }
+}
+
+async function loadEvents() {
+  // Events mit Tischtennis-Platte und Ersteller-Profil joinen
+  const qb = new QueryBuilder('events');
+  qb._select = `id,title,event_date,event_time,mode,max_participants,description,
+    tables(id,name,icon),
+    profiles(username,avatar_emoji),
+    event_participants(count)`;
+  const {data} = await qb.order('event_date').execute();
+  if(!data) return;
+
+  allEvents = data.map(e => {
+    const d = new Date(e.event_date);
+    const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
+    return {
+      id:      e.id,
+      name:    e.title,
+      day:     String(d.getDate()).padStart(2,'0'),
+      mon:     months[d.getMonth()],
+      time:    e.event_time?.slice(0,5) || '??:??',
+      type:    e.mode,
+      tname:   e.tables?.name || '?',
+      ticon:   e.tables?.icon || '🏓',
+      tid:     e.tables?.id,
+      creator: e.profiles?.username || 'Anonym',
+      p:       e.event_participants?.[0]?.count || 0,
+      max:     e.max_participants
+    };
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap, © CARTO',
-    subdomains: 'abcd', maxZoom: 20
-  }).addTo(leafletMap);
-
-  tables.forEach(t => addMarker(t));
-  renderTableList(tables);
+  // Events den Platten zuordnen (für Karte)
+  tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
 }
 
-function addMarker(table) {
-  const evCount = table.events.length;
-  const color = table.type === 'indoor' ? '#00e5ff' : '#00c896';
-  const icon = L.divIcon({
-    className: '',
-    html: `<div style="
-      background:${color};color:#000;
-      width:38px;height:38px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:1.1rem;font-weight:700;
-      box-shadow:0 0 0 3px rgba(0,229,255,0.3),0 4px 16px rgba(0,0,0,0.5);
-      position:relative;cursor:pointer;
-    ">🏓${evCount > 0 ? `<span style="position:absolute;top:-4px;right:-4px;background:#ff4d6d;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;">${evCount}</span>` : ''}</div>`,
-    iconSize: [38, 38], iconAnchor: [19, 19]
-  });
-
-  const marker = L.marker([table.lat, table.lng], { icon }).addTo(leafletMap);
-  marker.bindPopup(buildPopup(table), { maxWidth: 280 });
-  marker.on('click', () => {
-    selectedTableId = table.id;
-    document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
-    const card = document.getElementById('tcard-' + table.id);
-    if (card) { card.classList.add('selected'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-  });
-  markers.push({ id: table.id, marker });
+async function loadPlayers() {
+  const qb = new QueryBuilder('profiles');
+  qb._select = 'id,username,avatar_emoji,elo,wins,losses';
+  const {data} = await qb.order('elo', true).limit(20).execute();
+  if(data) allPlayers = data;
 }
 
-function buildPopup(table) {
-  const evHtml = table.events.length > 0
-    ? `<div style="color:#ff4d6d;font-size:0.78rem;margin-top:6px;">📅 ${table.events.length} Event${table.events.length > 1 ? 's' : ''} geplant</div>`
-    : `<div style="color:#8892a4;font-size:0.78rem;margin-top:6px;">Kein Event – erstelle eines!</div>`;
+async function loadMyMatches() {
+  if(!sb.isLoggedIn()) return;
+  const uid = sb.getUserId();
+  // Matches wo ich Gewinner oder Verlierer bin
+  const qb = new QueryBuilder('matches');
+  qb._select = `id,score_winner,score_loser,elo_change,confirmed,played_at,
+    winner:profiles!winner_id(username),
+    loser:profiles!loser_id(username)`;
+  qb.order('played_at', true);
+  qb.limit(10);
+  const {data} = await qb.execute();
+  if(!data) return;
+  const myId = uid;
+  myMatches = data
+    .filter(m => m.winner?.username || m.loser?.username)
+    .map(m => {
+      const iWon = m.winner_id === myId;
+      return {
+        opp:  iWon ? m.loser?.username  : m.winner?.username,
+        res:  iWon ? 'win' : 'loss',
+        elo:  iWon ? +(m.elo_change) : -(m.elo_change),
+        sets: `${m.score_winner}:${m.score_loser}`,
+        date: new Date(m.played_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'})
+      };
+    });
+}
 
-  return `<div class="popup-content">
-    <div class="popup-img" style="font-size:3.5rem;background:linear-gradient(135deg,#1e2330,#252c3d);">${table.icon}</div>
-    <div class="popup-title">${table.name}</div>
-    <div class="popup-sub">📍 ${table.address} · ${table.type === 'indoor' ? '🏢 Indoor' : '🌳 Outdoor'}</div>
-    <div style="font-size:0.8rem;color:#8892a4;line-height:1.5;">${table.desc}</div>
-    ${evHtml}
-    <div class="popup-actions" style="margin-top:10px;">
-      <button onclick="showTableDetail(${table.id})" style="flex:1;padding:7px 10px;border-radius:7px;background:#00e5ff;color:#000;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;">Details & Events</button>
-      <button onclick="openCreateEventForTable(${table.id})" style="flex:1;padding:7px 10px;border-radius:7px;background:#252c3d;color:#e8eaf0;border:1px solid #2a3147;cursor:pointer;font-size:0.8rem;font-weight:600;">+ Event</button>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           HOME                                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderHome() {
+  // Begrüßung personalisieren
+  if(currentUser) {
+    document.querySelector('.hero-greeting').textContent =
+      `Hallo, ${currentUser.username}! 👋`;
+  }
+
+  // Counter
+  animateCount(document.getElementById('c-tables'),  tables.length    || 9);
+  animateCount(document.getElementById('c-events'),  (allEvents.length || FALLBACK_EVENTS.length));
+  animateCount(document.getElementById('c-players'), allPlayers.length|| 0);
+
+  // Platten-Karten
+  const scroll = document.getElementById('home-tables-scroll');
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  scroll.innerHTML = src.slice(0,6).map(t=>`
+    <div class="map-thumb-card" onclick="showTableDetail(${t.id})">
+      <div class="map-thumb-img">
+        ${t.icon}
+        <span class="map-thumb-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
+        ${(t.events?.length||FALLBACK_EVENTS.filter(e=>e.tid===t.id).length)?`<span class="map-thumb-badge badge-ev" style="top:auto;bottom:8px;right:8px;">📅 ${t.events?.length||FALLBACK_EVENTS.filter(e=>e.tid===t.id).length}</span>`:''}
+      </div>
+      <div class="map-thumb-body">
+        <div class="map-thumb-name">${t.name}</div>
+        <div class="map-thumb-dist">📍 ${(t.addr||'').split(',')[0]}${t.distance!=null?' · '+formatDistance(t.distance)+'  entfernt':''}</div>
+        ${t.events?.length?`<div class="map-thumb-ev">📅 ${t.events.length} Event${t.events.length>1?'s':''}</div>`:''}
+      </div>
     </div>
+  `).join('');
+
+  // Events
+  const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const evList = document.getElementById('home-events-list');
+  evList.innerHTML = evSrc.slice(0,5).map(e=>`
+    <div class="event-list-item" onclick="showPage('events')">
+      <div class="ev-date-box">
+        <div class="ev-day">${e.day}</div>
+        <div class="ev-mon">${e.mon}</div>
+      </div>
+      <div class="ev-info">
+        <div class="ev-title">${e.name}</div>
+        <div class="ev-meta">📍 ${e.tname} · ⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+      </div>
+      <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</div>
+    </div>
+  `).join('');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           MAP                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+let leafletMap, markers=[];
+function initMap() {
+  leafletMap = L.map('map',{center:[50.0490,10.2310],zoom:14,zoomControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap', maxZoom:19
+  }).addTo(leafletMap);
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  src.forEach(t => addMarker(t));
+  renderMapList(src);
+}
+
+function addMarker(t) {
+  const color = t.type==='indoor'?'#3B7CF4':'#22C55E';
+  const evCount = t.events?.length || 0;
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:1rem;
+      box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
+      🏓${evCount?`<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+        color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
+        display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>`:''}
+    </div>`,
+    iconSize:[36,36], iconAnchor:[18,18]
+  });
+  const m = L.marker([t.lat,t.lng],{icon}).addTo(leafletMap);
+  m.on('click',()=>{ showTableDetail(t.id); selectMapItem(t.id); });
+  markers.push({id:t.id,m});
+}
+
+let userLat = null, userLng = null, userMarker = null;
+
+function centerMap() {
+  if(leafletMap) leafletMap.setView([50.0490,10.2310],14,{animate:true});
+}
+
+function locateUser() {
+  if(!navigator.geolocation) { showToast('Standort nicht verfügbar','⚠️'); return; }
+  const btn = document.getElementById('locate-btn');
+  btn?.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(pos => {
+    btn?.classList.remove('locating');
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    if(leafletMap) {
+      // Genauigkeitskreis
+      if(userMarker) leafletMap.removeLayer(userMarker);
+      userMarker = L.circle([userLat,userLng], {
+        radius: pos.coords.accuracy,
+        color: '#3B7CF4', fillColor: '#3B7CF4', fillOpacity: 0.1, weight: 2
+      }).addTo(leafletMap);
+      L.circleMarker([userLat,userLng], {
+        radius: 8, color: '#fff', weight: 3,
+        fillColor: '#3B7CF4', fillOpacity: 1
+      }).addTo(leafletMap).bindPopup('📍 Du bist hier');
+      leafletMap.setView([userLat,userLng], 15, {animate:true});
+    }
+    // Entfernungen neu berechnen und Liste sortieren
+    updateDistances();
+    showToast('📍 Standort gefunden!');
+  }, err => {
+    btn?.classList.remove('locating');
+    showToast('Standort konnte nicht ermittelt werden','⚠️');
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000; // Meter
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function formatDistance(m) {
+  if(m < 1000) return `${m}m`;
+  return `${(m/1000).toFixed(1)}km`;
+}
+
+function updateDistances() {
+  if(!userLat || !userLng) return;
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  src.forEach(t => { t.distance = calcDistance(userLat, userLng, t.lat, t.lng); });
+  src.sort((a,b) => (a.distance||99999) - (b.distance||99999));
+  renderMapList(src);
+  renderHome();
+}
+
+function selectMapItem(id) {
+  document.querySelectorAll('.map-list-item').forEach(el=>
+    el.classList.toggle('selected', el.dataset.id==id));
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x=>x.id===id);
+  if(t && leafletMap) leafletMap.setView([t.lat,t.lng],16,{animate:true});
+}
+
+function renderMapList(list) {
+  const c = document.getElementById('map-list-container');
+  if(!list.length) {
+    c.innerHTML = `<div class="osm-loading"><div class="search-spinner"></div>Lade Platten von OpenStreetMap…</div>`;
+    return;
+  }
+  c.innerHTML = list.map(t=>`
+    <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
+      <div class="map-list-icon">${t.icon}</div>
+      <div class="map-list-info">
+        <div class="map-list-name">${t.name}</div>
+        <div class="map-list-sub">${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
+        ${t.distance!=null?`<div class="map-dist">📍 ${formatDistance(t.distance)} entfernt</div>`:''}
+        ${t.osmId?`<span class="osm-badge" style="margin-top:3px;display:inline-flex;">🗺 OpenStreetMap</span>`:''}
+        ${t.events?.length?`<div class="map-list-ev">📅 ${t.events.length} Event${t.events.length>1?'s':''} geplant</div>`:''}
+      </div>
+      <div class="map-list-chevron">›</div>
+    </div>
+  `).join('');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           TABLE DETAIL                                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+let currentDetailTableId = null;
+
+function showTableDetail(id) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x=>x.id===id);
+  if(!t) return;
+  currentDetailTableId = id;
+  document.getElementById('tds-title').textContent = t.icon+' '+t.name;
+
+  // Fotos (OSM-Foto oder Emoji-Fallback)
+  const photos = t.photos && t.photos.length ? t.photos : [];
+  const sliderHtml = buildPhotoSlider(t, photos);
+
+  // Distanz
+  const distHtml = t.distance != null
+    ? `<span class="distance-badge">📍 ${formatDistance(t.distance)} entfernt</span>` : '';
+
+  // OSM Badge
+  const osmHtml = t.osmId
+    ? `<span class="osm-badge">🗺 OpenStreetMap</span>` : '';
+
+  // Zusatz-Infos aus OSM
+  const extraInfos = [];
+  if(t.surface)   extraInfos.push(`🏔 Belag: ${t.surface}`);
+  if(t.operator)  extraInfos.push(`🏢 Betreiber: ${t.operator}`);
+  if(t.access)    extraInfos.push(`🔓 Zugang: ${t.access}`);
+  const extraHtml = extraInfos.length
+    ? `<div style="padding:8px 20px;display:flex;flex-wrap:wrap;gap:8px;">
+        ${extraInfos.map(i=>`<span style="font-size:0.75rem;color:var(--text-dim);">${i}</span>`).join('')}
+       </div>` : '';
+
+  // Events
+  const evArr = t.events || [];
+  const evHtml = evArr.length===0
+    ? `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:0.85rem;">
+        Noch keine Events –<br>Sei der Erste! 🏓<br><br>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Event erstellen</button>
+       </div>`
+    : evArr.map(e=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
+        <div class="ev-date-box"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
+          <div style="font-size:0.74rem;color:var(--text-dim);">⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
+        </div>
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</span>
+        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Dabei</button>
+      </div>`).join('');
+
+  document.getElementById('tds-body').innerHTML = `
+    ${sliderHtml}
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+        <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
+        ${distHtml} ${osmHtml}
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-dim);">📍 ${t.addr||'Schweinfurt'}</div>
+    </div>
+    ${extraHtml}
+    <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm btn-full" onclick="openComments(${t.id})">💬 Kommentare</button>
+      <button class="btn btn-secondary btn-sm btn-full" onclick="openMapsDirections(${t.lat},${t.lng})">🗺 Route</button>
+    </div>
+    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">📅 Events</div>
+    ${evHtml}
+    <div style="padding:14px 20px;">
+      <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();
+        document.getElementById('ev-table').value='${t.id}';
+        openSheet('create-event-sheet')">+ Event hier erstellen</button>
+    </div>`;
+
+  openSheet('table-detail-sheet');
+}
+
+function buildPhotoSlider(t, photos) {
+  if(!photos.length) {
+    return `<div class="photo-slider">
+      <div class="photo-slider-inner">
+        <div class="photo-slide" style="font-size:5rem;">${t.icon}</div>
+      </div>
+    </div>`;
+  }
+  const slides = photos.map(p=>
+    `<div class="photo-slide"><img src="${p}" onerror="this.parentElement.innerHTML='${t.icon}'" loading="lazy"></div>`
+  ).join('');
+  const dots = photos.length > 1
+    ? `<div class="photo-dots">${photos.map((_,i)=>`<div class="photo-dot ${i===0?'active':''}"></div>`).join('')}</div>` : '';
+  const navBtns = photos.length > 1
+    ? `<button class="photo-nav prev" onclick="slidePhoto(-1,this)">‹</button>
+       <button class="photo-nav next" onclick="slidePhoto(1,this)">›</button>
+       <div class="photo-counter">1/${photos.length}</div>` : '';
+  return `<div class="photo-slider" data-idx="0">
+    <div class="photo-slider-inner" id="photo-inner">${slides}</div>
+    ${navBtns} ${dots}
   </div>`;
 }
 
-function showTableDetail(tableId) {
-  const t = tables.find(x => x.id === tableId);
-  const evHtml = t.events.length === 0
-    ? `<div style="color:var(--text-dim);font-size:0.85rem;padding:1rem;text-align:center;">Noch keine Events – sei der Erste!</div>`
-    : t.events.map(e => `
-      <div class="event-card">
-        <div class="event-date-box">
-          <div class="event-day">${e.date}</div>
-          <div class="event-month">${e.month}</div>
-        </div>
-        <div class="event-info">
-          <div class="event-name">${e.name}</div>
-          <div class="event-meta">⏰ ${e.time} Uhr · 👥 ${e.participants}/${e.max} Teilnehmer</div>
-        </div>
-        <div class="event-type-badge">
-          <span class="badge ${e.type === 'casual' ? 'badge-outdoor' : e.type === 'ranked' ? 'badge-event' : 'badge-indoor'}">${e.type === 'casual' ? 'CASUAL' : e.type === 'ranked' ? 'RANKED' : 'TURNIER'}</span>
-        </div>
-        <button onclick="joinEvent(this)" class="btn btn-ghost btn-small" style="margin-left:8px;">Teilnehmen</button>
-      </div>
-    `).join('');
-
-  document.getElementById('table-detail-content').innerHTML = `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.5rem;">
-      <div class="modal-title" style="margin-bottom:0;">${t.name}</div>
-      <button onclick="closeModal('table-detail-modal')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.5rem;">✕</button>
-    </div>
-    <div class="table-detail-img">${t.icon}</div>
-    <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
-      <span class="badge ${t.type === 'indoor' ? 'badge-indoor' : 'badge-outdoor'}">${t.type === 'indoor' ? '🏢 Indoor' : '🌳 Outdoor'}</span>
-      <span style="font-size:0.82rem;color:var(--text-dim);">📍 ${t.address}</span>
-    </div>
-    <p style="color:var(--text-dim);font-size:0.88rem;line-height:1.6;">${t.desc}</p>
-    <div class="events-list">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h3>📅 EVENTS AN DIESER PLATTE</h3>
-        <button class="btn btn-accent btn-small" onclick="closeModal('table-detail-modal');openCreateEventForTable(${t.id})">+ Event erstellen</button>
-      </div>
-      ${evHtml}
-    </div>
-  `;
-  openModal('table-detail-modal');
+function slidePhoto(dir, btn) {
+  const slider = btn.closest('.photo-slider');
+  const inner  = slider.querySelector('.photo-slider-inner');
+  const slides = slider.querySelectorAll('.photo-slide');
+  const dots   = slider.querySelectorAll('.photo-dot');
+  const counter = slider.querySelector('.photo-counter');
+  let idx = parseInt(slider.dataset.idx || 0) + dir;
+  if(idx < 0) idx = slides.length-1;
+  if(idx >= slides.length) idx = 0;
+  slider.dataset.idx = idx;
+  inner.style.transform = `translateX(-${idx*100}%)`;
+  dots.forEach((d,i) => d.classList.toggle('active', i===idx));
+  if(counter) counter.textContent = `${idx+1}/${slides.length}`;
 }
 
-function joinEvent(btn) {
-  btn.textContent = '✅ Dabei!';
-  btn.disabled = true;
-  btn.style.color = 'var(--green)';
-  showNotif('🏓', 'Du nimmst am Event teil!');
+function openMapsDirections(lat, lng) {
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+  window.open(url, '_blank');
 }
 
-function openCreateEventForTable(tableId) {
-  const sel = document.getElementById('event-table-select');
-  if (sel) sel.value = tableId;
-  openModal('create-event-modal');
-}
-
-function openCreateEventModal() { openModal('create-event-modal'); }
-
-function createEvent() {
-  closeModal('create-event-modal');
-  showNotif('🎉', 'Event erstellt! Andere können jetzt teilnehmen.');
-}
-
-// Table list sidebar
-function renderTableList(list) {
-  const container = document.getElementById('table-list');
-  container.innerHTML = list.map(t => `
-    <div class="table-card" id="tcard-${t.id}" onclick="selectTable(${t.id})">
-      <div class="table-card-header">
-        <div class="table-name">${t.icon} ${t.name}</div>
-        <span class="badge ${t.type === 'indoor' ? 'badge-indoor' : 'badge-outdoor'}">${t.type === 'indoor' ? 'INDOOR' : 'OUTDOOR'}</span>
-      </div>
-      <div class="table-meta">📍 ${t.address}</div>
-      ${t.events.length > 0 ? `<div class="table-events">📅 ${t.events.length} Event${t.events.length > 1 ? 's' : ''} geplant</div>` : ''}
-    </div>
-  `).join('');
-
-  // Fill select menus
-  ['event-table-select', 'match-table-select'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = tables.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  });
-}
-
-function selectTable(id) {
-  selectedTableId = id;
-  const t = tables.find(x => x.id === id);
-  document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('tcard-' + id).classList.add('selected');
-  const m = markers.find(x => x.id === id);
-  if (m) { leafletMap.setView([t.lat, t.lng], 16, { animate: true }); m.marker.openPopup(); }
-}
-
-function filterTables() {
-  const q = document.getElementById('table-search').value.toLowerCase();
-  const filtered = tables.filter(t => t.name.toLowerCase().includes(q) || t.address.toLowerCase().includes(q));
-  renderTableList(filtered);
-}
-
-// ===== EVENTS PAGE =====
-let currentEventFilter = 'all';
-
-function renderEvents(filter = 'all') {
-  const allEvents = [];
-  tables.forEach(t => t.events.forEach(e => allEvents.push({ ...e, tableName: t.name, tableId: t.id })));
-
-  const filtered = filter === 'all' ? allEvents : allEvents.filter(e => e.type === filter);
-
-  const grid = document.getElementById('events-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div style="color:var(--text-dim);font-size:0.9rem;grid-column:1/-1;text-align:center;padding:3rem;">Keine Events gefunden.</div>`;
+async function joinEvent(eventId, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  // Fallback-Events: kein DB-Eintrag nötig
+  const isFallback = eventId >= 101;
+  if(isFallback || !sb.isLoggedIn()) {
+    setTimeout(()=>{
+      btn.textContent='✅'; btn.style.background='var(--green)';
+      showToast('🏓 Du nimmst am Event teil!');
+    }, 400);
     return;
   }
+  const qb = new QueryBuilder('event_participants');
+  const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
+  if(error && error.code === '23505') {
+    showToast('Du nimmst bereits teil','ℹ️');
+    btn.textContent='✅'; btn.style.background='var(--green)';
+  } else if(error) {
+    showToast('Fehler beim Beitreten','❌');
+    btn.disabled=false; btn.textContent='Dabei';
+  } else {
+    btn.textContent='✅'; btn.style.background='var(--green)';
+    showToast('🏓 Du nimmst am Event teil!');
+    await loadEvents();
+  }
+}
 
-  grid.innerHTML = filtered.map(e => `
-    <div class="event-big-card fade-in-up">
-      <div class="event-card-header">
-        <div>
-          <div class="event-big-title">${e.name}</div>
-          <div class="event-big-location">📍 ${e.tableName}</div>
-        </div>
-        <div class="event-big-date">
-          <div class="event-big-day">${e.date}</div>
-          <div class="event-big-month">${e.month}</div>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           EVENTS                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderEvents(filter='all') {
+  // Fallback-Events verwenden wenn Supabase noch keine hat
+  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const list = filter==='all' ? src : src.filter(e=>e.type===filter);
+  const c = document.getElementById('events-list');
+  if(!list.length) {
+    c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
+      Keine Events in dieser Kategorie.
+    </div>`; return;
+  }
+  c.innerHTML = list.map(e=>`
+    <div class="event-card-big fade-up">
+      <div class="ecb-top">
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier'}</span>
+        <div class="ecb-date-box">
+          <div class="ecb-day">${e.day}</div>
+          <div class="ecb-mon">${e.mon}</div>
         </div>
       </div>
-      <div class="event-card-body">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.75rem;">
-          <span class="badge ${e.type === 'casual' ? 'badge-outdoor' : e.type === 'ranked' ? 'badge-event' : 'badge-indoor'}">${e.type === 'casual' ? '🎮 CASUAL' : e.type === 'ranked' ? '⚔️ RANKED' : '🏆 TURNIER'}</span>
-          <span style="font-size:0.78rem;color:var(--text-dim);">⏰ ${e.time} Uhr</span>
-        </div>
-        <div class="event-big-desc">${e.type === 'ranked' ? 'Offizielles Ranked Match – Ergebnisse zählen für die Rangliste.' : e.type === 'turnier' ? 'Kleines Turnier mit K.O.-Runden. Kommt frühzeitig!' : 'Entspannte Runde für alle Levels – kein Druck, einfach Spaß!'}</div>
+      <div class="ecb-body">
+        <div class="ecb-title">${e.name}</div>
+        <div class="ecb-location">📍 ${e.tname} · ⏰ ${e.time} Uhr · von ${e.creator}</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">${
+          e.type==='ranked'?'Offizielles Match – zählt für die ELO-Rangliste.':
+          e.type==='turnier'?'K.O.-Runden mit Siegerehrung!':
+          'Entspannte Runde für alle Level – einfach Spaß!'}</div>
       </div>
-      <div class="event-card-footer">
-        <div class="participants">👥 <span>${e.participants}</span>/${e.max} Teilnehmer</div>
-        <button class="btn btn-primary btn-small" onclick="this.textContent='✅ Angemeldet';this.disabled=true;showNotif('🏓','Du nimmst teil!')">Teilnehmen</button>
+      <div class="ecb-footer">
+        <div class="ecb-participants">👥 <b>${e.p}</b>/${e.max} Teilnehmer</div>
+        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Teilnehmen</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function filterEvents(type, btn) {
-  currentEventFilter = type;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  currentFilter = type;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderEvents(type);
 }
 
-// ===== LEADERBOARD =====
+async function submitCreateEvent() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const title   = document.getElementById('ev-name').value.trim();
+  const tableId = document.getElementById('ev-table').value;
+  const date    = document.getElementById('ev-date').value;
+  const time    = document.getElementById('ev-time').value;
+  const mode    = document.getElementById('ev-mode').value;
+  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
+
+  const qb = new QueryBuilder('events');
+  const {error} = await qb.insert({
+    title, table_id: parseInt(tableId),
+    creator_id: sb.getUserId(),
+    event_date: date, event_time: time, mode
+  });
+  if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+  closeAllSheets();
+  showToast('🎉 Event erstellt!','🎉');
+  await loadEvents();
+  renderEvents(currentFilter);
+  renderHome();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           RANGLISTE                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+function getLeague(elo) {
+  if(elo >= 800) return {name:'🥇 Gold', cls:'g'};
+  if(elo >= 400) return {name:'🥈 Silber', cls:'s'};
+  return {name:'🥉 Bronze', cls:'b'};
+}
+
 function renderLeaderboard() {
-  const sorted = [...players].sort((a, b) => b.elo - a.elo);
-  const container = document.getElementById('leaderboard');
-  container.innerHTML = sorted.map((p, i) => {
-    const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-    const rankNum = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
-    const numClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-    const leagueName = p.league === 'gold' ? '🥇 Gold' : p.league === 'silver' ? '🥈 Silber' : '🥉 Bronze';
-    const wr = Math.round(p.wins / (p.wins + p.losses) * 100);
-    return `
-      <div class="leaderboard-row ${rankClass}">
-        <div class="rank-num ${numClass}">${rankNum}</div>
-        <div class="player-info">
-          <div class="player-avatar">${p.avatar}</div>
-          <div>
-            <div class="player-name">${p.name}</div>
-            <div class="player-league">${leagueName}</div>
-          </div>
-        </div>
-        <div class="player-elo">${p.elo} ELO</div>
-        <div class="wl-ratio">
-          <span class="wl-win">${p.wins}W</span> / <span class="wl-loss">${p.losses}L</span><br>
-          <span style="font-size:0.75rem;">${wr}% WR</span>
-        </div>
+  const myId = sb.getUserId();
+  const src = allPlayers.length ? allPlayers : [];
+  if(!src.length) {
+    document.getElementById('leaderboard-list').innerHTML =
+      `<div style="text-align:center;padding:32px;color:var(--text-dim);">Rangliste wird geladen…</div>`;
+    return;
+  }
+  const c = document.getElementById('leaderboard-list');
+  c.innerHTML = src.map((p,i)=>{
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const cls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const rcls = i===0?'g':i===1?'s':i===2?'b':'';
+    const league = getLeague(p.elo);
+    const total = (p.wins||0)+(p.losses||0);
+    const wr = total ? Math.round((p.wins||0)/total*100) : 0;
+    const isMe = p.id === myId;
+    return `<div class="lb-row ${cls} ${isMe?'me':''}">
+      <div class="lb-rank ${rcls}">${medal}</div>
+      <div class="lb-avatar">${p.avatar_emoji||'🏓'}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.username||'Spieler'}${isMe?' <span style="font-size:0.7rem;color:var(--primary);font-weight:700;">(Du)</span>':''}</div>
+        <div class="lb-tier">${league.name}</div>
       </div>
-    `;
+      <div style="text-align:right;">
+        <div class="lb-elo">${p.elo} <span style="font-size:0.7rem;color:var(--text-dim);">ELO</span></div>
+        <div class="lb-wr">${p.wins||0}W / ${p.losses||0}L · ${wr}%</div>
+      </div>
+    </div>`;
   }).join('');
-}
 
-// ===== MATCH HISTORY =====
-function renderMatchHistory() {
-  const container = document.getElementById('match-history');
-  container.innerHTML = matchHistory.map(m => `
-    <div class="match-item">
-      <div class="match-result ${m.result}">${m.result === 'win' ? 'W' : 'L'}</div>
-      <div class="match-opponent">
-        <div style="font-size:0.85rem;font-weight:600;">vs. ${m.opponent}</div>
-        <div style="font-size:0.75rem;color:var(--text-dim);">Sätze: ${m.sets}</div>
-      </div>
-      <div>
-        <div class="match-elo-change ${m.eloChange > 0 ? 'pos' : 'neg'}">${m.eloChange > 0 ? '+' : ''}${m.eloChange} ELO</div>
-        <div class="match-date">${m.date}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== SKILL SELECTOR =====
-function selectSkill(el, key) {
-  document.querySelectorAll('.skill-option').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  showNotif('✅', 'Spielniveau aktualisiert!');
-}
-
-// ===== HERO ANIMATION =====
-function initHeroPing() {
-  const container = document.getElementById('hero-ping');
-  for (let i = 0; i < 12; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'ping-dot';
-    const x = Math.random() * 100;
-    const y = Math.random() * 100;
-    const dx = (Math.random() - 0.5) * 600;
-    const dy = (Math.random() - 0.5) * 400;
-    dot.style.cssText = `left:${x}%;top:${y}%;--dx:${dx}px;--dy:${dy}px;animation-delay:${i*0.65}s;animation-duration:${6+Math.random()*4}s;${i%3===0?'background:#ff4d6d':''}`;
-    container.appendChild(dot);
+  // Mein Rank-Card aktualisieren falls eingeloggt
+  if(currentUser) {
+    const myRank = src.findIndex(p=>p.id===myId)+1;
+    const league = getLeague(currentUser.elo||200);
+    document.querySelector('.myrank-name').textContent = currentUser.username;
+    document.querySelector('.myrank-elo').textContent  = currentUser.elo || 200;
+    document.querySelector('.myrank-tier').textContent = `${league.name} · Platz ${myRank||'?'}`;
+    // Progress bar Silber: 400-800, hier 400 offset
+    const elo = currentUser.elo || 200;
+    const pct = elo < 400 ? (elo/400*100)
+               : elo < 800 ? ((elo-400)/400*100) : 100;
+    document.querySelector('.rp-fill').style.width = Math.min(pct,100)+'%';
+    // Liga-Label
+    if(elo<400) { document.querySelector('.rp-labels span:first-child').textContent='Bronze · 0 ELO';
+                  document.querySelector('.rp-labels span:last-child').textContent='Silber ab 400 ELO'; }
+    else if(elo<800) { document.querySelector('.rp-labels span:first-child').textContent=`Silber · ${elo} ELO`;
+                       document.querySelector('.rp-labels span:last-child').textContent='Gold ab 800 ELO'; }
+    else { document.querySelector('.rp-labels span:first-child').textContent=`Gold · ${elo} ELO`;
+           document.querySelector('.rp-labels span:last-child').textContent='🏆 Höchste Liga!'; }
   }
 }
 
-// ===== COUNTER ANIMATION =====
-function animateCounter(el, target) {
-  let current = 0;
-  const step = Math.ceil(target / 40);
-  const timer = setInterval(() => {
-    current = Math.min(current + step, target);
-    el.textContent = current;
-    if (current >= target) clearInterval(timer);
-  }, 30);
+// ── KOMMENTARE ────────────────────────────────────────────────────
+async function openComments(tableId) {
+  currentDetailTableId = tableId;
+  document.getElementById('comment-sheet-title').textContent = '💬 Kommentare';
+  const listEl = document.getElementById('comment-list');
+  listEl.innerHTML = `<div class="osm-loading"><div class="search-spinner"></div>Lade Kommentare…</div>`;
+  openSheet('comment-sheet');
+
+  try {
+    const qb = new QueryBuilder('comments');
+    qb._select = 'id,text,created_at,profiles(username,avatar_emoji)';
+    qb.eq('table_id', tableId).order('created_at', true);
+    const {data} = await qb.execute();
+    renderComments(data || []);
+  } catch(e) {
+    renderComments([]);
+  }
 }
 
-// ===== INIT =====
-window.addEventListener('load', () => {
-  initHeroPing();
-  renderLeaderboard();
-  renderMatchHistory();
-  renderEvents('all');
+function renderComments(comments) {
+  const el = document.getElementById('comment-list');
+  if(!comments.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
+      Noch keine Kommentare.<br>Sei der Erste! 💬</div>`;
+    return;
+  }
+  el.innerHTML = comments.map(c => {
+    const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+    return `<div class="comment-item">
+      <div class="comment-header">
+        <div class="comment-avatar">${c.profiles?.avatar_emoji||'🏓'}</div>
+        <div class="comment-author">${c.profiles?.username||'Anonym'}</div>
+        <div class="comment-date">${date}</div>
+      </div>
+      <div class="comment-text">${c.text}</div>
+    </div>`;
+  }).join('');
+}
 
-  setTimeout(() => {
-    animateCounter(document.getElementById('stat-tables'), 9);
-    animateCounter(document.getElementById('stat-events'), 14);
-    animateCounter(document.getElementById('stat-players'), 83);
-  }, 300);
+async function submitComment() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const text = document.getElementById('new-comment').value.trim();
+  if(!text) { showToast('Bitte Text eingeben','⚠️'); return; }
+  const qb = new QueryBuilder('comments');
+  const {error} = await qb.insert({
+    table_id: currentDetailTableId,
+    user_id: sb.getUserId(),
+    text
+  });
+  if(error) { showToast('Fehler beim Senden','❌'); return; }
+  document.getElementById('new-comment').value = '';
+  showToast('💬 Kommentar gesendet!');
+  openComments(currentDetailTableId);
+}
+
+async function submitMatch() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const opponentSel = document.querySelector('#report-match-sheet select');
+  const resultSel   = document.querySelectorAll('#report-match-sheet select')[1];
+  const scoreInput  = document.querySelector('#report-match-sheet input[placeholder="3:1"]');
+  const tableSel    = document.getElementById('match-table-sel');
+
+  const scores = scoreInput.value.split(':').map(Number);
+  const isWin  = resultSel.value === 'win';
+  const myId   = sb.getUserId();
+
+  // Für jetzt: Wir brauchen eine richtige Spieler-Suche – erstmal als Demo-Flow
+  const qb = new QueryBuilder('matches');
+  const {error} = await qb.insert({
+    winner_id:    isWin ? myId : null,
+    loser_id:     isWin ? null : myId,
+    reported_by:  myId,
+    score_winner: scores[0]||0,
+    score_loser:  scores[1]||0,
+    table_id:     parseInt(tableSel.value)||1,
+    elo_change:   15,
+    confirmed:    false
+  });
+  closeAllSheets();
+  if(error) { showToast('Fehler beim Eintragen','❌'); return; }
+  showToast('🎮 Match eingereicht – warte auf Bestätigung!','🎮');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           PROFIL                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderProfile() {
+  if(!currentUser) return;
+  const league = getLeague(currentUser.elo||200);
+  const total  = (currentUser.wins||0)+(currentUser.losses||0);
+  const wr     = total ? Math.round((currentUser.wins||0)/total*100) : 0;
+  // Avatar & Name oben
+  document.querySelector('.profile-avatar').textContent    = currentUser.avatar_emoji||'😎';
+  document.querySelector('.profile-name').textContent      = currentUser.username||'Spieler';
+  document.querySelector('.profile-rank-pill').textContent = `${league.name} · ${currentUser.elo||200} ELO`;
+  // Stats
+  document.querySelectorAll('.pstat-val')[0].textContent = currentUser.wins||0;
+  document.querySelectorAll('.pstat-val')[1].textContent = currentUser.losses||0;
+  document.querySelectorAll('.pstat-val')[2].textContent = total;
+  document.querySelectorAll('.pstat-val')[3].textContent = wr+'%';
+  // Skill level
+  const skill = currentUser.skill_level || 'anfaenger';
+  document.querySelectorAll('.skill-opt').forEach((el,i)=>{
+    const vals=['anfaenger','fortgeschritten','profi'];
+    el.classList.toggle('active', vals[i]===skill);
+  });
+  // Match History
+  renderMatchHistory();
+  // Sign-out button
+  document.querySelector('#profile-signout-btn') &&
+    (document.querySelector('#profile-signout-btn').onclick = doSignOut);
+}
+
+function renderMatchHistory() {
+  const c = document.getElementById('profile-match-history');
+  if(!myMatches.length) {
+    c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
+      Noch keine Ranked Matches gespielt.</div>`;
+    return;
+  }
+  c.innerHTML = myMatches.map(m=>`
+    <div class="match-row">
+      <div class="match-res ${m.res}">${m.res==='win'?'W':'L'}</div>
+      <div style="flex:1;">
+        <div class="match-opp">vs. ${m.opp||'?'}</div>
+        <div class="match-sets">Sätze: ${m.sets}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="match-elo ${m.elo>0?'pos':'neg'}">${m.elo>0?'+':''}${m.elo} ELO</div>
+        <div class="match-date">${m.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function selectSkill(el) {
+  const vals=['anfaenger','fortgeschritten','profi'];
+  document.querySelectorAll('.skill-opt').forEach((o,i)=>{
+    o.classList.toggle('active', o===el);
+  });
+  const skill = vals[Array.from(document.querySelectorAll('.skill-opt')).indexOf(el)];
+  if(sb.isLoggedIn() && skill) {
+    const qb = new QueryBuilder('profiles');
+    await qb.eq('id', sb.getUserId()).update({ skill_level: skill });
+    if(currentUser) currentUser.skill_level = skill;
+  }
+  showToast('✅ Spielniveau gespeichert!');
+}
+
+async function saveProfile() {
+  if(!sb.isLoggedIn()) return;
+  const name   = document.getElementById('edit-name').value.trim();
+  const city   = document.getElementById('edit-city').value.trim();
+  const bio    = document.getElementById('edit-bio').value.trim();
+  const qb = new QueryBuilder('profiles');
+  const {error} = await qb.eq('id', sb.getUserId()).update({
+    username: name||currentUser.username,
+    city: city||currentUser.city
+  });
+  if(error) { showToast('Fehler beim Speichern','❌'); return; }
+  if(currentUser) { currentUser.username=name||currentUser.username; currentUser.city=city||currentUser.city; }
+  closeAllSheets();
+  showToast('✅ Profil gespeichert!');
+  renderProfile();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           HILFSFUNKTIONEN                                    ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ── SEARCH AUTOCOMPLETE ──────────────────────────────────────────────
+let searchTimer = null;
+let dropdownItems = [];
+let activeIdx = -1;
+
+function onSearchInput() {
+  const q = document.getElementById('home-search').value.trim();
+  clearTimeout(searchTimer);
+  activeIdx = -1;
+  if(q.length < 2) { closeDropdown(); return; }
+  showDropdownLoading();
+  // Debounce: 350ms nach letztem Tastendruck
+  searchTimer = setTimeout(() => runSearch(q), 350);
+}
+
+async function runSearch(q) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+
+  // 1. Lokale Platten sofort matchen
+  const localMatches = src.filter(t =>
+    t.name.toLowerCase().includes(q.toLowerCase()) ||
+    (t.addr||'').toLowerCase().includes(q.toLowerCase())
+  );
+
+  // 2. Nominatim (OSM Geocoding) für Orte/Adressen
+  let geoResults = [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(q + ' Schweinfurt')}&format=json&limit=4` +
+      `&addressdetails=1&countrycodes=de&accept-language=de`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+    const data = await res.json();
+    geoResults = data.slice(0,4);
+  } catch(e) { /* Offline oder Rate-limit */ }
+
+  renderDropdown(q, localMatches, geoResults);
+}
+
+function highlight(text, q) {
+  if(!q) return text;
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function renderDropdown(q, localMatches, geoResults) {
+  const dd = document.getElementById('search-dropdown');
+  dropdownItems = [];
+  let html = '';
+
+  // Lokale Platten
+  if(localMatches.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      🏓 Tischtennisplatten</div>`;
+    localMatches.slice(0,3).forEach(t => {
+      const idx = dropdownItems.length;
+      dropdownItems.push({ type:'table', data:t });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="selectDropdownItem(${idx})"
+        onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
+        id="sdi-${idx}">
+        <div class="sdi-icon table">${t.icon}</div>
+        <div>
+          <div class="sdi-main">${highlight(t.name, q)}</div>
+          <div class="sdi-sub">📍 ${t.addr||''} · ${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // OSM Geo-Ergebnisse
+  if(geoResults.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      📍 Orte & Adressen</div>`;
+    geoResults.forEach(r => {
+      const idx = dropdownItems.length;
+      const name = r.name || r.display_name.split(',')[0];
+      const sub  = r.display_name.split(',').slice(1,3).join(',').trim();
+      dropdownItems.push({ type:'geo', data:r });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="selectDropdownItem(${idx})"
+        onkeydown="if(event.key==='Enter')selectDropdownItem(${idx})"
+        id="sdi-${idx}">
+        <div class="sdi-icon place">📍</div>
+        <div>
+          <div class="sdi-main">${highlight(name, q)}</div>
+          <div class="sdi-sub">${sub}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if(!html) {
+    html = `<div class="search-empty">Keine Ergebnisse für „${q}"</div>`;
+  }
+
+  dd.innerHTML = html;
+  openDropdown();
+}
+
+function showDropdownLoading() {
+  const dd = document.getElementById('search-dropdown');
+  dd.innerHTML = `<div class="search-loading">
+    <div class="search-spinner"></div> Suche läuft…
+  </div>`;
+  openDropdown();
+}
+
+function openDropdown() {
+  const input = document.getElementById('home-search');
+  const dd    = document.getElementById('search-dropdown');
+  const rect  = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 6) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  dd.classList.add('open');
+}
+
+function closeDropdown() {
+  document.getElementById('search-dropdown').classList.remove('open');
+  activeIdx = -1;
+}
+
+function selectDropdownItem(idx) {
+  const item = dropdownItems[idx];
+  if(!item) return;
+  closeDropdown();
+
+  if(item.type === 'table') {
+    // Direkt zur Platte navigieren
+    const t = item.data;
+    document.getElementById('home-search').value = t.name;
+    showPage('map');
+    setTimeout(() => {
+      selectMapItem(t.id);
+      showTableDetail(t.id);
+    }, 100);
+
+  } else if(item.type === 'geo') {
+    // Auf der Karte zu Koordinaten zoomen
+    const lat = parseFloat(item.data.lat);
+    const lng = parseFloat(item.data.lon);
+    const name = item.data.name || item.data.display_name.split(',')[0];
+    document.getElementById('home-search').value = name;
+    showPage('map');
+    setTimeout(() => {
+      if(leafletMap) leafletMap.setView([lat, lng], 15, { animate: true });
+    }, 100);
+  }
+}
+
+// Tastaturnavigation im Dropdown (↑ ↓ Enter Escape)
+function onSearchKey(e) {
+  const items = document.querySelectorAll('.search-dropdown-item');
+  if(!items.length) return;
+  if(e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeIdx = Math.min(activeIdx + 1, items.length - 1);
+    items[activeIdx]?.focus();
+  } else if(e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeIdx = Math.max(activeIdx - 1, -1);
+    if(activeIdx === -1) document.getElementById('home-search').focus();
+    else items[activeIdx]?.focus();
+  } else if(e.key === 'Escape') {
+    closeDropdown();
+    document.getElementById('home-search').blur();
+  }
+}
+
+// Dropdown schließen wenn man woanders klickt
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('search-wrapper');
+  const dd = document.getElementById('search-dropdown');
+  if(!wrapper?.contains(e.target) && !dd?.contains(e.target)) {
+    closeDropdown();
+  }
+});
+
+// Dropdown-Position bei Scroll/Resize aktualisieren
+function repositionDropdown() {
+  const dd = document.getElementById('search-dropdown');
+  if(!dd?.classList.contains('open')) return;
+  const input = document.getElementById('home-search');
+  if(!input) return;
+  const rect = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 6) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+}
+window.addEventListener('scroll', repositionDropdown, true);
+window.addEventListener('resize', repositionDropdown);
+
+
+function animateCount(el, target) {
+  if(!el) return;
+  let n=0; const step=Math.max(1,Math.ceil(target/30));
+  const t=setInterval(()=>{ n=Math.min(n+step,target); el.textContent=n; if(n>=target)clearInterval(t); },40);
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           FALLBACK-DATEN (falls Supabase noch leer)          ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FALLBACK_TABLES = [
+  {id:1,name:"Stadtpark",addr:"Stadtpark Schweinfurt",lat:50.0497,lng:10.2322,type:"outdoor",icon:"🌳",events:[]},
+  {id:2,name:"Obere Marktstraße",addr:"Obere Marktstraße, SW",lat:50.0521,lng:10.2352,type:"outdoor",icon:"🏙️",events:[]},
+  {id:3,name:"TTC Halle Bellevue",addr:"Turnhalle Bellevue, SW",lat:50.0448,lng:10.2280,type:"indoor",icon:"🏢",events:[]},
+  {id:4,name:"Schillerplatz",addr:"Schillerplatz, SW",lat:50.0535,lng:10.2398,type:"outdoor",icon:"🌆",events:[]},
+  {id:5,name:"Willy-Sachs-Stadion",addr:"Stadionring, SW",lat:50.0418,lng:10.2265,type:"outdoor",icon:"⚽",events:[]},
+  {id:6,name:"Jugendtreff Haardt",addr:"Haardt, SW",lat:50.0575,lng:10.2420,type:"indoor",icon:"🎮",events:[]},
+  {id:7,name:"Bürgerpark Ost",addr:"Bürgerpark, SW-Ost",lat:50.0460,lng:10.2450,type:"outdoor",icon:"🌿",events:[]},
+  {id:8,name:"Sportanlage Oberndorf",addr:"Sportanlage Oberndorf",lat:50.0380,lng:10.2180,type:"outdoor",icon:"🏅",events:[]},
+  {id:9,name:"Mainkai",addr:"Mainkai, SW",lat:50.0500,lng:10.2200,type:"outdoor",icon:"🌊",events:[]}
+];
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           FALLBACK-EVENTS (solange DB leer ist)              ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FALLBACK_EVENTS = [
+  {id:101,name:"Casual Runde für alle",day:"03",mon:"JUL",time:"15:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"michaeltroster",p:3,max:6},
+  {id:102,name:"Ranked 1v1 Challenge",day:"04",mon:"JUL",time:"16:00",type:"ranked",tname:"Obere Marktstraße",ticon:"🏙️",tid:2,creator:"michaeltroster",p:2,max:2},
+  {id:103,name:"Mini-Turnier Bronze",day:"11",mon:"JUL",time:"13:00",type:"turnier",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"michaeltroster",p:8,max:16},
+  {id:104,name:"Anfänger Willkommen",day:"10",mon:"JUL",time:"14:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"michaeltroster",p:1,max:8},
+  {id:105,name:"Ranked Night",day:"18",mon:"JUL",time:"19:00",type:"ranked",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"michaeltroster",p:4,max:6},
+  {id:106,name:"Sunset Ping Pong",day:"16",mon:"JUL",time:"18:30",type:"casual",tname:"Mainkai",ticon:"🌊",tid:9,creator:"michaeltroster",p:6,max:12},
+  {id:107,name:"Jugend Casual",day:"07",mon:"JUL",time:"16:00",type:"casual",tname:"Jugendtreff Haardt",ticon:"🎮",tid:6,creator:"michaeltroster",p:4,max:10},
+  {id:108,name:"Ranked Challenge",day:"09",mon:"JUL",time:"10:00",type:"ranked",tname:"Sportanlage Oberndorf",ticon:"🏅",tid:8,creator:"michaeltroster",p:2,max:2},
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           STARTUP                                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+window.addEventListener('load', async () => {
+  applyTheme();
+
+  // 1. Sofort Fallback zeigen damit App nicht leer wirkt
+  tables = FALLBACK_TABLES;
+  renderHome();
+  renderEvents('all');
+  renderLeaderboard();
+
+  // 2. Supabase-Daten laden (parallel)
+  try {
+    await Promise.all([loadTables(), loadEvents(), loadPlayers()]);
+    // Wenn eingeloggt: User-Daten laden
+    if(sb.isLoggedIn()) {
+      await loadCurrentUser();
+      await loadMyMatches();
+      updateTopBarForUser();
+    }
+    // UI mit echten Daten aktualisieren
+    renderHome();
+    renderEvents(currentFilter);
+    renderLeaderboard();
+    renderMatchHistory();
+    // Select-Optionen befüllen
+    const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+  } catch(e) {
+    console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
+  }
 });
 </script>
+
+<!-- KOMMENTAR SHEET -->
+<div class="bottom-sheet" id="comment-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="comment-sheet-title">💬 Kommentare</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div id="comment-list" style="max-height:300px;overflow-y:auto;"></div>
+  <div class="sheet-body" style="border-top:1px solid var(--border);padding-top:12px;">
+    <div class="form-group">
+      <textarea class="form-textarea" id="new-comment" placeholder="Dein Kommentar zu dieser Platte…" style="min-height:70px;"></textarea>
+    </div>
+    <button class="btn btn-primary btn-full btn-sm" onclick="submitComment()">Kommentar senden 💬</button>
+  </div>
+</div>
+
+<div class="search-dropdown" id="search-dropdown"></div>
 </body>
 </html>
