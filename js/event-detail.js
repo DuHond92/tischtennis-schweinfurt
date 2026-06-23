@@ -4,13 +4,58 @@
 let currentEventId = null;
 let chatPollTimer  = null;
 
+const EVENT_TEST_IMAGES = [
+  'images/events/event1.webp',
+  'images/events/event2.webp',
+  'images/events/event3.webp',
+];
+const EVENT_FALLBACK = 'images/placeholders/placeholder-plate.webp';
+
+function buildEventSlider(images) {
+  const imgs = (images && images.length) ? images : EVENT_TEST_IMAGES;
+
+  const slides = imgs.map((src, i) =>
+    `<div class="ds-slide" style="${i===0?'':'display:none'}">
+      <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
+    </div>`
+  ).join('');
+
+  const thumbs = imgs.map((src, i) =>
+    `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
+      <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'">
+    </div>`
+  ).join('');
+
+  const navHtml = imgs.length > 1 ? `
+    <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
+    <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+
+  return `
+    <div class="detail-slider" data-idx="0" data-count="${imgs.length}">
+      <div class="ds-main">
+        <div class="ds-slides-wrap">${slides}</div>
+        <button class="ds-close" onclick="closeAllSheets()">×</button>
+        ${imgs.length > 1 ? `<div class="ds-counter">1/${imgs.length}</div>` : ''}
+        ${navHtml}
+      </div>
+      <div class="ds-thumbs">
+        ${thumbs}
+        <div class="ds-thumb-add" onclick="document.getElementById('ev-file-input').click()">+</div>
+      </div>
+    </div>
+    <input type="file" id="ev-file-input" accept="image/*" style="display:none" onchange="handleDetailImageUpload(this)">`;
+}
+
 function showEventDetail(eventId) {
   const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const ev  = src.find(e => e.id === eventId);
   if(!ev) return;
   currentEventId = eventId;
 
-  // Header
+  // Bild-Slider
+  document.getElementById('eds-slider').innerHTML = buildEventSlider(ev.images || null);
+
+  // Titel
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill

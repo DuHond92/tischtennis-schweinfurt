@@ -306,10 +306,6 @@
 <!-- TABLE DETAIL SHEET -->
 <div class="bottom-sheet" id="table-detail-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-title" id="tds-title">Platte</div>
-    <span class="sheet-close" onclick="closeAllSheets()">×</span>
-  </div>
   <div id="tds-body"></div>
 </div>
 
@@ -649,12 +645,10 @@
 <!-- EVENT DETAIL SHEET -->
 <div class="bottom-sheet" id="event-detail-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-title" id="eds-title">Event</div>
-    <span class="sheet-close" onclick="closeAllSheets()">×</span>
-  </div>
+  <div id="eds-slider"></div>
   <!-- Info -->
   <div class="edi-header">
+    <div class="edi-name" id="eds-title">Event</div>
     <div id="eds-type-pill"></div>
     <div class="edi-meta" id="eds-meta"></div>
     <div class="edi-desc" id="eds-desc" style="display:none;"></div>

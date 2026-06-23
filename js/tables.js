@@ -8,9 +8,8 @@ function showTableDetail(id) {
   const t = src.find(x=>x.id===id);
   if(!t) return;
   currentDetailTableId = id;
-  document.getElementById('tds-title').textContent = t.icon+' '+t.name;
 
-  // Fotos (OSM-Foto oder Emoji-Fallback)
+  // Fotos (OSM-Foto oder Test-Fallback)
   const photos = t.photos && t.photos.length ? t.photos : [];
   const sliderHtml = buildPhotoSlider(t, photos);
 
@@ -52,12 +51,13 @@ function showTableDetail(id) {
 
   document.getElementById('tds-body').innerHTML = `
     ${sliderHtml}
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+    <div class="ds-info">
+      <div class="ds-name">${t.icon} ${t.name}</div>
+      <div class="ds-badges">
         <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
         ${distHtml} ${osmHtml}
       </div>
-      <div style="font-size:0.8rem;color:var(--text-dim);">📍 ${t.addr||'Schweinfurt'}</div>
+      <div class="ds-address">📍 ${t.addr||'Schweinfurt'}</div>
     </div>
     ${extraHtml}
     <!-- Rating Summary -->
@@ -100,42 +100,68 @@ function showTableDetail(id) {
   loadKingOfPlate(id);
 }
 
+const PLATE_TEST_IMAGES = [
+  'images/platten/celtis-gymnasium.jpg',
+  'images/placeholders/placeholder-plate.webp',
+];
+const PLATE_FALLBACK = 'images/placeholders/placeholder-plate.webp';
+
 function buildPhotoSlider(t, photos) {
-  if(!photos.length) {
-    return `<div class="photo-slider">
-      <div class="photo-slider-inner">
-        <div class="photo-slide" style="font-size:5rem;">${t.icon}</div>
-      </div>
-    </div>`;
-  }
-  const slides = photos.map(p=>
-    `<div class="photo-slide"><img src="${p}" onerror="this.parentElement.innerHTML='${t.icon}'" loading="lazy"></div>`
+  const imgs = (photos && photos.length) ? photos : PLATE_TEST_IMAGES;
+
+  const slides = imgs.map((src, i) =>
+    `<div class="ds-slide" style="${i===0?'':'display:none'}">
+      <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
+    </div>`
   ).join('');
-  const dots = photos.length > 1
-    ? `<div class="photo-dots">${photos.map((_,i)=>`<div class="photo-dot ${i===0?'active':''}"></div>`).join('')}</div>` : '';
-  const navBtns = photos.length > 1
-    ? `<button class="photo-nav prev" onclick="slidePhoto(-1,this)">‹</button>
-       <button class="photo-nav next" onclick="slidePhoto(1,this)">›</button>
-       <div class="photo-counter">1/${photos.length}</div>` : '';
-  return `<div class="photo-slider" data-idx="0">
-    <div class="photo-slider-inner" id="photo-inner">${slides}</div>
-    ${navBtns} ${dots}
-  </div>`;
+
+  const thumbs = imgs.map((src, i) =>
+    `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
+      <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'">
+    </div>`
+  ).join('');
+
+  const navHtml = imgs.length > 1 ? `
+    <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
+    <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+
+  return `
+    <div class="detail-slider" data-idx="0" data-count="${imgs.length}">
+      <div class="ds-main">
+        <div class="ds-slides-wrap">${slides}</div>
+        <button class="ds-close" onclick="closeAllSheets()">×</button>
+        ${imgs.length > 1 ? `<div class="ds-counter">1/${imgs.length}</div>` : ''}
+        ${navHtml}
+      </div>
+      <div class="ds-thumbs">
+        ${thumbs}
+        <div class="ds-thumb-add" onclick="document.getElementById('ds-file-input').click()">+</div>
+      </div>
+    </div>
+    <input type="file" id="ds-file-input" accept="image/*" style="display:none" onchange="handleDetailImageUpload(this)">`;
 }
 
-function slidePhoto(dir, btn) {
-  const slider = btn.closest('.photo-slider');
-  const inner  = slider.querySelector('.photo-slider-inner');
-  const slides = slider.querySelectorAll('.photo-slide');
-  const dots   = slider.querySelectorAll('.photo-dot');
-  const counter = slider.querySelector('.photo-counter');
-  let idx = parseInt(slider.dataset.idx || 0) + dir;
-  if(idx < 0) idx = slides.length-1;
-  if(idx >= slides.length) idx = 0;
+function detailSliderGo(slider, idx) {
+  const slides  = slider.querySelectorAll('.ds-slide');
+  const thumbs  = slider.querySelectorAll('.ds-thumb');
+  const counter = slider.querySelector('.ds-counter');
+  const count   = slides.length;
+  slides.forEach((s, i) => { s.style.display = i === idx ? '' : 'none'; });
+  thumbs.forEach((th, i) => th.classList.toggle('active', i === idx));
   slider.dataset.idx = idx;
-  inner.style.transform = `translateX(-${idx*100}%)`;
-  dots.forEach((d,i) => d.classList.toggle('active', i===idx));
-  if(counter) counter.textContent = `${idx+1}/${slides.length}`;
+  if(counter) counter.textContent = `${idx+1}/${count}`;
+}
+
+function detailSliderStep(slider, dir) {
+  const count = parseInt(slider.dataset.count || 1);
+  const idx   = (parseInt(slider.dataset.idx || 0) + dir + count) % count;
+  detailSliderGo(slider, idx);
+}
+
+function handleDetailImageUpload(input) {
+  if(!input.files || !input.files[0]) return;
+  showToast('📸 Bild ausgewählt – Upload folgt in Kürze');
+  input.value = '';
 }
 
 function openMapsDirections(lat, lng) {
