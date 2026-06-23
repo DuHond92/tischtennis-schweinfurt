@@ -1,0 +1,92 @@
+/* ======= RESET ======= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ======= LAYOUT ======= */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--bg);
+  /* On desktop: show phone frame */
+}
+
+@media (min-width: 600px) {
+  body { background: var(--bg2); padding: 24px 0 100px; }
+  .app-shell {
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+    min-height: calc(100vh - 48px);
+  }
+  .desktop-bar {
+    display: flex !important;
+  }
+}
+
+.desktop-bar {
+  display: none;
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ======= LEAFLET OVERRIDES ======= */
+.leaflet-container { background: var(--bg2) !important; font-family: var(--font-body) !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-control-zoom a {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* ======= ANIMATIONS ======= */
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+.fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+.fade-up-2 { animation-delay: 0.1s; opacity: 0; }
+.fade-up-3 { animation-delay: 0.15s; opacity: 0; }
+
+/* ======= DARK MODE MAP TILE ======= */
+[data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
+
+/* Misc */
+.divider { height: 1px; background: var(--border); }
+.text-center { text-align: center; }
+.pb-20 { padding-bottom: 20px; }

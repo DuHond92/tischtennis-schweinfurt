@@ -1,0 +1,92 @@
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           EVENTS                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function joinEvent(eventId, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  // Fallback-Events: kein DB-Eintrag nötig
+  const isFallback = eventId >= 101;
+  if(isFallback || !sb.isLoggedIn()) {
+    setTimeout(()=>{
+      btn.textContent='✅'; btn.style.background='var(--green)';
+      showToast('🏓 Du nimmst am Event teil!');
+    }, 400);
+    return;
+  }
+  const qb = new QueryBuilder('event_participants');
+  const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
+  if(error && error.code === '23505') {
+    showToast('Du nimmst bereits teil','ℹ️');
+    btn.textContent='✅'; btn.style.background='var(--green)';
+  } else if(error) {
+    showToast('Fehler beim Beitreten','❌');
+    btn.disabled=false; btn.textContent='Dabei';
+  } else {
+    btn.textContent='✅'; btn.style.background='var(--green)';
+    showToast('🏓 Du nimmst am Event teil!');
+    await loadEvents();
+  }
+}
+
+function renderEvents(filter='all') {
+  // Fallback-Events verwenden wenn Supabase noch keine hat
+  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const list = filter==='all' ? src : src.filter(e=>e.type===filter);
+  const c = document.getElementById('events-list');
+  if(!list.length) {
+    c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
+      Keine Events in dieser Kategorie.
+    </div>`; return;
+  }
+  c.innerHTML = list.map(e=>`
+    <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})" style="cursor:pointer;">
+      <div class="ecb-top">
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier'}</span>
+        <div class="ecb-date-box">
+          <div class="ecb-day">${e.day}</div>
+          <div class="ecb-mon">${e.mon}</div>
+        </div>
+      </div>
+      <div class="ecb-body">
+        <div class="ecb-title">${e.name}</div>
+        <div class="ecb-location">📍 ${e.tname} · ⏰ ${e.time} Uhr · von ${e.creator}</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;">${
+          e.type==='ranked'?'Offizielles Match – zählt für die ELO-Rangliste.':
+          e.type==='turnier'?'K.O.-Runden mit Siegerehrung!':
+          'Entspannte Runde für alle Level – einfach Spaß!'}</div>
+      </div>
+      <div class="ecb-footer">
+        <div class="ecb-participants">👥 <b>${e.p}</b>/${e.max} Teilnehmer</div>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showEventDetail(${e.id})">Details →</button>
+      </div>
+    </div>`).join('');
+}
+
+function filterEvents(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents(type);
+}
+
+async function submitCreateEvent() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const title   = document.getElementById('ev-name').value.trim();
+  const tableId = document.getElementById('ev-table').value;
+  const date    = document.getElementById('ev-date').value;
+  const time    = document.getElementById('ev-time').value;
+  const mode    = document.getElementById('ev-mode').value;
+  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
+
+  const qb = new QueryBuilder('events');
+  const {error} = await qb.insert({
+    title, table_id: parseInt(tableId),
+    creator_id: sb.getUserId(),
+    event_date: date, event_time: time, mode
+  });
+  if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+  closeAllSheets();
+  showToast('🎉 Event erstellt!','🎉');
+  await loadEvents();
+  renderEvents(currentFilter);
+  renderHome();
+}
