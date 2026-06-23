@@ -1718,11 +1718,27 @@ class QueryBuilder {
   }
 
   async update(body) {
-    let url = `${SUPABASE_URL}/rest/v1/${this.table}?`;
-    this._filters.forEach((f,i) => url += (i?'&':'')+f);
+    // Fix: Filter korrekt mit ? und & zusammenbauen
+    const filterStr = this._filters.join('&');
+    const url = `${SUPABASE_URL}/rest/v1/${this.table}${filterStr ? '?' + filterStr : ''}`;
     const r = await fetch(url, {
       method:'PATCH',
       headers: { ...dbHeaders(), 'Prefer':'return=representation' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    return { data, error: r.ok ? null : data };
+  }
+
+  // Upsert: einfügen oder aktualisieren falls schon vorhanden
+  async upsert(body, onConflict) {
+    const conflictParam = onConflict ? `?on_conflict=${onConflict}` : '';
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${this.table}${conflictParam}`, {
+      method:'POST',
+      headers: {
+        ...dbHeaders(),
+        'Prefer': 'resolution=merge-duplicates,return=representation'
+      },
       body: JSON.stringify(body)
     });
     const data = await r.json();
@@ -2581,34 +2597,25 @@ async function submitRating() {
     table_id:   currentRatingTableId,
     user_id:    sb.getUserId(),
     overall:    currentRatings.overall,
-    surface:    currentRatings.surface || null,
-    ground:     currentRatings.ground  || null,
-    windshield: currentRatings.windshield || null,
+    surface:    currentRatings.surface   || null,
+    ground:     currentRatings.ground    || null,
+    windshield: currentRatings.windshield|| null,
     comment:    document.getElementById('rating-comment').value.trim() || null
   };
 
-  // Upsert: falls User schon bewertet hat → aktualisieren
+  // Upsert via unique(table_id, user_id) – aktualisiert falls User schon bewertet hat
   const qb = new QueryBuilder('ratings');
-  const existing = new QueryBuilder('ratings');
-  existing.eq('table_id', currentRatingTableId).eq('user_id', sb.getUserId());
-  const {data: ex} = await existing.execute();
-
-  let error;
-  if(ex && ex.length) {
-    // Update
-    const upd = new QueryBuilder('ratings');
-    upd.eq('table_id', currentRatingTableId).eq('user_id', sb.getUserId());
-    ({error} = await upd.update(payload));
-  } else {
-    ({error} = await qb.insert(payload));
-  }
+  const {error} = await qb.upsert(payload, 'table_id,user_id');
 
   btn.disabled = false; btn.textContent = 'Bewertung abgeben ⭐';
 
-  if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
+  if(error) {
+    console.error('Rating error:', JSON.stringify(error));
+    showToast('Fehler: ' + (error.message || error.hint || JSON.stringify(error)), '❌');
+    return;
+  }
   closeAllSheets();
   showToast('⭐ Bewertung gespeichert! Danke!','⭐');
-  // Rating-Anzeige im Detail aktualisieren
   await loadRatingsForTable(currentRatingTableId);
 }
 
