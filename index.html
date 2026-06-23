@@ -724,6 +724,41 @@ body {
 
 .sheet-body { padding: 16px 20px; }
 
+/* ── EVENT DETAIL SHEET ─────────────────────────────────────────── */
+.edi-header { padding: 16px 20px 12px; }
+.edi-meta { font-size: 0.82rem; color: var(--text-dim); margin-top: 4px; line-height: 1.6; }
+.edi-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-top: 8px; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; }
+.edi-actions { padding: 0 20px 16px; display: flex; gap: 8px; }
+.participants-section { padding: 0 20px 16px; }
+.section-label { font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.participants-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.participants-row::-webkit-scrollbar { display: none; }
+.participant-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 52px; cursor: default; }
+.pc-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 1.45rem; border: 2px solid var(--border); position: relative; }
+.pc-crown { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; }
+.pc-name { font-size: 0.63rem; color: var(--text-dim); text-align: center; max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-host-label { font-size: 0.58rem; background: var(--primary); color: #fff; border-radius: 4px; padding: 1px 5px; }
+.participants-empty { font-size: 0.8rem; color: var(--text-dim); }
+/* Chat */
+.chat-section { border-top: 1px solid var(--border); }
+.chat-section-header { padding: 12px 20px 0; }
+.chat-feed { padding: 10px 16px; min-height: 120px; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { display: flex; gap: 8px; align-items: flex-end; }
+.chat-msg.mine { flex-direction: row-reverse; }
+.chat-msg-avatar { font-size: 1.2rem; flex-shrink: 0; line-height: 1; }
+.chat-bubble-wrap { display: flex; flex-direction: column; max-width: 76%; }
+.chat-msg.mine .chat-bubble-wrap { align-items: flex-end; }
+.chat-bubble { padding: 8px 12px; border-radius: 16px; font-size: 0.85rem; line-height: 1.4; word-break: break-word; }
+.chat-msg.mine .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.chat-msg:not(.mine) .chat-bubble { background: var(--surface-2); color: var(--text); border-bottom-left-radius: 4px; }
+.chat-msg-meta { font-size: 0.62rem; color: var(--text-xdim); margin-top: 3px; }
+.chat-empty { text-align: center; padding: 24px 16px; color: var(--text-dim); font-size: 0.82rem; }
+.chat-input-row { padding: 10px 16px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); z-index: 1; }
+.chat-input { flex: 1; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 0.85rem; color: var(--text); font-family: var(--font-body); }
+.chat-input:focus { outline: none; border-color: var(--primary); }
+.chat-send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: #fff; border: none; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+.chat-send-btn:active { opacity: 0.7; }
+
 /* Form */
 .form-group { margin-bottom: 14px; }
 .form-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -1880,6 +1915,7 @@ function openSheet(id) {
   openSheetId = id;
 }
 function closeAllSheets() {
+  stopChatPolling();
   document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
   document.getElementById('overlay').classList.remove('open');
   openSheetId = null;
@@ -2078,7 +2114,7 @@ async function loadOSMTables() {
 async function loadEvents() {
   // Events mit Tischtennis-Platte und Ersteller-Profil joinen
   const qb = new QueryBuilder('events');
-  qb._select = `id,title,event_date,event_time,mode,max_participants,description,
+  qb._select = `id,title,event_date,event_time,mode,max_participants,description,creator_id,
     tables(id,name,icon),
     profiles(username,avatar_emoji),
     event_participants(count)`;
@@ -2089,18 +2125,20 @@ async function loadEvents() {
     const d = new Date(e.event_date);
     const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
     return {
-      id:      e.id,
-      name:    e.title,
-      day:     String(d.getDate()).padStart(2,'0'),
-      mon:     months[d.getMonth()],
-      time:    e.event_time?.slice(0,5) || '??:??',
-      type:    e.mode,
-      tname:   e.tables?.name || '?',
-      ticon:   e.tables?.icon || '🏓',
-      tid:     e.tables?.id,
-      creator: e.profiles?.username || 'Anonym',
-      p:       e.event_participants?.[0]?.count || 0,
-      max:     e.max_participants
+      id:        e.id,
+      name:      e.title,
+      day:       String(d.getDate()).padStart(2,'0'),
+      mon:       months[d.getMonth()],
+      time:      e.event_time?.slice(0,5) || '??:??',
+      type:      e.mode,
+      tname:     e.tables?.name || '?',
+      ticon:     e.tables?.icon || '🏓',
+      tid:       e.tables?.id,
+      creator:   e.profiles?.username || 'Anonym',
+      creatorId: e.creator_id,
+      desc:      e.description || '',
+      p:         e.event_participants?.[0]?.count || 0,
+      max:       e.max_participants
     };
   });
 
@@ -2179,7 +2217,7 @@ function renderHome() {
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
   evList.innerHTML = evSrc.slice(0,5).map(e=>`
-    <div class="event-list-item" onclick="showPage('events')">
+    <div class="event-list-item" onclick="showEventDetail(${e.id})">
       <div class="ev-date-box">
         <div class="ev-day">${e.day}</div>
         <div class="ev-mon">${e.mon}</div>
@@ -2363,7 +2401,7 @@ function showTableDetail(id) {
           <div style="font-size:0.74rem;color:var(--text-dim);">⏰ ${e.time} · 👥 ${e.p}/${e.max}</div>
         </div>
         <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</span>
-        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Dabei</button>
+        <button class="btn btn-primary btn-sm" onclick="showEventDetail(${e.id})">Details →</button>
       </div>`).join('');
 
   document.getElementById('tds-body').innerHTML = `
@@ -2499,7 +2537,7 @@ function renderEvents(filter='all') {
     </div>`; return;
   }
   c.innerHTML = list.map(e=>`
-    <div class="event-card-big fade-up">
+    <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})" style="cursor:pointer;">
       <div class="ecb-top">
         <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'🎮 Casual':e.type==='ranked'?'⚔️ Ranked':'🏆 Turnier'}</span>
         <div class="ecb-date-box">
@@ -2517,7 +2555,7 @@ function renderEvents(filter='all') {
       </div>
       <div class="ecb-footer">
         <div class="ecb-participants">👥 <b>${e.p}</b>/${e.max} Teilnehmer</div>
-        <button class="btn btn-primary btn-sm" onclick="joinEvent(${e.id},this)">Teilnehmen</button>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showEventDetail(${e.id})">Details →</button>
       </div>
     </div>`).join('');
 }
@@ -2550,6 +2588,226 @@ async function submitCreateEvent() {
   await loadEvents();
   renderEvents(currentFilter);
   renderHome();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           EVENT DETAIL                                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+let currentEventId = null;
+let chatPollTimer  = null;
+
+function showEventDetail(eventId) {
+  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const ev  = src.find(e => e.id === eventId);
+  if(!ev) return;
+  currentEventId = eventId;
+
+  // Header
+  document.getElementById('eds-title').textContent = ev.name;
+
+  // Type pill
+  const typeLabel = ev.type==='casual' ? '🎮 Casual' : ev.type==='ranked' ? '⚔️ Ranked' : '🏆 Turnier';
+  document.getElementById('eds-type-pill').innerHTML =
+    `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel}</span>`;
+
+  // Meta
+  document.getElementById('eds-meta').innerHTML =
+    `📅 ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ⏰ ${ev.time} Uhr<br>📍 ${ev.tname} &nbsp;·&nbsp; 👤 von <b>${ev.creator}</b><br>👥 ${ev.p}/${ev.max} Teilnehmer`;
+
+  // Description
+  const descEl = document.getElementById('eds-desc');
+  if(ev.desc) {
+    descEl.textContent = ev.desc;
+    descEl.style.display = '';
+  } else {
+    descEl.style.display = 'none';
+  }
+
+  // Actions (host vs. participant)
+  const myId    = sb.getUserId();
+  const isHost  = myId && ev.creatorId === myId;
+  const actEl   = document.getElementById('eds-actions');
+  if(isHost) {
+    actEl.innerHTML = `
+      <button class="btn btn-primary" style="flex:1;" onclick="startGame(${ev.id})">🏓 Spiel starten</button>
+      <button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;" onclick="openEditEvent(${ev.id})">✏️</button>`;
+  } else {
+    actEl.innerHTML =
+      `<button class="btn btn-primary btn-full" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>`;
+  }
+
+  // Reset participants & chat
+  document.getElementById('eds-participants').innerHTML = '<div class="participants-empty">Lade…</div>';
+  document.getElementById('eds-chat-feed').innerHTML    = '<div class="chat-empty">Lade Nachrichten…</div>';
+
+  // Show/hide chat input for non-fallback events
+  const isFallback = eventId >= 101;
+  document.getElementById('eds-chat-input-row').style.display = (isFallback || !sb.isLoggedIn()) ? 'none' : '';
+
+  openSheet('event-detail-sheet');
+
+  // Load data (don't block sheet open)
+  loadEventParticipants(eventId);
+  if(!isFallback) {
+    loadEventChat(eventId);
+    startChatPolling(eventId);
+  } else {
+    document.getElementById('eds-chat-feed').innerHTML = '<div class="chat-empty">Chat für Demo-Events nicht verfügbar.</div>';
+  }
+}
+
+async function loadEventParticipants(eventId) {
+  const el = document.getElementById('eds-participants');
+  try {
+    const qb = new QueryBuilder('event_participants');
+    qb._select = 'user_id,profiles(username,avatar_emoji)';
+    qb.eq('event_id', eventId);
+    const {data, error} = await qb.execute();
+    if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Teilnehmer gefunden.</div>'; return; }
+
+    const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+    const ev  = src.find(e => e.id === eventId);
+    renderParticipantChips(data, ev?.creatorId);
+  } catch(e) {
+    el.innerHTML = '<div class="participants-empty">Teilnehmer konnten nicht geladen werden.</div>';
+  }
+}
+
+function renderParticipantChips(participants, creatorId) {
+  const el = document.getElementById('eds-participants');
+  if(!participants.length) {
+    el.innerHTML = '<div class="participants-empty">Noch keine Teilnehmer 🏓</div>';
+    return;
+  }
+  el.innerHTML = participants.map(p => {
+    const isHost  = p.user_id === creatorId;
+    const avatar  = p.profiles?.avatar_emoji || '🏓';
+    const name    = p.profiles?.username || 'Anonym';
+    return `<div class="participant-chip">
+      <div class="pc-avatar">
+        ${avatar}
+        ${isHost ? '<span class="pc-crown">👑</span>' : ''}
+      </div>
+      <div class="pc-name">${name}</div>
+      ${isHost ? '<div class="pc-host-label">Host</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+async function loadEventChat(eventId) {
+  try {
+    const qb = new QueryBuilder('event_messages');
+    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji)';
+    qb.eq('event_id', eventId).order('created_at');
+    const {data, error} = await qb.execute();
+    if(error) { renderChatMessages(null); return; }
+    renderChatMessages(data || []);
+  } catch(e) {
+    renderChatMessages(null);
+  }
+}
+
+function renderChatMessages(messages) {
+  const el  = document.getElementById('eds-chat-feed');
+  const myId = sb.getUserId();
+  if(!messages) {
+    el.innerHTML = '<div class="chat-empty">Chat noch nicht verfügbar (Tabelle wird eingerichtet).</div>';
+    return;
+  }
+  if(!messages.length) {
+    el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
+    return;
+  }
+  el.innerHTML = messages.map(m => {
+    const isMine  = m.user_id === myId;
+    const avatar  = m.profiles?.avatar_emoji || '🏓';
+    const name    = m.profiles?.username || 'Anonym';
+    const time    = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="chat-msg ${isMine?'mine':''}">
+      <div class="chat-msg-avatar">${avatar}</div>
+      <div class="chat-bubble-wrap">
+        <div class="chat-bubble">${escHtml(m.message)}</div>
+        <div class="chat-msg-meta">${isMine?'Du':name} · ${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Scroll to bottom
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function sendChatMessage() {
+  if(!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden','⚠️'); return; }
+  const input = document.getElementById('eds-chat-input');
+  const msg   = input.value.trim();
+  if(!msg || !currentEventId) return;
+  input.value = '';
+  const qb = new QueryBuilder('event_messages');
+  const {error} = await qb.insert({
+    event_id: currentEventId,
+    user_id:  sb.getUserId(),
+    message:  msg
+  });
+  if(error) { showToast('Fehler beim Senden','❌'); input.value = msg; return; }
+  await loadEventChat(currentEventId);
+}
+
+function startChatPolling(eventId) {
+  stopChatPolling();
+  chatPollTimer = setInterval(() => {
+    if(currentEventId === eventId) loadEventChat(eventId);
+  }, 4000);
+}
+
+function stopChatPolling() {
+  if(chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+}
+
+async function joinEventFromDetail(eventId) {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const btn = document.getElementById('eds-join-btn');
+  if(btn) { btn.disabled = true; btn.textContent = '…'; }
+  const isFallback = eventId >= 101;
+  if(isFallback) {
+    setTimeout(() => {
+      if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
+      showToast('🏓 Du nimmst am Event teil!');
+    }, 400);
+    return;
+  }
+  const qb = new QueryBuilder('event_participants');
+  const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
+  if(error && error.code === '23505') {
+    if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
+    showToast('Du nimmst bereits teil','ℹ️');
+  } else if(error) {
+    if(btn) { btn.disabled = false; btn.textContent = 'Teilnehmen'; }
+    showToast('Fehler beim Beitreten','❌');
+  } else {
+    if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
+    showToast('🏓 Du nimmst am Event teil!');
+    await loadEvents();
+    loadEventParticipants(eventId);
+  }
+}
+
+function startGame(eventId) {
+  showToast('🏓 Spiel gestartet! Viel Spaß!','🏆');
+}
+
+function openEditEvent(eventId) {
+  closeAllSheets();
+  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const ev  = src.find(e => e.id === eventId);
+  if(!ev) return;
+  // Prefill create-event sheet as edit form
+  document.querySelector('#create-event-sheet .sheet-title').textContent = '✏️ Event bearbeiten';
+  document.getElementById('ev-name').value = ev.name;
+  document.getElementById('ev-mode').value = ev.type;
+  openSheet('create-event-sheet');
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -3323,6 +3581,44 @@ window.addEventListener('load', async () => {
       <textarea class="form-textarea" id="new-comment" placeholder="Dein Kommentar zu dieser Platte…" style="min-height:70px;"></textarea>
     </div>
     <button class="btn btn-primary btn-full btn-sm" onclick="submitComment()">Kommentar senden 💬</button>
+  </div>
+</div>
+
+<!-- EVENT DETAIL SHEET -->
+<div class="bottom-sheet" id="event-detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="eds-title">Event</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <!-- Info -->
+  <div class="edi-header">
+    <div id="eds-type-pill"></div>
+    <div class="edi-meta" id="eds-meta"></div>
+    <div class="edi-desc" id="eds-desc" style="display:none;"></div>
+  </div>
+  <!-- Actions -->
+  <div class="edi-actions" id="eds-actions"></div>
+  <!-- Participants -->
+  <div class="participants-section">
+    <div class="section-label">👥 Teilnehmer</div>
+    <div class="participants-row" id="eds-participants">
+      <div class="participants-empty">Lade…</div>
+    </div>
+  </div>
+  <!-- Chat -->
+  <div class="chat-section">
+    <div class="chat-section-header">
+      <div class="section-label">💬 Event-Chat</div>
+    </div>
+    <div class="chat-feed" id="eds-chat-feed">
+      <div class="chat-empty">Lade Nachrichten…</div>
+    </div>
+    <div class="chat-input-row" id="eds-chat-input-row">
+      <input class="chat-input" id="eds-chat-input" placeholder="Nachricht schreiben…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
+      <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+    </div>
   </div>
 </div>
 
