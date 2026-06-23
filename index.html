@@ -1012,6 +1012,108 @@ body {
   font-size: 0.7rem; color: var(--primary); font-weight: 700;
   margin-top: 2px;
 }
+
+/* ======= RATINGS + KING OF THE PLATE ======= */
+
+/* Stern-Rating */
+.star-rating { display: flex; gap: 6px; }
+.star {
+  font-size: 1.6rem; cursor: pointer;
+  color: var(--border); transition: color 0.15s, transform 0.1s;
+  line-height: 1;
+}
+.star:hover, .star.active { color: var(--gold); transform: scale(1.15); }
+.star.half { color: var(--gold); }
+
+.star-sm { font-size: 1.1rem; }
+.star-xs { font-size: 0.85rem; gap: 2px; }
+
+.rating-category {
+  margin-bottom: 14px;
+}
+.rating-cat-label {
+  font-size: 0.78rem; font-weight: 700; color: var(--text);
+  margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+.rating-cat-opt {
+  font-size: 0.68rem; color: var(--text-xdim);
+  font-weight: 400; margin-left: auto;
+}
+.rating-cat-desc {
+  font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; line-height: 1.4;
+}
+.rating-labels {
+  display: flex; justify-content: space-between;
+  font-size: 0.62rem; color: var(--text-xdim); margin-top: 4px;
+}
+
+/* Durchschnitt-Anzeige */
+.rating-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.rating-big-num {
+  font-family: var(--font-head); font-size: 2rem; font-weight: 800;
+  color: var(--text); line-height: 1;
+}
+.rating-stars-row { display: flex; gap: 2px; }
+.rating-star-filled { color: var(--gold); font-size: 0.9rem; }
+.rating-star-empty  { color: var(--border); font-size: 0.9rem; }
+.rating-count { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+.rating-sub-bars { flex: 1; }
+.rating-sub-bar-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 3px;
+}
+.rsb-label { font-size: 0.65rem; color: var(--text-dim); width: 72px; flex-shrink: 0; }
+.rsb-bar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rsb-fill { height: 100%; background: var(--gold); border-radius: 3px; }
+.rsb-val { font-size: 0.65rem; color: var(--text-dim); width: 20px; text-align: right; }
+
+/* King of the Plate */
+.king-section {
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.king-header {
+  font-family: var(--font-head); font-size: 0.95rem; font-weight: 800;
+  color: var(--text); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.king-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+}
+.king-row:last-child { border-bottom: none; }
+.king-rank {
+  width: 24px; text-align: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.king-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.king-row:first-child .king-avatar { border-color: var(--gold); }
+.king-name { flex: 1; font-weight: 700; font-size: 0.85rem; color: var(--text); }
+.king-wins {
+  background: var(--surface2); border-radius: 20px;
+  padding: 3px 10px; font-size: 0.75rem; font-weight: 700;
+  color: var(--text-dim);
+}
+.king-wins b { color: var(--primary); }
+.king-empty {
+  font-size: 0.82rem; color: var(--text-dim); text-align: center;
+  padding: 12px 0;
+}
+
+/* Rate Button im Detail */
+.rate-btn-row {
+  display: flex; gap: 8px; padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -2201,9 +2303,31 @@ function showTableDetail(id) {
       <div style="font-size:0.8rem;color:var(--text-dim);">📍 ${t.addr||'Schweinfurt'}</div>
     </div>
     ${extraHtml}
+    <!-- Rating Summary -->
+    <div id="rating-summary-${t.id}" class="rating-summary">
+      <div style="text-align:center;min-width:56px;">
+        <div class="rating-big-num" id="rating-num-${t.id}">–</div>
+        <div class="rating-stars-row" id="rating-stars-${t.id}" style="justify-content:center;"></div>
+        <div class="rating-count" id="rating-count-${t.id}">Noch keine</div>
+      </div>
+      <div class="rating-sub-bars" id="rating-bars-${t.id}">
+        <div style="font-size:0.72rem;color:var(--text-dim);">Lade Bewertungen…</div>
+      </div>
+    </div>
+
+    <!-- King of the Plate -->
+    <div class="king-section" id="king-section-${t.id}">
+      <div class="king-header">👑 King of the Plate</div>
+      <div class="king-empty">Lade…</div>
+    </div>
+
+    <!-- Action Buttons -->
     <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
       <button class="btn btn-secondary btn-sm btn-full" onclick="openComments(${t.id})">💬 Kommentare</button>
       <button class="btn btn-secondary btn-sm btn-full" onclick="openMapsDirections(${t.lat},${t.lng})">🗺 Route</button>
+    </div>
+    <div style="padding:8px 20px;border-bottom:1px solid var(--border);">
+      <button class="btn btn-primary btn-full btn-sm" onclick="openRating(${t.id},'${t.name}')">⭐ Platte bewerten</button>
     </div>
     <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">📅 Events</div>
     ${evHtml}
@@ -2214,6 +2338,9 @@ function showTableDetail(id) {
     </div>`;
 
   openSheet('table-detail-sheet');
+  // Ratings + King async laden
+  loadRatingsForTable(id);
+  loadKingOfPlate(id);
 }
 
 function buildPhotoSlider(t, photos) {
@@ -2412,6 +2539,168 @@ function renderLeaderboard() {
     else { document.querySelector('.rp-labels span:first-child').textContent=`Gold · ${elo} ELO`;
            document.querySelector('.rp-labels span:last-child').textContent='🏆 Höchste Liga!'; }
   }
+}
+
+// ── RATINGS ───────────────────────────────────────────────────────
+let currentRatings = { overall: 0, surface: 0, ground: 0, windshield: 0 };
+let currentRatingTableId = null;
+
+function openRating(tableId, tableName) {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  currentRatingTableId = tableId;
+  document.getElementById('rating-sheet-title').textContent = `⭐ ${tableName} bewerten`;
+  // Reset
+  currentRatings = { overall:0, surface:0, ground:0, windshield:0 };
+  ['overall','surface','ground','windshield'].forEach(cat => updateStarDisplay(cat, 0));
+  document.getElementById('rating-comment').value = '';
+  openSheet('rating-sheet');
+}
+
+function setRating(category, value) {
+  currentRatings[category] = value;
+  updateStarDisplay(category, value);
+}
+
+function updateStarDisplay(category, value) {
+  const container = document.getElementById(`stars-${category}`);
+  if(!container) return;
+  container.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('active', i < value);
+  });
+}
+
+async function submitRating() {
+  if(!currentRatings.overall) {
+    showToast('Bitte mindestens die Gesamtbewertung vergeben ⭐','⚠️');
+    return;
+  }
+  const btn = document.querySelector('#rating-sheet .btn-primary');
+  btn.disabled = true; btn.textContent = '…';
+
+  const payload = {
+    table_id:   currentRatingTableId,
+    user_id:    sb.getUserId(),
+    overall:    currentRatings.overall,
+    surface:    currentRatings.surface || null,
+    ground:     currentRatings.ground  || null,
+    windshield: currentRatings.windshield || null,
+    comment:    document.getElementById('rating-comment').value.trim() || null
+  };
+
+  // Upsert: falls User schon bewertet hat → aktualisieren
+  const qb = new QueryBuilder('ratings');
+  const existing = new QueryBuilder('ratings');
+  existing.eq('table_id', currentRatingTableId).eq('user_id', sb.getUserId());
+  const {data: ex} = await existing.execute();
+
+  let error;
+  if(ex && ex.length) {
+    // Update
+    const upd = new QueryBuilder('ratings');
+    upd.eq('table_id', currentRatingTableId).eq('user_id', sb.getUserId());
+    ({error} = await upd.update(payload));
+  } else {
+    ({error} = await qb.insert(payload));
+  }
+
+  btn.disabled = false; btn.textContent = 'Bewertung abgeben ⭐';
+
+  if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
+  closeAllSheets();
+  showToast('⭐ Bewertung gespeichert! Danke!','⭐');
+  // Rating-Anzeige im Detail aktualisieren
+  await loadRatingsForTable(currentRatingTableId);
+}
+
+async function loadRatingsForTable(tableId) {
+  try {
+    // Durchschnitt laden
+    const qb = new QueryBuilder('table_ratings_avg');
+    qb.eq('table_id', tableId);
+    const {data} = await qb.execute();
+    if(data && data[0]) renderRatingSummary(tableId, data[0]);
+    else renderRatingSummary(tableId, null);
+  } catch(e) {
+    console.warn('Rating load error', e);
+    renderRatingSummary(tableId, null);
+  }
+}
+
+function renderRatingSummary(tableId, r) {
+  const numEl   = document.getElementById(`rating-num-${tableId}`);
+  const starsEl = document.getElementById(`rating-stars-${tableId}`);
+  const countEl = document.getElementById(`rating-count-${tableId}`);
+  const barsEl  = document.getElementById(`rating-bars-${tableId}`);
+  if(!numEl) return;
+
+  if(!r || !r.rating_count) {
+    numEl.textContent = '–';
+    starsEl.innerHTML = '';
+    countEl.textContent = 'Noch keine Bewertung';
+    barsEl.innerHTML = `<div style="font-size:0.75rem;color:var(--text-dim);">Sei der Erste! ⭐</div>`;
+    return;
+  }
+
+  const avg = parseFloat(r.avg_overall);
+  numEl.textContent = avg.toFixed(1);
+
+  // Sterne rendern
+  let starsHtml = '';
+  for(let i=1;i<=5;i++) {
+    starsHtml += `<span class="${i<=Math.round(avg)?'rating-star-filled':'rating-star-empty'}">★</span>`;
+  }
+  starsEl.innerHTML = starsHtml;
+  countEl.textContent = `${r.rating_count} Bewertung${r.rating_count>1?'en':''}`;
+
+  // Sub-Bars
+  const cats = [
+    {key:'avg_surface',    label:'Oberfläche'},
+    {key:'avg_ground',     label:'Untergrund'},
+    {key:'avg_windshield', label:'Windschutz'},
+  ];
+  barsEl.innerHTML = cats.map(c => {
+    const val = r[c.key] ? parseFloat(r[c.key]) : null;
+    if(!val) return '';
+    const pct = (val/5*100).toFixed(0);
+    return `<div class="rating-sub-bar-row">
+      <div class="rsb-label">${c.label}</div>
+      <div class="rsb-bar"><div class="rsb-fill" style="width:${pct}%"></div></div>
+      <div class="rsb-val">${val.toFixed(1)}</div>
+    </div>`;
+  }).join('') || `<div style="font-size:0.72rem;color:var(--text-dim);">Details ausstehend</div>`;
+}
+
+async function loadKingOfPlate(tableId) {
+  const el = document.getElementById(`king-section-${tableId}`);
+  if(!el) return;
+  try {
+    const qb = new QueryBuilder('king_of_plate');
+    qb.eq('table_id', tableId).order('wins_at_table', true).limit(3);
+    const {data} = await qb.execute();
+    renderKingOfPlate(tableId, data || []);
+  } catch(e) {
+    renderKingOfPlate(tableId, []);
+  }
+}
+
+function renderKingOfPlate(tableId, kings) {
+  const el = document.getElementById(`king-section-${tableId}`);
+  if(!el) return;
+  const medals = ['👑','🥈','🥉'];
+  if(!kings.length) {
+    el.innerHTML = `<div class="king-header">👑 King of the Plate</div>
+      <div class="king-empty">Noch keine Ranked Matches an dieser Platte.<br>
+      <span style="font-size:0.78rem;">Spiele ein Ranked Match um König zu werden!</span></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="king-header">👑 King of the Plate</div>` +
+    kings.map((k,i) => `
+      <div class="king-row">
+        <div class="king-rank">${medals[i]||`#${i+1}`}</div>
+        <div class="king-avatar">${k.avatar_emoji||'🏓'}</div>
+        <div class="king-name">${k.username}</div>
+        <div class="king-wins"><b>${k.wins_at_table}</b> Siege</div>
+      </div>`).join('');
 }
 
 // ── KOMMENTARE ────────────────────────────────────────────────────
@@ -2848,6 +3137,105 @@ window.addEventListener('load', async () => {
   }
 });
 </script>
+
+
+<!-- BEWERTUNGS SHEET -->
+<div class="bottom-sheet" id="rating-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="rating-sheet-title">⭐ Platte bewerten</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body">
+
+    <!-- Gesamtbewertung (Pflicht) -->
+    <div class="rating-category">
+      <div class="rating-cat-label">
+        ⭐ Gesamtbewertung
+        <span style="font-size:0.68rem;color:var(--accent);font-weight:700;">Pflicht</span>
+      </div>
+      <div class="star-rating" id="stars-overall">
+        <span class="star" onclick="setRating('overall',1)">★</span>
+        <span class="star" onclick="setRating('overall',2)">★</span>
+        <span class="star" onclick="setRating('overall',3)">★</span>
+        <span class="star" onclick="setRating('overall',4)">★</span>
+        <span class="star" onclick="setRating('overall',5)">★</span>
+      </div>
+    </div>
+
+    <div class="divider" style="margin:12px 0 16px;"></div>
+    <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:12px;">Optional – hilft anderen Spielern:</div>
+
+    <!-- Tischoberfläche -->
+    <div class="rating-category">
+      <div class="rating-cat-label">
+        🏓 Tischoberfläche
+        <span class="rating-cat-opt">optional</span>
+      </div>
+      <div class="rating-cat-desc">Wie ist der Zustand der Tischoberfläche?</div>
+      <div class="star-rating star-sm" id="stars-surface">
+        <span class="star star-sm" onclick="setRating('surface',1)">★</span>
+        <span class="star star-sm" onclick="setRating('surface',2)">★</span>
+        <span class="star star-sm" onclick="setRating('surface',3)">★</span>
+        <span class="star star-sm" onclick="setRating('surface',4)">★</span>
+        <span class="star star-sm" onclick="setRating('surface',5)">★</span>
+      </div>
+      <div class="rating-labels">
+        <span>mangelhaft</span><span>schlecht</span><span>okay</span><span>gut</span><span>sehr gut</span>
+      </div>
+    </div>
+
+    <!-- Untergrund -->
+    <div class="rating-category">
+      <div class="rating-cat-label">
+        🌿 Untergrund
+        <span class="rating-cat-opt">optional</span>
+      </div>
+      <div class="rating-cat-desc">Wie ist die Umgebung? Sand, Kies, Beton, sauber?</div>
+      <div class="star-rating star-sm" id="stars-ground">
+        <span class="star star-sm" onclick="setRating('ground',1)">★</span>
+        <span class="star star-sm" onclick="setRating('ground',2)">★</span>
+        <span class="star star-sm" onclick="setRating('ground',3)">★</span>
+        <span class="star star-sm" onclick="setRating('ground',4)">★</span>
+        <span class="star star-sm" onclick="setRating('ground',5)">★</span>
+      </div>
+      <div class="rating-labels">
+        <span>mangelhaft</span><span>schlecht</span><span>okay</span><span>gut</span><span>sehr gut</span>
+      </div>
+    </div>
+
+    <!-- Windschutz -->
+    <div class="rating-category">
+      <div class="rating-cat-label">
+        💨 Windschutz
+        <span class="rating-cat-opt">optional</span>
+      </div>
+      <div class="rating-cat-desc">Wie windgeschützt ist die Platte?</div>
+      <div class="star-rating star-sm" id="stars-windshield">
+        <span class="star star-sm" onclick="setRating('windshield',1)">★</span>
+        <span class="star star-sm" onclick="setRating('windshield',2)">★</span>
+        <span class="star star-sm" onclick="setRating('windshield',3)">★</span>
+        <span class="star star-sm" onclick="setRating('windshield',4)">★</span>
+        <span class="star star-sm" onclick="setRating('windshield',5)">★</span>
+      </div>
+      <div class="rating-labels">
+        <span>gar nicht</span><span>wenig</span><span>okay</span><span>gut</span><span>perfekt</span>
+      </div>
+    </div>
+
+    <!-- Kommentar -->
+    <div class="form-group">
+      <label class="form-label">Kommentar <span style="color:var(--text-xdim);font-weight:400;">optional</span></label>
+      <textarea class="form-textarea" id="rating-comment"
+        placeholder="z.B. Netz ist gut erhalten, Boden etwas rutschig nach Regen…"
+        style="min-height:70px;"></textarea>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="submitRating()">
+      Bewertung abgeben ⭐
+    </button>
+  </div>
+</div>
 
 <!-- KOMMENTAR SHEET -->
 <div class="bottom-sheet" id="comment-sheet">
