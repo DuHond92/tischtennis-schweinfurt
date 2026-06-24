@@ -133,18 +133,22 @@ function renderParticipantChips(participants, creatorId) {
     return;
   }
   el.innerHTML = participants.map(p => {
-    const isHost     = p.user_id === creatorId;
-    const name       = p.profiles?.username || 'Anonym';
-    const avatarHtml = p.profiles?.avatar_emoji
+    const isHost  = p.user_id === creatorId;
+    const name    = p.profiles?.username || 'Anonym';
+    const emoji   = p.profiles?.avatar_emoji || '';
+    const uid     = p.user_id || '';
+    const ctx     = isHost ? '👑 Host dieser Spielrunde' : '';
+    const click   = `showPlayerProfile('${uid}','${escAttr(name)}','${escAttr(emoji)}','${ctx}')`;
+    const avatarHtml = emoji
       ? `<div class="pc-avatar pc-avatar-emoji">
-           ${p.profiles.avatar_emoji}
+           ${emoji}
            ${isHost ? '<span class="pc-crown">👑</span>' : ''}
          </div>`
       : `<div class="pc-avatar pc-avatar-init">
            ${initAvatar(name, 46)}
            ${isHost ? '<span class="pc-crown">👑</span>' : ''}
          </div>`;
-    return `<div class="participant-chip">
+    return `<div class="participant-chip pp-clickable" onclick="${click}">
       ${avatarHtml}
       <div class="pc-name">${name}</div>
       ${isHost ? '<div class="pc-host-label">👑 Host</div>' : ''}

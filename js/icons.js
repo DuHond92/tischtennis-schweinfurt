@@ -42,7 +42,12 @@ function initAvatar(name, size) {
   return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
 }
 
-// Renders overlapping avatar stack (Slack/Notion style)
+// Encode attribute values (prevents XSS / quote-breakout in data attrs)
+function escAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Renders overlapping avatar stack (Slack/Notion style) — items are clickable
 function participantStack(participants, maxShow, size) {
   maxShow = maxShow || 3;
   size    = size    || 24;
@@ -51,12 +56,16 @@ function participantStack(participants, maxShow, size) {
   const extra   = participants.length - maxShow;
   const fs = Math.round(size * 0.38);
   const items = visible.map(p => {
+    const n   = p.username || '?';
+    const uid = escAttr(p.id   || '');
+    const nm  = escAttr(n);
+    const em  = escAttr(p.avatar_emoji || '');
+    const clickHandler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji)`;
     if(p.avatar_emoji) {
       const efs = Math.round(size * 0.58);
-      return `<div class="pstack-item pstack-emoji" style="width:${size}px;height:${size}px;font-size:${efs}px;">${p.avatar_emoji}</div>`;
+      return `<div class="pstack-item pstack-emoji pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;font-size:${efs}px;">${p.avatar_emoji}</div>`;
     }
-    const n = p.username || '?';
-    return `<div class="pstack-item" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
+    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
   }).join('');
   const extraHtml = extra > 0
     ? `<div class="pstack-item pstack-extra" style="width:${size}px;height:${size}px;font-size:${fs}px;">+${extra}</div>`

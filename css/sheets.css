@@ -242,3 +242,80 @@
   font-family: var(--font-head); font-size: 1.1rem;
   font-weight: 800; color: var(--text); margin-bottom: 6px;
 }
+
+/* ── PLAYER PROFILE SHEET ────────────────────────────────────────── */
+#pp-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.32);
+  z-index: 750;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+#pp-overlay.open { opacity: 1; pointer-events: all; }
+#player-profile-sheet { z-index: 800; }
+
+.pp-hero {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.pp-av-wrap { margin-bottom: 10px; }
+.pp-av-emoji {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+  border: 3px solid var(--border);
+}
+.pp-name {
+  font-family: var(--font-head);
+  font-size: 1.25rem; font-weight: 800; color: var(--text);
+}
+.pp-host-badge {
+  background: var(--gold-bg); color: var(--gold);
+  border-radius: 20px; padding: 2px 12px;
+  font-size: 0.75rem; font-weight: 700; margin-top: 6px;
+}
+.pp-city {
+  font-size: 0.82rem; color: var(--text-dim);
+  margin-top: 4px; display: flex; align-items: center; gap: 4px;
+}
+
+.pp-stats-row {
+  display: flex; justify-content: space-around;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  min-height: 64px;
+}
+.pp-stat { text-align: center; }
+.pp-stat-val {
+  font-family: var(--font-head);
+  font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1;
+}
+.pp-stat-val.green { color: var(--green); }
+.pp-stat-val.red   { color: var(--accent); }
+.pp-stat-label { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
+
+.pp-loading {
+  padding: 20px; text-align: center;
+  font-size: 0.85rem; color: var(--text-dim);
+}
+.pp-details-section {
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.pp-detail-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0;
+}
+.pp-detail-label { font-size: 0.82rem; color: var(--text-dim); }
+.pp-detail-val   { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+
+.pp-actions {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 20px;
+}
+.pp-soon { font-size: 0.68rem; opacity: 0.7; font-weight: 400; }
+
+/* Clickable participant targets */
+.pp-clickable { cursor: pointer; }
+.pp-clickable:hover  { opacity: 0.82; }
+.pp-clickable:active { transform: scale(0.97); }

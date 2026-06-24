@@ -51,6 +51,8 @@ function closeAllSheets() {
   stopChatPolling();
   document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
   document.getElementById('overlay').classList.remove('open');
+  const ppOv = document.getElementById('pp-overlay');
+  if(ppOv) ppOv.classList.remove('open');
   openSheetId = null;
 }
 

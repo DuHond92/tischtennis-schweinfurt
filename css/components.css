@@ -782,6 +782,13 @@
   font-family: var(--font-body); font-size: 0.62rem !important;
   font-weight: 700;
 }
+.pstack-clickable {
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  position: relative; z-index: 1;
+}
+.pstack-clickable:hover  { opacity: 0.82; transform: scale(1.12); z-index: 2; }
+.pstack-clickable:active { transform: scale(0.95); }
 
 /* Home card participant row */
 .ev-participants-row {
