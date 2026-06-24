@@ -17,7 +17,6 @@ window.addEventListener('load', async () => {
   tables = FALLBACK_TABLES;
   renderHome();
   renderEvents('all');
-  renderLeaderboard();
 
   // 2. Supabase-Daten laden (parallel)
   try {

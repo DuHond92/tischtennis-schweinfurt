@@ -160,8 +160,10 @@
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
 }
 .pill-casual { background: var(--green-bg); color: var(--green); }
-.pill-ranked { background: var(--accent-bg); color: var(--accent); }
-.pill-turnier { background: var(--gold-bg); color: var(--gold); }
+.pill-ranked { background: var(--primary-bg); color: var(--primary); }
+.pill-training { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+.pill-turnier { background: var(--surface2); color: var(--text-dim); }
+.pill-spiel { background: var(--surface2); color: var(--text-dim); }
 
 /* ======= PAGE: MAP ======= */
 .map-page-layout { display: flex; flex-direction: column; flex: 1; }

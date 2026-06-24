@@ -41,7 +41,7 @@ function renderEvents(filter='all') {
   const EV_PH  = 'images/placeholders/placeholder-plate.webp';
   c.innerHTML = list.map((e, idx)=>{
     const thumb = EV_IMGS[idx % EV_IMGS.length];
-    const typeLabel = e.type==='casual'?ic('gamepad',13)+' Casual':e.type==='ranked'?ic('swords',13)+' Ranked':ic('trophy',13)+' Turnier';
+    const typeLabel = e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel';
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
       <img class="ecb-thumb" src="${thumb}" onerror="this.src='${EV_PH}'" loading="lazy">

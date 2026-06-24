@@ -50,7 +50,7 @@ function renderHome() {
         <div class="ev-meta-loc">${ic('pin')} ${e.tname}</div>
         <div class="ev-meta-time">${ic('clock')} ${e.time} &nbsp;·&nbsp; ${ic('users')} ${e.p}/${e.max}</div>
       </div>
-      <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</div>
+      <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel'}</div>
     </div>
   `).join('');
 }

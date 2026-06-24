@@ -3,18 +3,15 @@
 // ╚══════════════════════════════════════════════════════════════╝
 function renderProfile() {
   if(!currentUser) return;
-  const league = getLeague(currentUser.elo||200);
-  const total  = (currentUser.wins||0)+(currentUser.losses||0);
-  const wr     = total ? Math.round((currentUser.wins||0)/total*100) : 0;
+  const total = (currentUser.wins||0)+(currentUser.losses||0);
   // Avatar & Name oben
-  document.querySelector('.profile-avatar').textContent    = currentUser.avatar_emoji||'😎';
-  document.querySelector('.profile-name').textContent      = currentUser.username||'Spieler';
-  document.querySelector('.profile-rank-pill').textContent = `${league.name} · ${currentUser.elo||200} ELO`;
-  // Stats
-  document.querySelectorAll('.pstat-val')[0].textContent = currentUser.wins||0;
-  document.querySelectorAll('.pstat-val')[1].textContent = currentUser.losses||0;
-  document.querySelectorAll('.pstat-val')[2].textContent = total;
-  document.querySelectorAll('.pstat-val')[3].textContent = wr+'%';
+  document.querySelector('.profile-avatar').textContent = currentUser.avatar_emoji||'😎';
+  document.querySelector('.profile-name').textContent   = currentUser.username||'Spieler';
+  // Stats (W/L/Spiele gesamt, kein ELO/Winrate)
+  const pv = document.querySelectorAll('.pstat-val');
+  if(pv[0]) pv[0].textContent = currentUser.wins||0;
+  if(pv[1]) pv[1].textContent = currentUser.losses||0;
+  if(pv[2]) pv[2].textContent = total;
   // Skill level
   const skill = currentUser.skill_level || 'anfaenger';
   document.querySelectorAll('.skill-opt').forEach((el,i)=>{
@@ -32,7 +29,7 @@ function renderMatchHistory() {
   const c = document.getElementById('profile-match-history');
   if(!myMatches.length) {
     c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
-      Noch keine Ranked Matches gespielt.</div>`;
+      Noch keine Matches gespielt.</div>`;
     return;
   }
   c.innerHTML = myMatches.map(m=>`
@@ -43,7 +40,6 @@ function renderMatchHistory() {
         <div class="match-sets">Sätze: ${m.sets}</div>
       </div>
       <div style="text-align:right;">
-        <div class="match-elo ${m.elo>0?'pos':'neg'}">${m.elo>0?'+':''}${m.elo} ELO</div>
         <div class="match-date">${m.date}</div>
       </div>
     </div>`).join('');

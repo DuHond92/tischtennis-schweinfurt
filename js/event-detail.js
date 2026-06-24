@@ -59,7 +59,7 @@ function showEventDetail(eventId) {
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill
-  const typeLabel = ev.type==='casual' ? ic('gamepad',13)+' Casual' : ev.type==='ranked' ? ic('swords',13)+' Ranked' : ic('trophy',13)+' Turnier';
+  const typeLabel = ev.type==='casual' ? 'Just 4 Fun' : ev.type==='ranked' ? 'Wertungsspiel' : ev.type==='training' ? 'Training' : 'Spiel';
   document.getElementById('eds-type-pill').innerHTML =
     `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel}</span>`;
 
