@@ -748,3 +748,63 @@
   display: flex; gap: 8px; padding: 10px 20px;
   border-bottom: 1px solid var(--border);
 }
+
+/* ── PARTICIPANT AVATARS ─────────────────────────────────────────── */
+.init-av {
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #fff; flex-shrink: 0;
+  font-family: var(--font-head); letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* Overlapping avatar stack (Slack-style) */
+.pstack {
+  display: inline-flex; align-items: center;
+}
+.pstack-item {
+  border-radius: 50%;
+  border: 2px solid var(--card, #fff);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #fff; flex-shrink: 0;
+  font-family: var(--font-head); line-height: 1; letter-spacing: -0.5px;
+  margin-left: -7px;
+}
+.pstack-item:first-child { margin-left: 0; }
+.pstack-emoji {
+  background: var(--surface2);
+  font-weight: 400; font-family: inherit; letter-spacing: 0;
+}
+.pstack-extra {
+  background: var(--surface2);
+  color: var(--text-dim);
+  border-color: var(--border);
+  font-family: var(--font-body); font-size: 0.62rem !important;
+  font-weight: 700;
+}
+
+/* Home card participant row */
+.ev-participants-row {
+  display: flex; align-items: center; gap: 6px; margin-top: 4px;
+}
+.ev-pcount {
+  font-size: 0.73rem; color: var(--text-dim); font-weight: 600;
+}
+
+/* Events list card participant row */
+.ecb-participants-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 5px;
+}
+.ecb-pcount {
+  font-size: 0.78rem; color: var(--text-dim); font-weight: 600;
+}
+
+/* Detail view avatar variants */
+.pc-avatar-init {
+  background: none !important;
+  overflow: hidden;
+}
+.pc-avatar-init .init-av {
+  width: 100% !important; height: 100% !important;
+  font-size: 1.1rem !important;
+}

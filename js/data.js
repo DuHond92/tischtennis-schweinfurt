@@ -84,13 +84,18 @@ async function loadEvents() {
   const {data: evData} = await qbE.order('event_date').execute();
   if(!evData || !evData.length) return;
 
-  // 2. Teilnehmer-Anzahl separat zählen
-  const pCounts = {};
+  // 2. Teilnehmer-Anzahl + Profile für Avatar-Stack
+  const pCounts       = {};
+  const pParticipants = {};
   try {
     const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id';
+    qbP._select = 'event_id,profiles(id,username,avatar_emoji)';
     const {data: pData} = await qbP.execute();
-    if(pData) pData.forEach(p => { pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1; });
+    if(pData) pData.forEach(p => {
+      pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
+      if(!pParticipants[p.event_id]) pParticipants[p.event_id] = [];
+      if(p.profiles) pParticipants[p.event_id].push(p.profiles);
+    });
   } catch(e) {}
 
   // 3. Platten-Info für Name + Icon (einfacher Select)
@@ -129,9 +134,10 @@ async function loadEvents() {
       tid:       e.table_id,
       creator:   prof.username || 'Anonym',
       creatorId: e.creator_id,
-      desc:      e.description || '',
-      p:         pCounts[e.id] || 0,
-      max:       e.max_participants
+      desc:         e.description || '',
+      p:            pCounts[e.id] || 0,
+      max:          e.max_participants,
+      participants: pParticipants[e.id] || []
     };
   });
 

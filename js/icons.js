@@ -24,3 +24,42 @@ function ic(name, size) {
   const s = size || 14;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0;">${_IC[name] || ''}</svg>`;
 }
+
+// ── AVATAR HELPERS ────────────────────────────────────────────────
+const _AV_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
+
+function _avColor(name) {
+  let h = 0;
+  const n = name || '?';
+  for(let i = 0; i < n.length; i++) h = n.charCodeAt(i) + ((h << 5) - h);
+  return _AV_COLORS[Math.abs(h) % _AV_COLORS.length];
+}
+
+function initAvatar(name, size) {
+  size = size || 28;
+  const n  = name || '?';
+  const fs = Math.round(size * 0.4);
+  return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
+}
+
+// Renders overlapping avatar stack (Slack/Notion style)
+function participantStack(participants, maxShow, size) {
+  maxShow = maxShow || 3;
+  size    = size    || 24;
+  if(!participants || !participants.length) return '';
+  const visible = participants.slice(0, maxShow);
+  const extra   = participants.length - maxShow;
+  const fs = Math.round(size * 0.38);
+  const items = visible.map(p => {
+    if(p.avatar_emoji) {
+      const efs = Math.round(size * 0.58);
+      return `<div class="pstack-item pstack-emoji" style="width:${size}px;height:${size}px;font-size:${efs}px;">${p.avatar_emoji}</div>`;
+    }
+    const n = p.username || '?';
+    return `<div class="pstack-item" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
+  }).join('');
+  const extraHtml = extra > 0
+    ? `<div class="pstack-item pstack-extra" style="width:${size}px;height:${size}px;font-size:${fs}px;">+${extra}</div>`
+    : '';
+  return `<div class="pstack">${items}${extraHtml}</div>`;
+}

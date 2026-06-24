@@ -133,16 +133,21 @@ function renderParticipantChips(participants, creatorId) {
     return;
   }
   el.innerHTML = participants.map(p => {
-    const isHost  = p.user_id === creatorId;
-    const avatar  = p.profiles?.avatar_emoji || '🏓';
-    const name    = p.profiles?.username || 'Anonym';
+    const isHost     = p.user_id === creatorId;
+    const name       = p.profiles?.username || 'Anonym';
+    const avatarHtml = p.profiles?.avatar_emoji
+      ? `<div class="pc-avatar pc-avatar-emoji">
+           ${p.profiles.avatar_emoji}
+           ${isHost ? '<span class="pc-crown">👑</span>' : ''}
+         </div>`
+      : `<div class="pc-avatar pc-avatar-init">
+           ${initAvatar(name, 46)}
+           ${isHost ? '<span class="pc-crown">👑</span>' : ''}
+         </div>`;
     return `<div class="participant-chip">
-      <div class="pc-avatar">
-        ${avatar}
-        ${isHost ? '<span class="pc-crown">👑</span>' : ''}
-      </div>
+      ${avatarHtml}
       <div class="pc-name">${name}</div>
-      ${isHost ? '<div class="pc-host-label">Host</div>' : ''}
+      ${isHost ? '<div class="pc-host-label">👑 Host</div>' : ''}
     </div>`;
   }).join('');
 }

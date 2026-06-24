@@ -48,7 +48,8 @@ function renderHome() {
       <div class="ev-info">
         <div class="ev-title">${e.name}</div>
         <div class="ev-meta-loc">${ic('pin')} ${e.tname}</div>
-        <div class="ev-meta-time">${ic('clock')} ${e.time} &nbsp;·&nbsp; ${ic('users')} ${e.p}/${e.max}</div>
+        <div class="ev-meta-time">${ic('clock')} ${e.time}</div>
+        <div class="ev-participants-row">${participantStack(e.participants,3,22)}<span class="ev-pcount">${e.p}/${e.max}</span></div>
       </div>
       <div class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel'}</div>
     </div>

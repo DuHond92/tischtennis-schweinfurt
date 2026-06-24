@@ -53,7 +53,7 @@ function renderEvents(filter='all') {
         <div class="ecb-title">${e.name}</div>
         <div class="ecb-meta">${ic('clock')} ${e.time} Uhr · von ${e.creator}</div>
         <div class="ecb-location">${ic('pin')} ${e.tname}</div>
-        <div class="ecb-participants">${ic('users')} ${e.p}/${e.max} Teilnehmer</div>
+        <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
       </div>
       <div class="ecb-chevron">›</div>
     </div>`;
