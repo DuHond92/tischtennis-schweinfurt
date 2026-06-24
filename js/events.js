@@ -53,7 +53,7 @@ function renderPlayerSearchCard(ps) {
 
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const psSrc   = allPlayerSearches.length ? allPlayerSearches : FALLBACK_PLAYER_SEARCHES;
+  const psSrc   = allPlayerSearches;
   const c = document.getElementById('events-list');
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
   const EV_PH   = 'images/placeholders/placeholder-plate.webp';
@@ -80,7 +80,12 @@ function renderEvents(filter = 'all') {
   if(filter === 'mitspieler') {
     c.innerHTML = psSrc.length
       ? psSrc.map(renderPlayerSearchCard).join('')
-      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Mitspieler-Gesuche vorhanden.</div>';
+      : `<div style="text-align:center;padding:48px 24px;color:var(--text-dim);">
+           <div style="font-size:2rem;margin-bottom:10px;">👥</div>
+           <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Noch keine Gesuche</div>
+           <div style="font-size:0.83rem;margin-bottom:20px;">Sei der Erste und finde Mitspieler in deiner Nähe.</div>
+           <button class="btn btn-primary btn-sm" onclick="closeAllSheets();openSheet('mitspieler-sheet')">+ Mitspieler suchen</button>
+         </div>`;
     return;
   }
 

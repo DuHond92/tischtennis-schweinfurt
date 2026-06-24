@@ -35,7 +35,7 @@ function renderHome() {
   }).join('');
 
   // Mitspieler-Hint
-  const psTotal = allPlayerSearches.length || FALLBACK_PLAYER_SEARCHES.length;
+  const psTotal = allPlayerSearches.length;
   const psHint  = document.getElementById('home-ps-hint');
   if(psHint) {
     const psCountEl = document.getElementById('home-ps-count');
