@@ -854,6 +854,14 @@
   margin-top: 6px;
   display: flex; align-items: center; gap: 4px;
 }
+.tds-desc {
+  margin: 0 20px 4px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem; color: var(--text-dim);
+  line-height: 1.55; white-space: pre-line;
+}
 .tds-cta-row {
   display: flex; gap: 8px;
   padding: 12px 20px; border-bottom: 1px solid var(--border);

@@ -63,6 +63,7 @@ function showTableDetail(id) {
         <span style="font-size:0.78rem;color:var(--text-dim);">⭐ Lade…</span>
       </div>
     </div>
+    ${t.description ? `<div class="tds-desc">${escHtml(t.description)}</div>` : ''}
     ${extraHtml}
     <!-- Primäre Aktionen -->
     <div class="tds-cta-row">
