@@ -745,6 +745,40 @@
   padding: 12px 0;
 }
 
+/* ── TABLE DETAIL – kompakte neue Struktur ──────────────────────── */
+.tds-rating-inline {
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+.tds-cta-row {
+  display: flex; gap: 8px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.tds-route-btn {
+  flex-shrink: 0; padding: 11px 16px;
+}
+.tds-section {
+  padding: 12px 20px 10px; border-bottom: 1px solid var(--border);
+}
+.tds-section-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.7rem; font-weight: 800; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.7px;
+  margin-bottom: 8px;
+}
+.tds-comment-row {
+  display: flex; gap: 9px; padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tds-comment-row:last-child { border-bottom: none; }
+.tds-comment-av { font-size: 1.15rem; flex-shrink: 0; line-height: 1.5; }
+.tds-comment-body { flex: 1; min-width: 0; }
+.tds-comment-meta { font-size: 0.68rem; color: var(--text-dim); margin-bottom: 2px; font-weight: 600; }
+.tds-comment-meta span { font-weight: 400; opacity: 0.75; }
+.tds-comment-text { font-size: 0.82rem; color: var(--text); line-height: 1.4; word-break: break-word; }
+.tds-comment-btn { margin-top: 10px; }
+.tds-loading, .tds-no-comments { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
+
 /* Rate Button im Detail */
 .rate-btn-row {
   display: flex; gap: 8px; padding: 10px 20px;

@@ -51,53 +51,46 @@ function showTableDetail(id) {
 
   document.getElementById('tds-body').innerHTML = `
     ${sliderHtml}
+    <!-- Kompakter Info-Block -->
     <div class="ds-info">
       <div class="ds-name">${t.icon} ${t.name}</div>
       <div class="ds-badges">
         <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
-        ${distHtml} ${osmHtml}
+        ${distHtml}${osmHtml}
       </div>
       <div class="ds-address">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
+      <div class="tds-rating-inline" id="tds-rating-${t.id}">
+        <span style="font-size:0.78rem;color:var(--text-dim);">⭐ Lade…</span>
+      </div>
     </div>
     ${extraHtml}
-    <!-- Rating Summary -->
-    <div id="rating-summary-${t.id}" class="rating-summary">
-      <div style="text-align:center;min-width:56px;">
-        <div class="rating-big-num" id="rating-num-${t.id}">–</div>
-        <div class="rating-stars-row" id="rating-stars-${t.id}" style="justify-content:center;"></div>
-        <div class="rating-count" id="rating-count-${t.id}">Noch keine</div>
+    <!-- Primäre Aktionen -->
+    <div class="tds-cta-row">
+      <button class="btn btn-primary btn-full" onclick="closeAllSheets();
+        document.getElementById('ev-table').value='${t.id}';
+        openSheet('create-event-sheet')">🏓 Spiel organisieren</button>
+      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections(${t.lat},${t.lng})">${ic('navigate',15)} Route</button>
+    </div>
+    <!-- Kommentare (inline) -->
+    <div class="tds-section">
+      <div class="tds-section-label">${ic('chat',13)} Kommentare</div>
+      <div id="tds-comments-${t.id}">
+        <div class="tds-loading">Lade…</div>
       </div>
-      <div class="rating-sub-bars" id="rating-bars-${t.id}">
-        <div style="font-size:0.72rem;color:var(--text-dim);">Lade Bewertungen…</div>
-      </div>
+      <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" onclick="openComments(${t.id})">${ic('chat',13)} Kommentar schreiben</button>
     </div>
-
-    <!-- King of the Plate -->
-    <div class="king-section" id="king-section-${t.id}">
-      <div class="king-header">👑 King of the Plate</div>
-      <div class="king-empty">Lade…</div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
-      <button class="btn btn-secondary btn-sm btn-full" onclick="openComments(${t.id})">${ic('chat',14)} Kommentare</button>
-      <button class="btn btn-secondary btn-sm btn-full" onclick="openMapsDirections(${t.lat},${t.lng})">${ic('navigate',14)} Route</button>
-    </div>
+    <!-- Bewertung abgeben -->
     <div style="padding:8px 20px;border-bottom:1px solid var(--border);">
-      <button class="btn btn-primary btn-full btn-sm" onclick="openRating(${t.id},'${t.name}')">⭐ Platte bewerten</button>
+      <button class="btn btn-secondary btn-full btn-sm" onclick="openRating(${t.id},'${escAttr(t.name)}')">⭐ Bewertung abgeben</button>
     </div>
+    <!-- Spielrunden -->
     <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">${ic('calendar',15)} Spielrunden</div>
     ${evHtml}
-    <div style="padding:14px 20px;">
-      <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();
-        document.getElementById('ev-table').value='${t.id}';
-        openSheet('create-event-sheet')">+ Spiel hier organisieren</button>
-    </div>`;
+    <div class="pb-safe"></div>`;
 
   openSheet('table-detail-sheet');
-  // Ratings + King async laden
   loadRatingsForTable(id);
-  loadKingOfPlate(id);
+  loadCommentsInline(id);
 }
 
 const PLATE_TEST_IMAGES = [
@@ -232,61 +225,34 @@ async function submitRating() {
 }
 
 async function loadRatingsForTable(tableId) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t   = src.find(x => x.id === tableId);
   try {
-    // Durchschnitt laden
     const qb = new QueryBuilder('table_ratings_avg');
     qb.eq('table_id', tableId);
     const {data} = await qb.execute();
-    if(data && data[0]) renderRatingSummary(tableId, data[0]);
-    else renderRatingSummary(tableId, null);
+    renderRatingSummary(tableId, (data && data[0]) ? data[0] : null, t?.name || '');
   } catch(e) {
     console.warn('Rating load error', e);
-    renderRatingSummary(tableId, null);
+    renderRatingSummary(tableId, null, t?.name || '');
   }
 }
 
-function renderRatingSummary(tableId, r) {
-  const numEl   = document.getElementById(`rating-num-${tableId}`);
-  const starsEl = document.getElementById(`rating-stars-${tableId}`);
-  const countEl = document.getElementById(`rating-count-${tableId}`);
-  const barsEl  = document.getElementById(`rating-bars-${tableId}`);
-  if(!numEl) return;
-
-  if(!r || !r.rating_count) {
-    numEl.textContent = '–';
-    starsEl.innerHTML = '';
-    countEl.textContent = 'Noch keine Bewertung';
-    barsEl.innerHTML = `<div style="font-size:0.75rem;color:var(--text-dim);">Sei der Erste! ⭐</div>`;
-    return;
+function renderRatingSummary(tableId, r, tableName) {
+  // Kompakte Anzeige im Info-Block
+  const inlineEl = document.getElementById(`tds-rating-${tableId}`);
+  if(inlineEl) {
+    if(!r || !r.rating_count) {
+      inlineEl.innerHTML = `<span style="font-size:0.78rem;color:var(--text-dim);">Noch keine Bewertungen</span>`;
+    } else {
+      const avg = parseFloat(r.avg_overall);
+      let stars = '';
+      for(let i=1;i<=5;i++) {
+        stars += `<span style="color:${i<=Math.round(avg)?'var(--gold)':'var(--border)'};">★</span>`;
+      }
+      inlineEl.innerHTML = `<span style="display:flex;align-items:center;gap:5px;font-size:0.78rem;color:var(--text-dim);">${stars}<b style="color:var(--text);">${avg.toFixed(1)}</b> · ${r.rating_count} Bewertung${r.rating_count>1?'en':''}</span>`;
+    }
   }
-
-  const avg = parseFloat(r.avg_overall);
-  numEl.textContent = avg.toFixed(1);
-
-  // Sterne rendern
-  let starsHtml = '';
-  for(let i=1;i<=5;i++) {
-    starsHtml += `<span class="${i<=Math.round(avg)?'rating-star-filled':'rating-star-empty'}">★</span>`;
-  }
-  starsEl.innerHTML = starsHtml;
-  countEl.textContent = `${r.rating_count} Bewertung${r.rating_count>1?'en':''}`;
-
-  // Sub-Bars
-  const cats = [
-    {key:'avg_surface',    label:'Oberfläche'},
-    {key:'avg_ground',     label:'Untergrund'},
-    {key:'avg_windshield', label:'Windschutz'},
-  ];
-  barsEl.innerHTML = cats.map(c => {
-    const val = r[c.key] ? parseFloat(r[c.key]) : null;
-    if(!val) return '';
-    const pct = (val/5*100).toFixed(0);
-    return `<div class="rating-sub-bar-row">
-      <div class="rsb-label">${c.label}</div>
-      <div class="rsb-bar"><div class="rsb-fill" style="width:${pct}%"></div></div>
-      <div class="rsb-val">${val.toFixed(1)}</div>
-    </div>`;
-  }).join('') || `<div style="font-size:0.72rem;color:var(--text-dim);">Details ausstehend</div>`;
 }
 
 async function loadKingOfPlate(tableId) {
@@ -323,6 +289,35 @@ function renderKingOfPlate(tableId, kings) {
 }
 
 // ── KOMMENTARE ────────────────────────────────────────────────────
+async function loadCommentsInline(tableId) {
+  const el = document.getElementById(`tds-comments-${tableId}`);
+  if(!el) return;
+  try {
+    const qb = new QueryBuilder('comments');
+    qb._select = 'id,text,created_at,profiles(username,avatar_emoji)';
+    qb.eq('table_id', tableId).order('created_at', true).limit(3);
+    const {data} = await qb.execute();
+    if(!data || !data.length) {
+      el.innerHTML = `<div class="tds-no-comments">Noch keine Kommentare.</div>`;
+      return;
+    }
+    el.innerHTML = data.map(c => {
+      const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+      const av   = c.profiles?.avatar_emoji || '🏓';
+      const name = c.profiles?.username || 'Anonym';
+      return `<div class="tds-comment-row">
+        <div class="tds-comment-av">${av}</div>
+        <div class="tds-comment-body">
+          <div class="tds-comment-meta">${escHtml(name)} <span>· ${date}</span></div>
+          <div class="tds-comment-text">${escHtml(c.text)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="tds-no-comments">Kommentare nicht verfügbar.</div>`;
+  }
+}
+
 async function openComments(tableId) {
   currentDetailTableId = tableId;
   document.getElementById('comment-sheet-title').textContent = '💬 Kommentare';
