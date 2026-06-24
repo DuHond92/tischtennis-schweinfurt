@@ -35,8 +35,8 @@ function showTableDetail(id) {
   const evArr = t.events || [];
   const evHtml = evArr.length===0
     ? `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:0.85rem;">
-        Noch keine Events –<br>Sei der Erste! 🏓<br><br>
-        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Event erstellen</button>
+        Noch keine Spielrunden –<br>Sei der Erste! 🏓<br><br>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Spielrunde erstellen</button>
        </div>`
     : evArr.map(e=>`
       <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
@@ -45,7 +45,7 @@ function showTableDetail(id) {
           <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
           <div style="font-size:0.74rem;color:var(--text-dim);">${ic('clock')} ${e.time} · ${ic('users')} ${e.p}/${e.max}</div>
         </div>
-        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Casual':e.type==='ranked'?'Ranked':'Turnier'}</span>
+        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel'}</span>
         <button class="btn btn-primary btn-sm" onclick="showEventDetail(${e.id})">Details →</button>
       </div>`).join('');
 
@@ -86,12 +86,12 @@ function showTableDetail(id) {
     <div style="padding:8px 20px;border-bottom:1px solid var(--border);">
       <button class="btn btn-primary btn-full btn-sm" onclick="openRating(${t.id},'${t.name}')">⭐ Platte bewerten</button>
     </div>
-    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">${ic('calendar',15)} Events</div>
+    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">${ic('calendar',15)} Spielrunden</div>
     ${evHtml}
     <div style="padding:14px 20px;">
       <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
-        openSheet('create-event-sheet')">+ Event hier erstellen</button>
+        openSheet('create-event-sheet')">+ Spielrunde hier erstellen</button>
     </div>`;
 
   openSheet('table-detail-sheet');
@@ -308,8 +308,8 @@ function renderKingOfPlate(tableId, kings) {
   const medals = ['👑','🥈','🥉'];
   if(!kings.length) {
     el.innerHTML = `<div class="king-header">👑 King of the Plate</div>
-      <div class="king-empty">Noch keine Ranked Matches an dieser Platte.<br>
-      <span style="font-size:0.78rem;">Spiele ein Ranked Match um König zu werden!</span></div>`;
+      <div class="king-empty">Noch keine Wertungsspiele an dieser Platte.<br>
+      <span style="font-size:0.78rem;">Spiele ein Wertungsspiel um König zu werden!</span></div>`;
     return;
   }
   el.innerHTML = `<div class="king-header">👑 King of the Plate</div>` +

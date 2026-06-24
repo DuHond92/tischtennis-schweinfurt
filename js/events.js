@@ -34,7 +34,7 @@ function renderEvents(filter='all') {
   const c = document.getElementById('events-list');
   if(!list.length) {
     c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
-      Keine Events in dieser Kategorie.
+      Keine Spielrunden in dieser Kategorie.
     </div>`; return;
   }
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
@@ -84,7 +84,7 @@ async function submitCreateEvent() {
   });
   if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
   closeAllSheets();
-  showToast('🎉 Event erstellt!','🎉');
+  showToast('🎉 Spielrunde erstellt!','🎉');
   await loadEvents();
   renderEvents(currentFilter);
   renderHome();
