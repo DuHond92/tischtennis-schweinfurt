@@ -259,6 +259,8 @@
 .ecb-title-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .ecb-title { font-weight: 800; font-size: 0.9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-meta { font-size: 0.73rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ecb-creator { font-size: 0.78rem; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ecb-creator b { color: var(--primary); }
 .ecb-location { font-size: 0.73rem; color: var(--text-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-participants { font-size: 0.72rem; color: var(--accent); font-weight: 700; margin-top: 4px; }
 .ecb-chevron { color: var(--text-xdim); font-size: 1.1rem; flex-shrink: 0; }

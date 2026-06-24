@@ -41,17 +41,16 @@ function renderEvents(filter='all') {
   const EV_PH  = 'images/placeholders/placeholder-plate.webp';
   c.innerHTML = list.map((e, idx)=>{
     const thumb = EV_IMGS[idx % EV_IMGS.length];
-    const typeLabel = e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel';
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
       <img class="ecb-thumb" src="${thumb}" onerror="this.src='${EV_PH}'" loading="lazy">
       <div class="ecb-info">
         <div class="ecb-title-row">
-          <span class="ev-type-pill pill-${e.type}">${typeLabel}</span>
+          <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
           <span style="font-size:0.72rem;color:var(--text-dim);">${ic('calendar',12)} ${e.day}. ${e.mon}</span>
         </div>
         <div class="ecb-title">${e.name}</div>
-        <div class="ecb-meta">${ic('clock')} ${e.time} Uhr · von ${e.creator}</div>
+        <div class="ecb-creator">${ic('user',12)} <b>${e.creator}</b> &nbsp;·&nbsp; ${ic('clock',12)} ${e.time} Uhr</div>
         <div class="ecb-location">${ic('pin')} ${e.tname}</div>
         <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
       </div>
@@ -84,7 +83,7 @@ async function submitCreateEvent() {
   });
   if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
   closeAllSheets();
-  showToast('🎉 Spielrunde erstellt!','🎉');
+  showToast('🎉 Spiel organisiert!','🎉');
   await loadEvents();
   renderEvents(currentFilter);
   renderHome();

@@ -42,6 +42,14 @@ function initAvatar(name, size) {
   return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
 }
 
+// Einheitliche Typ-Labels mit Emojis (single source of truth)
+function typeLabel(type) {
+  return type === 'casual'   ? '🎉 Just 4 Fun'
+       : type === 'ranked'   ? '🏓 Wertungsspiel'
+       : type === 'training' ? '🎯 Training'
+       : 'Spiel';
+}
+
 // Encode attribute values (prevents XSS / quote-breakout in data attrs)
 function escAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

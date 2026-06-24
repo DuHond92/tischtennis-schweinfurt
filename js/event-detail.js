@@ -59,9 +59,8 @@ function showEventDetail(eventId) {
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill
-  const typeLabel = ev.type==='casual' ? 'Just 4 Fun' : ev.type==='ranked' ? 'Wertungsspiel' : ev.type==='training' ? 'Training' : 'Spiel';
   document.getElementById('eds-type-pill').innerHTML =
-    `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel}</span>`;
+    `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel(ev.type)}</span>`;
 
   // Meta
   document.getElementById('eds-meta').innerHTML =

@@ -36,7 +36,7 @@ function showTableDetail(id) {
   const evHtml = evArr.length===0
     ? `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:0.85rem;">
         Noch keine Spielrunden –<br>Sei der Erste! 🏓<br><br>
-        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Spielrunde erstellen</button>
+        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Spiel organisieren</button>
        </div>`
     : evArr.map(e=>`
       <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
@@ -45,7 +45,7 @@ function showTableDetail(id) {
           <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
           <div style="font-size:0.74rem;color:var(--text-dim);">${ic('clock')} ${e.time} · ${ic('users')} ${e.p}/${e.max}</div>
         </div>
-        <span class="ev-type-pill pill-${e.type}">${e.type==='casual'?'Just 4 Fun':e.type==='ranked'?'Wertungsspiel':e.type==='training'?'Training':'Spiel'}</span>
+        <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
         <button class="btn btn-primary btn-sm" onclick="showEventDetail(${e.id})">Details →</button>
       </div>`).join('');
 
@@ -91,7 +91,7 @@ function showTableDetail(id) {
     <div style="padding:14px 20px;">
       <button class="btn btn-accent btn-full btn-sm" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
-        openSheet('create-event-sheet')">+ Spielrunde hier erstellen</button>
+        openSheet('create-event-sheet')">+ Spiel hier organisieren</button>
     </div>`;
 
   openSheet('table-detail-sheet');
