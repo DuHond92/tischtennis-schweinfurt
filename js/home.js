@@ -29,7 +29,7 @@
       .then(r => r.json())
       .then(data => {
         const a    = data.address || {};
-        const city = a.city || a.town || a.village || a.municipality || a.county || 'Schweinfurt';
+        const city = a.city || a.town || a.village || a.municipality || a.county || 'deiner Nähe';
         localStorage.setItem(CACHE_KEY, JSON.stringify({ city, ts: Date.now() }));
         setHeroCity(city);
       })
