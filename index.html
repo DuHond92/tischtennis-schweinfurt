@@ -128,12 +128,14 @@
           <div class="mbs-pip"></div>
         </div>
         <div class="mbs-pills" id="mbs-pills">
-          <div class="mbs-pill active" data-filter="all"      onclick="setMapFilter('all',this)">Alle</div>
-          <div class="mbs-pill"        data-filter="casual"   onclick="setMapFilter('casual',this)">🎉 Just 4 Fun</div>
-          <div class="mbs-pill"        data-filter="training" onclick="setMapFilter('training',this)">🎯 Training</div>
-          <div class="mbs-pill"        data-filter="ranked"   onclick="setMapFilter('ranked',this)">🏓 Spiel um Punkte</div>
-          <div class="mbs-pill"        data-filter="indoor"   onclick="setMapFilter('indoor',this)">🏠 Indoor</div>
-          <div class="mbs-pill"        data-filter="outdoor"  onclick="setMapFilter('outdoor',this)">☀️ Outdoor</div>
+          <div class="mbs-pill active" data-spielart="all"      onclick="setMapSpielart('all',this)">Alle</div>
+          <div class="mbs-pill"        data-spielart="casual"   onclick="setMapSpielart('casual',this)">🎉 Just 4 Fun</div>
+          <div class="mbs-pill"        data-spielart="training" onclick="setMapSpielart('training',this)">🎯 Training</div>
+          <div class="mbs-pill"        data-spielart="ranked"   onclick="setMapSpielart('ranked',this)">🏓 Spiel um Punkte</div>
+          <div class="mbs-pill-sep"></div>
+          <div class="mbs-pill"        data-place="all"     onclick="setMapPlace('all',this)" id="mbs-place-all">Alle Platten</div>
+          <div class="mbs-pill"        data-place="outdoor" onclick="setMapPlace('outdoor',this)">☀️ Outdoor</div>
+          <div class="mbs-pill"        data-place="indoor"  onclick="setMapPlace('indoor',this)">🏠 Indoor</div>
         </div>
         <div class="map-list" id="map-list-container"></div>
       </div>
@@ -840,6 +842,31 @@
 <script src="js/tables.js"></script>
 <script src="js/events.js"></script>
 <script src="js/event-detail.js"></script>
+<!-- MAP FILTER SHEET -->
+<div class="bottom-sheet" id="map-filter-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Filter</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="padding:8px 20px 32px;">
+    <div class="fms-section-label">Spielart</div>
+    <div class="fms-options" id="fms-spielart-opts">
+      <div class="fms-option active" data-val="all"      onclick="setFmsSpielart('all',this)">Alle Spielarten</div>
+      <div class="fms-option"        data-val="casual"   onclick="setFmsSpielart('casual',this)">🎉 Just 4 Fun</div>
+      <div class="fms-option"        data-val="training" onclick="setFmsSpielart('training',this)">🎯 Training</div>
+      <div class="fms-option"        data-val="ranked"   onclick="setFmsSpielart('ranked',this)">🏓 Spiel um Punkte</div>
+    </div>
+    <div class="fms-section-label" style="margin-top:22px;">Plattentyp</div>
+    <div class="fms-options" id="fms-place-opts">
+      <div class="fms-option active" data-val="all"     onclick="setFmsPlace('all',this)">Alle Platten</div>
+      <div class="fms-option"        data-val="outdoor" onclick="setFmsPlace('outdoor',this)">☀️ Outdoor</div>
+      <div class="fms-option"        data-val="indoor"  onclick="setFmsPlace('indoor',this)">🏠 Indoor</div>
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:24px;" onclick="closeAllSheets()">Fertig</button>
+  </div>
+</div>
+
 <script src="js/player-profile.js"></script>
 <script src="js/ranked.js"></script>
 <script src="js/profile.js"></script>

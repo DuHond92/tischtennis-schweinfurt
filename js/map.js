@@ -2,8 +2,9 @@
 // ║           MAP                                                ║
 // ╚══════════════════════════════════════════════════════════════╝
 let leafletMap, markers = [];
-let mapSearchQuery = '';
-let mapTypeFilter  = 'all';
+let mapSearchQuery   = '';
+let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'ranked'
+let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 
 function initMap() {
   leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
@@ -18,7 +19,7 @@ function initMap() {
 }
 
 function addMarker(t) {
-  const color  = t.type === 'indoor' ? '#3B7CF4' : '#22C55E';
+  const color   = t.type === 'indoor' ? '#3B7CF4' : '#22C55E';
   const evCount = t.events?.length || 0;
   const icon = L.divIcon({
     className: '',
@@ -50,30 +51,57 @@ function clearMapSearch() {
   const input = document.getElementById('map-search');
   if(input) input.value = '';
   mapSearchQuery = '';
-  const clear = document.getElementById('map-search-clear');
-  if(clear) clear.style.display = 'none';
+  document.getElementById('map-search-clear').style.display = 'none';
   _applyMapFilters();
 }
 
-// ── FILTER PILLS ──────────────────────────────────────────────────────────────
+// ── SPIELART FILTER ───────────────────────────────────────────────────────────
 
-const MAP_FILTER_CYCLE = ['all','casual','training','ranked','indoor','outdoor'];
-
-function setMapFilter(type, btn) {
-  mapTypeFilter = type;
-  document.querySelectorAll('.mbs-pill').forEach(p => p.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  const filterBtn = document.getElementById('map-filter-btn');
-  if(filterBtn) filterBtn.classList.toggle('active', type !== 'all');
+function setMapSpielart(val, btn) {
+  mapSpielartFilter = val;
+  // sync pills in bottom sheet
+  document.querySelectorAll('[data-spielart]').forEach(p =>
+    p.classList.toggle('active', p.dataset.spielart === val));
+  // sync filter sheet
+  document.querySelectorAll('#fms-spielart-opts .fms-option').forEach(o =>
+    o.classList.toggle('active', o.dataset.val === val));
+  _updateFilterBtnState();
   _applyMapFilters();
+}
+
+function setMapPlace(val, btn) {
+  mapPlaceFilter = val;
+  // sync pills in bottom sheet
+  document.querySelectorAll('[data-place]').forEach(p =>
+    p.classList.toggle('active', p.dataset.place === val));
+  // sync filter sheet
+  document.querySelectorAll('#fms-place-opts .fms-option').forEach(o =>
+    o.classList.toggle('active', o.dataset.val === val));
+  _updateFilterBtnState();
+  _applyMapFilters();
+}
+
+// Called from filter sheet
+function setFmsSpielart(val, btn) { setMapSpielart(val, btn); }
+function setFmsPlace(val, btn)    { setMapPlace(val, btn); }
+
+// Old entry-point kept for compatibility (pills still call this if referenced elsewhere)
+function setMapFilter(type) {
+  if(type === 'indoor' || type === 'outdoor') setMapPlace(type);
+  else setMapSpielart(type);
+}
+
+function _updateFilterBtnState() {
+  const hasFilter = mapSpielartFilter !== 'all' || mapPlaceFilter !== 'all';
+  document.getElementById('map-filter-btn')?.classList.toggle('active', hasFilter);
+}
+
+function openMapFilterSheet() {
+  openSheet('map-filter-sheet');
 }
 
 function cycleMapTypeFilter() {
-  const idx  = MAP_FILTER_CYCLE.indexOf(mapTypeFilter);
-  const next = MAP_FILTER_CYCLE[(idx + 1) % MAP_FILTER_CYCLE.length];
-  const pill = document.querySelector(`.mbs-pill[data-filter="${next}"]`);
-  setMapFilter(next, pill);
-  if(pill) pill.scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
+  openMapFilterSheet();
 }
 
 function getFilteredTables(src) {
@@ -84,13 +112,12 @@ function getFilteredTables(src) {
       (t.addr || '').toLowerCase().includes(mapSearchQuery)
     );
   }
-  if(mapTypeFilter === 'indoor') {
-    filtered = filtered.filter(t => t.type === 'indoor');
-  } else if(mapTypeFilter === 'outdoor') {
-    filtered = filtered.filter(t => t.type === 'outdoor');
-  } else if(mapTypeFilter !== 'all') {
+  if(mapPlaceFilter !== 'all') {
+    filtered = filtered.filter(t => t.type === mapPlaceFilter);
+  }
+  if(mapSpielartFilter !== 'all') {
     filtered = filtered.filter(t =>
-      (t.events || []).some(e => e.type === mapTypeFilter)
+      (t.events || []).some(e => e.type === mapSpielartFilter)
     );
   }
   return filtered;
@@ -177,23 +204,58 @@ function selectMapItem(id) {
   const src = tables.length ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === id);
   if(t && leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate:true });
-  // scroll selected item into view in the bottom sheet list
   const selected = document.querySelector('.map-list-item.selected');
   if(selected) selected.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
+function _buildStatusLine(filtered) {
+  const total     = (tables.length ? tables : FALLBACK_TABLES).length;
+  const count     = filtered.length;
+  const hasSearch = !!mapSearchQuery;
+  const hasSpiela = mapSpielartFilter !== 'all';
+  const hasPlace  = mapPlaceFilter    !== 'all';
+  const hasFilter = hasSpiela || hasPlace;
+
+  let parts = [];
+
+  if(hasSearch) {
+    parts.push(`🔍 <b>"${escHtml(mapSearchQuery)}"</b>`);
+  }
+
+  if(hasSpiela) {
+    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Spiel um Punkte'};
+    parts.push(labels[mapSpielartFilter] || mapSpielartFilter);
+  }
+  if(hasPlace) {
+    parts.push(mapPlaceFilter === 'indoor' ? '🏠 Indoor' : '☀️ Outdoor');
+  }
+
+  const filterHint = parts.length ? `<span class="mbs-status-filter">${parts.join(' · ')}</span>` : '';
+  const countWord  = (hasSearch || hasFilter) ? 'passende' : '';
+  const countText  = count === 0
+    ? 'Keine Platten gefunden'
+    : `${count} ${countWord} Platte${count !== 1 ? 'n' : ''}`;
+
+  return filterHint
+    ? `<div class="mbs-status">${filterHint}<span class="mbs-status-count">${countText}</span></div>`
+    : `<div class="mbs-status"><span class="mbs-status-count">${countText}</span></div>`;
+}
+
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
+  const statusHtml = _buildStatusLine(list);
+
   if(!list.length) {
-    c.innerHTML = `<div class="map-list-empty">Keine Platten gefunden.</div>`;
+    c.innerHTML = statusHtml + `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
     return;
   }
+
   const PH = 'images/placeholders/placeholder-plate.webp';
-  c.innerHTML = list.map(t => {
+  c.innerHTML = statusHtml + list.map(t => {
     const thumb    = (t.photos && t.photos.length) ? t.photos[0] : PLATE_TEST_IMAGES[0];
     const evCount  = t.events?.length || 0;
     const distHtml = t.distance != null
-      ? `<span class="mli-dist">${formatDistance(t.distance)}</span>` : '';
+      ? ` &nbsp;·&nbsp; <span class="mli-dist">${formatDistance(t.distance)}</span>` : '';
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
       <div class="mli-thumb">
@@ -204,23 +266,12 @@ function renderMapList(list) {
           <div class="map-list-name">${t.name}</div>
           <span class="mli-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
         </div>
-        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}${distHtml ? ' &nbsp;·&nbsp; '+distHtml : ''}</div>
+        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}${distHtml}</div>
         ${evCount ? `<div class="map-list-ev">${ic('calendar',13)} ${evCount} Event${evCount>1?'s':''} geplant</div>` : ''}
       </div>
       <div class="map-list-chevron">›</div>
     </div>`;
   }).join('');
-  // count label
-  const total = (tables.length ? tables : FALLBACK_TABLES).length;
-  const label = list.length === total
-    ? `${total} Platte${total !== 1 ? 'n' : ''}`
-    : `${list.length} von ${total} Platten`;
-  document.getElementById('mbs-count')?.remove();
-  const countEl = document.createElement('div');
-  countEl.id = 'mbs-count';
-  countEl.className = 'mbs-count';
-  countEl.textContent = label;
-  c.prepend(countEl);
 }
 
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
@@ -230,10 +281,12 @@ function initBottomSheet() {
   const handle = document.getElementById('mbs-handle');
   if(!bs || !handle) return;
 
-  const PEEK_H   = 200;
-  const expandH  = () => Math.round(bs.parentElement.offsetHeight * 0.68);
+  const PEEK_H  = 200;
+  const expandH = () => Math.round(bs.parentElement.offsetHeight * 0.68);
+  const ANIM    = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
 
-  bs.style.height = PEEK_H + 'px';
+  bs.style.height     = PEEK_H + 'px';
+  bs.style.transition = ANIM;
 
   let startY = null, startH = null;
 
@@ -252,16 +305,18 @@ function initBottomSheet() {
 
   handle.addEventListener('touchend', () => {
     if(startY === null) return;
-    startY = null;
-    bs.style.transition = '';
-    const h   = bs.offsetHeight;
+    const h = bs.offsetHeight;
+    startY  = null;
+    bs.style.transition = ANIM;
+    // Force reflow so transition applies to the next height change
+    void bs.offsetHeight;
     const mid = (PEEK_H + expandH()) / 2;
     bs.style.height = (h > mid ? expandH() : PEEK_H) + 'px';
   });
 
   handle.addEventListener('click', () => {
-    bs.style.transition = '';
     const h = bs.offsetHeight;
+    bs.style.transition = ANIM;
     bs.style.height = (h <= PEEK_H + 20 ? expandH() : PEEK_H) + 'px';
   });
 }
