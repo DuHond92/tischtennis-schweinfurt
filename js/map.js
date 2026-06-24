@@ -1,6 +1,19 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           MAP                                                ║
 // ╚══════════════════════════════════════════════════════════════╝
+
+// MAP_STYLE: 'voyager' | 'positron' | 'osm'
+const MAP_STYLE = 'voyager';
+
+const MAP_TILES = {
+  voyager:  { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>' },
+  positron: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>' },
+  osm:      { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+};
+
 let leafletMap, markers = [];
 let mapSearchQuery   = '';
 let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'ranked'
@@ -8,8 +21,12 @@ let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 
 function initMap() {
   leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:'© OpenStreetMap', maxZoom:19
+  const tile = MAP_TILES[MAP_STYLE] || MAP_TILES.voyager;
+  L.tileLayer(tile.url, {
+    attribution: tile.attr,
+    maxZoom: 19,
+    subdomains: 'abcd',
+    detectRetina: true
   }).addTo(leafletMap);
 
   const src = tables.length ? tables : FALLBACK_TABLES;
