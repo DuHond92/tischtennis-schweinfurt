@@ -9,9 +9,9 @@ function renderHome() {
   }
 
   // Counter
-  animateCount(document.getElementById('c-tables'),  tables.length    || 9);
-  animateCount(document.getElementById('c-events'),  (allEvents.length || FALLBACK_EVENTS.length));
-  animateCount(document.getElementById('c-players'), allPlayers.length|| 0);
+  animateCount(document.getElementById('c-tables'),   tables.length || 9);
+  animateCount(document.getElementById('c-events'),   allEvents.length || FALLBACK_EVENTS.length);
+  animateCount(document.getElementById('c-searches'), allPlayerSearches.length);
 
   // Platten-Karten
   const scroll = document.getElementById('home-tables-scroll');
@@ -34,33 +34,61 @@ function renderHome() {
     </div>`;
   }).join('');
 
-  // Mitspieler-Hint
-  const psTotal = allPlayerSearches.length;
-  const psHint  = document.getElementById('home-ps-hint');
-  if(psHint) {
-    const psCountEl = document.getElementById('home-ps-count');
-    if(psCountEl) psCountEl.textContent = psTotal;
-    psHint.style.display = psTotal > 0 ? '' : 'none';
-  }
+  // Mitspieler-Section
+  renderHomePsSection();
 
   // Events
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
   const EV_PH = 'images/placeholders/placeholder-plate.webp';
-  evList.innerHTML = evSrc.slice(0,5).map((e, idx)=>`
+  evList.innerHTML = evSrc.slice(0, 5).map((e, idx)=>`
     <div class="event-list-item" onclick="showEventDetail(${e.id})">
       <div class="ev-thumb">
         <img src="${EV_IMGS[idx % EV_IMGS.length]}" onerror="this.src='${EV_PH}'" loading="lazy">
         <div class="ev-date-overlay"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
       </div>
       <div class="ev-info">
+        <div class="ev-type-pill pill-${e.type}" style="margin-bottom:5px;">${typeLabel(e.type)}</div>
         <div class="ev-title">${e.name}</div>
         <div class="ev-meta-loc">${ic('pin')} ${e.tname}</div>
         <div class="ev-meta-time">${ic('clock')} ${e.time}</div>
         <div class="ev-participants-row">${participantStack(e.participants,3,26)}<span class="ev-pcount">${e.p}/${e.max}</span></div>
       </div>
-      <div class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</div>
     </div>
   `).join('');
+}
+
+function renderHomePsSection() {
+  const container = document.getElementById('home-ps-section');
+  if(!container) return;
+  if(!allPlayerSearches.length) {
+    container.innerHTML = '';
+    return;
+  }
+  const first = allPlayerSearches[0];
+  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', ranked: 'Spiel um Punkte'};
+  const avHtml = first.avatarEmoji
+    ? `<span style="font-size:1.6rem;line-height:1;">${first.avatarEmoji}</span>`
+    : initAvatar(first.username || '?', 36);
+  const metaParts = [];
+  if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');
+  if(first.wann && first.wann !== 'Egal') metaParts.push(first.wann);
+  const extraCount = allPlayerSearches.length - 1;
+  container.innerHTML = `
+    <div class="section-header">
+      <div class="section-title">👥 Mitspieler gesucht</div>
+      <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
+    </div>
+    <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">
+      <div class="hpsc-av">${avHtml}</div>
+      <div class="hpsc-info">
+        <div class="hpsc-name">${escHtml(first.username || 'Spieler')}</div>
+        <div class="hpsc-type">sucht <b>${spielartLabels[first.spielart] || 'Mitspieler'}</b></div>
+        ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
+      </div>
+      ${extraCount > 0
+        ? `<span class="hpsc-more">+${extraCount} weitere</span>`
+        : `<span class="hpsc-chevron">›</span>`}
+    </div>`;
 }

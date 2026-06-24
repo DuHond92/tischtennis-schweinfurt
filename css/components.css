@@ -868,6 +868,22 @@
 .home-ps-hint b { font-weight: 800; }
 .hps-arrow { margin-left: auto; font-size: 1rem; opacity: 0.7; }
 
+.home-ps-card {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 16px 8px; padding: 12px 14px;
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
+}
+.home-ps-card:hover { background: var(--surface2); }
+.hpsc-av { flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+.hpsc-info { flex: 1; min-width: 0; }
+.hpsc-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.hpsc-type { font-size: 0.78rem; color: var(--text-dim); margin-top: 1px; }
+.hpsc-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+.hpsc-more { background: var(--primary-bg); color: var(--primary); border-radius: 20px; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; flex-shrink: 0; white-space: nowrap; }
+.hpsc-chevron { font-size: 1.2rem; color: var(--text-dim); flex-shrink: 0; }
+
 /* ── FEED: SECTION TITLES ────────────────────────────────────────── */
 .feed-section-title {
   display: flex; align-items: center; gap: 8px;
