@@ -817,3 +817,65 @@
   width: 100% !important; height: 100% !important;
   font-size: 1.1rem !important;
 }
+
+/* ── HOME: MITSPIELER HINT ───────────────────────────────────────── */
+.home-ps-hint {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 20px 16px;
+  background: var(--primary-bg);
+  border: 1px solid rgba(59,124,244,0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.85rem; font-weight: 600; color: var(--primary);
+}
+.home-ps-hint:hover { background: rgba(59,124,244,0.12); }
+.home-ps-hint b { font-weight: 800; }
+.hps-arrow { margin-left: auto; font-size: 1rem; opacity: 0.7; }
+
+/* ── FEED: SECTION TITLES ────────────────────────────────────────── */
+.feed-section-title {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 7px;
+  font-size: 0.68rem; font-weight: 800;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.ps-count-chip {
+  background: var(--primary); color: #fff;
+  font-size: 0.62rem; padding: 1px 7px;
+  border-radius: 20px; font-weight: 800; line-height: 1.5;
+}
+
+/* ── PLAYER SEARCH CARDS ─────────────────────────────────────────── */
+.player-search-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.psc-info { flex: 1; min-width: 0; padding-top: 2px; }
+.psc-name {
+  font-weight: 800; font-size: 0.9rem; color: var(--text);
+  cursor: pointer; transition: color 0.15s;
+  font-family: var(--font-head);
+}
+.psc-name:hover { color: var(--primary); }
+.psc-type-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px; flex-wrap: wrap;
+}
+.psc-meta {
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.psc-message {
+  font-size: 0.78rem; color: var(--text-dim);
+  margin-top: 5px; line-height: 1.45;
+  font-style: italic;
+}
+.psc-btn {
+  flex-shrink: 0; align-self: flex-start;
+  font-size: 0.75rem !important; padding: 6px 12px !important;
+}

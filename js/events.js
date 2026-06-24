@@ -27,19 +27,42 @@ async function joinEvent(eventId, btn) {
   }
 }
 
-function renderEvents(filter='all') {
-  // Fallback-Events verwenden wenn Supabase noch keine hat
-  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const list = filter==='all' ? src : src.filter(e=>e.type===filter);
+function renderPlayerSearchCard(ps) {
+  const uid   = escAttr(ps.userId || '');
+  const name  = escAttr(ps.username || 'Spieler');
+  const emoji = escAttr(ps.avatarEmoji || '');
+  const click = `showPlayerProfile('${uid}','${name}','${emoji}')`;
+  const avHtml = ps.avatarEmoji
+    ? `<div onclick="${click}" title="Profil ansehen" style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;cursor:pointer;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
+    : `<div onclick="${click}" title="Profil ansehen" style="cursor:pointer;flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
+  const spielartMap = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Wertungsspiel'};
+  const spielartLabel = spielartMap[ps.spielart] || '🎉 Just 4 Fun';
+  const metaParts = [];
+  if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`📍 ${ps.umkreis}`);
+  if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`📅 ${ps.wann}`);
+  return `
+    <div class="player-search-card fade-up">
+      ${avHtml}
+      <div class="psc-info">
+        <div class="psc-name" onclick="${click}">${escHtml(ps.username || 'Spieler')}</div>
+        <div class="psc-type-row">
+          <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
+          ${metaParts.length ? `<span class="psc-meta">${metaParts.join(' · ')}</span>` : ''}
+        </div>
+        ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
+      </div>
+      <button class="btn btn-secondary btn-sm psc-btn" onclick="${click}">Profil</button>
+    </div>`;
+}
+
+function renderEvents(filter = 'all') {
+  const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const psSrc   = [...allPlayerSearches, ...FALLBACK_PLAYER_SEARCHES];
   const c = document.getElementById('events-list');
-  if(!list.length) {
-    c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-dim);">
-      Keine Spielrunden in dieser Kategorie.
-    </div>`; return;
-  }
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
-  const EV_PH  = 'images/placeholders/placeholder-plate.webp';
-  c.innerHTML = list.map((e, idx)=>{
+  const EV_PH   = 'images/placeholders/placeholder-plate.webp';
+
+  function gameCard(e, idx) {
     const thumb = EV_IMGS[idx % EV_IMGS.length];
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
@@ -56,14 +79,46 @@ function renderEvents(filter='all') {
       </div>
       <div class="ecb-chevron">›</div>
     </div>`;
-  }).join('');
+  }
+
+  if(filter === 'mitspieler') {
+    c.innerHTML = psSrc.length
+      ? psSrc.map(renderPlayerSearchCard).join('')
+      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Mitspieler-Gesuche vorhanden.</div>';
+    return;
+  }
+
+  const games = filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter);
+
+  if(filter === 'all') {
+    const psHtml = psSrc.length ? `
+      <div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psSrc.length}</span></div>
+      ${psSrc.slice(0, 3).map(renderPlayerSearchCard).join('')}
+      <div class="feed-section-title" style="margin-top:4px;">${ic('calendar',13)} Spielrunden</div>
+    ` : '';
+    if(!games.length && !psSrc.length) {
+      c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
+      return;
+    }
+    c.innerHTML = psHtml + games.map(gameCard).join('');
+  } else {
+    c.innerHTML = games.length
+      ? games.map(gameCard).join('')
+      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Spielrunden in dieser Kategorie.</div>';
+  }
 }
 
 function filterEvents(type, btn) {
   currentFilter = type;
-  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderEvents(type);
+}
+
+function activateMitspielerFilter() {
+  showPage('events');
+  const pill = document.getElementById('pill-mitspieler');
+  if(pill) filterEvents('mitspieler', pill);
 }
 
 async function submitCreateEvent() {
@@ -85,6 +140,32 @@ async function submitCreateEvent() {
   closeAllSheets();
   showToast('🎉 Spiel organisiert!','🎉');
   await loadEvents();
+  renderEvents(currentFilter);
+  renderHome();
+}
+
+function submitMitspieler() {
+  const spielart = document.getElementById('ms-spielart').value;
+  const wann     = document.getElementById('ms-wann').value;
+  const umkreis  = document.getElementById('ms-umkreis').value;
+  const message  = (document.getElementById('ms-message').value || '').trim();
+  const username = currentUser?.username || 'Du';
+  const emoji    = currentUser?.avatar_emoji || '';
+
+  allPlayerSearches.unshift({
+    id: 300 + allPlayerSearches.length + 1,
+    type: 'player_search',
+    userId: currentUser?.id || null,
+    username,
+    avatarEmoji: emoji,
+    spielart,
+    wann,
+    umkreis,
+    message
+  });
+
+  closeAllSheets();
+  showToast('👥 Gesuch veröffentlicht!', '✅');
   renderEvents(currentFilter);
   renderHome();
 }

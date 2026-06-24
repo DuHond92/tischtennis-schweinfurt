@@ -55,6 +55,11 @@ function escAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// Encode HTML text content
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 // Renders overlapping avatar stack (Slack/Notion style) — items are clickable
 function participantStack(participants, maxShow, size) {
   maxShow = maxShow || 3;

@@ -34,6 +34,15 @@ function renderHome() {
     </div>`;
   }).join('');
 
+  // Mitspieler-Hint
+  const psTotal = allPlayerSearches.length + FALLBACK_PLAYER_SEARCHES.length;
+  const psHint  = document.getElementById('home-ps-hint');
+  if(psHint) {
+    const psCountEl = document.getElementById('home-ps-count');
+    if(psCountEl) psCountEl.textContent = psTotal;
+    psHint.style.display = psTotal > 0 ? '' : 'none';
+  }
+
   // Events
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');

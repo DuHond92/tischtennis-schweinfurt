@@ -79,6 +79,13 @@
     </div>
     <div class="cards-scroll" id="home-tables-scroll"></div>
 
+    <!-- Mitspieler hint -->
+    <div class="home-ps-hint" id="home-ps-hint" onclick="activateMitspielerFilter()" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span><b id="home-ps-count">4</b> Spieler suchen gerade Mitspieler</span>
+      <span class="hps-arrow">›</span>
+    </div>
+
     <!-- Upcoming events -->
     <div class="section-header">
       <div class="section-title">Kommende Spielrunden</div>
@@ -114,6 +121,7 @@
     </div>
     <div class="filter-pills" id="event-filter-pills">
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
+      <button class="filter-pill" id="pill-mitspieler" onclick="filterEvents('mitspieler',this)">👥 Mitspieler</button>
       <button class="filter-pill" onclick="filterEvents('casual',this)">🎉 Just 4 Fun</button>
       <button class="filter-pill" onclick="filterEvents('training',this)">🎯 Training</button>
       <button class="filter-pill" onclick="filterEvents('ranked',this)">🏓 Wertungsspiel</button>
@@ -381,7 +389,7 @@
     <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:20px;">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
     <div class="form-group">
       <label class="form-label">Spielart</label>
-      <select class="form-select">
+      <select class="form-select" id="ms-spielart">
         <option value="casual">🎉 Just 4 Fun – Einfach spielen</option>
         <option value="training">🎯 Training – Technik verbessern</option>
         <option value="ranked">🏓 Wertungsspiel – Herausforderung</option>
@@ -390,7 +398,7 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Wann?</label>
-        <select class="form-select">
+        <select class="form-select" id="ms-wann">
           <option>Heute</option>
           <option>Diese Woche</option>
           <option>Egal</option>
@@ -398,7 +406,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Umkreis</label>
-        <select class="form-select">
+        <select class="form-select" id="ms-umkreis">
           <option>2 km</option>
           <option>5 km</option>
           <option>10 km</option>
@@ -408,12 +416,11 @@
     </div>
     <div class="form-group">
       <label class="form-label">Nachricht <span style="color:var(--text-xdim);font-weight:400;">optional</span></label>
-      <textarea class="form-textarea" placeholder="z.B. Suche jemanden für 1–2 Stunden Casual Ping Pong am Nachmittag…" style="min-height:70px;"></textarea>
+      <textarea class="form-textarea" id="ms-message" placeholder="z.B. Suche jemanden für 1–2 Stunden Casual Ping Pong am Nachmittag…" style="min-height:70px;"></textarea>
     </div>
-    <button class="btn btn-primary btn-full" onclick="showToast('🏓 Diese Funktion kommt bald!','👥');closeAllSheets();">
-      Mitspieler suchen
+    <button class="btn btn-primary btn-full" onclick="submitMitspieler()">
+      👥 Mitspieler suchen
     </button>
-    <p style="text-align:center;font-size:0.72rem;color:var(--text-xdim);margin-top:10px;">Funktion wird in Kürze freigeschaltet.</p>
   </div>
 </div>
 

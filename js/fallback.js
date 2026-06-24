@@ -34,3 +34,13 @@ const FALLBACK_EVENTS = [
   {id:108,name:"Wertungsspiel Duo",day:"09",mon:"JUL",time:"10:00",type:"ranked",tname:"Sportanlage Oberndorf",ticon:"🏅",tid:8,creator:"Anna",p:2,max:2,
    participants:[{username:'Anna',avatar_emoji:'🎯'},{username:'Max',avatar_emoji:''}]},
 ];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           FALLBACK: MITSPIELER-GESUCHE                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FALLBACK_PLAYER_SEARCHES = [
+  {id:301, type:'player_search', userId:null, username:'Sarah',  avatarEmoji:'',   spielart:'casual',   wann:'Heute',       umkreis:'5 km',  message:'Suche jemanden für eine entspannte Runde heute Nachmittag. Alle Level willkommen!'},
+  {id:302, type:'player_search', userId:null, username:'Lukas',  avatarEmoji:'⚡',  spielart:'training', wann:'Diese Woche', umkreis:'10 km', message:'Regelmäßiges Techniktraining gesucht. Schläger und Bälle vorhanden.'},
+  {id:303, type:'player_search', userId:null, username:'Anna',   avatarEmoji:'🎯', spielart:'ranked',   wann:'Egal',        umkreis:'5 km',  message:''},
+  {id:304, type:'player_search', userId:null, username:'Max',    avatarEmoji:'',   spielart:'casual',   wann:'Diese Woche', umkreis:'2 km',  message:'Wer hat Lust auf Ping Pong am Wochenende?'},
+];
