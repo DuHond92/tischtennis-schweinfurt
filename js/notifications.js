@@ -28,7 +28,12 @@ async function checkNotifications() {
     if(data) participantIds = data.map(p => p.event_id);
   } catch(e) { console.warn('notif: participant query failed', e); }
 
-  const myEventIds = [...new Set([...creatorIds, ...participantIds])];
+  // 3. Player-Search-Gesuche die der User erstellt hat
+  const psCreatorIds = allPlayerSearches
+    .filter(ps => ps.userId === userId)
+    .map(ps => ps.id);
+
+  const myEventIds = [...new Set([...creatorIds, ...participantIds, ...psCreatorIds])];
   if(!myEventIds.length) { hideNotifBadge(); return; }
 
   // 3. Letzte 50 Nachrichten (mit Profil-Join)
@@ -114,10 +119,14 @@ function renderNotifSheet() {
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evMap = {};
   evSrc.forEach(e => { evMap[e.id] = e; });
+  // Mitspieler-Gesuche auch in Map aufnehmen
+  allPlayerSearches.forEach(ps => {
+    if(!evMap[ps.id]) evMap[ps.id] = { id: ps.id, name: ps.username + ' sucht Mitspieler' };
+  });
 
   body.innerHTML = pendingNotifs.slice(0, 20).map(m => {
     const ev      = evMap[m.event_id];
-    const evTitle = ev ? ev.name : 'Spielrunde';
+    const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const sender  = m.profiles?.username || 'Jemand';
     const emoji   = m.profiles?.avatar_emoji || '';
     const avHtml  = emoji
@@ -151,7 +160,11 @@ function _notifTime(isoStr) {
 function openNotifEvent(eventId) {
   markEventSeen(eventId);
   closeAllSheets();
-  showEventDetail(eventId);
+  if(allPlayerSearches.some(ps => ps.id === eventId)) {
+    showPlayerSearchDetail(eventId);
+  } else {
+    showEventDetail(eventId);
+  }
 }
 
 // ── Polling alle 60 Sekunden ─────────────────────────────────────

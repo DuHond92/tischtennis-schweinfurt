@@ -28,10 +28,7 @@ async function joinEvent(eventId, btn) {
 }
 
 function renderPlayerSearchCard(ps) {
-  const uid   = escAttr(ps.userId || '');
-  const name  = escAttr(ps.username || 'Spieler');
-  const emoji = escAttr(ps.avatarEmoji || '');
-  const click = `showPlayerProfile('${uid}','${name}','${emoji}')`;
+  const click = `showPlayerSearchDetail(${ps.id})`;
   const avHtml = ps.avatarEmoji
     ? `<div style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
     : `<div style="flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
