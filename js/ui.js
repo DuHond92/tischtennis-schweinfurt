@@ -19,6 +19,7 @@ function showPage(name) {
   document.getElementById('main-fab').style.display =
     (name==='home'||name==='events') ? 'flex' : 'none';
   if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
+  else if(name==='map' && leafletMap) { setTimeout(()=>leafletMap.invalidateSize(),50); }
   if(name==='profile') renderProfile();
 }
 
