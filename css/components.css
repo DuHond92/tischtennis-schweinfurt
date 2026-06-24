@@ -161,7 +161,7 @@
 }
 .pill-casual { background: var(--green-bg); color: var(--green); }
 .pill-ranked { background: var(--primary-bg); color: var(--primary); }
-.pill-training { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+.pill-training { background: var(--gold-bg); color: var(--gold); }
 .pill-turnier { background: var(--surface2); color: var(--text-dim); }
 .pill-spiel { background: var(--surface2); color: var(--text-dim); }
 
@@ -855,7 +855,11 @@
   padding: 13px 16px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.player-search-card:hover { background: var(--surface2); }
+.player-search-card:active { background: var(--primary-bg); opacity: 0.92; }
 .psc-info { flex: 1; min-width: 0; padding-top: 2px; }
 .psc-name {
   font-weight: 800; font-size: 0.9rem; color: var(--text);

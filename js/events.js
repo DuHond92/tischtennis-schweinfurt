@@ -33,25 +33,24 @@ function renderPlayerSearchCard(ps) {
   const emoji = escAttr(ps.avatarEmoji || '');
   const click = `showPlayerProfile('${uid}','${name}','${emoji}')`;
   const avHtml = ps.avatarEmoji
-    ? `<div onclick="${click}" title="Profil ansehen" style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;cursor:pointer;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
-    : `<div onclick="${click}" title="Profil ansehen" style="cursor:pointer;flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
-  const spielartMap = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Wertungsspiel'};
-  const spielartLabel = spielartMap[ps.spielart] || '🎉 Just 4 Fun';
+    ? `<div style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
+    : `<div style="flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
+  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', ranked:'Wertungsspiel gesucht'};
+  const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
-  if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`📍 ${ps.umkreis}`);
-  if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`📅 ${ps.wann}`);
+  if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
+  if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
-    <div class="player-search-card fade-up">
+    <div class="player-search-card fade-up" onclick="${click}">
       ${avHtml}
       <div class="psc-info">
-        <div class="psc-name" onclick="${click}">${escHtml(ps.username || 'Spieler')}</div>
+        <div class="psc-name">${escHtml(ps.username || 'Spieler')}</div>
         <div class="psc-type-row">
           <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
-          ${metaParts.length ? `<span class="psc-meta">${metaParts.join(' · ')}</span>` : ''}
         </div>
+        ${metaParts.length ? `<div class="psc-meta" style="margin-top:5px;">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
         ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
       </div>
-      <button class="btn btn-secondary btn-sm psc-btn" onclick="${click}">Profil</button>
     </div>`;
 }
 
@@ -94,7 +93,7 @@ function renderEvents(filter = 'all') {
     const psHtml = psSrc.length ? `
       <div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psSrc.length}</span></div>
       ${psSrc.slice(0, 3).map(renderPlayerSearchCard).join('')}
-      <div class="feed-section-title" style="margin-top:4px;">${ic('calendar',13)} Spielrunden</div>
+      <div class="feed-section-title" style="margin-top:4px;">${ic('calendar',13)} Geplante Spiele</div>
     ` : '';
     if(!games.length && !psSrc.length) {
       c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
@@ -104,7 +103,7 @@ function renderEvents(filter = 'all') {
   } else {
     c.innerHTML = games.length
       ? games.map(gameCard).join('')
-      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Spielrunden in dieser Kategorie.</div>';
+      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Spiele in dieser Kategorie.</div>';
   }
 }
 
