@@ -15,7 +15,7 @@ function showPlayerSearchDetail(psId) {
     ? `<div style="width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
     : `<div style="flex-shrink:0;">${initAvatar(ps.username || '?', 52)}</div>`;
 
-  const spielartMap = {casual:'Just 4 Fun', training:'Training', ranked:'Wertungsspiel'};
+  const spielartMap = {casual:'Just 4 Fun', training:'Training', ranked:'Spiel um Punkte'};
   const spielartLabel = spielartMap[ps.spielart] || 'Mitspieler';
 
   const metaParts = [];

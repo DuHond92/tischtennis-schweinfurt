@@ -32,7 +32,7 @@ function renderPlayerSearchCard(ps) {
   const avHtml = ps.avatarEmoji
     ? `<div style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
     : `<div style="flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
-  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', ranked:'Wertungsspiel gesucht'};
+  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', ranked:'Spiel um Punkte gesucht'};
   const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
   if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
@@ -53,7 +53,6 @@ function renderPlayerSearchCard(ps) {
 
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const psSrc   = allPlayerSearches;
   const c = document.getElementById('events-list');
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
   const EV_PH   = 'images/placeholders/placeholder-plate.webp';
@@ -77,36 +76,31 @@ function renderEvents(filter = 'all') {
     </div>`;
   }
 
-  if(filter === 'mitspieler') {
-    c.innerHTML = psSrc.length
-      ? psSrc.map(renderPlayerSearchCard).join('')
-      : `<div style="text-align:center;padding:48px 24px;color:var(--text-dim);">
-           <div style="font-size:2rem;margin-bottom:10px;">👥</div>
-           <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Noch keine Gesuche</div>
-           <div style="font-size:0.83rem;margin-bottom:20px;">Sei der Erste und finde Mitspieler in deiner Nähe.</div>
-           <button class="btn btn-primary btn-sm" onclick="closeAllSheets();openSheet('mitspieler-sheet')">+ Mitspieler suchen</button>
-         </div>`;
+  // Spielart-Filter gilt für beide Bereiche
+  const psFiltered = filter === 'all'
+    ? allPlayerSearches
+    : allPlayerSearches.filter(ps => ps.spielart === filter);
+
+  const games = filter === 'all'
+    ? gameSrc
+    : gameSrc.filter(e => e.type === filter);
+
+  if(!psFiltered.length && !games.length) {
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
     return;
   }
 
-  const games = filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter);
+  const psHtml = psFiltered.length
+    ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psFiltered.length}</span></div>
+       ${psFiltered.map(renderPlayerSearchCard).join('')}`
+    : '';
 
-  if(filter === 'all') {
-    const psHtml = psSrc.length ? `
-      <div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psSrc.length}</span></div>
-      ${psSrc.slice(0, 3).map(renderPlayerSearchCard).join('')}
-      <div class="feed-section-title" style="margin-top:4px;">${ic('calendar',13)} Geplante Spiele</div>
-    ` : '';
-    if(!games.length && !psSrc.length) {
-      c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
-      return;
-    }
-    c.innerHTML = psHtml + games.map(gameCard).join('');
-  } else {
-    c.innerHTML = games.length
-      ? games.map(gameCard).join('')
-      : '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Spiele in dieser Kategorie.</div>';
-  }
+  const gamesHtml = games.length
+    ? `<div class="feed-section-title"${psHtml ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
+       ${games.map(gameCard).join('')}`
+    : '';
+
+  c.innerHTML = psHtml + gamesHtml;
 }
 
 function filterEvents(type, btn) {
@@ -118,8 +112,9 @@ function filterEvents(type, btn) {
 
 function activateMitspielerFilter() {
   showPage('events');
-  const pill = document.getElementById('pill-mitspieler');
-  if(pill) filterEvents('mitspieler', pill);
+  // Mitspieler-Gesuche erscheinen oben im "Alle"-Feed
+  const allPill = document.querySelector('#event-filter-pills .filter-pill');
+  if(allPill && currentFilter !== 'all') filterEvents('all', allPill);
 }
 
 async function submitCreateEvent() {
