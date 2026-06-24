@@ -56,7 +56,7 @@ function renderPlayerSearchCard(ps) {
 
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const psSrc   = [...allPlayerSearches, ...FALLBACK_PLAYER_SEARCHES];
+  const psSrc   = allPlayerSearches.length ? allPlayerSearches : FALLBACK_PLAYER_SEARCHES;
   const c = document.getElementById('events-list');
   const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
   const EV_PH   = 'images/placeholders/placeholder-plate.webp';
@@ -143,28 +143,41 @@ async function submitCreateEvent() {
   renderHome();
 }
 
-function submitMitspieler() {
+async function submitMitspieler() {
+  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+
+  const btn     = document.getElementById('ms-submit-btn');
+  if(btn) { btn.disabled = true; btn.textContent = '…'; }
+
   const spielart = document.getElementById('ms-spielart').value;
   const wann     = document.getElementById('ms-wann').value;
   const umkreis  = document.getElementById('ms-umkreis').value;
   const message  = (document.getElementById('ms-message').value || '').trim();
-  const username = currentUser?.username || 'Du';
-  const emoji    = currentUser?.avatar_emoji || '';
-
-  allPlayerSearches.unshift({
-    id: 300 + allPlayerSearches.length + 1,
-    type: 'player_search',
-    userId: currentUser?.id || null,
-    username,
-    avatarEmoji: emoji,
-    spielart,
-    wann,
-    umkreis,
-    message
+  const today    = new Date().toISOString().slice(0, 10);
+  const title    = (currentUser?.username || 'Spieler') + ' sucht Mitspieler';
+  const descJson = JSON.stringify({
+    spielart, wann, umkreis, message,
+    avatarEmoji: currentUser?.avatar_emoji || ''
   });
+
+  const qb = new QueryBuilder('events');
+  const {error} = await qb.insert({
+    title,
+    table_id:         null,
+    creator_id:       sb.getUserId(),
+    event_date:       today,
+    event_time:       '00:00',
+    mode:             'player_search',
+    max_participants: 2,
+    description:      descJson
+  });
+
+  if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
+  if(error) { showToast('Fehler beim Veröffentlichen', '❌'); console.error(error); return; }
 
   closeAllSheets();
   showToast('👥 Gesuch veröffentlicht!', '✅');
+  await loadEvents();
   renderEvents(currentFilter);
   renderHome();
 }

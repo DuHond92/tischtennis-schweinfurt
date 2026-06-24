@@ -111,7 +111,7 @@ async function loadEvents() {
   const profileMap = {};
   try {
     const qbProf = new QueryBuilder('profiles');
-    qbProf._select = 'id,username';
+    qbProf._select = 'id,username,avatar_emoji';
     const {data: pData} = await qbProf.execute();
     if(pData) pData.forEach(p => { profileMap[p.id] = p; });
   } catch(e) {}
@@ -132,14 +132,35 @@ async function loadEvents() {
       tname:     tbl.name  || '?',
       ticon:     tbl.icon  || '🏓',
       tid:       e.table_id,
-      creator:   prof.username || 'Anonym',
-      creatorId: e.creator_id,
+      creator:      prof.username    || 'Anonym',
+      creatorId:    e.creator_id,
+      creatorEmoji: prof.avatar_emoji || '',
       desc:         e.description || '',
       p:            pCounts[e.id] || 0,
       max:          e.max_participants,
       participants: pParticipants[e.id] || []
     };
   });
+
+  // Mitspieler-Gesuche aus allEvents herauslösen
+  allPlayerSearches = allEvents
+    .filter(e => e.type === 'player_search')
+    .map(e => {
+      let extra = {};
+      try { extra = JSON.parse(e.desc || '{}'); } catch(_) {}
+      return {
+        id:          e.id,
+        type:        'player_search',
+        userId:      e.creatorId,
+        username:    e.creator,
+        avatarEmoji: e.creatorEmoji || extra.avatarEmoji || '',
+        spielart:    extra.spielart  || 'casual',
+        wann:        extra.wann      || 'Egal',
+        umkreis:     extra.umkreis   || '5 km',
+        message:     extra.message   || ''
+      };
+    });
+  allEvents = allEvents.filter(e => e.type !== 'player_search');
 
   tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
 }
