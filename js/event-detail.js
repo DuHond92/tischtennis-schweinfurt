@@ -97,6 +97,7 @@ function showEventDetail(eventId) {
   document.getElementById('eds-chat-input-row').style.display = (isFallback || !sb.isLoggedIn()) ? 'none' : '';
 
   openSheet('event-detail-sheet');
+  markEventSeen(eventId);
 
   // Load data (don't block sheet open)
   loadEventParticipants(eventId);
@@ -214,6 +215,7 @@ async function sendChatMessage() {
   });
   if(error) { showToast('Fehler beim Senden','❌'); input.value = msg; return; }
   await loadEventChat(currentEventId);
+  markEventSeen(currentEventId);
 }
 
 function startChatPolling(eventId) {

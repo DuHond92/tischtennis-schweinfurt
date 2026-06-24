@@ -319,3 +319,47 @@
 .pp-clickable { cursor: pointer; }
 .pp-clickable:hover  { opacity: 0.82; }
 .pp-clickable:active { transform: scale(0.97); }
+
+/* ── NOTIFICATION BELL BADGE ────────────────────────────────────── */
+.notif-btn { position: relative; }
+.notif-badge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 16px; height: 16px; border-radius: 10px;
+  background: var(--accent); color: #fff;
+  font-size: 0.58rem; font-weight: 800; line-height: 16px;
+  text-align: center; padding: 0 3px;
+  pointer-events: none;
+}
+
+/* ── NOTIFICATION SHEET ITEMS ───────────────────────────────────── */
+.notif-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.notif-item:hover  { background: var(--surface2); }
+.notif-item:active { background: var(--primary-bg); opacity: 0.9; }
+
+.notif-av {
+  flex-shrink: 0; width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+}
+
+.notif-content { flex: 1; min-width: 0; }
+.notif-title   { font-size: 0.83rem; color: var(--text); line-height: 1.35; }
+.notif-preview { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-time    { font-size: 0.68rem; color: var(--text-xdim); margin-top: 3px; }
+
+.notif-dot {
+  flex-shrink: 0; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--primary);
+}
+
+.notif-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 20px; gap: 10px;
+  color: var(--text-dim); font-size: 0.88rem; text-align: center;
+}
+.notif-empty-icon { font-size: 2rem; }

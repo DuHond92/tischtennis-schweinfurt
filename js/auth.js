@@ -41,6 +41,8 @@ async function submitAuth() {
       closeAllSheets();
       showToast(`Willkommen zurück, ${currentUser?.username || 'Spieler'}! 👋`);
       updateTopBarForUser();
+      checkNotifications();
+      startNotifPolling();
 
     } else {
       const username = document.getElementById('auth-username').value.trim();

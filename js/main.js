@@ -26,6 +26,8 @@ window.addEventListener('load', async () => {
       await loadCurrentUser();
       await loadMyMatches();
       updateTopBarForUser();
+      checkNotifications();
+      startNotifPolling();
     }
     // UI mit echten Daten aktualisieren
     renderHome();
