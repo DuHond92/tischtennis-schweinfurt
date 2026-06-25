@@ -113,7 +113,7 @@ async function loadEventParticipants(eventId) {
   const el = document.getElementById('eds-participants');
   try {
     const qb = new QueryBuilder('event_participants');
-    qb._select = 'user_id,profiles(username,avatar_emoji)';
+    qb._select = 'user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId);
     const {data, error} = await qb.execute();
     if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Teilnehmer gefunden.</div>'; return; }
@@ -139,15 +139,10 @@ function renderParticipantChips(participants, creatorId) {
     const uid     = p.user_id || '';
     const ctx     = isHost ? '👑 Host dieser Spielrunde' : '';
     const click   = `showPlayerProfile('${uid}','${escAttr(name)}','${escAttr(emoji)}','${ctx}')`;
-    const avatarHtml = emoji
-      ? `<div class="pc-avatar pc-avatar-emoji">
-           ${emoji}
-           ${isHost ? '<span class="pc-crown">👑</span>' : ''}
-         </div>`
-      : `<div class="pc-avatar pc-avatar-init">
-           ${initAvatar(name, 46)}
-           ${isHost ? '<span class="pc-crown">👑</span>' : ''}
-         </div>`;
+    const avatarHtml = `<div class="pc-avatar" style="position:relative;">
+      ${getAvatarHtml(p.profiles, {size: 46})}
+      ${isHost ? '<span class="pc-crown">👑</span>' : ''}
+    </div>`;
     return `<div class="participant-chip pp-clickable" onclick="${click}">
       ${avatarHtml}
       <div class="pc-name">${name}</div>
@@ -159,7 +154,7 @@ function renderParticipantChips(participants, creatorId) {
 async function loadEventChat(eventId) {
   try {
     const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji)';
+    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId).order('created_at');
     const {data, error} = await qb.execute();
     if(error) { renderChatMessages(null); return; }
@@ -182,11 +177,11 @@ function renderChatMessages(messages) {
   }
   el.innerHTML = messages.map(m => {
     const isMine  = m.user_id === myId;
-    const avatar  = m.profiles?.avatar_emoji || '🏓';
+    const avatar  = getAvatarHtml(m.profiles, {size: 32});
     const name    = m.profiles?.username || 'Anonym';
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     return `<div class="chat-msg ${isMine?'mine':''}">
-      <div class="chat-msg-avatar">${avatar}</div>
+      ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
         <div class="chat-msg-meta">${isMine?'Du':name} · ${time}</div>

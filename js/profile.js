@@ -5,7 +5,7 @@ function renderProfile() {
   if(!currentUser) return;
   const total = (currentUser.wins||0)+(currentUser.losses||0);
   // Avatar & Name oben
-  document.querySelector('.profile-avatar').textContent = currentUser.avatar_emoji||'😎';
+  updateProfileAvatarEl(currentUser);
   document.querySelector('.profile-name').textContent   = currentUser.username||'Spieler';
   // Stats (W/L/Spiele gesamt, kein ELO/Winrate)
   const pv = document.querySelectorAll('.pstat-val');

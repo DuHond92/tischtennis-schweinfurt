@@ -40,7 +40,7 @@ async function checkNotifications() {
   let messages = [];
   try {
     const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,event_id,profiles(username,avatar_emoji)';
+    qb._select = 'id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)';
     qb.order('created_at', true).limit(50);
     const {data} = await qb.execute();
     messages = data || [];
@@ -128,10 +128,7 @@ function renderNotifSheet() {
     const ev      = evMap[m.event_id];
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const sender  = m.profiles?.username || 'Jemand';
-    const emoji   = m.profiles?.avatar_emoji || '';
-    const avHtml  = emoji
-      ? emoji
-      : initAvatar(sender, 38).replace('class="init-av"', 'class="init-av" style="width:38px;height:38px;font-size:15px;"');
+    const avHtml = getAvatarHtml(m.profiles, {size: 38});
     const preview = m.message.length > 60 ? m.message.slice(0, 60) + '…' : m.message;
     const time    = _notifTime(m.created_at);
     return `

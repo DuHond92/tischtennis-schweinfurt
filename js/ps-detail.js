@@ -56,7 +56,7 @@ async function loadPsChat(eventId) {
   if(!el) return;
   try {
     const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji)';
+    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId).order('created_at');
     const {data, error} = await qb.execute();
     if(error) { el.innerHTML = '<div class="chat-empty">Chat nicht verfügbar.</div>'; return; }
@@ -76,11 +76,11 @@ function _renderPsChatMessages(messages) {
   }
   el.innerHTML = messages.map(m => {
     const isMine = m.user_id === myId;
-    const avatar = m.profiles?.avatar_emoji || '🏓';
+    const avatar = getAvatarHtml(m.profiles, {size: 32});
     const name   = m.profiles?.username || 'Anonym';
     const time   = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     return `<div class="chat-msg ${isMine?'mine':''}">
-      <div class="chat-msg-avatar">${avatar}</div>
+      ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
         <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}</div>

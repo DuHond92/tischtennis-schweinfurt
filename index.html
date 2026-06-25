@@ -230,7 +230,10 @@
   <!-- PROFILE -->
   <div class="page" id="page-profile">
     <div class="profile-top">
-      <div class="profile-avatar">😎</div>
+      <div class="profile-avatar-wrap" onclick="openAvatarPicker()">
+        <div class="profile-avatar" id="profile-avatar-el">😎</div>
+        <div class="profile-avatar-badge">✏️</div>
+      </div>
       <div class="profile-name">Max Mustermann</div>
       <div class="profile-sub">Schweinfurt · Mitglied seit März 2025</div>
     </div>
@@ -369,6 +372,66 @@
 
 <!-- ======= BOTTOM SHEETS ======= -->
 <div class="sheet-overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- AVATAR PICKER SHEET -->
+<div class="bottom-sheet" id="avatar-picker-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Profilbild ändern</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="padding:8px 16px 20px;">
+    <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="onAvatarFileSelected(event)">
+    <div class="av-option" onclick="document.getElementById('avatar-file-input').click()">
+      <div class="av-option-icon">🖼️</div>
+      <div class="av-option-text">Foto hochladen</div>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim)"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+    <div class="av-option" onclick="openEmojiPicker()">
+      <div class="av-option-icon">😀</div>
+      <div class="av-option-text">Emoji auswählen</div>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim)"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+    <div class="av-option av-option-danger" onclick="removeAvatar()">
+      <div class="av-option-icon">🗑️</div>
+      <div class="av-option-text">Profilbild entfernen</div>
+    </div>
+    <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="closeAllSheets()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- EMOJI PICKER SHEET -->
+<div class="bottom-sheet" id="emoji-picker-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Emoji auswählen</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div class="sheet-body" style="padding:8px 16px 24px;">
+    <div class="emoji-grid">
+      <div class="emoji-item" onclick="selectAvatarEmoji('😀')">😀</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('😎')">😎</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🏓')">🏓</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('⚡')">⚡</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🎯')">🎯</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🔥')">🔥</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🌟')">🌟</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🐧')">🐧</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🦊')">🦊</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🐼')">🐼</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🐸')">🐸</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🐯')">🐯</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🏆')">🏆</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('💪')">💪</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🎮')">🎮</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🎲')">🎲</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🚀')">🚀</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('✨')">✨</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🌈')">🌈</div>
+      <div class="emoji-item" onclick="selectAvatarEmoji('🦁')">🦁</div>
+    </div>
+  </div>
+</div>
 
 <!-- CREATE CHOICE SHEET -->
 <div class="bottom-sheet" id="create-choice-sheet">
@@ -941,6 +1004,7 @@
 
 <script src="js/player-profile.js"></script>
 <script src="js/ranked.js"></script>
+<script src="js/avatar.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/ps-detail.js"></script>
 <script src="js/notifications.js"></script>

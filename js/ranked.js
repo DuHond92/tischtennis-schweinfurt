@@ -26,7 +26,7 @@ function renderLeaderboard() {
     const isMe = p.id === myId;
     return `<div class="lb-row ${cls} ${isMe?'me':''}">
       <div class="lb-rank ${rcls}">${medal}</div>
-      <div class="lb-avatar">${p.avatar_emoji||'🏓'}</div>
+      <div class="lb-avatar">${getAvatarContent(p)}</div>
       <div class="lb-info">
         <div class="lb-name">${p.username||'Spieler'}${isMe?' <span style="font-size:0.7rem;color:var(--primary);font-weight:700;">(Du)</span>':''}</div>
         <div class="lb-tier">${league.name}</div>

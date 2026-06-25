@@ -74,11 +74,8 @@ function participantStack(participants, maxShow, size) {
     const nm  = escAttr(n);
     const em  = escAttr(p.avatar_emoji || '');
     const clickHandler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji)`;
-    if(p.avatar_emoji) {
-      const efs = Math.round(size * 0.58);
-      return `<div class="pstack-item pstack-emoji pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;font-size:${efs}px;">${p.avatar_emoji}</div>`;
-    }
-    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
+    const inner = getAvatarHtml(p, {size, extraStyle:'border:2px solid var(--surface);'});
+    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;">${inner}</div>`;
   }).join('');
   const extraHtml = extra > 0
     ? `<div class="pstack-item pstack-extra" style="width:${size}px;height:${size}px;font-size:${fs}px;">+${extra}</div>`

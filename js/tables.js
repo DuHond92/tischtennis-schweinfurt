@@ -283,7 +283,7 @@ function renderKingOfPlate(tableId, kings) {
     kings.map((k,i) => `
       <div class="king-row">
         <div class="king-rank">${medals[i]||`#${i+1}`}</div>
-        <div class="king-avatar">${k.avatar_emoji||'🏓'}</div>
+        <div class="king-avatar">${getAvatarContent(k)}</div>
         <div class="king-name">${k.username}</div>
         <div class="king-wins"><b>${k.wins_at_table}</b> Siege</div>
       </div>`).join('');
@@ -295,7 +295,7 @@ async function loadCommentsInline(tableId) {
   if(!el) return;
   try {
     const qb = new QueryBuilder('comments');
-    qb._select = 'id,text,created_at,profiles(username,avatar_emoji)';
+    qb._select = 'id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('table_id', tableId).order('created_at', true).limit(3);
     const {data} = await qb.execute();
     if(!data || !data.length) {
@@ -304,7 +304,7 @@ async function loadCommentsInline(tableId) {
     }
     el.innerHTML = data.map(c => {
       const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-      const av   = c.profiles?.avatar_emoji || '🏓';
+      const av   = getAvatarContent(c.profiles);
       const name = c.profiles?.username || 'Anonym';
       return `<div class="tds-comment-row">
         <div class="tds-comment-av">${av}</div>
@@ -328,7 +328,7 @@ async function openComments(tableId) {
 
   try {
     const qb = new QueryBuilder('comments');
-    qb._select = 'id,text,created_at,profiles(username,avatar_emoji)';
+    qb._select = 'id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('table_id', tableId).order('created_at', true);
     const {data} = await qb.execute();
     renderComments(data || []);
@@ -348,7 +348,7 @@ function renderComments(comments) {
     const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
     return `<div class="comment-item">
       <div class="comment-header">
-        <div class="comment-avatar">${c.profiles?.avatar_emoji||'🏓'}</div>
+        <div class="comment-avatar">${getAvatarContent(c.profiles)}</div>
         <div class="comment-author">${c.profiles?.username||'Anonym'}</div>
         <div class="comment-date">${date}</div>
       </div>

@@ -19,9 +19,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
   const hostEl = document.getElementById('pp-host-badge');
   const cityEl = document.getElementById('pp-city');
 
-  avEl.innerHTML = (avatarEmoji && avatarEmoji.trim())
-    ? `<div class="pp-av-emoji">${avatarEmoji}</div>`
-    : initAvatar(username || '?', 72);
+  avEl.innerHTML = getAvatarHtml({ avatar_emoji: avatarEmoji, username }, {size: 72});
   nameEl.textContent = username || 'Spieler';
 
   if(contextLabel) {
@@ -46,7 +44,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
 
   try {
     const qb = new QueryBuilder('profiles');
-    qb._select = 'id,username,avatar_emoji,wins,losses,skill_level,city';
+    qb._select = 'id,username,avatar_emoji,avatar_url,wins,losses,skill_level,city';
     qb.eq('id', userId);
     const {data} = await qb.execute();
     if(data && data[0]) {
@@ -61,6 +59,10 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
 }
 
 function renderPlayerProfileData(profile) {
+  // Avatar mit vollständigen Daten aktualisieren (inkl. avatar_url)
+  const avEl = document.getElementById('pp-avatar');
+  if (avEl) avEl.innerHTML = getAvatarHtml(profile, {size: 72});
+
   // Stadt
   const cityEl = document.getElementById('pp-city');
   if(profile.city) {

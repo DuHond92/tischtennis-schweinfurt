@@ -1220,3 +1220,45 @@
 .admin-role-user  { background: var(--surface2); color: var(--text-dim); }
 .admin-role-mod   { background: #dbeafe; color: #1d4ed8; }
 .admin-role-admin { background: #fef3c7; color: #d97706; }
+
+/* ======= AVATAR — Bild-Support für Container ======= */
+.lb-avatar, .comment-avatar, .king-avatar {
+  overflow: hidden; position: relative;
+}
+
+/* ======= PROFIL AVATAR — tippbar, mit Edit-Badge ======= */
+.profile-avatar-wrap {
+  position: relative; width: 72px; margin: 0 auto 10px; cursor: pointer;
+}
+.profile-avatar { margin: 0 !important; overflow: hidden; }
+.profile-avatar-badge {
+  position: absolute; bottom: 0; right: -2px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--surface); border: 2px solid rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; line-height: 1; z-index: 2;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ======= AVATAR PICKER ======= */
+.av-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 4px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; border-radius: 10px;
+}
+.av-option:last-of-type { border-bottom: none; }
+.av-option:active { background: var(--surface2); }
+.av-option-icon { font-size: 1.4rem; width: 36px; text-align: center; flex-shrink: 0; }
+.av-option-text { flex: 1; font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.av-option-danger .av-option-text { color: var(--red, #EF4444); }
+
+/* ======= EMOJI GRID ======= */
+.emoji-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+}
+.emoji-item {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; border-radius: 12px; cursor: pointer;
+  background: var(--surface2); transition: transform 0.1s, background 0.1s;
+}
+.emoji-item:active { transform: scale(0.9); background: var(--primary-bg); }

@@ -90,7 +90,7 @@ async function loadEvents() {
   const pParticipants = {};
   try {
     const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id,profiles(id,username,avatar_emoji)';
+    qbP._select = 'event_id,profiles(id,username,avatar_emoji,avatar_url)';
     const {data: pData} = await qbP.execute();
     if(pData) pData.forEach(p => {
       pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
@@ -112,7 +112,7 @@ async function loadEvents() {
   const profileMap = {};
   try {
     const qbProf = new QueryBuilder('profiles');
-    qbProf._select = 'id,username,avatar_emoji';
+    qbProf._select = 'id,username,avatar_emoji,avatar_url';
     const {data: pData} = await qbProf.execute();
     if(pData) pData.forEach(p => { profileMap[p.id] = p; });
   } catch(e) {}
@@ -135,7 +135,8 @@ async function loadEvents() {
       tid:       e.table_id,
       creator:      prof.username    || 'Anonym',
       creatorId:    e.creator_id,
-      creatorEmoji: prof.avatar_emoji || '',
+      creatorEmoji:    prof.avatar_emoji || '',
+      creatorAvatarUrl: prof.avatar_url  || null,
       desc:         e.description || '',
       p:            pCounts[e.id] || 0,
       max:          e.max_participants,
@@ -154,7 +155,8 @@ async function loadEvents() {
         type:        'player_search',
         userId:      e.creatorId,
         username:    e.creator,
-        avatarEmoji: e.creatorEmoji || extra.avatarEmoji || '',
+        avatarEmoji:  e.creatorEmoji    || extra.avatarEmoji  || '',
+        avatarUrl:    e.creatorAvatarUrl || extra.avatarUrl || null,
         spielart:    extra.spielart  || 'casual',
         wann:        extra.wann      || 'Egal',
         umkreis:     extra.umkreis   || '5 km',
@@ -168,7 +170,7 @@ async function loadEvents() {
 
 async function loadPlayers() {
   const qb = new QueryBuilder('profiles');
-  qb._select = 'id,username,avatar_emoji,elo,wins,losses';
+  qb._select = 'id,username,avatar_emoji,avatar_url,elo,wins,losses';
   const {data} = await qb.order('elo', true).limit(20).execute();
   if(data) allPlayers = data;
 }
