@@ -1274,9 +1274,14 @@
 .emoji-item:active { transform: scale(0.9); background: var(--primary-bg); }
 
 /* ======= SPIELPARTNER ======= */
+.sp-section-title {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--text-xdim);
+  padding: 12px 4px 4px; margin-top: 2px;
+}
 .spielpartner-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 4px; cursor: pointer; border-radius: 8px;
+  padding: 9px 4px; cursor: pointer; border-radius: 8px;
   border-bottom: 1px solid var(--border); transition: background 0.15s;
 }
 .spielpartner-row:last-child { border-bottom: none; }
@@ -1285,6 +1290,8 @@
 .sp-info { flex: 1; min-width: 0; }
 .sp-name { font-weight: 700; font-size: 0.93rem; color: var(--text); }
 .sp-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+.sp-req-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sp-req-actions .btn { padding: 6px 10px; font-size: 0.8rem; }
 .btn-icon-sm {
   width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
   border: 1px solid var(--border); background: var(--surface2);
@@ -1292,6 +1299,7 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-icon-sm:active { background: var(--accent-bg); color: var(--accent); }
+.sp-withdraw:active { background: var(--gold-bg) !important; color: var(--gold) !important; }
 .conn-accepted { color: var(--green) !important; border-color: var(--green) !important; }
 
 /* ── Verbindungs-Anfragen im Notif-Sheet ── */

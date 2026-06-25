@@ -222,32 +222,77 @@ async function renderSpielpartnerSection() {
 
   const myId    = sb.getUserId();
   const accepted = _myConnections.filter(c => c.status === 'accepted');
+  const incoming = _myConnections.filter(c => c.status === 'pending' && c.receiver_id === myId);
+  const outgoing = _myConnections.filter(c => c.status === 'pending' && c.requester_id === myId);
 
-  if (!accepted.length) {
+  if (!accepted.length && !incoming.length && !outgoing.length) {
     el.innerHTML = `<div style="text-align:center;padding:20px 12px;color:var(--text-dim);font-size:0.85rem;">
       Noch keine Spielpartner.<br>Besuche Profile anderer Spieler um anzufragen.</div>`;
     return;
   }
 
-  const partnerIds = accepted.map(c => c.requester_id === myId ? c.receiver_id : c.requester_id);
-  let partnerProfiles = [];
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${partnerIds.join(',')})`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    partnerProfiles = Array.isArray(data) ? data : [];
-  } catch(e) {}
+  // Alle benötigten Profil-IDs in einem Batch laden
+  const profileIds = [...new Set([
+    ...accepted.map(c => c.requester_id === myId ? c.receiver_id : c.requester_id),
+    ...incoming.map(c => c.requester_id),
+    ...outgoing.map(c => c.receiver_id)
+  ].filter(Boolean))];
+
+  let profiles = {};
+  if (profileIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${profileIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { profiles[p.id] = p; });
+    } catch(e) {}
+  }
 
   const skillMap = { anfaenger: '🐣 Anfänger', fortgeschritten: '🏓 Fortgeschritten', profi: '⚡ Profi' };
-  el.innerHTML = partnerProfiles.map(p => {
-    const conn = accepted.find(c => c.requester_id === p.id || c.receiver_id === p.id);
-    const cid  = escAttr(conn?.id || '');
-    return `<div class="spielpartner-row" onclick="showPlayerProfile('${escAttr(p.id)}','${escAttr(p.username)}','${escAttr(p.avatar_emoji || '')}')">
+
+  function profileRow(conn, otherId, actionHtml) {
+    const p   = profiles[otherId] || { id: otherId, username: 'Spieler', avatar_emoji: '', skill_level: '' };
+    const pid = escAttr(p.id);
+    return `<div class="spielpartner-row" onclick="showPlayerProfile('${pid}','${escAttr(p.username || '')}','${escAttr(p.avatar_emoji || '')}')">
       <div class="sp-av">${getAvatarHtml(p, { size: 44 })}</div>
       <div class="sp-info">
-        <div class="sp-name">${escHtml(p.username)}</div>
+        <div class="sp-name">${escHtml(p.username || 'Spieler')}</div>
         ${p.skill_level ? `<div class="sp-sub">${skillMap[p.skill_level] || ''}</div>` : ''}
       </div>
-      <button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${cid}','${escAttr(p.id)}')">✕</button>
+      ${actionHtml}
     </div>`;
-  }).join('');
+  }
+
+  let html = '';
+
+  // 1. Meine Spielpartner (accepted)
+  if (accepted.length) {
+    html += `<div class="sp-section-title">Meine Spielpartner</div>`;
+    html += accepted.map(c => {
+      const otherId = c.requester_id === myId ? c.receiver_id : c.requester_id;
+      return profileRow(c, otherId,
+        `<button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>`
+      );
+    }).join('');
+  }
+
+  // 2. Eingegangene Anfragen (pending, ich bin receiver)
+  if (incoming.length) {
+    html += `<div class="sp-section-title">Eingegangene Anfragen</div>`;
+    html += incoming.map(c => profileRow(c, c.requester_id,
+      `<div class="sp-req-actions">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')">✅</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();rejectConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')">❌</button>
+      </div>`
+    )).join('');
+  }
+
+  // 3. Gesendete Anfragen (pending, ich bin requester)
+  if (outgoing.length) {
+    html += `<div class="sp-section-title">Gesendete Anfragen</div>`;
+    html += outgoing.map(c => profileRow(c, c.receiver_id,
+      `<button class="btn-icon-sm sp-withdraw" title="Zurückziehen" onclick="event.stopPropagation();cancelConnectionRequest('${escAttr(c.id)}','${escAttr(c.receiver_id)}')">↩</button>`
+    )).join('');
+  }
+
+  el.innerHTML = html;
 }
