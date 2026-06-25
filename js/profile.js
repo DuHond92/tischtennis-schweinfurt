@@ -23,9 +23,12 @@ function renderProfile() {
   // Sign-out button
   document.querySelector('#profile-signout-btn') &&
     (document.querySelector('#profile-signout-btn').onclick = doSignOut);
-  // Admin link — only visible for admins
+  // Moderation link — visible for moderators and admins
   const adminItem = document.getElementById('admin-nav-item');
-  if (adminItem) adminItem.style.display = currentUser.is_admin ? '' : 'none';
+  if (adminItem) {
+    const canMod = currentUser.role === 'moderator' || currentUser.role === 'admin';
+    adminItem.style.display = canMod ? '' : 'none';
+  }
 }
 
 function renderMatchHistory() {
