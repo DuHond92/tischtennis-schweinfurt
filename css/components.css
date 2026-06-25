@@ -1312,3 +1312,16 @@
 .notif-conn-title { font-size: 0.88rem; color: var(--text); line-height: 1.4; }
 .notif-conn-time { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
 .notif-conn-actions { display: flex; gap: 8px; }
+
+/* ── Bilder-Moderation (Admin) ── */
+.admin-img-card { padding: 0 0 10px; overflow: hidden; }
+.admin-img-preview-wrap {
+  width: 100%; aspect-ratio: 16/9; overflow: hidden;
+  border-radius: 8px 8px 0 0; background: var(--surface2);
+}
+.admin-img-preview {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.admin-img-card .admin-card-header,
+.admin-img-card .admin-card-row,
+.admin-img-card .admin-card-actions { padding-left: 12px; padding-right: 12px; }

@@ -92,6 +92,7 @@ function showTableDetail(id) {
   openSheet('table-detail-sheet');
   loadRatingsForTable(id);
   loadCommentsInline(id);
+  loadTableImages(id);
 }
 
 const PLATE_TEST_IMAGES = [
@@ -129,10 +130,10 @@ function buildPhotoSlider(t, photos) {
       </div>
       <div class="ds-thumbs">
         ${thumbs}
-        <div class="ds-thumb-add" onclick="document.getElementById('ds-file-input').click()">+</div>
+        <div class="ds-thumb-add" title="Bild hinzufügen" onclick="document.getElementById('ds-file-input').click()">+</div>
       </div>
     </div>
-    <input type="file" id="ds-file-input" accept="image/*" style="display:none" onchange="handleDetailImageUpload(this)">`;
+    <input type="file" id="ds-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleTableImageUpload(this)">`;
 }
 
 function detailSliderGo(slider, idx) {
@@ -152,10 +153,155 @@ function detailSliderStep(slider, dir) {
   detailSliderGo(slider, idx);
 }
 
+// Stub für Event-Detail (noch nicht implementiert)
 function handleDetailImageUpload(input) {
-  if(!input.files || !input.files[0]) return;
+  if (!input.files || !input.files[0]) return;
   showToast('📸 Bild ausgewählt – Upload folgt in Kürze');
   input.value = '';
+}
+
+// ── Platten-Bild Upload ───────────────────────────────────────
+async function handleTableImageUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  if (!sb.isLoggedIn()) {
+    input.value = '';
+    closeAllSheets();
+    openSheet('auth-sheet');
+    return;
+  }
+  const file = input.files[0];
+  input.value = '';
+  showToast('Bild wird komprimiert und hochgeladen…', '⏳');
+  try {
+    const blob     = await _resizeTableImage(file);
+    const imageUrl = await _uploadTableImageToStorage(blob, currentDetailTableId);
+    await _saveTableImageRecord(currentDetailTableId, imageUrl);
+    showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
+  } catch(e) {
+    console.error('Table image upload error:', e);
+    showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
+  }
+}
+
+async function _resizeTableImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload  = ev => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload  = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.82);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function _uploadTableImageToStorage(blob, tableId) {
+  const uid   = sb.getUserId();
+  const token = await sb.getValidToken();
+  const ts    = Date.now();
+  const path  = `${tableId}/${uid}_${ts}.jpg`;
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/table-images/${path}`, {
+    method:  'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
+    body:    blob
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.message || 'Storage-Upload fehlgeschlagen');
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/table-images/${path}`;
+}
+
+async function _saveTableImageRecord(tableId, imageUrl) {
+  const qb = new QueryBuilder('table_images');
+  const { data, error } = await qb.insert({
+    table_id:    tableId,
+    uploaded_by: sb.getUserId(),
+    image_url:   imageUrl,
+    status:      'pending'
+  });
+  if (error) throw new Error('Datenbank-Eintrag fehlgeschlagen: ' + JSON.stringify(error));
+}
+
+// ── Approved DB-Bilder in den Slider einfügen ─────────────────
+async function loadTableImages(tableId) {
+  try {
+    const qb = new QueryBuilder('table_images');
+    qb._select = 'id,image_url,created_at';
+    qb.eq('table_id', tableId).eq('status', 'approved').order('created_at');
+    const { data } = await qb.execute();
+    if (data && data.length) _appendDbImagesToSlider(data);
+  } catch(e) { /* silent — OSM-Bilder bleiben sichtbar */ }
+}
+
+function _appendDbImagesToSlider(dbImages) {
+  const slider = document.querySelector('#tds-body .detail-slider');
+  if (!slider) return;
+
+  const slidesWrap = slider.querySelector('.ds-slides-wrap');
+  const thumbsRow  = slider.querySelector('.ds-thumbs');
+  const addBtn     = thumbsRow?.querySelector('.ds-thumb-add');
+  if (!slidesWrap || !thumbsRow) return;
+
+  dbImages.forEach(img => {
+    const currentCount = slider.querySelectorAll('.ds-slide').length;
+
+    // Neuer Slide (versteckt)
+    const slide = document.createElement('div');
+    slide.className  = 'ds-slide';
+    slide.style.display = 'none';
+    slide.innerHTML  = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`;
+    slidesWrap.appendChild(slide);
+
+    // Neuer Thumb, vor dem + Button
+    const thumb = document.createElement('div');
+    thumb.className = 'ds-thumb';
+    const idx = currentCount; // 0-basierter Index des neuen Slides
+    thumb.onclick   = () => detailSliderGo(slider, idx);
+    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`;
+    thumbsRow.insertBefore(thumb, addBtn);
+  });
+
+  // data-count und Counter aktualisieren
+  const total = slider.querySelectorAll('.ds-slide').length;
+  slider.dataset.count = total;
+
+  if (total > 1) {
+    let counter = slider.querySelector('.ds-counter');
+    const currentIdx = parseInt(slider.dataset.idx || 0);
+    if (!counter) {
+      counter = document.createElement('div');
+      counter.className = 'ds-counter';
+      slider.querySelector('.ds-main').appendChild(counter);
+    }
+    counter.textContent = `${currentIdx + 1}/${total}`;
+
+    // Navigations-Buttons ergänzen falls noch nicht da
+    if (!slider.querySelector('.ds-nav')) {
+      const main = slider.querySelector('.ds-main');
+      const prev = document.createElement('button');
+      prev.className = 'ds-nav ds-prev';
+      prev.textContent = '‹';
+      prev.onclick = () => detailSliderStep(slider, -1);
+      const next = document.createElement('button');
+      next.className = 'ds-nav ds-next';
+      next.textContent = '›';
+      next.onclick = () => detailSliderStep(slider, 1);
+      main.appendChild(prev);
+      main.appendChild(next);
+    }
+  }
 }
 
 function openMapsDirections(lat, lng) {

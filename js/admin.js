@@ -16,6 +16,7 @@ function showAdminPage() {
 
 async function loadAdminPage() {
   _loadSuggestions();
+  _loadImageModerations();
   const userSection = document.getElementById('admin-user-section');
   if (userSection) {
     const isAdmin = currentUser?.role === 'admin';
@@ -176,6 +177,135 @@ async function adminApprove(id) {
   setTimeout(() => { card.remove(); _checkEmpty(); }, 400);
   showToast('Platte übernommen!', '✅');
   delete _adminData[id];
+}
+
+// --- Bilder-Moderation ---
+
+let _imageData = {};
+
+async function _loadImageModerations() {
+  const section = document.getElementById('admin-images-section');
+  const list    = document.getElementById('admin-images-list');
+  if (!section || !list) return;
+  section.style.display = '';
+  list.innerHTML = '<div class="admin-loading">Lade Bilder…</div>';
+
+  // Pending-Bilder + zugehörige Platten-Namen laden
+  let images = [];
+  try {
+    const qb = new QueryBuilder('table_images');
+    qb._select = 'id,table_id,uploaded_by,image_url,status,created_at';
+    qb.eq('status', 'pending').order('created_at');
+    const { data, error } = await qb.execute();
+    if (error) throw error;
+    images = data || [];
+  } catch(e) {
+    list.innerHTML = '<div class="admin-empty">Fehler beim Laden der Bilder</div>';
+    return;
+  }
+
+  if (!images.length) {
+    list.innerHTML = '<div class="admin-empty">🎉 Keine Bilder zur Freigabe</div>';
+    return;
+  }
+
+  // Platten-Namen batch-laden
+  const tableIds  = [...new Set(images.map(i => i.table_id).filter(Boolean))];
+  const tableMap  = {};
+  if (tableIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/tables?select=id,name&id=in.(${tableIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(t => { tableMap[t.id] = t.name; });
+    } catch(e) {}
+  }
+
+  // Uploader-Namen batch-laden
+  const uploaderIds = [...new Set(images.map(i => i.uploaded_by).filter(Boolean))];
+  const uploaderMap = {};
+  if (uploaderIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${uploaderIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { uploaderMap[p.id] = p.username; });
+    } catch(e) {}
+  }
+
+  _imageData = {};
+  images.forEach(img => { _imageData[img.id] = img; });
+  list.innerHTML = images.map(img =>
+    _renderImageCard(img, tableMap[img.table_id] || `Platte #${img.table_id}`, uploaderMap[img.uploaded_by] || 'Unbekannt')
+  ).join('');
+}
+
+function _renderImageCard(img, tableName, uploaderName) {
+  const date = new Date(img.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+  const imgId = escAttr(img.id);
+  return `
+  <div class="admin-card admin-img-card" id="admin-img-card-${imgId}">
+    <div class="admin-img-preview-wrap">
+      <img class="admin-img-preview" src="${escAttr(img.image_url)}"
+        onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">
+    </div>
+    <div class="admin-card-header" style="margin-top:8px;">
+      <div class="admin-card-name">📍 ${escHtml(tableName)}</div>
+      <div class="admin-card-date">${date}</div>
+    </div>
+    <div class="admin-card-row">von <strong>${escHtml(uploaderName)}</strong></div>
+    <div class="admin-card-actions" id="admin-img-actions-${imgId}">
+      <button class="btn btn-secondary btn-sm admin-reject-btn" onclick="rejectTableImage('${imgId}')">✕ Ablehnen</button>
+      <button class="btn btn-sm admin-approve-btn" onclick="approveTableImage('${imgId}')" style="flex:1;">✓ Freigeben</button>
+    </div>
+  </div>`;
+}
+
+async function approveTableImage(id) {
+  const card = document.getElementById(`admin-img-card-${id}`);
+  if (!card) return;
+  _setCardLoading(card, true);
+  const qb = new QueryBuilder('table_images');
+  const { error } = await qb.eq('id', id).update({
+    status:      'approved',
+    reviewed_by: sb.getUserId(),
+    reviewed_at: new Date().toISOString()
+  });
+  if (error) {
+    _setCardLoading(card, false);
+    showToast('Fehler beim Freigeben', '❌');
+    return;
+  }
+  card.classList.add('admin-card-done');
+  setTimeout(() => { card.remove(); _checkImagesEmpty(); }, 400);
+  showToast('Bild freigegeben ✅');
+  delete _imageData[id];
+}
+
+async function rejectTableImage(id) {
+  const card = document.getElementById(`admin-img-card-${id}`);
+  if (!card) return;
+  _setCardLoading(card, true);
+  const qb = new QueryBuilder('table_images');
+  const { error } = await qb.eq('id', id).update({
+    status:      'rejected',
+    reviewed_by: sb.getUserId(),
+    reviewed_at: new Date().toISOString()
+  });
+  if (error) {
+    _setCardLoading(card, false);
+    showToast('Fehler beim Ablehnen', '❌');
+    return;
+  }
+  card.classList.add('admin-card-done');
+  setTimeout(() => { card.remove(); _checkImagesEmpty(); }, 400);
+  showToast('Bild abgelehnt');
+  delete _imageData[id];
+}
+
+function _checkImagesEmpty() {
+  const list = document.getElementById('admin-images-list');
+  if (list && !list.querySelector('.admin-img-card')) {
+    list.innerHTML = '<div class="admin-empty">🎉 Keine Bilder zur Freigabe</div>';
+  }
 }
 
 // --- Nutzerverwaltung (nur Admin) ---
