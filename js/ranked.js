@@ -24,7 +24,8 @@ function renderLeaderboard() {
     const total = (p.wins||0)+(p.losses||0);
     const wr = total ? Math.round((p.wins||0)/total*100) : 0;
     const isMe = p.id === myId;
-    return `<div class="lb-row ${cls} ${isMe?'me':''}">
+    const profileClick = `showPlayerProfile('${escAttr(p.id||'')}','${escAttr(p.username||'')}','${escAttr(p.avatar_emoji||'')}')`;
+    return `<div class="lb-row ${cls} ${isMe?'me':''}" onclick="${profileClick}">
       <div class="lb-rank ${rcls}">${medal}</div>
       <div class="lb-avatar">${getAvatarContent(p)}</div>
       <div class="lb-info">

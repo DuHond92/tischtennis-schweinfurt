@@ -28,26 +28,27 @@ async function joinEvent(eventId, btn) {
 }
 
 function renderPlayerSearchCard(ps) {
-  const click = `showPlayerSearchDetail(${ps.id})`;
-  const avHtml = ps.avatarEmoji
-    ? `<div style="width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0;border:2px solid var(--border);">${ps.avatarEmoji}</div>`
-    : `<div style="flex-shrink:0;">${initAvatar(ps.username || '?', 46)}</div>`;
+  const cardClick    = `showPlayerSearchDetail(${ps.id})`;
+  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}')`;
+  const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
   const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', ranked:'Spiel um Punkte gesucht'};
   const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
   if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
   if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
-    <div class="player-search-card fade-up" onclick="${click}">
-      ${avHtml}
-      <div class="psc-info">
-        <div class="psc-name">${escHtml(ps.username || 'Spieler')}</div>
-        <div class="psc-type-row">
-          <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
+    <div class="player-search-card fade-up" onclick="${cardClick}">
+      <div class="psc-profile pp-clickable" onclick="${profileClick}">
+        ${avHtml}
+        <div class="psc-identity">
+          <div class="psc-name">${escHtml(ps.username || 'Spieler')}</div>
+          <div class="psc-type-row">
+            <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
+          </div>
         </div>
-        ${metaParts.length ? `<div class="psc-meta" style="margin-top:5px;">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-        ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
       </div>
+      ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+      ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
     </div>`;
 }
 

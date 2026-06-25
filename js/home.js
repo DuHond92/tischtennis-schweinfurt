@@ -104,24 +104,25 @@ function renderHomePsSection() {
   }
   const first = allPlayerSearches[0];
   const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', ranked: 'Spiel um Punkte'};
-  const avHtml = first.avatarEmoji
-    ? `<span style="font-size:1.6rem;line-height:1;">${first.avatarEmoji}</span>`
-    : initAvatar(first.username || '?', 36);
+  const avHtml = getAvatarHtml({ avatar_emoji: first.avatarEmoji, avatar_url: first.avatarUrl, username: first.username }, { size: 36 });
   const metaParts = [];
   if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');
   if(first.wann && first.wann !== 'Egal') metaParts.push(first.wann);
   const extraCount = allPlayerSearches.length - 1;
+  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}')`;
   container.innerHTML = `
     <div class="section-header">
       <div class="section-title">👥 Mitspieler gesucht</div>
       <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
     </div>
     <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">
-      <div class="hpsc-av">${avHtml}</div>
-      <div class="hpsc-info">
-        <div class="hpsc-name">${escHtml(first.username || 'Spieler')}</div>
-        <div class="hpsc-type">sucht <b>${spielartLabels[first.spielart] || 'Mitspieler'}</b></div>
-        ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
+      <div class="hpsc-left pp-clickable" onclick="${profileClick}">
+        <div class="hpsc-av">${avHtml}</div>
+        <div class="hpsc-info">
+          <div class="hpsc-name">${escHtml(first.username || 'Spieler')}</div>
+          <div class="hpsc-type">sucht <b>${spielartLabels[first.spielart] || 'Mitspieler'}</b></div>
+          ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
+        </div>
       </div>
       ${extraCount > 0
         ? `<span class="hpsc-more">+${extraCount} weitere</span>`

@@ -990,6 +990,7 @@
   cursor: pointer; transition: background 0.15s;
 }
 .home-ps-card:hover { background: var(--surface2); }
+.hpsc-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .hpsc-av { flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 .hpsc-info { flex: 1; min-width: 0; }
 .hpsc-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
@@ -1015,7 +1016,7 @@
 
 /* ── PLAYER SEARCH CARDS ─────────────────────────────────────────── */
 .player-search-card {
-  display: flex; align-items: flex-start; gap: 12px;
+  display: flex; flex-direction: column; align-items: stretch;
   padding: 13px 16px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
@@ -1024,24 +1025,31 @@
 }
 .player-search-card:hover { background: var(--surface2); }
 .player-search-card:active { background: var(--primary-bg); opacity: 0.92; }
+.psc-profile {
+  display: flex; align-items: center; gap: 12px;
+  border-radius: 8px; padding: 4px 6px; margin: -4px -6px;
+  transition: background 0.15s;
+}
+.psc-profile:hover { background: var(--primary-mid); }
+.psc-profile:active { background: var(--primary-bg); }
+.psc-identity { flex: 1; min-width: 0; }
 .psc-info { flex: 1; min-width: 0; padding-top: 2px; }
 .psc-name {
   font-weight: 800; font-size: 0.9rem; color: var(--text);
-  cursor: pointer; transition: color 0.15s;
   font-family: var(--font-head);
 }
-.psc-name:hover { color: var(--primary); }
 .psc-type-row {
   display: flex; align-items: center; gap: 6px;
   margin-top: 4px; flex-wrap: wrap;
 }
 .psc-meta {
   font-size: 0.72rem; color: var(--text-dim);
+  margin-top: 6px; padding-left: 58px;
 }
 .psc-message {
   font-size: 0.78rem; color: var(--text-dim);
   margin-top: 5px; line-height: 1.45;
-  font-style: italic;
+  font-style: italic; padding-left: 58px;
 }
 .psc-btn {
   flex-shrink: 0; align-self: flex-start;

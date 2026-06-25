@@ -76,9 +76,12 @@ function _renderPsChatMessages(messages) {
   }
   el.innerHTML = messages.map(m => {
     const isMine = m.user_id === myId;
-    const avatar = getAvatarHtml(m.profiles, {size: 32});
     const name   = m.profiles?.username || 'Anonym';
+    const emoji  = m.profiles?.avatar_emoji || '';
+    const uid    = m.user_id || '';
     const time   = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
+    const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
