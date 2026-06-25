@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           NAVIGATION                                         ║
 // ╚══════════════════════════════════════════════════════════════╝
-const pages = ['home','map','events','profile'];
+const pages = ['home','map','events','profile','admin'];
 let currentPage = 'home';
 let mapInit = false;
 
