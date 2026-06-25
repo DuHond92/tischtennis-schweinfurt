@@ -28,11 +28,16 @@ function showPage(name) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           DARK MODE                                          ║
 // ╚══════════════════════════════════════════════════════════════╝
+const LOGO_LIGHT = 'images/logo/logo-bildschrift.svg';
+const LOGO_DARK  = 'images/logo/logo-bildschrift-negative.svg';
+
 let isDark = localStorage.getItem('tt_dark')==='1';
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
   const t = document.getElementById('dm-toggle');
   if(t) t.checked = isDark;
+  const logo = document.getElementById('app-logo');
+  if(logo) logo.src = isDark ? LOGO_DARK : LOGO_LIGHT;
 }
 function toggleTheme() {
   isDark = !isDark;
