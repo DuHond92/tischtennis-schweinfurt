@@ -63,14 +63,16 @@
 
 .stat-card {
   flex: 1; background: var(--surface);
-  border-radius: var(--radius); padding: 14px 12px;
+  border-radius: var(--radius); padding: 10px 12px;
   text-align: center; box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
-  transition: all 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer; user-select: none;
 }
 .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.stat-val { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.stat-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+.stat-card:active { transform: scale(0.97); box-shadow: none; }
+.stat-val { font-family: var(--font-head); font-size: 1.75rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.stat-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
 
 /* Section header */
 .section-header {

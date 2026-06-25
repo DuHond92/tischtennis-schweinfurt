@@ -128,3 +128,15 @@ function renderHomePsSection() {
         : `<span class="hpsc-chevron">›</span>`}
     </div>`;
 }
+
+function navStat(type) {
+  if (type === 'map') {
+    showPage('map');
+  } else if (type === 'events') {
+    showPage('events');
+    const allPill = document.querySelector('#event-filter-pills .filter-pill');
+    if (allPill) filterEvents('all', allPill);
+  } else if (type === 'searches') {
+    activateMitspielerFilter();
+  }
+}
