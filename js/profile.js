@@ -18,6 +18,8 @@ function renderProfile() {
     const vals=['anfaenger','fortgeschritten','profi'];
     el.classList.toggle('active', vals[i]===skill);
   });
+  // Spielpartner
+  if (typeof renderSpielpartnerSection === 'function') renderSpielpartnerSection();
   // Match History
   renderMatchHistory();
   // Sign-out button

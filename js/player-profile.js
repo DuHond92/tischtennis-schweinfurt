@@ -13,6 +13,8 @@ function closePlayerProfile() {
 }
 
 async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
+  _ppCurrentUserId = userId;
+
   // Sofort Basis-Info anzeigen
   const avEl   = document.getElementById('pp-avatar');
   const nameEl = document.getElementById('pp-username');
@@ -34,6 +36,22 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
   document.getElementById('pp-stats').innerHTML   = '';
   document.getElementById('pp-details').innerHTML =
     '<div class="pp-loading">Lade Profil…</div>';
+
+  // Verbindungs-Button rendern
+  const connEl = document.getElementById('pp-connection-btn');
+  if (connEl) {
+    const myId = sb.getUserId();
+    if (!userId || userId === myId) {
+      connEl.innerHTML = '';
+    } else if (typeof _myConnections !== 'undefined' && _myConnections === null) {
+      connEl.innerHTML = '<button class="btn btn-secondary btn-full" disabled style="opacity:.5">Lade…</button>';
+      loadMyConnections().then(() => {
+        if (_ppCurrentUserId === userId) connEl.innerHTML = getConnectionButtonHtml(userId);
+      });
+    } else {
+      connEl.innerHTML = typeof getConnectionButtonHtml === 'function' ? getConnectionButtonHtml(userId) : '';
+    }
+  }
 
   openPlayerSheet();
 

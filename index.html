@@ -275,6 +275,12 @@
       </div>
     </div>
 
+    <!-- Spielpartner -->
+    <div class="profile-section">
+      <div class="ps-header">🤝 Spielpartner</div>
+      <div id="profile-spielpartner" style="padding:4px 12px 8px;"></div>
+    </div>
+
     <!-- Match History -->
     <div class="profile-section">
       <div class="ps-header">📜 Match History</div>
@@ -952,15 +958,8 @@
   <div class="pp-stats-row" id="pp-stats"></div>
   <!-- Skill / Details -->
   <div id="pp-details"></div>
-  <!-- Actions (Platzhalter für spätere Community-Features) -->
-  <div class="pp-actions">
-    <button class="btn btn-primary btn-full" disabled style="opacity:0.45;cursor:default;">
-      🏓 Zum Spielen einladen <span class="pp-soon">(bald verfügbar)</span>
-    </button>
-    <button class="btn btn-secondary btn-full" disabled style="opacity:0.45;cursor:default;">
-      💬 Nachricht senden <span class="pp-soon">(bald verfügbar)</span>
-    </button>
-  </div>
+  <!-- Actions: Spielpartner -->
+  <div class="pp-actions" id="pp-connection-btn"></div>
   <div class="pb-safe"></div>
 </div>
 
@@ -1002,6 +1001,7 @@
   </div>
 </div>
 
+<script src="js/connections.js"></script>
 <script src="js/player-profile.js"></script>
 <script src="js/ranked.js"></script>
 <script src="js/avatar.js"></script>

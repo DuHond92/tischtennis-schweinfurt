@@ -1264,3 +1264,35 @@
   background: var(--surface2); transition: transform 0.1s, background 0.1s;
 }
 .emoji-item:active { transform: scale(0.9); background: var(--primary-bg); }
+
+/* ======= SPIELPARTNER ======= */
+.spielpartner-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 4px; cursor: pointer; border-radius: 8px;
+  border-bottom: 1px solid var(--border); transition: background 0.15s;
+}
+.spielpartner-row:last-child { border-bottom: none; }
+.spielpartner-row:active { background: var(--surface2); }
+.sp-av { flex-shrink: 0; }
+.sp-info { flex: 1; min-width: 0; }
+.sp-name { font-weight: 700; font-size: 0.93rem; color: var(--text); }
+.sp-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+.btn-icon-sm {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text-dim); cursor: pointer; font-size: 0.78rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-icon-sm:active { background: var(--accent-bg); color: var(--accent); }
+.conn-accepted { color: var(--green) !important; border-color: var(--green) !important; }
+
+/* ── Verbindungs-Anfragen im Notif-Sheet ── */
+.notif-conn-req {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.notif-conn-header { display: flex; align-items: center; gap: 10px; }
+.notif-conn-text { flex: 1; min-width: 0; }
+.notif-conn-title { font-size: 0.88rem; color: var(--text); line-height: 1.4; }
+.notif-conn-time { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+.notif-conn-actions { display: flex; gap: 8px; }

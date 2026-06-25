@@ -54,7 +54,9 @@ async function checkNotifications() {
     return m.created_at > seenTs;
   });
 
-  pendingNotifs.length ? showNotifBadge(pendingNotifs.length) : hideNotifBadge();
+  if (typeof checkConnectionNotifications === 'function') await checkConnectionNotifications();
+  const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0);
+  totalBadge ? showNotifBadge(totalBadge) : hideNotifBadge();
 }
 
 // ── Badge anzeigen / verstecken ──────────────────────────────────
@@ -107,7 +109,7 @@ function renderNotifSheet() {
     return;
   }
 
-  if(!pendingNotifs.length) {
+  if(!pendingNotifs.length && !(pendingConnectionRequests?.length)) {
     body.innerHTML = `
       <div class="notif-empty">
         <div class="notif-empty-icon">✅</div>
@@ -124,7 +126,8 @@ function renderNotifSheet() {
     if(!evMap[ps.id]) evMap[ps.id] = { id: ps.id, name: ps.username + ' sucht Mitspieler' };
   });
 
-  body.innerHTML = pendingNotifs.slice(0, 20).map(m => {
+  const connHtml = typeof renderConnectionRequestNotifs === 'function' ? renderConnectionRequestNotifs() : '';
+  body.innerHTML = connHtml + pendingNotifs.slice(0, 20).map(m => {
     const ev      = evMap[m.event_id];
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const sender  = m.profiles?.username || 'Jemand';
