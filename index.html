@@ -122,6 +122,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
         </div>
         <div class="map-fab" onclick="openSheet('create-choice-sheet')" title="Spiel organisieren">+</div>
+        <div class="map-fab map-fab-suggest" onclick="openSuggestSheet()" title="Platte vorschlagen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
       </div>
 
       <!-- Bottom sheet -->
@@ -875,5 +878,96 @@
 <script src="js/ps-detail.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/main.js"></script>
+<script src="js/suggest.js"></script>
+
+<!-- SUGGEST TABLE SHEET -->
+<div class="bottom-sheet" id="suggest-table-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">📍 Platte vorschlagen</div>
+    <span class="sheet-close" onclick="closeSuggestSheet()">×</span>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="sug-steps">
+    <div class="sug-dot active" id="sug-dot-1"></div>
+    <div class="sug-step-line"></div>
+    <div class="sug-dot" id="sug-dot-2"></div>
+    <div class="sug-step-line"></div>
+    <div class="sug-dot" id="sug-dot-3"></div>
+  </div>
+
+  <!-- Step 1: Standort -->
+  <div id="sug-step-1" class="sheet-body">
+    <div class="sug-step-title">Schritt 1 von 2 — Standort wählen</div>
+    <button class="btn btn-primary btn-full" id="sug-gps-btn" onclick="suggestUseGPS()" style="margin-bottom:10px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      Aktuellen Standort verwenden
+    </button>
+    <div class="sug-or">oder</div>
+    <button class="btn btn-secondary btn-full" onclick="suggestActivateMapClick()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+      Pin auf Karte setzen
+    </button>
+    <div class="sug-coord-display" id="sug-coord-display">Noch kein Standort gewählt</div>
+    <button class="btn btn-primary btn-full" id="sug-step1-next" onclick="suggestNextStep()" style="margin-top:16px;" disabled>Weiter →</button>
+  </div>
+
+  <!-- Step 2: Details -->
+  <div id="sug-step-2" class="sheet-body" style="display:none;">
+    <div class="sug-step-title">Schritt 2 von 2 — Details</div>
+    <div class="form-group">
+      <label class="form-label">Name *</label>
+      <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adresse (optional)</label>
+      <input class="form-input" id="sug-address" type="text" placeholder="Straße, Ort" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Typ</label>
+      <div class="sug-type-toggle">
+        <button class="sug-type-btn active" data-type="outdoor" onclick="suggestSetType(this)">☀️ Outdoor</button>
+        <button class="sug-type-btn" data-type="indoor" onclick="suggestSetType(this)">🏠 Indoor</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Anzahl Tische</label>
+        <input class="form-input" id="sug-count" type="number" min="1" max="20" placeholder="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Zustand</label>
+        <select class="form-select" id="sug-condition">
+          <option value="">– wählen –</option>
+          <option value="sehr_gut">Sehr gut</option>
+          <option value="gut">Gut</option>
+          <option value="ok">Ok</option>
+          <option value="schlecht">Schlecht</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung (optional)</label>
+      <textarea class="form-textarea" id="sug-desc" placeholder="Besonderheiten, Öffnungszeiten, Zugangsbeschränkungen…"></textarea>
+    </div>
+    <div class="sug-photo-hint">📷 Foto-Upload folgt in einer späteren Version</div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" style="flex:0 0 auto;" onclick="suggestPrevStep()">← Zurück</button>
+      <button class="btn btn-primary" id="sug-submit-btn" onclick="suggestNextStep()" style="flex:1;">Absenden</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Erfolg -->
+  <div id="sug-step-3" class="sheet-body" style="display:none;">
+    <div class="sug-success">
+      <div class="sug-success-icon">🎉</div>
+      <div class="sug-success-title">Danke für deinen Vorschlag!</div>
+      <div class="sug-success-text">Wir prüfen den Standort und nehmen ihn bei Freigabe in die App auf.</div>
+      <button class="btn btn-primary btn-full" style="margin-top:24px;" onclick="closeSuggestSheet()">Schließen</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

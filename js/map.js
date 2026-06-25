@@ -33,6 +33,7 @@ function initMap() {
   src.forEach(t => addMarker(t));
   renderMapList(src);
   initBottomSheet();
+  leafletMap.on('click', e => { if(typeof _handleSuggestMapClick === 'function') _handleSuggestMapClick(e); });
 }
 
 function addMarker(t) {
