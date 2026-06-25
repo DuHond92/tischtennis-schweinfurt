@@ -2,8 +2,10 @@
 // ║           SPIELPARTNER (Verbindungen)                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-let _myConnections   = null;   // null = noch nicht geladen
-let _ppCurrentUserId = null;   // aktuell geöffnetes Spielerprofil
+let _myConnections    = null;   // null = noch nicht geladen
+let _ppCurrentUserId  = null;   // aktuell geöffnetes Spielerprofil
+let _ppCurrentUserName  = '';
+let _ppCurrentUserEmoji = '';
 
 // ── Verbindungen laden ────────────────────────────────────────────
 async function loadMyConnections() {
@@ -66,7 +68,10 @@ function getConnectionButtonHtml(otherUserId) {
   }
 
   if (conn.status === 'accepted') {
-    return `<button class="btn btn-secondary btn-full conn-accepted" onclick="removeConnection('${cid}','${oid}')">🤝 Spielpartner ✓ <span class="pp-soon">(entfernen)</span></button>`;
+    const pnm = escAttr(_ppCurrentUserName || '');
+    const pem = escAttr(_ppCurrentUserEmoji || '');
+    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}')">💬 Nachricht schreiben</button>
+<button class="btn btn-secondary btn-full conn-accepted" onclick="removeConnection('${cid}','${oid}')">🤝 Spielpartner ✓ <span class="pp-soon">(entfernen)</span></button>`;
   }
 
   // rejected oder blocked → erneut anfragen erlaubt
@@ -269,8 +274,15 @@ async function renderSpielpartnerSection() {
     html += `<div class="sp-section-title">Meine Spielpartner</div>`;
     html += accepted.map(c => {
       const otherId = c.requester_id === myId ? c.receiver_id : c.requester_id;
+      const p = profiles[otherId] || {};
+      const pnm = escAttr(p.username || '');
+      const pem = escAttr(p.avatar_emoji || '');
+      const oid = escAttr(otherId);
       return profileRow(c, otherId,
-        `<button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>`
+        `<div style="display:flex;gap:6px;">
+          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}')">💬</button>
+          <button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>
+        </div>`
       );
     }).join('');
   }

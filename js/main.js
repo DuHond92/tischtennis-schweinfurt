@@ -31,6 +31,7 @@ window.addEventListener('load', async () => {
       updateTopBarForUser();
       checkNotifications();
       startNotifPolling();
+      if (typeof checkDmNotifications === 'function') checkDmNotifications();
     }
     // UI mit echten Daten aktualisieren
     renderHome();

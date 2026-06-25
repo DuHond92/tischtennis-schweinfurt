@@ -13,7 +13,9 @@ function closePlayerProfile() {
 }
 
 async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
-  _ppCurrentUserId = userId;
+  _ppCurrentUserId    = userId;
+  _ppCurrentUserName  = username  || '';
+  _ppCurrentUserEmoji = avatarEmoji || '';
 
   // Sofort Basis-Info anzeigen
   const avEl   = document.getElementById('pp-avatar');

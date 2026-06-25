@@ -34,6 +34,10 @@
       <img id="app-logo" src="images/logo/logo-bild-schrift.svg" alt="PlattenTreff" class="topbar-logo-img">
     </a>
     <div class="topbar-right">
+      <button class="icon-btn" onclick="openInbox()" title="Nachrichten" style="position:relative;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span class="notif-badge" id="dm-badge" style="display:none;">0</span>
+      </button>
       <button class="icon-btn notif-btn" onclick="openNotifSheet()" title="Benachrichtigungen">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
@@ -615,6 +619,21 @@
   </div>
 </div>
 
+<!-- INBOX SHEET -->
+<div class="bottom-sheet" id="inbox-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">💬 Nachrichten</div>
+    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  </div>
+  <div id="inbox-body" style="padding:0;">
+    <div class="notif-empty">
+      <div class="notif-empty-icon">💬</div>
+      <div>Wird geladen…</div>
+    </div>
+  </div>
+</div>
+
 <!-- PROFILE EDIT SHEET -->
 <div class="bottom-sheet" id="profile-edit-sheet">
   <div class="sheet-handle"></div>
@@ -963,6 +982,27 @@
   <div class="pb-safe"></div>
 </div>
 
+<!-- DM OVERLAY (stacks above player-profile-sheet) -->
+<div id="dm-overlay" onclick="closeDmSheet()"></div>
+
+<!-- DM CONVERSATION SHEET -->
+<div class="bottom-sheet" id="dm-sheet">
+  <div class="dm-sheet-header">
+    <button class="icon-btn" onclick="closeDmSheet()" style="flex-shrink:0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <div id="dm-partner-av" style="flex-shrink:0;"></div>
+    <div id="dm-partner-name" class="dm-partner-name">Spieler</div>
+  </div>
+  <div id="dm-feed" class="dm-feed"></div>
+  <div class="dm-input-row">
+    <input class="dm-input" id="dm-input" type="text" placeholder="Nachricht…" onkeydown="onDmInputKey(event)">
+    <button class="btn btn-primary" style="padding:10px 14px;flex-shrink:0;" onclick="sendDm()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
 <!-- JS: load order matters — globals must be defined before consumers -->
 <script src="js/icons.js"></script>
 <script src="js/supabase.js"></script>
@@ -1001,6 +1041,7 @@
   </div>
 </div>
 
+<script src="js/messages.js"></script>
 <script src="js/connections.js"></script>
 <script src="js/player-profile.js"></script>
 <script src="js/ranked.js"></script>

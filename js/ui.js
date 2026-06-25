@@ -57,10 +57,13 @@ function openSheet(id) {
 }
 function closeAllSheets() {
   stopChatPolling();
+  if (typeof stopDmPolling === 'function') stopDmPolling();
   document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
   document.getElementById('overlay').classList.remove('open');
   const ppOv = document.getElementById('pp-overlay');
   if(ppOv) ppOv.classList.remove('open');
+  const dmOv = document.getElementById('dm-overlay');
+  if(dmOv) dmOv.classList.remove('open');
   openSheetId = null;
 }
 
