@@ -67,8 +67,12 @@ const sb = {
     const redirectTo = window.location.origin + window.location.pathname;
     const r = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ email, gotrue_meta_security: {} })
+      body: JSON.stringify({ email, redirect_to: redirectTo })
     });
+    if(!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      console.error('Password reset error:', err);
+    }
     return r.ok;
   },
 
