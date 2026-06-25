@@ -23,6 +23,9 @@ function renderProfile() {
   // Sign-out button
   document.querySelector('#profile-signout-btn') &&
     (document.querySelector('#profile-signout-btn').onclick = doSignOut);
+  // Admin link — only visible for admins
+  const adminItem = document.getElementById('admin-nav-item');
+  if (adminItem) adminItem.style.display = currentUser.is_admin ? '' : 'none';
 }
 
 function renderMatchHistory() {
