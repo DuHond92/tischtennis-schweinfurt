@@ -33,7 +33,6 @@ async function _loadSuggestions() {
 
   const qb = new QueryBuilder('table_suggestions');
   qb._filters.push('status=eq.pending');
-  qb.select('*,profiles!submitted_by(username)');
   const { data, error } = await qb.order('created_at').execute();
 
   if (error) {
@@ -45,16 +44,27 @@ async function _loadSuggestions() {
     return;
   }
 
+  // Nutzernamen für alle submitted_by IDs in einer Query laden
+  const userIds = [...new Set(data.map(s => s.submitted_by).filter(Boolean))];
+  const usernameMap = {};
+  if (userIds.length) {
+    const qbP = new QueryBuilder('profiles');
+    qbP.select('id,username');
+    qbP._filters.push(`id=in.(${userIds.join(',')})`);
+    const { data: profiles } = await qbP.execute();
+    if (profiles) profiles.forEach(p => { usernameMap[p.id] = p.username; });
+  }
+
   _adminData = {};
   data.forEach(s => { _adminData[s.id] = s; });
-  list.innerHTML = data.map(s => _renderSuggestionCard(s)).join('');
+  list.innerHTML = data.map(s => _renderSuggestionCard(s, usernameMap[s.submitted_by])).join('');
 }
 
-function _renderSuggestionCard(s) {
+function _renderSuggestionCard(s, username) {
   const date     = new Date(s.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
   const typeTag  = s.type === 'indoor' ? '🏠 Indoor' : '☀️ Outdoor';
   const condMap  = { sehr_gut: 'Sehr gut', gut: 'Gut', ok: 'Ok', schlecht: 'Schlecht' };
-  const username = s.profiles?.username || 'Unbekannt';
+  username = username || 'Unbekannt';
 
   return `
   <div class="admin-card" id="admin-card-${s.id}">
