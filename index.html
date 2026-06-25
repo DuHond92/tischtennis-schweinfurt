@@ -602,20 +602,28 @@
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
   <div class="sheet-body">
-    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:16px;">
+    <!-- Tabs (Login / Registrieren) -->
+    <div id="auth-tabs" style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:16px;">
       <button id="auth-tab-login" onclick="setAuthMode('login')" class="auth-tab auth-tab-active">Anmelden</button>
       <button id="auth-tab-reg"   onclick="setAuthMode('register')" class="auth-tab">Registrieren</button>
     </div>
+
+    <!-- Login -->
     <div id="auth-login-fields">
       <div class="form-group">
         <label class="form-label">E-Mail</label>
         <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de">
       </div>
       <div class="form-group">
-        <label class="form-label">Passwort</label>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Passwort</label>
+          <button class="auth-forgot-link" onclick="setAuthMode('reset')">Passwort vergessen?</button>
+        </div>
         <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
       </div>
     </div>
+
+    <!-- Registrieren -->
     <div id="auth-reg-fields" style="display:none;">
       <div class="form-group">
         <label class="form-label">Spielername</label>
@@ -630,6 +638,36 @@
         <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
       </div>
     </div>
+
+    <!-- Passwort zurücksetzen -->
+    <div id="auth-reset-fields" style="display:none;">
+      <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+        Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link zum Zurücksetzen deines Passworts.
+      </p>
+      <div class="form-group">
+        <label class="form-label">E-Mail</label>
+        <input class="form-input" type="email" id="auth-reset-email" placeholder="deine@email.de">
+      </div>
+      <button class="btn btn-primary btn-full" id="auth-reset-btn" onclick="sendPasswordReset()">Reset-Link senden</button>
+      <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
+    </div>
+
+    <!-- Neues Passwort setzen (nach Recovery-Link) -->
+    <div id="auth-newpw-fields" style="display:none;">
+      <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+        Wähle ein neues Passwort für deinen Account.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Neues Passwort (min. 6 Zeichen)</label>
+        <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort bestätigen</label>
+        <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-full" id="auth-newpw-btn" onclick="submitNewPassword()">Passwort speichern</button>
+    </div>
+
     <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">Anmelden</button>
     <p style="text-align:center;font-size:0.75rem;color:var(--text-xdim);margin-top:12px;">
       Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen.

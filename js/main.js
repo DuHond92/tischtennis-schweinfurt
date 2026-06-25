@@ -2,6 +2,9 @@
 // ║           STARTUP                                            ║
 // ╚══════════════════════════════════════════════════════════════╝
 window.addEventListener('load', async () => {
+  // Passwort-Recovery aus URL-Hash erkennen (Supabase Magic Link)
+  checkPasswordRecovery();
+
   // Token beim Start sofort prüfen und ggf. erneuern
   if(sb.isLoggedIn()) {
     await sb.refreshToken();

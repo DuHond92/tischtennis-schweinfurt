@@ -1,24 +1,92 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           AUTH  (Login / Registrierung)                      ║
 // ╚══════════════════════════════════════════════════════════════╝
-let authMode = 'login'; // 'login' | 'register'
+let authMode = 'login'; // 'login' | 'register' | 'reset' | 'new-password'
 
 function setAuthMode(mode) {
   authMode = mode;
-  // Felder ein-/ausblenden
-  document.getElementById('auth-login-fields').style.display = mode==='login' ? 'block' : 'none';
-  document.getElementById('auth-reg-fields').style.display   = mode==='register' ? 'block' : 'none';
+  const isStandard = mode === 'login' || mode === 'register';
+
+  // Sektionen
+  document.getElementById('auth-login-fields').style.display    = mode === 'login'         ? 'block' : 'none';
+  document.getElementById('auth-reg-fields').style.display      = mode === 'register'       ? 'block' : 'none';
+  document.getElementById('auth-reset-fields').style.display    = mode === 'reset'          ? 'block' : 'none';
+  document.getElementById('auth-newpw-fields').style.display    = mode === 'new-password'   ? 'block' : 'none';
+  document.getElementById('auth-submit-btn').style.display      = isStandard                ? 'flex'  : 'none';
+  document.getElementById('auth-tabs').style.display            = isStandard                ? 'flex'  : 'none';
+
   // Titel
-  document.getElementById('auth-sheet-title').innerHTML = mode==='login'
-    ? `${ic('user',18)} Anmelden`
-    : '🏓 Registrieren';
+  const titles = { login: `${ic('user',18)} Anmelden`, register: '🏓 Registrieren',
+                   reset: '🔑 Passwort zurücksetzen', 'new-password': '🔑 Neues Passwort' };
+  document.getElementById('auth-sheet-title').innerHTML = titles[mode] || titles.login;
+
   // Submit-Button Label
-  document.getElementById('auth-submit-btn').textContent = mode==='login' ? 'Anmelden' : 'Konto erstellen';
-  // Tab-Styling: active = blau, inaktiv = grau
-  const tabLogin = document.getElementById('auth-tab-login');
-  const tabReg   = document.getElementById('auth-tab-reg');
-  tabLogin.classList.toggle('auth-tab-active', mode==='login');
-  tabReg.classList.toggle('auth-tab-active',   mode==='register');
+  document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'Anmelden' : 'Konto erstellen';
+
+  // Tab-Styling
+  document.getElementById('auth-tab-login').classList.toggle('auth-tab-active', mode === 'login');
+  document.getElementById('auth-tab-reg').classList.toggle('auth-tab-active',   mode === 'register');
+}
+
+async function sendPasswordReset() {
+  const email = document.getElementById('auth-reset-email').value.trim();
+  if (!email) { showToast('Bitte E-Mail eingeben', '⚠️'); return; }
+
+  const btn = document.getElementById('auth-reset-btn');
+  btn.disabled = true; btn.textContent = '…';
+
+  const ok = await sb.resetPassword(email);
+  btn.disabled = false; btn.textContent = 'Reset-Link senden';
+
+  if (ok) {
+    document.getElementById('auth-reset-fields').innerHTML = `
+      <div style="text-align:center;padding:20px 0 8px;">
+        <div style="font-size:2.5rem;margin-bottom:12px;">📧</div>
+        <div style="font-weight:700;font-size:1rem;margin-bottom:8px;">E-Mail gesendet!</div>
+        <div style="font-size:0.85rem;color:var(--text-dim);line-height:1.5;">
+          Prüfe dein Postfach und klicke auf den Link, um ein neues Passwort festzulegen.
+        </div>
+        <button class="btn btn-secondary btn-full" style="margin-top:20px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
+      </div>`;
+  } else {
+    showToast('Fehler beim Senden — E-Mail prüfen', '❌');
+  }
+}
+
+async function submitNewPassword() {
+  const pw  = document.getElementById('auth-newpw').value;
+  const pw2 = document.getElementById('auth-newpw2').value;
+  if (!pw || pw.length < 6) { showToast('Mindestens 6 Zeichen', '⚠️'); return; }
+  if (pw !== pw2)            { showToast('Passwörter stimmen nicht überein', '⚠️'); return; }
+
+  const btn = document.getElementById('auth-newpw-btn');
+  btn.disabled = true; btn.textContent = '…';
+
+  const ok = await sb.updatePassword(pw);
+  btn.disabled = false; btn.textContent = 'Passwort speichern';
+
+  if (ok) {
+    closeAllSheets();
+    showToast('✅ Passwort geändert! Bitte neu anmelden.');
+    await sb.signOut();
+    setTimeout(() => { openSheet('auth-sheet'); setAuthMode('login'); }, 800);
+  } else {
+    showToast('Fehler beim Speichern', '❌');
+  }
+}
+
+function checkPasswordRecovery() {
+  const hash = window.location.hash;
+  if (!hash.includes('type=recovery')) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const token   = params.get('access_token');
+  const refresh = params.get('refresh_token');
+  if (!token) return;
+  // Token zwischenspeichern damit updatePassword() ihn nutzen kann
+  localStorage.setItem('sb_token', token);
+  if (refresh) localStorage.setItem('sb_refresh_token', refresh);
+  history.replaceState(null, '', window.location.pathname);
+  setTimeout(() => { openSheet('auth-sheet'); setAuthMode('new-password'); }, 300);
 }
 
 async function submitAuth() {

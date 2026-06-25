@@ -63,6 +63,24 @@ const sb = {
     return localStorage.getItem('sb_token');
   },
 
+  async resetPassword(email) {
+    const redirectTo = window.location.origin + window.location.pathname;
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ email, gotrue_meta_security: {} })
+    });
+    return r.ok;
+  },
+
+  async updatePassword(newPassword) {
+    const token = await this.getValidToken();
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT', headers: authHeaders(token),
+      body: JSON.stringify({ password: newPassword })
+    });
+    return r.ok;
+  },
+
   async signOut() {
     const token = localStorage.getItem('sb_token');
     if(token) await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
