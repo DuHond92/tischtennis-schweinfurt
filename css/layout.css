@@ -10,12 +10,15 @@
 }
 
 .topbar-logo {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--font-head);
-  font-weight: 800; font-size: 1.05rem;
-  color: var(--text);
+  display: flex; align-items: center;
   cursor: pointer; text-decoration: none;
-  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.topbar-logo-img {
+  height: 28px;
+  width: auto;
+  display: block;
 }
 
 .logo-icon {
