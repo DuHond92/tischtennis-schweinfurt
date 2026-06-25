@@ -33,7 +33,7 @@ async function _loadSuggestions() {
 
   const qb = new QueryBuilder('table_suggestions');
   qb._filters.push('status=eq.pending');
-  qb.select('*,profiles!user_id(username)');
+  qb.select('*,profiles!submitted_by(username)');
   const { data, error } = await qb.order('created_at').execute();
 
   if (error) {
