@@ -3,15 +3,9 @@
 // ╚══════════════════════════════════════════════════════════════╝
 function renderProfile() {
   if(!currentUser) return;
-  const total = (currentUser.wins||0)+(currentUser.losses||0);
   // Avatar & Name oben
   updateProfileAvatarEl(currentUser);
   document.querySelector('.profile-name').textContent   = currentUser.username||'Spieler';
-  // Stats (W/L/Spiele gesamt, kein ELO/Winrate)
-  const pv = document.querySelectorAll('.pstat-val');
-  if(pv[0]) pv[0].textContent = currentUser.wins||0;
-  if(pv[1]) pv[1].textContent = currentUser.losses||0;
-  if(pv[2]) pv[2].textContent = total;
   // Skill level
   const skill = currentUser.skill_level || 'anfaenger';
   document.querySelectorAll('.skill-opt').forEach((el,i)=>{

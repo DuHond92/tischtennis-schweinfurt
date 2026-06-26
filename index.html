@@ -242,20 +242,7 @@
       <div class="profile-sub">Schweinfurt · Mitglied seit März 2025</div>
     </div>
 
-    <div class="profile-stats-row">
-      <div class="pstat">
-        <div class="pstat-val green">23</div>
-        <div class="pstat-label">Siege</div>
-      </div>
-      <div class="pstat">
-        <div class="pstat-val red">11</div>
-        <div class="pstat-label">Niederlagen</div>
-      </div>
-      <div class="pstat">
-        <div class="pstat-val">34</div>
-        <div class="pstat-label">Spiele</div>
-      </div>
-    </div>
+    <!-- Match-Statistiken entfernt (v1: kein Match-System) -->
 
     <!-- Skill Level -->
     <div class="profile-section" style="margin-top:16px;">
@@ -285,11 +272,7 @@
       <div id="profile-spielpartner" style="padding:4px 12px 8px;"></div>
     </div>
 
-    <!-- Match History temporarily disabled -->
-    <div class="profile-section" style="display:none">
-      <div class="ps-header">📜 Match History</div>
-      <div id="profile-match-history"></div>
-    </div>
+    <!-- Match History entfernt (v1: kein Match-System) -->
 
     <!-- Settings -->
     <div class="profile-section">
@@ -304,7 +287,7 @@
       </div>
       <div class="settings-item">
         <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
-        <div class="si-text">Benachrichtigungen<div class="si-sub">Spielrunden & Matches</div></div>
+        <div class="si-text">Benachrichtigungen<div class="si-sub">Spielrunden & Events</div></div>
         <label class="toggle-switch">
           <input type="checkbox" checked>
           <span class="toggle-slider"></span>
@@ -728,7 +711,7 @@
     <div style="text-align:center;padding:16px 0 20px;">
       <div style="font-size:3rem;margin-bottom:8px;">😎</div>
       <div style="font-weight:800;font-size:1.1rem;font-family:var(--font-head);">Max Mustermann</div>
-      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:2px;">🥈 Silber · 520 ELO</div>
+      <!-- ELO/Rang entfernt (v1: kein Match-System) -->
     </div>
     <button class="btn btn-primary btn-full" onclick="closeAllSheets();showPage('profile')">Zum Profil</button>
     <div style="height:10px;"></div>
@@ -1036,8 +1019,6 @@
     <div class="pp-host-badge" id="pp-host-badge" style="display:none;"></div>
     <div class="pp-city" id="pp-city" style="display:none;"></div>
   </div>
-  <!-- Stats -->
-  <div class="pp-stats-row" id="pp-stats"></div>
   <!-- Skill / Details -->
   <div id="pp-details"></div>
   <!-- Actions: Spielpartner -->

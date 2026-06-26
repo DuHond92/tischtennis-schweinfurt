@@ -35,7 +35,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
   cityEl.style.display = 'none';
   cityEl.textContent   = '';
 
-  document.getElementById('pp-stats').innerHTML   = '';
+  // pp-stats entfernt (v1: kein Match-System)
   document.getElementById('pp-details').innerHTML =
     '<div class="pp-loading">Lade Profil…</div>';
 
@@ -64,7 +64,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
 
   try {
     const qb = new QueryBuilder('profiles');
-    qb._select = 'id,username,avatar_emoji,avatar_url,wins,losses,skill_level,city';
+    qb._select = 'id,username,avatar_emoji,avatar_url,skill_level,city';
     qb.eq('id', userId);
     const {data} = await qb.execute();
     if(data && data[0]) {
@@ -90,27 +90,7 @@ function renderPlayerProfileData(profile) {
     cityEl.style.display = '';
   }
 
-  // Stats
-  const wins    = profile.wins   || 0;
-  const losses  = profile.losses || 0;
-  const total   = wins + losses;
-  const evCount = allEvents.filter(e => e.creatorId === profile.id).length;
-
-  document.getElementById('pp-stats').innerHTML = `
-    <div class="pp-stat">
-      <div class="pp-stat-val green">${wins}</div>
-      <div class="pp-stat-label">Siege</div>
-    </div>
-    <div class="pp-stat">
-      <div class="pp-stat-val red">${losses}</div>
-      <div class="pp-stat-label">Niederlagen</div>
-    </div>
-    <div class="pp-stat">
-      <div class="pp-stat-val">${total}</div>
-      <div class="pp-stat-label">Spiele</div>
-    </div>
-    ${evCount > 0 ? `<div class="pp-stat"><div class="pp-stat-val">${evCount}</div><div class="pp-stat-label">Runden</div></div>` : ''}
-  `;
+  // Statistiken entfernt (v1: kein Match-System)
 
   // Spielniveau
   const skillMap = {

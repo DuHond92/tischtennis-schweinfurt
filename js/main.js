@@ -28,7 +28,6 @@ window.addEventListener('load', async () => {
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {
       await loadCurrentUser();
-      await loadMyMatches();
       updateTopBarForUser();
       checkNotifications();
       startNotifPolling();
@@ -37,11 +36,9 @@ window.addEventListener('load', async () => {
     // UI mit echten Daten aktualisieren
     renderHome();
     renderEvents(currentFilter);
-    renderLeaderboard();
-    renderMatchHistory();
     // Select-Optionen befüllen
     const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-    ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+    ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
   } catch(e) {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
   }

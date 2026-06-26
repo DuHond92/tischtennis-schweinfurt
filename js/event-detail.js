@@ -54,7 +54,7 @@ function showEventDetail(eventId) {
   currentEventId = eventId;
 
   // Bild-Slider
-  document.getElementById('eds-slider').innerHTML = buildEventSlider(ev.images || null);
+  document.getElementById('eds-slider').innerHTML = buildEventSlider(ev.photos || null);
 
   // Titel
   document.getElementById('eds-title').textContent = ev.name;
@@ -84,8 +84,7 @@ function showEventDetail(eventId) {
   const delBtn  = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
   if(isHost) {
     actEl.innerHTML = `
-      <button class="btn btn-primary" style="flex:1;" onclick="startGame(${ev.id})">🏓 Spiel starten</button>
-      <button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;" onclick="openEditEvent(${ev.id})">✏️</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>
       ${delBtn}`;
   } else {
     actEl.innerHTML =
@@ -97,7 +96,7 @@ function showEventDetail(eventId) {
   document.getElementById('eds-chat-feed').innerHTML    = '<div class="chat-empty">Lade Nachrichten…</div>';
 
   // Show/hide chat input for non-fallback events
-  const isFallback = eventId >= 101;
+  const isFallback = allEvents.length === 0;
   document.getElementById('eds-chat-input-row').style.display = (isFallback || !sb.isLoggedIn()) ? 'none' : '';
 
   openSheet('event-detail-sheet');
@@ -254,7 +253,7 @@ async function joinEventFromDetail(eventId) {
   if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   const btn = document.getElementById('eds-join-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }
-  const isFallback = eventId >= 101;
+  const isFallback = allEvents.length === 0;
   if(isFallback) {
     setTimeout(() => {
       if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }

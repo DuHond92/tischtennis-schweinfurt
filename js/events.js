@@ -4,7 +4,7 @@
 async function joinEvent(eventId, btn) {
   btn.disabled = true; btn.textContent = '…';
   // Fallback-Events: kein DB-Eintrag nötig
-  const isFallback = eventId >= 101;
+  const isFallback = allEvents.length === 0;
   if(isFallback || !sb.isLoggedIn()) {
     setTimeout(()=>{
       btn.textContent='✅'; btn.style.background='var(--green)';
@@ -68,7 +68,9 @@ function renderEvents(filter = 'all') {
           <span style="font-size:0.72rem;color:var(--text-dim);">${ic('calendar',12)} ${e.day}. ${e.mon}</span>
         </div>
         <div class="ecb-title">${e.name}</div>
-        <div class="ecb-creator">${ic('user',12)} <b>${e.creator}</b> &nbsp;·&nbsp; ${ic('clock',12)} ${e.time} Uhr</div>
+        <div class="ecb-creator">${ic('user',12)} ${e.creatorId
+          ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}')">${escHtml(e.creator||'Anonym')}</b>`
+          : `<b>${escHtml(e.creator||'Anonym')}</b>`} &nbsp;·&nbsp; ${ic('clock',12)} ${e.time} Uhr</div>
         <div class="ecb-location">${ic('pin')} ${e.tname}</div>
         <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
       </div>
