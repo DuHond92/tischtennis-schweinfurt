@@ -1217,6 +1217,12 @@
 }
 .admin-section-toggle:active { background: var(--surface2); }
 .admin-toggle-icon { flex-shrink: 0; transition: transform 0.2s ease; color: var(--text-xdim); }
+.admin-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: #e53935; color: #fff;
+  font-size: 0.68rem; font-weight: 700; border-radius: 9px; line-height: 1;
+}
 .admin-section-body { background: var(--bg); }
 .admin-card-meta {
   font-size: 0.76rem; color: var(--text-dim);

@@ -318,6 +318,7 @@
       <div class="settings-item" id="admin-nav-item" onclick="showAdminPage()" style="display:none;">
         <div class="si-icon" style="background:#fef3c7;color:#d97706;">🛡</div>
         <div class="si-text">Moderation<div class="si-sub">Vorschläge prüfen &amp; Rollen vergeben</div></div>
+        <span class="admin-badge" id="admin-badge-nav" style="display:none;margin-right:4px;"></span>
         <span class="si-arrow">›</span>
       </div>
       <div class="settings-item" onclick="doSignOut()">
@@ -342,8 +343,11 @@
     </div>
     <div class="admin-section">
       <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
-        📍 Offene Vorschläge
-        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        <span>📍 Offene Vorschläge</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="admin-badge" id="admin-badge-suggestions" style="display:none"></span>
+          <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
       </button>
       <div class="admin-section-body">
         <div id="admin-suggestions-list" class="admin-list"></div>
@@ -351,8 +355,11 @@
     </div>
     <div class="admin-section" id="admin-images-section" style="display:none;">
       <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
-        📸 Bilder zur Freigabe
-        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        <span>📸 Bilder zur Freigabe</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="admin-badge" id="admin-badge-images" style="display:none"></span>
+          <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
       </button>
       <div class="admin-section-body">
         <div id="admin-images-list" class="admin-list"></div>
@@ -360,8 +367,11 @@
     </div>
     <div class="admin-section" id="admin-reports-section" style="display:none;">
       <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
-        🚩 Gemeldete Inhalte
-        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        <span>🚩 Gemeldete Inhalte</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="admin-badge" id="admin-badge-reports" style="display:none"></span>
+          <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
       </button>
       <div class="admin-section-body">
         <div id="admin-reports-list" class="admin-list"></div>

@@ -55,6 +55,7 @@ async function checkNotifications() {
   });
 
   if (typeof checkConnectionNotifications === 'function') await checkConnectionNotifications();
+  if (typeof _pollAdminCounts === 'function') await _pollAdminCounts();
   const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0);
   totalBadge ? showNotifBadge(totalBadge) : hideNotifBadge();
 }

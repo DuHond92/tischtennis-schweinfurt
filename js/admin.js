@@ -4,6 +4,71 @@
 
 let _adminData = {};
 let _usersData = {};
+let _adminCounts = { suggestions: -1, images: -1, reports: -1 };
+
+const _NOTIFY_LABELS = {
+  suggestions: { one: 'neuer Vorschlag',  many: 'neue Vorschläge' },
+  images:      { one: 'neues Bild',       many: 'neue Bilder'     },
+  reports:     { one: 'neue Meldung',     many: 'neue Meldungen'  },
+};
+
+function _updateAdminBadge(key, count) {
+  const el = document.getElementById(`admin-badge-${key}`);
+  if (el) {
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : String(count);
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+  if (key !== 'nav') {
+    const counts = { ..._adminCounts, [key]: count };
+    const total = Object.values(counts).reduce((s, c) => s + Math.max(0, c), 0);
+    _updateAdminBadge('nav', total);
+  }
+}
+
+function _notifyIfNew(key, count) {
+  const prev = _adminCounts[key];
+  if (prev >= 0 && count > prev) {
+    const diff = count - prev;
+    const l = _NOTIFY_LABELS[key];
+    showToast(l ? `${diff} ${diff === 1 ? l.one : l.many}` : `${diff} neue Einträge`, '🔔');
+  }
+  _adminCounts[key] = count;
+}
+
+async function _pollAdminCounts() {
+  if (!currentUser || !['moderator', 'admin'].includes(currentUser.role)) return;
+  try {
+    const { data } = await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/table_suggestions?select=id&status=eq.pending`,
+      { headers: dbHeaders() }
+    );
+    const c = Array.isArray(data) ? data.length : 0;
+    _notifyIfNew('suggestions', c);
+    _updateAdminBadge('suggestions', c);
+  } catch(e) {}
+  try {
+    const { data } = await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/table_images?select=id&status=eq.pending`,
+      { headers: dbHeaders() }
+    );
+    const c = Array.isArray(data) ? data.length : 0;
+    _notifyIfNew('images', c);
+    _updateAdminBadge('images', c);
+  } catch(e) {}
+  try {
+    const { data } = await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/reports?select=id&status=eq.pending`,
+      { headers: dbHeaders() }
+    );
+    const c = Array.isArray(data) ? data.length : 0;
+    _notifyIfNew('reports', c);
+    _updateAdminBadge('reports', c);
+  } catch(e) {}
+}
 
 function showAdminPage() {
   if (!currentUser || !['moderator', 'admin'].includes(currentUser.role)) {
@@ -43,6 +108,7 @@ async function _loadSuggestions() {
     return;
   }
   if (!data.length) {
+    _notifyIfNew('suggestions', 0); _updateAdminBadge('suggestions', 0);
     list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Vorschläge</div>';
     return;
   }
@@ -60,6 +126,7 @@ async function _loadSuggestions() {
 
   _adminData = {};
   data.forEach(s => { _adminData[s.id] = s; });
+  _notifyIfNew('suggestions', data.length); _updateAdminBadge('suggestions', data.length);
   list.innerHTML = data.map(s => _renderSuggestionCard(s, usernameMap[s.submitted_by])).join('');
 }
 
@@ -207,6 +274,7 @@ async function _loadImageModerations() {
   }
 
   if (!images.length) {
+    _notifyIfNew('images', 0); _updateAdminBadge('images', 0);
     list.innerHTML = '<div class="admin-empty">🎉 Keine Bilder zur Freigabe</div>';
     return;
   }
@@ -235,6 +303,7 @@ async function _loadImageModerations() {
 
   _imageData = {};
   images.forEach(img => { _imageData[img.id] = img; });
+  _notifyIfNew('images', images.length); _updateAdminBadge('images', images.length);
   list.innerHTML = images.map(img =>
     _renderImageCard(img, tableMap[img.table_id] || `Platte #${img.table_id}`, uploaderMap[img.uploaded_by] || 'Unbekannt')
   ).join('');
@@ -503,6 +572,7 @@ async function _loadReports() {
   }
 
   if (!reports.length) {
+    _notifyIfNew('reports', 0); _updateAdminBadge('reports', 0);
     list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
     return;
   }
@@ -517,6 +587,7 @@ async function _loadReports() {
     } catch(e) {}
   }
 
+  _notifyIfNew('reports', reports.length); _updateAdminBadge('reports', reports.length);
   list.innerHTML = reports.map(r => {
     const date      = new Date(r.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
     const reporter  = repMap[r.reporter_id] || 'Anonym';
