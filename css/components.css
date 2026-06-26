@@ -993,7 +993,7 @@
 .hpsc-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .hpsc-av { flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 .hpsc-info { flex: 1; min-width: 0; }
-.hpsc-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.hpsc-name { font-weight: 700; font-size: 0.88rem; color: var(--text); width: fit-content; }
 .hpsc-type { font-size: 0.78rem; color: var(--text-dim); margin-top: 1px; }
 .hpsc-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
 .hpsc-more { background: var(--primary-bg); color: var(--primary); border-radius: 20px; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; flex-shrink: 0; white-space: nowrap; }
@@ -1036,7 +1036,7 @@
 .psc-info { flex: 1; min-width: 0; padding-top: 2px; }
 .psc-name {
   font-weight: 800; font-size: 0.9rem; color: var(--text);
-  font-family: var(--font-head);
+  font-family: var(--font-head); width: fit-content;
 }
 .psc-type-row {
   display: flex; align-items: center; gap: 6px;
@@ -1288,7 +1288,7 @@
 .spielpartner-row .pp-clickable:active { background: var(--surface2); border-radius: 50%; }
 .sp-av { flex-shrink: 0; }
 .sp-info { flex: 1; min-width: 0; }
-.sp-name { font-weight: 700; font-size: 0.93rem; color: var(--text); }
+.sp-name { font-weight: 700; font-size: 0.93rem; color: var(--text); width: fit-content; }
 .sp-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
 .sp-req-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .sp-req-actions .btn { padding: 6px 10px; font-size: 0.8rem; }

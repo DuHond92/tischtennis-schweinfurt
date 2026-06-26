@@ -30,7 +30,7 @@ function showPlayerSearchDetail(psId) {
     <div style="display:flex;align-items:center;gap:14px;padding:16px 20px 12px;">
       ${avHtml}
       <div style="flex:1;min-width:0;">
-        <div class="${pClick?'pp-clickable':''}" style="font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:5px;cursor:${pClick?'pointer':'default'};" ${pClick?`onclick="${pClick}"`:''}>${escHtml(ps.username || 'Spieler')}</div>
+        <div class="${pClick?'pp-clickable':''}" style="font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:5px;cursor:${pClick?'pointer':'default'};width:fit-content;" ${pClick?`onclick="${pClick}"`:''}>${escHtml(ps.username || 'Spieler')}</div>
         <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel} gesucht</span>
         ${metaParts.length ? `<div style="font-size:0.78rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">${metaParts.join('<span style="margin:0 2px;opacity:.4;">·</span>')}</div>` : ''}
       </div>
