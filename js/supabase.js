@@ -180,7 +180,7 @@ function dbHeaders() {
 // Führt einen API-Call aus, erneuert bei JWT-Fehler automatisch den Token
 async function fetchWithRefresh(url, options) {
   let r = await fetch(url, options);
-  let data = await r.json();
+  let data = await _parseResponse(r);
 
   // JWT expired → Token erneuern und nochmal versuchen
   if(data.message === 'JWT expired' || data.code === 'PGRST301' ||
@@ -188,12 +188,10 @@ async function fetchWithRefresh(url, options) {
     console.log('JWT expired – erneuere Token…');
     const refreshed = await sb.refreshToken();
     if(refreshed) {
-      // Neue Headers mit frischem Token
       options.headers = { ...options.headers, ...dbHeaders() };
       r = await fetch(url, options);
-      data = await r.json();
+      data = await _parseResponse(r);
     } else {
-      // Refresh auch fehlgeschlagen → neu einloggen
       showToast('Sitzung abgelaufen – bitte neu einloggen', '🔑');
       await sb.signOut();
       updateTopBarForUser();
@@ -202,4 +200,10 @@ async function fetchWithRefresh(url, options) {
     }
   }
   return { ok: r.ok, data };
+}
+
+async function _parseResponse(r) {
+  const text = await r.text();
+  if (!text) return {};
+  try { return JSON.parse(text); } catch(e) { return {}; }
 }
