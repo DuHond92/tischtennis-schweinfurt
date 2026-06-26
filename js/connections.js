@@ -257,10 +257,11 @@ async function renderSpielpartnerSection() {
   function profileRow(conn, otherId, actionHtml) {
     const p   = profiles[otherId] || { id: otherId, username: 'Spieler', avatar_emoji: '', skill_level: '' };
     const pid = escAttr(p.id);
-    return `<div class="spielpartner-row" onclick="showPlayerProfile('${pid}','${escAttr(p.username || '')}','${escAttr(p.avatar_emoji || '')}')">
-      <div class="sp-av">${getAvatarHtml(p, { size: 44 })}</div>
+    const pClick = `showPlayerProfile('${pid}','${escAttr(p.username || '')}','${escAttr(p.avatar_emoji || '')}')`;
+    return `<div class="spielpartner-row">
+      <div class="sp-av pp-clickable" onclick="${pClick}">${getAvatarHtml(p, { size: 44 })}</div>
       <div class="sp-info">
-        <div class="sp-name">${escHtml(p.username || 'Spieler')}</div>
+        <div class="sp-name pp-clickable" onclick="${pClick}">${escHtml(p.username || 'Spieler')}</div>
         ${p.skill_level ? `<div class="sp-sub">${skillMap[p.skill_level] || ''}</div>` : ''}
       </div>
       ${actionHtml}

@@ -1030,8 +1030,8 @@
   border-radius: 8px; padding: 4px 6px; margin: -4px -6px;
   transition: background 0.15s;
 }
-.psc-profile:hover { background: var(--primary-mid); }
-.psc-profile:active { background: var(--primary-bg); }
+.psc-profile .pp-clickable:hover  { opacity: 0.8; }
+.psc-profile .pp-clickable:active { opacity: 0.65; }
 .psc-identity { flex: 1; min-width: 0; }
 .psc-info { flex: 1; min-width: 0; padding-top: 2px; }
 .psc-name {
@@ -1285,7 +1285,7 @@
   border-bottom: 1px solid var(--border); transition: background 0.15s;
 }
 .spielpartner-row:last-child { border-bottom: none; }
-.spielpartner-row:active { background: var(--surface2); }
+.spielpartner-row .pp-clickable:active { background: var(--surface2); border-radius: 50%; }
 .sp-av { flex-shrink: 0; }
 .sp-info { flex: 1; min-width: 0; }
 .sp-name { font-weight: 700; font-size: 0.93rem; color: var(--text); }

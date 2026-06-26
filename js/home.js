@@ -116,10 +116,10 @@ function renderHomePsSection() {
       <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
     </div>
     <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">
-      <div class="hpsc-left pp-clickable" onclick="${profileClick}">
-        <div class="hpsc-av">${avHtml}</div>
+      <div class="hpsc-left">
+        <div class="hpsc-av pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="hpsc-info">
-          <div class="hpsc-name">${escHtml(first.username || 'Spieler')}</div>
+          <div class="hpsc-name pp-clickable" onclick="${profileClick}">${escHtml(first.username || 'Spieler')}</div>
           <div class="hpsc-type">sucht <b>${spielartLabels[first.spielart] || 'Mitspieler'}</b></div>
           ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
         </div>

@@ -38,10 +38,10 @@ function renderPlayerSearchCard(ps) {
   if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
     <div class="player-search-card fade-up" onclick="${cardClick}">
-      <div class="psc-profile pp-clickable" onclick="${profileClick}">
-        ${avHtml}
+      <div class="psc-profile">
+        <div class="pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="psc-identity">
-          <div class="psc-name">${escHtml(ps.username || 'Spieler')}</div>
+          <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
           <div class="psc-type-row">
             <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
           </div>
