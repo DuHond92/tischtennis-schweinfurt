@@ -120,20 +120,19 @@ async function renderInboxChats() {
   const dot = document.getElementById('inbox-tab-dot-chats');
   if (dot) dot.style.display = totalUnread ? '' : 'none';
 
-  el.innerHTML = convs.map(c => {
+  const renderRow = c => {
     const p       = profiles[c.partnerId] || { id: c.partnerId, username: 'Spieler' };
-    const av      = getAvatarHtml(p, { size: 50 });
+    const av      = getAvatarHtml(p, { size: 56 });
     const nm      = escHtml(p.username || 'Spieler');
     const pid     = escAttr(c.partnerId);
     const pnm     = escAttr(p.username || 'Spieler');
     const pem     = escAttr(p.avatar_emoji || '');
     const isMine  = c.lastMsg.sender_id === uid;
-    const preview = c.lastMsg.message.length > 55
-      ? c.lastMsg.message.slice(0, 55) + '…'
+    const preview = c.lastMsg.message.length > 60
+      ? c.lastMsg.message.slice(0, 60) + '…'
       : c.lastMsg.message;
     const time    = _dmTime(c.lastMsg.created_at);
     const hasNew  = c.unread > 0;
-
     return `
       <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}')">
         <div class="inbox-conv-av">${av}</div>
@@ -150,7 +149,12 @@ async function renderInboxChats() {
           </div>
         </div>
       </div>`;
-  }).join('');
+  };
+
+  // Gruppierung: alle DMs sind aktuell Spielpartner-Chats
+  const rowsHtml = convs.map(renderRow).join('');
+  el.innerHTML = `<div class="inbox-section-label">👤 Spielpartner</div>${rowsHtml}`;
+  // Spielrunden / Mitspieler-Gesucht: werden nicht angezeigt solange leer
 }
 
 // ── Aktivitäten-Tab ────────────────────────────────────────────

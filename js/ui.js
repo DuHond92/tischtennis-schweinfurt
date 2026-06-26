@@ -58,13 +58,52 @@ function openSheet(id) {
 function closeAllSheets() {
   stopChatPolling();
   if (typeof stopDmPolling === 'function') stopDmPolling();
-  document.querySelectorAll('.bottom-sheet.open').forEach(s=>s.classList.remove('open'));
+  document.querySelectorAll('.bottom-sheet.open').forEach(s => {
+    s.classList.remove('open');
+    s.style.removeProperty('height');
+    s.style.removeProperty('max-height');
+  });
   document.getElementById('overlay').classList.remove('open');
   const ppOv = document.getElementById('pp-overlay');
   if(ppOv) ppOv.classList.remove('open');
   const dmOv = document.getElementById('dm-overlay');
   if(dmOv) dmOv.classList.remove('open');
   openSheetId = null;
+}
+
+// Drag-to-expand: Sheet zwischen zwei Snap-Punkten ziehbar machen
+function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
+  const handle = sheetEl.querySelector('.sheet-handle');
+  if (!handle) return;
+  let dragging = false, startY = 0, startH = 0;
+
+  handle.addEventListener('touchstart', e => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startH = sheetEl.offsetHeight;
+    sheetEl.style.transition = 'none';
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dy  = startY - e.touches[0].clientY;
+    const vh  = window.innerHeight;
+    const min = vh * 0.25;
+    const max = vh * snap2Vh;
+    const newH = Math.min(max, Math.max(min, startH + dy));
+    sheetEl.style.height = newH + 'px';
+  }, { passive: true });
+
+  handle.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheetEl.style.transition = '';
+    const h  = sheetEl.offsetHeight;
+    const vh = window.innerHeight;
+    // Snap: über 86 % → Fullscreen-Snap, sonst zurück zu snap1
+    const snap = h > vh * 0.86 ? vh * snap2Vh : vh * snap1Vh;
+    sheetEl.style.height = snap + 'px';
+  });
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -280,3 +319,8 @@ function animateCount(el, target) {
   let n=0; const step=Math.max(1,Math.ceil(target/30));
   const t=setInterval(()=>{ n=Math.min(n+step,target); el.textContent=n; if(n>=target)clearInterval(t); },40);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const inbox = document.getElementById('inbox-sheet');
+  if (inbox) initSheetDrag(inbox, 0.78, 0.95);
+});
