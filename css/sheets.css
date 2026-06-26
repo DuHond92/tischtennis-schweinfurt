@@ -58,6 +58,12 @@
 .chat-msg.mine .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
 .chat-msg:not(.mine) .chat-bubble { background: var(--surface-2); color: var(--text); border-bottom-left-radius: 4px; }
 .chat-msg-meta { font-size: 0.62rem; color: var(--text-xdim); margin-top: 3px; }
+.msg-delete-btn {
+  background: none; border: none; cursor: pointer; padding: 0 2px;
+  font-size: 0.7rem; color: var(--text-xdim); opacity: 0.5;
+  vertical-align: middle; transition: opacity 0.15s, color 0.15s;
+}
+.msg-delete-btn:hover { color: #e53935; opacity: 1; }
 .chat-empty { text-align: center; padding: 24px 16px; color: var(--text-dim); font-size: 0.82rem; }
 .chat-input-row { padding: 10px 16px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); z-index: 1; }
 .chat-input { flex: 1; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 0.85rem; color: var(--text); font-family: var(--font-body); }

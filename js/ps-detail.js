@@ -78,6 +78,7 @@ function _renderPsChatMessages(messages) {
     el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
     return;
   }
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   el.innerHTML = messages.map(m => {
     const isMine = m.user_id === myId;
     const name   = m.profiles?.username || 'Anonym';
@@ -86,11 +87,12 @@ function _renderPsChatMessages(messages) {
     const time   = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
+    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','ps')">🗑</button>` : '';
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}</div>
+        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${del}</div>
       </div>
     </div>`;
   }).join('');

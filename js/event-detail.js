@@ -167,6 +167,7 @@ async function loadEventChat(eventId) {
 function renderChatMessages(messages) {
   const el  = document.getElementById('eds-chat-feed');
   const myId = sb.getUserId();
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if(!messages) {
     el.innerHTML = '<div class="chat-empty">Chat noch nicht verfügbar (Tabelle wird eingerichtet).</div>';
     return;
@@ -183,16 +184,28 @@ function renderChatMessages(messages) {
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
+    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','event')">🗑</button>` : '';
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine?'Du':escHtml(name)} · ${time}</div>
+        <div class="chat-msg-meta">${isMine?'Du':escHtml(name)} · ${time}${del}</div>
       </div>
     </div>`;
   }).join('');
-  // Scroll to bottom
   el.scrollTop = el.scrollHeight;
+}
+
+async function deleteEventMessage(messageId, context) {
+  if (!confirm('Nachricht wirklich löschen?')) return;
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/event_messages?id=eq.${encodeURIComponent(messageId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  showToast('Nachricht gelöscht');
+  if (context === 'ps') loadPsChat(currentPsEventId);
+  else loadEventChat(currentEventId);
 }
 
 function escHtml(s) {
