@@ -352,6 +352,14 @@
       <div class="admin-section-title">Nutzerverwaltung</div>
       <div id="admin-users-list" class="admin-list"></div>
     </div>
+    <div class="admin-section" id="admin-reports-section" style="display:none;">
+      <div class="admin-section-title">🚩 Gemeldete Inhalte</div>
+      <div id="admin-reports-list" class="admin-list"></div>
+    </div>
+    <div class="admin-section" id="admin-modlog-section" style="display:none;">
+      <div class="admin-section-title">📋 Mod-Log</div>
+      <div id="admin-modlog-list" class="admin-list"></div>
+    </div>
     <div class="pb-safe"></div>
   </div>
 
@@ -895,6 +903,21 @@
   </div>
 </div>
 
+<!-- REPORT SHEET -->
+<div class="overlay" id="report-overlay" onclick="closeReportSheet()"></div>
+<div class="bottom-sheet" id="report-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <div style="font-weight:800;font-size:1rem;margin-bottom:4px;">🚩 Inhalt melden</div>
+    <div id="report-preview" class="report-preview"></div>
+    <div style="font-size:0.82rem;font-weight:700;margin:12px 0 8px;">Grund:</div>
+    <div id="report-reason-btns" class="report-reason-btns"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="submitReport()">Melden</button>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="closeReportSheet()">Abbrechen</button>
+  </div>
+  <div class="pb-safe"></div>
+</div>
+
 <!-- EVENT DETAIL SHEET -->
 <!-- MITSPIELER-GESUCH DETAIL SHEET -->
 <div class="bottom-sheet" id="ps-detail-sheet">
@@ -905,6 +928,8 @@
   </div>
   <!-- Creator hero (filled by JS) -->
   <div id="psd-hero"></div>
+  <!-- Mod-Delete (filled by JS) -->
+  <div id="psd-mod-actions"></div>
   <!-- Chat -->
   <div class="chat-section">
     <div class="chat-section-header">

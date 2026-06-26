@@ -17,6 +17,8 @@ function showAdminPage() {
 async function loadAdminPage() {
   _loadSuggestions();
   _loadImageModerations();
+  _loadReports();
+  _loadModLog();
   const userSection = document.getElementById('admin-user-section');
   if (userSection) {
     const isAdmin = currentUser?.role === 'admin';
@@ -390,4 +392,252 @@ function _checkEmpty() {
   if (list && !list.querySelector('.admin-card')) {
     list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Vorschläge</div>';
   }
+}
+
+// ── Mod-Log ───────────────────────────────────────────────────────────
+
+async function _logModAction(action, contentType, contentId, details) {
+  try {
+    await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/moderation_log`, {
+      method:  'POST',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mod_id:       sb.getUserId(),
+        action,
+        content_type: contentType,
+        content_id:   String(contentId),
+        details:      details || null
+      })
+    });
+  } catch(e) { /* Logfehler blockiert nie die eigentliche Aktion */ }
+}
+
+const _ACTION_LABELS = {
+  delete_image:          '🗑 Bild gelöscht',
+  delete_comment:        '🗑 Kommentar gelöscht',
+  delete_event_message:  '🗑 Event-Nachricht gelöscht',
+  delete_dm:             '🗑 DM gelöscht',
+  delete_event:          '🗑 Event gelöscht',
+  delete_player_search:  '🗑 Mitspieler-Gesuch gelöscht',
+};
+
+const _CONTENT_LABELS = {
+  table_image: 'Plattenblid', event_message: 'Event-Chat',
+  direct_message: 'Direktnachricht', comment: 'Kommentar',
+  event: 'Spielrunde', player_search: 'Mitspieler-Gesuch',
+};
+
+async function _loadModLog() {
+  const section = document.getElementById('admin-modlog-section');
+  const list    = document.getElementById('admin-modlog-list');
+  if (!section || !list) return;
+  section.style.display = '';
+  list.innerHTML = '<div class="admin-loading">Lade Log…</div>';
+
+  let entries = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/moderation_log?select=id,action,content_type,content_id,mod_id,created_at&order=created_at.desc&limit=50`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    entries = data || [];
+  } catch(e) {
+    list.innerHTML = '<div class="admin-empty">Fehler beim Laden</div>';
+    return;
+  }
+
+  if (!entries.length) {
+    list.innerHTML = '<div class="admin-empty">Noch keine Einträge</div>';
+    return;
+  }
+
+  const modIds = [...new Set(entries.map(e => e.mod_id).filter(Boolean))];
+  const modMap = {};
+  if (modIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${modIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { modMap[p.id] = p.username; });
+    } catch(e) {}
+  }
+
+  list.innerHTML = entries.map(e => {
+    const time = new Date(e.created_at).toLocaleString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const mod  = modMap[e.mod_id] || 'Unbekannt';
+    const action = _ACTION_LABELS[e.action] || e.action;
+    return `<div class="admin-modlog-row">
+      <div class="admin-modlog-action">${action}</div>
+      <div class="admin-modlog-meta">von <b>${escHtml(mod)}</b> · ${time}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Gemeldete Inhalte ─────────────────────────────────────────────────
+
+const _REASON_LABELS = {
+  spam: '🚫 Spam', inappropriate: '⚠️ Unangemessen',
+  wrong_info: '🔧 Falsche Info', other: '💬 Sonstiges',
+};
+
+async function _loadReports() {
+  const section = document.getElementById('admin-reports-section');
+  const list    = document.getElementById('admin-reports-list');
+  if (!section || !list) return;
+  section.style.display = '';
+  list.innerHTML = '<div class="admin-loading">Lade Meldungen…</div>';
+
+  let reports = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/reports?select=id,content_type,content_id,reason,preview,status,reporter_id,created_at&status=eq.pending&order=created_at.desc&limit=50`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    reports = data || [];
+  } catch(e) {
+    list.innerHTML = '<div class="admin-empty">Fehler beim Laden</div>';
+    return;
+  }
+
+  if (!reports.length) {
+    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
+    return;
+  }
+
+  const repIds = [...new Set(reports.map(r => r.reporter_id).filter(Boolean))];
+  const repMap = {};
+  if (repIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${repIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { repMap[p.id] = p.username; });
+    } catch(e) {}
+  }
+
+  list.innerHTML = reports.map(r => {
+    const date      = new Date(r.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+    const reporter  = repMap[r.reporter_id] || 'Anonym';
+    const typeLabel = _CONTENT_LABELS[r.content_type] || r.content_type;
+    const reason    = _REASON_LABELS[r.reason] || r.reason;
+    const rid       = escAttr(r.id);
+    return `<div class="admin-card admin-report-card" id="admin-report-${rid}">
+      <div class="admin-card-header">
+        <div class="admin-card-name">${typeLabel}</div>
+        <div class="admin-card-date">${date}</div>
+      </div>
+      <div class="admin-card-row">${reason}</div>
+      ${r.preview ? `<div class="admin-card-desc">"${escHtml(r.preview)}"</div>` : ''}
+      <div class="admin-card-meta">Gemeldet von <strong>${escHtml(reporter)}</strong></div>
+      <div class="admin-card-actions" id="admin-report-actions-${rid}">
+        <button class="btn btn-secondary btn-sm" onclick="resolveReport('${rid}','dismissed')">Ignorieren</button>
+        <button class="btn btn-sm admin-approve-btn" onclick="resolveReport('${rid}','reviewed')" style="flex:1;">✓ Erledigt</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function resolveReport(reportId, status) {
+  const card = document.getElementById(`admin-report-${reportId}`);
+  if (card) _setCardLoading(card, true);
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(reportId)}`,
+    {
+      method:  'PATCH',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, reviewed_by: sb.getUserId(), reviewed_at: new Date().toISOString() })
+    }
+  );
+  if (!ok) { if (card) _setCardLoading(card, false); showToast('Fehler', '❌'); return; }
+  if (card) { card.classList.add('admin-card-done'); setTimeout(() => { card.remove(); _checkReportsEmpty(); }, 400); }
+  showToast(status === 'reviewed' ? 'Als erledigt markiert ✅' : 'Ignoriert');
+}
+
+function _checkReportsEmpty() {
+  const list = document.getElementById('admin-reports-list');
+  if (list && !list.querySelector('.admin-report-card')) {
+    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
+  }
+}
+
+// ── Events + Mitspieler-Gesuche löschen (Mod) ────────────────────────
+
+async function deleteEvent(eventId) {
+  if (!confirm('Event und alle zugehörigen Nachrichten wirklich löschen?')) return;
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  _logModAction('delete_event', 'event', eventId);
+  showToast('Event gelöscht');
+  closeAllSheets();
+  await loadEvents();
+  renderPage(currentPage);
+}
+
+async function deletePlayerSearch(psId) {
+  if (!confirm('Mitspieler-Gesuch und alle zugehörigen Nachrichten wirklich löschen?')) return;
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(psId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  _logModAction('delete_player_search', 'player_search', psId);
+  showToast('Gesuch gelöscht');
+  closeAllSheets();
+  await loadEvents();
+  renderPage(currentPage);
+}
+
+// ── Report-Modal ──────────────────────────────────────────────────────
+
+let _reportData = { contentType: null, contentId: null, reason: null };
+
+function openReportFromBtn(btn) {
+  openReport(btn.dataset.type, btn.dataset.id, btn.dataset.preview);
+}
+
+function openReport(contentType, contentId, preview) {
+  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
+  _reportData = { contentType, contentId, reason: null };
+  const prev = document.getElementById('report-preview');
+  if (prev) prev.textContent = preview ? `"${preview}"` : '';
+  const reasons = [
+    { key: 'spam',          label: '🚫 Spam / Werbung' },
+    { key: 'inappropriate', label: '⚠️ Unangemessener Inhalt' },
+    { key: 'wrong_info',    label: '🔧 Falsche Informationen' },
+    { key: 'other',         label: '💬 Sonstiges' },
+  ];
+  const btns = document.getElementById('report-reason-btns');
+  if (btns) btns.innerHTML = reasons.map(r =>
+    `<button class="btn btn-secondary btn-sm report-reason-opt" onclick="selectReportReason('${r.key}',this)">${r.label}</button>`
+  ).join('');
+  document.getElementById('report-overlay')?.classList.add('open');
+  openSheet('report-sheet');
+}
+
+function selectReportReason(key, btn) {
+  _reportData.reason = key;
+  document.querySelectorAll('.report-reason-opt').forEach(b => b.classList.remove('btn-primary'));
+  btn.classList.add('btn-primary');
+}
+
+async function submitReport() {
+  if (!_reportData.reason) { showToast('Bitte einen Grund auswählen', '⚠️'); return; }
+  const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
+    method:  'POST',
+    headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      reporter_id:  sb.getUserId(),
+      content_type: _reportData.contentType,
+      content_id:   String(_reportData.contentId),
+      reason:       _reportData.reason,
+      preview:      document.getElementById('report-preview')?.textContent?.replace(/^"|"$/g, '').slice(0, 200) || null,
+      status:       'pending'
+    })
+  });
+  closeReportSheet();
+  if (ok) showToast('Danke – Inhalt wurde gemeldet 🚩');
+  else showToast('Fehler beim Melden', '❌');
+}
+
+function closeReportSheet() {
+  document.getElementById('report-overlay')?.classList.remove('open');
+  const sheet = document.getElementById('report-sheet');
+  if (sheet) sheet.classList.remove('open');
 }

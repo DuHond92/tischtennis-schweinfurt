@@ -1332,3 +1332,28 @@
 .admin-img-card .admin-card-header,
 .admin-img-card .admin-card-row,
 .admin-img-card .admin-card-actions { padding-left: 12px; padding-right: 12px; }
+
+/* ── Mod-Log ─────────────────────────────────────────────────────── */
+.admin-modlog-row {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.admin-modlog-row:last-child { border-bottom: none; }
+.admin-modlog-action { font-size: 0.84rem; font-weight: 700; color: var(--text); }
+.admin-modlog-meta   { font-size: 0.72rem; color: var(--text-dim); }
+
+/* ── Report-Button (🚩) ──────────────────────────────────────────── */
+.report-btn {
+  background: none; border: none; cursor: pointer; padding: 0 2px;
+  font-size: 0.7rem; opacity: 0.4; vertical-align: middle;
+  transition: opacity 0.15s; line-height: 1;
+}
+.report-btn:hover { opacity: 1; }
+
+/* ── Report-Sheet ────────────────────────────────────────────────── */
+.report-preview {
+  font-size: 0.8rem; color: var(--text-dim); font-style: italic;
+  margin-bottom: 4px; word-break: break-word;
+}
+.report-reason-btns { display: flex; flex-direction: column; gap: 8px; }
+.report-reason-btns .btn { text-align: left; }

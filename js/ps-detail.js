@@ -37,6 +37,13 @@ function showPlayerSearchDetail(psId) {
     </div>
     ${ps.message ? `<div style="margin:0 20px 14px;padding:10px 14px;background:var(--surface2);border-radius:10px;font-size:0.84rem;color:var(--text-dim);line-height:1.5;font-style:italic;">"${escHtml(ps.message)}"</div>` : ''}`;
 
+  // Mod-Delete-Button
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const modDelEl = document.getElementById('psd-mod-actions');
+  if (modDelEl) modDelEl.innerHTML = isMod
+    ? `<button class="btn btn-secondary btn-full btn-sm" style="color:#e53935;margin:0 20px 12px;" onclick="deletePlayerSearch(${psId})">🗑 Gesuch löschen</button>`
+    : '';
+
   // Chat state
   const isReal = allPlayerSearches.some(p => p.id === psId);
   const inputRow = document.getElementById('psd-chat-input-row');
@@ -88,11 +95,15 @@ function _renderPsChatMessages(messages) {
     const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
     const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','ps')">🗑</button>` : '';
+    const preview = escAttr((m.message || '').slice(0, 80));
+    const report  = (!isMod && sb.isLoggedIn() && !isMine)
+      ? ` <button class="report-btn" data-type="event_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+      : '';
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${del}</div>
+        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${del}${report}</div>
       </div>
     </div>`;
   }).join('');

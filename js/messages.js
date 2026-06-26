@@ -506,6 +506,10 @@ function _renderDmMessages(messages) {
     const msgDate = new Date(m.created_at).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteDm('${escAttr(m.id)}')">🗑</button>` : '';
+    const preview = escAttr((m.message || '').slice(0, 80));
+    const report  = (!isMod && sb.isLoggedIn() && !isMine)
+      ? ` <button class="report-btn" data-type="direct_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+      : '';
     let sep = '';
     if (msgDate !== lastDate) {
       sep = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
@@ -513,7 +517,7 @@ function _renderDmMessages(messages) {
     }
     return `${sep}<div class="dm-msg ${isMine ? 'dm-mine' : 'dm-theirs'}">
       <div class="dm-bubble">${escHtml(m.message)}</div>
-      <div class="dm-meta">${time}${del}</div>
+      <div class="dm-meta">${time}${del}${report}</div>
     </div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
@@ -526,6 +530,7 @@ async function deleteDm(messageId) {
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
   if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  _logModAction('delete_dm', 'direct_message', messageId);
   showToast('Nachricht gelöscht');
   await loadDmMessages();
 }

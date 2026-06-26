@@ -346,6 +346,7 @@ async function deleteTableImage(slideEl) {
   );
   if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
 
+  _logModAction('delete_image', 'table_image', imageId);
   showToast('Bild gelöscht', '🗑');
 
   // Alle DB-Slides + Thumbs entfernen und neu laden
@@ -501,12 +502,13 @@ function renderKingOfPlate(tableId, kings) {
 
 // ── KOMMENTARE ────────────────────────────────────────────────────
 async function loadCommentsInline(tableId) {
-  const el = document.getElementById(`tds-comments-${tableId}`);
+  const el    = document.getElementById(`tds-comments-${tableId}`);
   if(!el) return;
+  const myId  = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   try {
     const qb = new QueryBuilder('comments');
-    qb._select = 'id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
+    qb._select = 'id,user_id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('table_id', tableId).order('created_at', true).limit(3);
     const {data} = await qb.execute();
     if(!data || !data.length) {
@@ -514,17 +516,22 @@ async function loadCommentsInline(tableId) {
       return;
     }
     el.innerHTML = data.map(c => {
-      const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-      const av   = getAvatarContent(c.profiles);
-      const name = c.profiles?.username || 'Anonym';
-      const del  = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','inline')">🗑</button>` : '';
+      const date    = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+      const av      = getAvatarContent(c.profiles);
+      const name    = c.profiles?.username || 'Anonym';
+      const del     = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','inline')">🗑</button>` : '';
+      const isOwn   = c.user_id === myId;
+      const preview = escAttr((c.text || '').slice(0, 80));
+      const report  = (!isMod && sb.isLoggedIn() && !isOwn)
+        ? `<button class="report-btn" data-type="comment" data-id="${escAttr(c.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+        : '';
       return `<div class="tds-comment-row">
         <div class="tds-comment-av">${av}</div>
         <div class="tds-comment-body">
           <div class="tds-comment-meta">${escHtml(name)} <span>· ${date}</span></div>
           <div class="tds-comment-text">${escHtml(c.text)}</div>
         </div>
-        ${del}
+        ${report}${del}
       </div>`;
     }).join('');
   } catch(e) {
@@ -541,7 +548,7 @@ async function openComments(tableId) {
 
   try {
     const qb = new QueryBuilder('comments');
-    qb._select = 'id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
+    qb._select = 'id,user_id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('table_id', tableId).order('created_at', true);
     const {data} = await qb.execute();
     renderComments(data || []);
@@ -551,7 +558,8 @@ async function openComments(tableId) {
 }
 
 function renderComments(comments) {
-  const el = document.getElementById('comment-list');
+  const el    = document.getElementById('comment-list');
+  const myId  = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if(!comments.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
@@ -559,14 +567,19 @@ function renderComments(comments) {
     return;
   }
   el.innerHTML = comments.map(c => {
-    const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-    const del  = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','sheet')">🗑</button>` : '';
+    const date    = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+    const del     = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','sheet')">🗑</button>` : '';
+    const isOwn   = c.user_id === myId;
+    const preview = escAttr((c.text || '').slice(0, 80));
+    const report  = (!isMod && sb.isLoggedIn() && !isOwn)
+      ? `<button class="report-btn" data-type="comment" data-id="${escAttr(c.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+      : '';
     return `<div class="comment-item">
       <div class="comment-header">
         <div class="comment-avatar">${getAvatarContent(c.profiles)}</div>
         <div class="comment-author">${c.profiles?.username||'Anonym'}</div>
         <div class="comment-date">${date}</div>
-        ${del}
+        ${report}${del}
       </div>
       <div class="comment-text">${c.text}</div>
     </div>`;
@@ -580,6 +593,7 @@ async function deleteComment(commentId, context) {
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
   if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  _logModAction('delete_comment', 'comment', commentId);
   showToast('Kommentar gelöscht');
   if (context === 'sheet') openComments(currentDetailTableId);
   else loadCommentsInline(currentDetailTableId);

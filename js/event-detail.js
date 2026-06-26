@@ -78,14 +78,17 @@ function showEventDetail(eventId) {
   // Actions (host vs. participant)
   const myId    = sb.getUserId();
   const isHost  = myId && ev.creatorId === myId;
+  const isMod   = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const actEl   = document.getElementById('eds-actions');
+  const delBtn  = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
   if(isHost) {
     actEl.innerHTML = `
       <button class="btn btn-primary" style="flex:1;" onclick="startGame(${ev.id})">🏓 Spiel starten</button>
-      <button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;" onclick="openEditEvent(${ev.id})">✏️</button>`;
+      <button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;" onclick="openEditEvent(${ev.id})">✏️</button>
+      ${delBtn}`;
   } else {
     actEl.innerHTML =
-      `<button class="btn btn-primary btn-full" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>`;
+      `<button class="btn btn-primary" style="flex:1;" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>${delBtn}`;
   }
 
   // Reset participants & chat
@@ -185,11 +188,15 @@ function renderChatMessages(messages) {
     const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
     const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','event')">🗑</button>` : '';
+    const preview = escAttr((m.message || '').slice(0, 80));
+    const report  = (!isMod && sb.isLoggedIn() && !isMine)
+      ? ` <button class="report-btn" data-type="event_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+      : '';
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine?'Du':escHtml(name)} · ${time}${del}</div>
+        <div class="chat-msg-meta">${isMine?'Du':escHtml(name)} · ${time}${del}${report}</div>
       </div>
     </div>`;
   }).join('');
@@ -203,6 +210,7 @@ async function deleteEventMessage(messageId, context) {
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
   if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  _logModAction('delete_event_message', 'event_message', messageId);
   showToast('Nachricht gelöscht');
   if (context === 'ps') loadPsChat(currentPsEventId);
   else loadEventChat(currentEventId);
