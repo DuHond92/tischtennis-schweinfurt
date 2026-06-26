@@ -140,7 +140,7 @@
           <div class="mbs-pill active" data-spielart="all"      onclick="setMapSpielart('all',this)">Alle</div>
           <div class="mbs-pill"        data-spielart="casual"   onclick="setMapSpielart('casual',this)">🎉 Just 4 Fun</div>
           <div class="mbs-pill"        data-spielart="training" onclick="setMapSpielart('training',this)">🎯 Training</div>
-          <div class="mbs-pill"        data-spielart="ranked"   onclick="setMapSpielart('ranked',this)">🏓 Spiel um Punkte</div>
+          <!-- Ranked play temporarily disabled -->
           <div class="mbs-pill-sep"></div>
           <div class="mbs-pill"        data-place="all"     onclick="setMapPlace('all',this)" id="mbs-place-all">Alle Platten</div>
           <div class="mbs-pill"        data-place="outdoor" onclick="setMapPlace('outdoor',this)">☀️ Outdoor</div>
@@ -166,14 +166,14 @@
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
       <button class="filter-pill" onclick="filterEvents('casual',this)">🎉 Just 4 Fun</button>
       <button class="filter-pill" onclick="filterEvents('training',this)">🎯 Training</button>
-      <button class="filter-pill" onclick="filterEvents('ranked',this)">🏓 Spiel um Punkte</button>
+      <!-- Ranked play filter temporarily disabled -->
     </div>
     <div class="events-grid-list" id="events-list"></div>
     <div class="pb-safe"></div>
   </div>
 
-  <!-- RANKED -->
-  <div class="page" id="page-ranked">
+  <!-- RANKED TEMPORARILY DISABLED -->
+  <div class="page" id="page-ranked" style="display:none">
     <div class="ranked-hero-section">
       <h1>🏆 Rangliste</h1>
       <p>Steige von Bronze bis Gold auf</p>
@@ -285,8 +285,8 @@
       <div id="profile-spielpartner" style="padding:4px 12px 8px;"></div>
     </div>
 
-    <!-- Match History -->
-    <div class="profile-section">
+    <!-- Match History temporarily disabled -->
+    <div class="profile-section" style="display:none">
       <div class="ps-header">📜 Match History</div>
       <div id="profile-match-history"></div>
     </div>
@@ -506,10 +506,10 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg> Spiel organisieren
       <div style="font-size:0.75rem;font-weight:400;opacity:0.75;margin-top:2px;">Lege Ort und Zeit für ein gemeinsames Spiel fest.</div>
     </button>
-    <button class="btn btn-secondary btn-full choice-btn" onclick="closeAllSheets();openSheet('report-match-sheet')">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="3" y1="17" y2="21"/></svg> Match eintragen
-      <div style="font-size:0.75rem;font-weight:400;opacity:0.75;margin-top:2px;">Trage ein gespieltes Match ein.</div>
-    </button>
+    <!-- Match recording temporarily disabled -->
+    
+    
+    
   </div>
 </div>
 
@@ -550,7 +550,7 @@
       <select class="form-select" id="ev-mode">
         <option value="casual">Just 4 Fun – Spaß für alle</option>
         <option value="training">Training</option>
-        <option value="ranked">Spiel um Punkte</option>
+        <!-- Ranked option temporarily disabled -->
       </select>
     </div>
     <div class="form-group">
@@ -579,7 +579,7 @@
       <select class="form-select" id="ms-spielart">
         <option value="casual">🎉 Just 4 Fun – Einfach spielen</option>
         <option value="training">🎯 Training – Technik verbessern</option>
-        <option value="ranked">🏓 Spiel um Punkte – Herausforderung</option>
+        <!-- Ranked play option temporarily disabled -->
       </select>
     </div>
     <div class="form-row">
@@ -612,7 +612,7 @@
 </div>
 
 <!-- REPORT MATCH SHEET -->
-<div class="bottom-sheet" id="report-match-sheet">
+<div class="bottom-sheet" id="report-match-sheet" style="display:none">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="17" y1="13" y2="13"/><path d="M6 12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M6 20H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> Match eintragen</div>
@@ -1092,7 +1092,7 @@
       <div class="fms-option active" data-val="all"      onclick="setFmsSpielart('all',this)">Alle Spielarten</div>
       <div class="fms-option"        data-val="casual"   onclick="setFmsSpielart('casual',this)">🎉 Just 4 Fun</div>
       <div class="fms-option"        data-val="training" onclick="setFmsSpielart('training',this)">🎯 Training</div>
-      <div class="fms-option"        data-val="ranked"   onclick="setFmsSpielart('ranked',this)">🏓 Spiel um Punkte</div>
+      <!-- Ranked play option temporarily disabled -->
     </div>
     <div class="fms-section-label" style="margin-top:22px;">Plattentyp</div>
     <div class="fms-options" id="fms-place-opts">

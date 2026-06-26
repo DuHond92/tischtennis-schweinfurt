@@ -18,10 +18,35 @@ async function loadTables() {
   } catch(e) { console.warn('Supabase tables error', e); }
 
   await loadOSMTables();
+  await _loadApprovedTableImagesForTables(tables);
 
   const src = tables.length ? tables : FALLBACK_TABLES;
   const opts = src.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+}
+
+async function _loadApprovedTableImagesForTables(tableItems) {
+  const tableIds = tableItems.map(t => t.id).filter(Boolean);
+  if(!tableIds.length) return;
+
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/table_images?select=table_id,image_url&status=eq.approved&table_id=in.(${tableIds.join(',')})&order=created_at.asc`;
+    const { ok, data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if(!ok || !Array.isArray(data)) return;
+
+    const imageMap = {};
+    data.forEach(img => {
+      if(!img.table_id || !img.image_url) return;
+      imageMap[img.table_id] = imageMap[img.table_id] || [];
+      imageMap[img.table_id].push(img.image_url);
+    });
+
+    tableItems.forEach(t => {
+      t.photos = imageMap[t.id] || t.photos || [];
+    });
+  } catch(e) {
+    console.warn('Table image load error', e);
+  }
 }
 
 async function loadOSMTables() {
@@ -99,14 +124,21 @@ async function loadEvents() {
     });
   } catch(e) {}
 
-  // 3. Platten-Info für Name + Icon (einfacher Select)
-  const tableMap = {};
-  try {
-    const qbT = new QueryBuilder('tables');
-    qbT._select = 'id,name,icon';
-    const {data: tData} = await qbT.execute();
-    if(tData) tData.forEach(t => { tableMap[t.id] = t; });
-  } catch(e) {}
+  // 3. Platten-Info für Name, Icon und Bilder aus bereits geladenen Tabellen sammeln
+  const tableMap = Object.fromEntries((tables || []).map(t => [t.id, t]));
+  const tableItems = Object.values(tableMap);
+  if (tableItems.length) {
+    const needPhotos = tableItems.filter(t => !Array.isArray(t.photos) || !t.photos.length);
+    if (needPhotos.length) await _loadApprovedTableImagesForTables(needPhotos);
+  } else {
+    try {
+      const qbT = new QueryBuilder('tables');
+      qbT._select = 'id,name,icon';
+      const {data: tData} = await qbT.execute();
+      if(tData) tData.forEach(t => { tableMap[t.id] = t; });
+      await _loadApprovedTableImagesForTables(Object.values(tableMap));
+    } catch(e) {}
+  }
 
   // 4. Profile für Ersteller-Usernamen (einfacher Select)
   const profileMap = {};
@@ -140,13 +172,15 @@ async function loadEvents() {
       desc:         e.description || '',
       p:            pCounts[e.id] || 0,
       max:          e.max_participants,
-      participants: pParticipants[e.id] || []
+      participants: pParticipants[e.id] || [],
+      photos:       tbl.photos || []
     };
   });
 
   // Mitspieler-Gesuche aus allEvents herauslösen
   allPlayerSearches = allEvents
     .filter(e => e.type === 'player_search')
+    .filter(e => JSON.parse(e.desc || '{}').spielart !== 'ranked')
     .map(e => {
       let extra = {};
       try { extra = JSON.parse(e.desc || '{}'); } catch(_) {}
@@ -205,6 +239,7 @@ async function loadMyMatches() {
   myMatches = data
     .filter(m => m.winner_id || m.loser_id)
     .map(m => {
+      const table = tables.find(t => t.id === m.table_id);
       const iWon = m.winner_id === uid;
       return {
         opp:  iWon ? (profileMap[m.loser_id]?.username  || '?')
@@ -212,7 +247,8 @@ async function loadMyMatches() {
         res:  iWon ? 'win' : 'loss',
         elo:  iWon ? +(m.elo_change) : -(m.elo_change),
         sets: `${m.score_winner}:${m.score_loser}`,
-        date: m.played_at
+        date: formatDate(m.played_at),
+        table: table ? table.name : null
           ? new Date(m.played_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'})
           : '–'
       };

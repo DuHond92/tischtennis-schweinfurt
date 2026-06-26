@@ -20,8 +20,8 @@ function renderProfile() {
   });
   // Spielpartner
   if (typeof renderSpielpartnerSection === 'function') renderSpielpartnerSection();
-  // Match History
-  renderMatchHistory();
+  // Match History - temporarily disabled
+  // renderMatchHistory();
   // Sign-out button
   document.querySelector('#profile-signout-btn') &&
     (document.querySelector('#profile-signout-btn').onclick = doSignOut);
@@ -33,9 +33,15 @@ function renderProfile() {
   }
 }
 
-function renderMatchHistory() {
+async function renderMatchHistory() {
   const c = document.getElementById('profile-match-history');
   if(!myMatches.length) {
+    await loadMyMatches();
+    if(!myMatches.length) {
+      c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
+        Noch keine Matches gespielt.</div>`;
+      return;
+    }
     c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
       Noch keine Matches gespielt.</div>`;
     return;
@@ -46,9 +52,11 @@ function renderMatchHistory() {
       <div style="flex:1;">
         <div class="match-opp">vs. ${m.opp||'?'}</div>
         <div class="match-sets">Sätze: ${m.sets}</div>
+        ${m.table ? `<div class="match-table">${ic('map-pin',12)} ${m.table}</div>` : ''}
       </div>
       <div style="text-align:right;">
         <div class="match-date">${m.date}</div>
+        <div class="match-elo">${m.elo > 0 ? '+' : ''}${m.elo}</div>
       </div>
     </div>`).join('');
 }

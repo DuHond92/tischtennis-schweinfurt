@@ -31,7 +31,7 @@ function renderPlayerSearchCard(ps) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
-  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', ranked:'Spiel um Punkte gesucht'};
+  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht'};
   const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
   if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
@@ -56,9 +56,12 @@ function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const c = document.getElementById('events-list');
   function gameCard(e, idx) {
+    const thumbInner = (e.photos && e.photos.length)
+      ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
+      : `<div class="thumb-empty">🏓</div>`;
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
-      <div class="ecb-thumb ev-thumb-${e.type||'casual'}"></div>
+      <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
       <div class="ecb-info">
         <div class="ecb-title-row">
           <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>

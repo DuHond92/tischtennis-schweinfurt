@@ -21,9 +21,10 @@ window.addEventListener('load', async () => {
   renderHome();
   renderEvents('all');
 
-  // 2. Supabase-Daten laden (parallel)
+  // 2. Supabase-Daten laden
   try {
-    await Promise.all([loadTables(), loadEvents(), loadPlayers()]);
+    await loadTables();
+    await Promise.all([loadEvents(), loadPlayers()]);
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {
       await loadCurrentUser();

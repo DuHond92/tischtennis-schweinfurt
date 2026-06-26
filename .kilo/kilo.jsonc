@@ -1,0 +1,17 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "provider": {
+    "openrouter": {
+      "models": {
+        "deepseek/deepseek-chat": {
+          "options": {
+            "provider": {
+              "sort": "price",
+              "data_collection": "deny"
+            }
+          }
+        }
+      }
+    }
+  }
+}
