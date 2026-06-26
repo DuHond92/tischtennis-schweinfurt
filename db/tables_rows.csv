@@ -1,0 +1,24 @@
+id,name,address,lat,lng,type,icon,description,created_at
+1,Stadtpark,Stadtpark Schweinfurt,50.0497,10.2322,outdoor,🌳,2 gut erhaltene Outdoor-Platten im Stadtpark.,2026-06-22 11:14:54.084631+00
+2,Obere Marktstraße,"Obere Marktstraße, SW",50.0521,10.2352,outdoor,🏙️,Zentrale Einzelplatte in der Innenstadt.,2026-06-22 11:14:54.084631+00
+3,TTC Halle Bellevue,"Turnhalle Bellevue, SW",50.0448,10.228,indoor,🏢,6 Profi-Platten – ideal für Turniere.,2026-06-22 11:14:54.084631+00
+4,Schillerplatz,"Schillerplatz, SW",50.0535,10.2398,outdoor,🌆,Outdoor-Platte mit Beleuchtung für Abendspiele.,2026-06-22 11:14:54.084631+00
+7,Bürgerpark Ost,"Bürgerpark, SW-Ost",50.046,10.245,outdoor,🌿,"Ruhige Lage, ideal für entspannte Nachmittage.",2026-06-22 11:14:54.084631+00
+9,Mainkai,"Mainkai, SW",50.05,10.22,outdoor,🌊,Direkt am Main – perfekt für Sommerspiele.,2026-06-22 11:14:54.084631+00
+18,Wehranlage Schweinfurt,"Im I. Wehr, 97424 Schweinfurt",50.0429479,10.2437293,outdoor,🌊,"2 Tischtennisplatten am Spielplatz. Unter Bäumen, dadurch sehr guter Windschutz. Relativ schmutzanfällig, ggf. Besen mitbringen.",2026-06-24 21:24:06.1447+00
+19,Celtis Gymnasium,"Gymnasiumstraße 5, 97421 Schweinfurt",50.0473949,10.2296672,outdoor,🏫,2 Tischtennisplatten im Pausenhof des Celtis Gymnasiums.,2026-06-24 21:24:06.1447+00
+20,Verkehrsgarten,"Friedrich-Stein-Straße, 97421 Schweinfurt",50.0444426,10.2231609,outdoor,🏓,Zwei Betontische. Zustand gut.,2026-06-24 21:24:06.1447+00
+21,Fritz-Drescher-Straße,"Fritz-Drescher-Straße, 97421 Schweinfurt",50.0437522,10.214198,outdoor,🏓,"1 Betonplatte und 1 Kunststoffplatte. Sehr gut windgeschützt. Nachteile: Platten stehen zu nah beieinander, Kunststoffplatte steht in einer Senke – dadurch teilweise schlecht bespielbar.",2026-06-24 21:24:06.1447+00
+22,FOSBOS Niederwerrner Straße,"Goethestraße, 97421 Schweinfurt",50.047227,10.2175988,outdoor,🎓,1 Betonplatte. Guter Zustand.,2026-06-24 21:24:06.1447+00
+23,Nikolaus-Hofmann-Straße,"Nikolaus-Hofmann-Straße, 97421 Schweinfurt",50.0507064,10.2220627,outdoor,🏓,2 Betonplatten. Guter Zustand. Relativ windgeschützt.,2026-06-24 21:24:06.1447+00
+24,Marienbach / SC 1900 e.V.,"Deutschhöfer Straße, 97422 Schweinfurt",50.0551009,10.2309636,outdoor,⚽,1 Betonplatte. Zustand befriedigend.,2026-06-24 21:24:06.1447+00
+25,Jugendhaus Franz-Schubert-Straße,"Franz-Schubert-Straße, 97421 Schweinfurt",50.0525257,10.2144946,outdoor,🎮,2 Tische aus geschliffenem Beton. Guter Zustand. Jederzeit zugänglich.,2026-06-24 21:24:06.1447+00
+26,Spielplatz Galgenleite,"Galgenleite, 97424 Schweinfurt",50.0541218,10.2233825,outdoor,🏓,,2026-06-24 21:41:56.253613+00
+27,Grundschule Kleinflürlein,"Kleinflürleinsweg, 97424 Schweinfurt",50.0582048,10.2199017,outdoor,🏓,Schulhof mit 3 Tischen. Zugänglich ab 16:00 Uhr oder an schulfreien Tagen.,2026-06-24 21:41:56.253613+00
+28,Sperlingstraße,"Sperlingstraße, 97422 Schweinfurt",50.0623338,10.2220641,outdoor,🏓,2 Tische.,2026-06-24 21:41:56.253613+00
+29,Freibad Silvaner,"Schermbacherstraße, 97422 Schweinfurt",50.0625446,10.2397028,outdoor,🏓,"Tischtennis im Freibadgelände. Nur während der Badesaison zugänglich, Eintritt erforderlich.",2026-06-24 21:41:56.253613+00
+30,Spielplatz Seinäjokipark,"Konrad-Adenauer-Straße, 97422 Schweinfurt",50.062735,10.2514357,outdoor,🏓,,2026-06-24 21:41:56.253613+00
+31,Spielplatz Volksfestplatz,"Florian-Geyer-Straße, 97421 Schweinfurt",50.0465967,10.2053295,outdoor,🏓,,2026-06-24 21:41:56.253613+00
+32,Oskar-von-Miller-Straße,"Oskar-von-Miller-Straße, 97424 Schweinfurt",50.0426913,10.192895,outdoor,🏓,,2026-06-24 21:41:56.253613+00
+33,Spielplatz Wohnscheibe,"Oskar-von-Miller-Straße, 97424 Schweinfurt",50.041321,10.195222,outdoor,🏓,,2026-06-24 21:41:56.253613+00
+34,Spielplatz Max-Planck-Straße,"Max-Planck-Straße, 97424 Schweinfurt",50.0423242,10.1928177,outdoor,🏓,,2026-06-24 21:41:56.253613+00
