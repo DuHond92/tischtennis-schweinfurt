@@ -95,37 +95,39 @@ function showTableDetail(id) {
   loadTableImages(id);
 }
 
-const PLATE_TEST_IMAGES = [
-  'images/platten/celtis-gymnasium.jpg',
-  'images/placeholders/placeholder-plate.webp',
-];
 const PLATE_FALLBACK = 'images/placeholders/placeholder-plate.webp';
 
 function buildPhotoSlider(t, photos) {
-  const imgs = (photos && photos.length) ? photos : PLATE_TEST_IMAGES;
+  const hasPhotos = photos && photos.length;
 
-  const slides = imgs.map((src, i) =>
-    `<div class="ds-slide" style="${i===0?'':'display:none'}">
-      <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
-    </div>`
-  ).join('');
+  const slides = hasPhotos
+    ? photos.map((src, i) =>
+        `<div class="ds-slide" style="${i===0?'':'display:none'}">
+          <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
+        </div>`
+      ).join('')
+    : `<div class="ds-slide ds-slide-empty">
+        <div class="ds-no-img-hint"><span class="nimg-icon">🏓</span>Noch kein Bild</div>
+      </div>`;
 
-  const thumbs = imgs.map((src, i) =>
-    `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-      <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'">
-    </div>`
-  ).join('');
+  const thumbs = hasPhotos
+    ? photos.map((src, i) =>
+        `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
+          <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'">
+        </div>`
+      ).join('')
+    : '';
 
-  const navHtml = imgs.length > 1 ? `
+  const navHtml = hasPhotos && photos.length > 1 ? `
     <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
     <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
 
   return `
-    <div class="detail-slider" data-idx="0" data-count="${imgs.length}">
+    <div class="detail-slider" data-idx="0" data-count="${hasPhotos ? photos.length : 1}">
       <div class="ds-main">
         <div class="ds-slides-wrap">${slides}</div>
         <button class="ds-close" onclick="closeAllSheets()">×</button>
-        ${imgs.length > 1 ? `<div class="ds-counter">1/${imgs.length}</div>` : ''}
+        ${hasPhotos && photos.length > 1 ? `<div class="ds-counter">1/${photos.length}</div>` : ''}
         ${navHtml}
       </div>
       <div class="ds-thumbs">
@@ -268,15 +270,20 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
   const addBtn     = thumbsRow?.querySelector('.ds-thumb-add');
   if (!slidesWrap || !thumbsRow) return;
 
-  dbImages.forEach(img => {
+  // Remove "Noch kein Bild" placeholder when real images arrive
+  const emptySlide = slidesWrap.querySelector('.ds-slide-empty');
+  const hadEmpty = !!emptySlide;
+  if (emptySlide) emptySlide.remove();
+
+  dbImages.forEach((img, dbIdx) => {
     const currentCount = slider.querySelectorAll('.ds-slide').length;
     const date = new Date(img.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
     const uploader = (uploaderMap && uploaderMap[img.uploaded_by]) || 'Unbekannt';
 
-    // Neuer Slide (versteckt)
+    // Neuer Slide (erster sichtbar, wenn Placeholder ersetzt)
     const slide = document.createElement('div');
     slide.className = 'ds-slide ds-db-slide';
-    slide.style.display = 'none';
+    slide.style.display = (hadEmpty && dbIdx === 0) ? '' : 'none';
     slide.dataset.imgId  = img.id;
     slide.dataset.imgUrl = img.image_url;
     slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`

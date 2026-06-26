@@ -55,14 +55,10 @@ function renderPlayerSearchCard(ps) {
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const c = document.getElementById('events-list');
-  const EV_IMGS = ['images/events/event1.webp','images/events/event2.webp','images/events/event3.webp'];
-  const EV_PH   = 'images/placeholders/placeholder-plate.webp';
-
   function gameCard(e, idx) {
-    const thumb = EV_IMGS[idx % EV_IMGS.length];
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
-      <img class="ecb-thumb" src="${thumb}" onerror="this.src='${EV_PH}'" loading="lazy">
+      <div class="ecb-thumb ev-thumb-${e.type||'casual'}"></div>
       <div class="ecb-info">
         <div class="ecb-title-row">
           <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>

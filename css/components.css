@@ -109,6 +109,7 @@
   overflow: hidden; position: relative;
 }
 .map-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; opacity: .35; }
 
 .map-thumb-badge {
   position: absolute; top: 8px; right: 8px;
@@ -139,6 +140,9 @@
   position: relative;
 }
 .ev-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ev-thumb-casual  { background: linear-gradient(135deg,#4caf50,#1b5e20); }
+.ev-thumb-training { background: linear-gradient(135deg,#1e88e5,#0d47a1); }
+.ev-thumb-ranked  { background: linear-gradient(135deg,#fb8c00,#e65100); }
 .ev-date-overlay {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: rgba(0,0,0,0.52); text-align: center; padding: 2px 0;
@@ -367,7 +371,7 @@
 
 .ecb-thumb {
   flex-shrink: 0; width: 110px; height: 80px;
-  border-radius: 10px; object-fit: cover; display: block;
+  border-radius: 10px; overflow: hidden;
   background: var(--surface-2);
 }
 .ecb-info { flex: 1; min-width: 0; }

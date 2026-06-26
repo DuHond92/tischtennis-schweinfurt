@@ -177,6 +177,16 @@
   width: 100%; height: 100%;
   object-fit: cover; display: block;
 }
+.ds-slide-empty {
+  display: flex !important;
+  align-items: center; justify-content: center;
+  background: var(--surface2);
+}
+.ds-no-img-hint {
+  text-align: center; color: var(--text-xdim);
+  font-size: 0.82rem; line-height: 1.6; pointer-events: none;
+}
+.nimg-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
 
 .ds-close {
   position: absolute; top: 12px; right: 12px;

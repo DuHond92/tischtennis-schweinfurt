@@ -268,16 +268,17 @@ function renderMapList(list) {
     return;
   }
 
-  const PH = 'images/placeholders/placeholder-plate.webp';
   c.innerHTML = statusHtml + list.map(t => {
-    const thumb    = (t.photos && t.photos.length) ? t.photos[0] : PLATE_TEST_IMAGES[0];
     const evCount  = t.events?.length || 0;
     const distHtml = t.distance != null
       ? ` &nbsp;·&nbsp; <span class="mli-dist">${formatDistance(t.distance)}</span>` : '';
+    const thumbInner = (t.photos && t.photos.length)
+      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
+      : `<div class="thumb-empty">🏓</div>`;
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
       <div class="mli-thumb">
-        <img src="${thumb}" onerror="this.src='${PH}'" loading="lazy">
+        ${thumbInner}
       </div>
       <div class="map-list-info">
         <div class="mli-title-row">

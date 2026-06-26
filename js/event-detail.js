@@ -4,38 +4,39 @@
 let currentEventId = null;
 let chatPollTimer  = null;
 
-const EVENT_TEST_IMAGES = [
-  'images/events/event1.webp',
-  'images/events/event2.webp',
-  'images/events/event3.webp',
-];
 const EVENT_FALLBACK = 'images/placeholders/placeholder-plate.webp';
 
 function buildEventSlider(images) {
-  const imgs = (images && images.length) ? images : EVENT_TEST_IMAGES;
+  const hasImgs = images && images.length;
 
-  const slides = imgs.map((src, i) =>
-    `<div class="ds-slide" style="${i===0?'':'display:none'}">
-      <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
-    </div>`
-  ).join('');
+  const slides = hasImgs
+    ? images.map((src, i) =>
+        `<div class="ds-slide" style="${i===0?'':'display:none'}">
+          <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
+        </div>`
+      ).join('')
+    : `<div class="ds-slide ds-slide-empty">
+        <div class="ds-no-img-hint"><span class="nimg-icon">🏓</span>Kein Bild vorhanden</div>
+      </div>`;
 
-  const thumbs = imgs.map((src, i) =>
-    `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-      <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'">
-    </div>`
-  ).join('');
+  const thumbs = hasImgs
+    ? images.map((src, i) =>
+        `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
+          <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'">
+        </div>`
+      ).join('')
+    : '';
 
-  const navHtml = imgs.length > 1 ? `
+  const navHtml = hasImgs && images.length > 1 ? `
     <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
     <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
 
   return `
-    <div class="detail-slider" data-idx="0" data-count="${imgs.length}">
+    <div class="detail-slider" data-idx="0" data-count="${hasImgs ? images.length : 1}">
       <div class="ds-main">
         <div class="ds-slides-wrap">${slides}</div>
         <button class="ds-close" onclick="closeAllSheets()">×</button>
-        ${imgs.length > 1 ? `<div class="ds-counter">1/${imgs.length}</div>` : ''}
+        ${hasImgs && images.length > 1 ? `<div class="ds-counter">1/${images.length}</div>` : ''}
         ${navHtml}
       </div>
       <div class="ds-thumbs">
