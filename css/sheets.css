@@ -164,6 +164,7 @@
   min-width: 100%;
   height: 100%;
   flex-shrink: 0;
+  position: relative;
 }
 
 .ds-slide img {
@@ -224,6 +225,23 @@
   transition: border-color 0.15s, color 0.15s;
 }
 .ds-thumb-add:hover { border-color: var(--primary); color: var(--primary); }
+
+.ds-delete-btn {
+  position: absolute; top: 12px; left: 12px;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(180,0,0,0.7); backdrop-filter: blur(6px);
+  color: #fff; border: none; font-size: 1rem; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  z-index: 3; transition: background 0.15s;
+}
+.ds-delete-btn:active { background: rgba(180,0,0,0.95); }
+
+.ds-mod-info {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+  color: #fff; font-size: 0.72rem; padding: 5px 12px;
+  pointer-events: none;
+}
 
 .ds-info {
   padding: 14px 20px 12px;

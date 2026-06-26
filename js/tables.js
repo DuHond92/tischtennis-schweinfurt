@@ -237,15 +237,29 @@ async function _saveTableImageRecord(tableId, imageUrl) {
 // ── Approved DB-Bilder in den Slider einfügen ─────────────────
 async function loadTableImages(tableId) {
   try {
+    const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
     const qb = new QueryBuilder('table_images');
-    qb._select = 'id,image_url,created_at';
+    qb._select = isMod ? 'id,image_url,created_at,uploaded_by' : 'id,image_url,created_at';
     qb.eq('table_id', tableId).eq('status', 'approved').order('created_at');
     const { data } = await qb.execute();
-    if (data && data.length) _appendDbImagesToSlider(data);
+    if (data && data.length) {
+      let uploaderMap = {};
+      if (isMod) {
+        const ids = [...new Set(data.map(i => i.uploaded_by).filter(Boolean))];
+        if (ids.length) {
+          try {
+            const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${ids.join(',')})`;
+            const { data: profiles } = await fetchWithRefresh(url, { headers: dbHeaders() });
+            if (Array.isArray(profiles)) profiles.forEach(p => { uploaderMap[p.id] = p.username; });
+          } catch(e) {}
+        }
+      }
+      _appendDbImagesToSlider(data, uploaderMap, isMod);
+    }
   } catch(e) { /* silent — OSM-Bilder bleiben sichtbar */ }
 }
 
-function _appendDbImagesToSlider(dbImages) {
+function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
   const slider = document.querySelector('#tds-body .detail-slider');
   if (!slider) return;
 
@@ -256,18 +270,24 @@ function _appendDbImagesToSlider(dbImages) {
 
   dbImages.forEach(img => {
     const currentCount = slider.querySelectorAll('.ds-slide').length;
+    const date = new Date(img.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+    const uploader = (uploaderMap && uploaderMap[img.uploaded_by]) || 'Unbekannt';
 
     // Neuer Slide (versteckt)
     const slide = document.createElement('div');
-    slide.className  = 'ds-slide';
+    slide.className = 'ds-slide ds-db-slide';
     slide.style.display = 'none';
-    slide.innerHTML  = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`;
+    slide.dataset.imgId  = img.id;
+    slide.dataset.imgUrl = img.image_url;
+    slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`
+      + (isMod ? `<button class="ds-delete-btn" onclick="deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen">🗑</button>` : '')
+      + (isMod ? `<div class="ds-mod-info">👤 ${escHtml(uploader)} · 📅 ${date}</div>` : '');
     slidesWrap.appendChild(slide);
 
     // Neuer Thumb, vor dem + Button
     const thumb = document.createElement('div');
-    thumb.className = 'ds-thumb';
-    const idx = currentCount; // 0-basierter Index des neuen Slides
+    thumb.className = 'ds-thumb ds-db-thumb';
+    const idx = currentCount;
     thumb.onclick   = () => detailSliderGo(slider, idx);
     thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`;
     thumbsRow.insertBefore(thumb, addBtn);
@@ -287,7 +307,6 @@ function _appendDbImagesToSlider(dbImages) {
     }
     counter.textContent = `${currentIdx + 1}/${total}`;
 
-    // Navigations-Buttons ergänzen falls noch nicht da
     if (!slider.querySelector('.ds-nav')) {
       const main = slider.querySelector('.ds-main');
       const prev = document.createElement('button');
@@ -302,6 +321,51 @@ function _appendDbImagesToSlider(dbImages) {
       main.appendChild(next);
     }
   }
+}
+
+async function deleteTableImage(slideEl) {
+  if (!confirm('Bild wirklich löschen?')) return;
+
+  const imageId  = slideEl.dataset.imgId;
+  const imageUrl = slideEl.dataset.imgUrl;
+
+  // Storage löschen
+  try {
+    const storagePath = imageUrl.replace(`${SUPABASE_URL}/storage/v1/object/public/table-images/`, '');
+    const token = await sb.getValidToken();
+    await fetch(`${SUPABASE_URL}/storage/v1/object/table-images/${storagePath}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch(e) { /* Storage-Fehler ignorieren, DB trotzdem löschen */ }
+
+  // DB-Eintrag löschen
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/table_images?id=eq.${encodeURIComponent(imageId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+
+  showToast('Bild gelöscht', '🗑');
+
+  // Alle DB-Slides + Thumbs entfernen und neu laden
+  const slider = document.querySelector('#tds-body .detail-slider');
+  if (slider) {
+    slider.querySelectorAll('.ds-db-slide').forEach(el => el.remove());
+    slider.querySelectorAll('.ds-db-thumb').forEach(el => el.remove());
+    const remaining = slider.querySelectorAll('.ds-slide').length;
+    slider.dataset.count = remaining;
+    const curIdx = parseInt(slider.dataset.idx || 0);
+    if (curIdx >= remaining) detailSliderGo(slider, 0);
+    const counter = slider.querySelector('.ds-counter');
+    if (remaining <= 1) {
+      counter?.remove();
+      slider.querySelectorAll('.ds-nav').forEach(el => el.remove());
+    } else if (counter) {
+      counter.textContent = `${parseInt(slider.dataset.idx || 0) + 1}/${remaining}`;
+    }
+  }
+  await loadTableImages(currentDetailTableId);
 }
 
 function openMapsDirections(lat, lng) {
