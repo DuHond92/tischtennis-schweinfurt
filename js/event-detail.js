@@ -291,10 +291,14 @@ function openEditEvent(eventId) {
   const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const ev  = src.find(e => e.id === eventId);
   if(!ev) return;
-  // Prefill create-event sheet as edit form
+  _editingEventId = eventId;
   document.querySelector('#create-event-sheet .sheet-title').textContent = '✏️ Event bearbeiten';
-  document.getElementById('ev-name').value = ev.name;
-  document.getElementById('ev-mode').value = ev.type;
+  document.querySelector('#create-event-sheet .btn-primary').textContent = '💾 Speichern';
+  document.getElementById('ev-name').value  = ev.name    || '';
+  document.getElementById('ev-table').value = ev.tid     || '';
+  document.getElementById('ev-date').value  = ev.dateStr || '';
+  document.getElementById('ev-time').value  = ev.time    || '';
+  document.getElementById('ev-mode').value  = ev.type    || 'casual';
   openSheet('create-event-sheet');
 }
 

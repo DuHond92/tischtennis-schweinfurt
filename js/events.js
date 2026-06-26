@@ -148,6 +148,18 @@ function activateMitspielerFilter() {
   if(allPill && currentFilter !== 'all') filterEvents('all', allPill);
 }
 
+function openCreateEventSheet() {
+  _editingEventId = null;
+  document.querySelector('#create-event-sheet .sheet-title').textContent = 'Spiel organisieren';
+  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren 🏓';
+  document.getElementById('ev-name').value  = '';
+  document.getElementById('ev-date').value  = '';
+  document.getElementById('ev-time').value  = '15:00';
+  document.getElementById('ev-mode').value  = 'casual';
+  closeAllSheets();
+  openSheet('create-event-sheet');
+}
+
 async function submitCreateEvent() {
   if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   const title   = document.getElementById('ev-name').value.trim();
@@ -158,14 +170,27 @@ async function submitCreateEvent() {
   if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
 
   const qb = new QueryBuilder('events');
-  const {error} = await qb.insert({
-    title, table_id: parseInt(tableId),
-    creator_id: sb.getUserId(),
-    event_date: date, event_time: time, mode
-  });
-  if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
-  closeAllSheets();
-  showToast('🎉 Spiel organisiert!','🎉');
+  let error;
+
+  if(_editingEventId) {
+    ({ error } = await qb.eq('id', _editingEventId).update({
+      title, table_id: parseInt(tableId), event_date: date, event_time: time, mode
+    }));
+    if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
+    _editingEventId = null;
+    closeAllSheets();
+    showToast('✅ Event gespeichert!');
+  } else {
+    ({ error } = await qb.insert({
+      title, table_id: parseInt(tableId),
+      creator_id: sb.getUserId(),
+      event_date: date, event_time: time, mode
+    }));
+    if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+    closeAllSheets();
+    showToast('🎉 Spiel organisiert!','🎉');
+  }
+
   await loadEvents();
   renderEvents(currentFilter);
   renderHome();

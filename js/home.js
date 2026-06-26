@@ -77,9 +77,15 @@ function renderHome() {
   // Events
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
-  evList.innerHTML = evSrc.slice(0, 5).map((e)=>`
+  const _homeThumb = t => t === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
+    : t === 'casual' ? 'images/placeholders/thumbnail-justforfun.png' : null;
+
+  evList.innerHTML = evSrc.slice(0, 5).map((e)=>{
+    const thumbSrc = (e.photos && e.photos.length) ? e.photos[0] : _homeThumb(e.type);
+    return `
     <div class="event-list-item" onclick="showEventDetail(${e.id})">
       <div class="ev-thumb ev-thumb-${e.type||'casual'}">
+        ${thumbSrc ? `<img src="${escAttr(thumbSrc)}" loading="lazy" onerror="this.remove()">` : ''}
         <div class="ev-date-overlay"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
       </div>
       <div class="ev-info">
@@ -90,7 +96,7 @@ function renderHome() {
         <div class="ev-participants-row">${participantStack(e.participants,3,26)}<span class="ev-pcount">${e.p}/${e.max}</span></div>
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 function renderHomePsSection() {
@@ -101,7 +107,7 @@ function renderHomePsSection() {
     return;
   }
   const first = allPlayerSearches[0];
-  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', ranked: 'Spiel um Punkte'};
+  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', ranked: 'Punktspiel', punktspiel: 'Punktspiel'};
   const avHtml = getAvatarHtml({ avatar_emoji: first.avatarEmoji, avatar_url: first.avatarUrl, username: first.username }, { size: 36 });
   const metaParts = [];
   if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');

@@ -241,7 +241,7 @@ function _buildStatusLine(filtered) {
   }
 
   if(hasSpiela) {
-    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Spiel um Punkte'};
+    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Punktspiel', punktspiel:'🏓 Punktspiel'};
     parts.push(labels[mapSpielartFilter] || mapSpielartFilter);
   }
   if(hasPlace) {

@@ -47,7 +47,7 @@ function typeLabel(type) {
   return type === 'casual'     ? '🎉 Just 4 Fun'
        : type === 'training'   ? '🎯 Training'
        : type === 'punktspiel' ? '🏓 Punktspiel'
-       : type === 'ranked'     ? '🏓 Spiel um Punkte'
+       : type === 'ranked'     ? '🏓 Punktspiel'
        : 'Spiel';
 }
 
