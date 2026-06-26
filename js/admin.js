@@ -382,6 +382,14 @@ async function setUserRole(uid, newRole) {
 
 // --- Helpers ---
 
+function toggleAdminSection(btn) {
+  const body = btn.nextElementSibling;
+  const icon = btn.querySelector('.admin-toggle-icon');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (icon) icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
 function _setCardLoading(card, loading) {
   card.style.opacity = loading ? '0.5' : '1';
   card.querySelectorAll('button').forEach(b => { b.disabled = loading; });

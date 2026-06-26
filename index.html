@@ -341,24 +341,49 @@
       </button>
     </div>
     <div class="admin-section">
-      <div class="admin-section-title">Offene Vorschläge</div>
-      <div id="admin-suggestions-list" class="admin-list"></div>
+      <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
+        📍 Offene Vorschläge
+        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body">
+        <div id="admin-suggestions-list" class="admin-list"></div>
+      </div>
     </div>
     <div class="admin-section" id="admin-images-section" style="display:none;">
-      <div class="admin-section-title">📸 Bilder zur Freigabe</div>
-      <div id="admin-images-list" class="admin-list"></div>
-    </div>
-    <div class="admin-section" id="admin-user-section" style="display:none;">
-      <div class="admin-section-title">Nutzerverwaltung</div>
-      <div id="admin-users-list" class="admin-list"></div>
+      <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
+        📸 Bilder zur Freigabe
+        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body">
+        <div id="admin-images-list" class="admin-list"></div>
+      </div>
     </div>
     <div class="admin-section" id="admin-reports-section" style="display:none;">
-      <div class="admin-section-title">🚩 Gemeldete Inhalte</div>
-      <div id="admin-reports-list" class="admin-list"></div>
+      <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
+        🚩 Gemeldete Inhalte
+        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body">
+        <div id="admin-reports-list" class="admin-list"></div>
+      </div>
     </div>
     <div class="admin-section" id="admin-modlog-section" style="display:none;">
-      <div class="admin-section-title">📋 Mod-Log</div>
-      <div id="admin-modlog-list" class="admin-list"></div>
+      <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
+        📋 Mod-Log
+        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body">
+        <div id="admin-modlog-list" class="admin-list"></div>
+      </div>
+    </div>
+    <div class="admin-section" id="admin-user-section" style="display:none;">
+      <button class="admin-section-toggle" onclick="toggleAdminSection(this)">
+        👤 Nutzerverwaltung
+        <svg class="admin-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body" style="display:none;">
+        <div id="admin-users-list" class="admin-list"></div>
+      </div>
     </div>
     <div class="pb-safe"></div>
   </div>

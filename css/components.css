@@ -1154,7 +1154,7 @@
   cursor: pointer; flex-shrink: 0; color: var(--text);
 }
 
-.admin-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.admin-list { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 
 .admin-loading, .admin-empty {
   text-align: center; padding: 48px 20px;
@@ -1199,12 +1199,25 @@
 .auth-forgot-link:hover { text-decoration: underline; }
 
 /* ======= MODERATION — ZUSÄTZLICHE STYLES ======= */
-.admin-section { margin-bottom: 8px; }
+.admin-section {
+  border-bottom: 1px solid var(--border);
+}
 .admin-section-title {
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--text-dim);
   padding: 12px 16px 4px;
 }
+.admin-section-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 13px 16px;
+  background: var(--surface); border: none; border-bottom: 1px solid var(--border);
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-dim);
+  cursor: pointer; text-align: left; gap: 8px;
+}
+.admin-section-toggle:active { background: var(--surface2); }
+.admin-toggle-icon { flex-shrink: 0; transition: transform 0.2s ease; color: var(--text-xdim); }
+.admin-section-body { background: var(--bg); }
 .admin-card-meta {
   font-size: 0.76rem; color: var(--text-dim);
   margin: 4px 0 8px;
