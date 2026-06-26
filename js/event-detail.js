@@ -64,7 +64,7 @@ function showEventDetail(eventId) {
 
   // Meta
   document.getElementById('eds-meta').innerHTML =
-    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von <b>${ev.creator}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${ev.creatorId ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}')">` : '<b>'}${escHtml(ev.creator||'')}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
 
   // Description
   const descEl = document.getElementById('eds-desc');
