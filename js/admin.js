@@ -646,7 +646,8 @@ async function deleteEvent(eventId) {
   showToast('Event gelöscht');
   closeAllSheets();
   await loadEvents();
-  renderPage(currentPage);
+  renderEvents(currentFilter);
+  renderHome();
 }
 
 async function deletePlayerSearch(psId) {
@@ -660,7 +661,8 @@ async function deletePlayerSearch(psId) {
   showToast('Gesuch gelöscht');
   closeAllSheets();
   await loadEvents();
-  renderPage(currentPage);
+  renderEvents(currentFilter);
+  renderHome();
 }
 
 // ── Report-Modal ──────────────────────────────────────────────────────

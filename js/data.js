@@ -177,10 +177,14 @@ async function loadEvents() {
     };
   });
 
-  // Mitspieler-Gesuche aus allEvents herauslösen
-  allPlayerSearches = allEvents
-    .filter(e => e.type === 'player_search')
-    .filter(e => JSON.parse(e.desc || '{}').spielart !== 'ranked')
+  // Mitspieler-Gesuche aus allEvents herauslösen — erst trennen, dann verarbeiten
+  const playerSearchRaw = allEvents.filter(e => e.type === 'player_search');
+  allEvents = allEvents.filter(e => e.type !== 'player_search');
+  allPlayerSearches = playerSearchRaw
+    .filter(e => {
+      try { return JSON.parse(e.desc || '{}').spielart !== 'ranked'; }
+      catch(_) { return true; }
+    })
     .map(e => {
       let extra = {};
       try { extra = JSON.parse(e.desc || '{}'); } catch(_) {}
@@ -197,7 +201,6 @@ async function loadEvents() {
         message:     extra.message   || ''
       };
     });
-  allEvents = allEvents.filter(e => e.type !== 'player_search');
 
   tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
 }
