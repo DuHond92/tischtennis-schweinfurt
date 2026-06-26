@@ -480,29 +480,7 @@
   flex-shrink: 0;
 }
 
-/* Tabs */
-.inbox-tabs {
-  display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  padding: 0 12px; gap: 4px;
-}
-.inbox-tab {
-  flex: 1; padding: 7px 0 6px; background: none; border: none;
-  font-size: 0.84rem; font-weight: 600; color: var(--text-dim);
-  cursor: pointer; position: relative;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-  transition: color 0.15s;
-}
-.inbox-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-.inbox-tab-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent, var(--primary)); flex-shrink: 0;
-}
-
-/* Panels */
+/* Scroll-Panel */
 .inbox-panel {
   flex: 1; overflow-y: auto; min-height: 0;
 }
@@ -564,33 +542,11 @@
   font-size: 0.65rem; font-weight: 800; padding: 0 5px; flex-shrink: 0;
 }
 
-/* Aktivitäten rows */
-.inbox-akt-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; cursor: pointer; min-height: 64px;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
-}
-.inbox-akt-row:hover  { background: var(--surface2); }
-.inbox-akt-row:active { background: var(--primary-bg, rgba(255,255,255,0.05)); }
-.inbox-akt-av { flex-shrink: 0; }
-.inbox-akt-body { flex: 1; min-width: 0; }
-.inbox-akt-title {
-  font-size: 0.85rem; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: 3px;
-}
-.inbox-akt-preview {
-  font-size: 0.78rem; color: var(--text-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.inbox-akt-meta {
-  flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
-}
-.inbox-akt-time { font-size: 0.7rem; color: var(--text-xdim, var(--text-dim)); }
-.inbox-akt-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--primary); flex-shrink: 0;
+/* Event-Avatar-Placeholder (wenn noch keine Nachricht vorhanden) */
+.inbox-event-av {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--surface2); display: flex; align-items: center;
+  justify-content: center; font-size: 1.5rem; flex-shrink: 0;
 }
 .pp-clickable { cursor: pointer; }
 

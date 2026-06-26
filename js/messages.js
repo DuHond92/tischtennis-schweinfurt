@@ -7,7 +7,6 @@ let _dmPartnerName  = '';
 let _dmPartnerEmoji = '';
 let _dmPollTimer    = null;
 let _dmUnreadCount  = 0;
-let _inboxActiveTab = 'chats';   // 'chats' | 'akt'
 
 // ── Badge ──────────────────────────────────────────────────────
 function updateDmBadge(n) {
@@ -36,33 +35,10 @@ async function checkDmNotifications() {
 async function openInbox() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   openSheet('inbox-sheet');
-  _activateInboxTab(_inboxActiveTab, false);
-  await _loadInboxTab(_inboxActiveTab);
+  await renderInboxChats();
 }
 
-function switchInboxTab(tab) {
-  _inboxActiveTab = tab;
-  _activateInboxTab(tab, true);
-  _loadInboxTab(tab);
-}
-
-function _activateInboxTab(tab, animate) {
-  document.querySelectorAll('.inbox-tab').forEach(t => t.classList.remove('active'));
-  const activeBtn = document.getElementById('inbox-tab-' + tab);
-  if (activeBtn) activeBtn.classList.add('active');
-  document.querySelectorAll('.inbox-panel').forEach(p => {
-    p.style.display = 'none';
-  });
-  const panel = document.getElementById('inbox-panel-' + tab);
-  if (panel) panel.style.display = '';
-}
-
-async function _loadInboxTab(tab) {
-  if (tab === 'chats') await renderInboxChats();
-  else await renderInboxAkt();
-}
-
-// ── Chats-Tab ─────────────────────────────────────────────────
+// ── Inbox rendern: drei Kategorien ────────────────────────────
 async function renderInboxChats() {
   const el = document.getElementById('inbox-body');
   if (!el) return;
@@ -72,159 +48,199 @@ async function renderInboxChats() {
     return;
   }
 
-  el.innerHTML = _inboxEmpty('⏳', 'Lade Chats…', true);
+  el.innerHTML = _inboxEmpty('⏳', 'Lade Unterhaltungen…', true);
 
   const uid = sb.getUserId();
-  let messages = [];
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/direct_messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(sender_id.eq.${uid},receiver_id.eq.${uid})&order=created_at.desc&limit=200`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    messages = data || [];
-  } catch(e) {
-    el.innerHTML = _inboxEmpty('⚠️', 'Fehler beim Laden.');
-    return;
-  }
 
-  if (!messages.length) {
-    el.innerHTML = _inboxEmpty('💬', 'Noch keine Unterhaltungen.<br>Schreib einem Spielpartner!');
-    return;
-  }
+  // Parallel: DMs und Event-Beteiligungen laden
+  const [dmMessages, eventData] = await Promise.all([
+    _loadDmMessages(uid),
+    _loadEventConversations(uid)
+  ]);
 
-  // Konversationen nach Partner-ID gruppieren
-  const convMap = {};
-  messages.forEach(m => {
-    const partnerId = m.sender_id === uid ? m.receiver_id : m.sender_id;
-    if (!convMap[partnerId]) {
-      convMap[partnerId] = { partnerId, lastMsg: m, unread: 0 };
-    }
-    if (m.receiver_id === uid && !m.read_at) convMap[partnerId].unread++;
-  });
+  // ── Spielpartner (1:1 DMs) ──────────────────────────────────
+  const dmConvs = _groupDmsByPartner(dmMessages, uid);
 
-  const convs = Object.values(convMap).sort(
-    (a, b) => new Date(b.lastMsg.created_at) - new Date(a.lastMsg.created_at)
-  );
-
-  // Profile batch-laden
-  const partnerIds = convs.map(c => c.partnerId).filter(Boolean);
-  let profiles = {};
+  // Profile für DM-Partner
+  let dmProfiles = {};
+  const partnerIds = dmConvs.map(c => c.partnerId).filter(Boolean);
   if (partnerIds.length) {
     try {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${partnerIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      if (Array.isArray(data)) data.forEach(p => { profiles[p.id] = p; });
+      if (Array.isArray(data)) data.forEach(p => { dmProfiles[p.id] = p; });
     } catch(e) {}
   }
 
-  // Unread-Dot auf Tab setzen
-  const totalUnread = convs.reduce((s, c) => s + c.unread, 0);
-  const dot = document.getElementById('inbox-tab-dot-chats');
-  if (dot) dot.style.display = totalUnread ? '' : 'none';
+  // Unread-Badge im Topbar aktualisieren
+  const totalDmUnread = dmConvs.reduce((s, c) => s + c.unread, 0);
+  updateDmBadge(totalDmUnread);
 
-  const renderRow = c => {
-    const p       = profiles[c.partnerId] || { id: c.partnerId, username: 'Spieler' };
-    const av      = getAvatarHtml(p, { size: 56 });
-    const nm      = escHtml(p.username || 'Spieler');
-    const pid     = escAttr(c.partnerId);
-    const pnm     = escAttr(p.username || 'Spieler');
-    const pem     = escAttr(p.avatar_emoji || '');
-    const isMine  = c.lastMsg.sender_id === uid;
-    const preview = c.lastMsg.message.length > 60
-      ? c.lastMsg.message.slice(0, 60) + '…'
-      : c.lastMsg.message;
-    const time    = _dmTime(c.lastMsg.created_at);
-    const hasNew  = c.unread > 0;
-    return `
-      <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}')">
-        <div class="inbox-conv-av">${av}</div>
-        <div class="inbox-conv-body">
-          <div class="inbox-conv-top">
-            <div class="inbox-conv-name${hasNew ? ' inbox-conv-name-bold' : ''}">${nm}</div>
-            <div class="inbox-conv-time${hasNew ? ' inbox-conv-time-bold' : ''}">${time}</div>
-          </div>
-          <div class="inbox-conv-bottom">
-            <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">
-              ${isMine ? '<span class="inbox-conv-mine">Du: </span>' : ''}${escHtml(preview)}
-            </div>
-            ${hasNew ? `<span class="inbox-conv-badge">${c.unread > 9 ? '9+' : c.unread}</span>` : ''}
-          </div>
-        </div>
-      </div>`;
-  };
+  // ── Event-Kategorien aufteilen ──────────────────────────────
+  const spielrunden = eventData.filter(e => e.mode !== 'player_search');
+  const mitgesuch   = eventData.filter(e => e.mode === 'player_search');
 
-  // Gruppierung: alle DMs sind aktuell Spielpartner-Chats
-  const rowsHtml = convs.map(renderRow).join('');
-  el.innerHTML = `<div class="inbox-section-label">👤 Spielpartner</div>${rowsHtml}`;
-  // Spielrunden / Mitspieler-Gesucht: werden nicht angezeigt solange leer
+  // ── HTML zusammenbauen ─────────────────────────────────────
+  let html = '';
+
+  if (dmConvs.length) {
+    html += `<div class="inbox-section-label">👤 Spielpartner</div>`;
+    html += dmConvs.map(c => _renderDmRow(c, dmProfiles, uid)).join('');
+  }
+
+  if (spielrunden.length) {
+    html += `<div class="inbox-section-label">🏓 Spielrunden</div>`;
+    html += spielrunden.map(e => _renderEventRow(e)).join('');
+  }
+
+  if (mitgesuch.length) {
+    html += `<div class="inbox-section-label">🔍 Mitspieler gesucht</div>`;
+    html += mitgesuch.map(e => _renderEventRow(e)).join('');
+  }
+
+  el.innerHTML = html || _inboxEmpty('💬', 'Noch keine Unterhaltungen.<br>Schreib einem Spielpartner!');
 }
 
-// ── Aktivitäten-Tab ────────────────────────────────────────────
-async function renderInboxAkt() {
-  const el = document.getElementById('inbox-akt-body');
-  if (!el) return;
+// ── Datenlader ────────────────────────────────────────────────
 
-  if (!sb.isLoggedIn()) {
-    el.innerHTML = _inboxEmpty('🔔', 'Bitte melde dich an.');
-    return;
-  }
+async function _loadDmMessages(uid) {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/direct_messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(sender_id.eq.${uid},receiver_id.eq.${uid})&order=created_at.desc&limit=200`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    return data || [];
+  } catch(e) { return []; }
+}
 
-  el.innerHTML = _inboxEmpty('⏳', 'Lade Aktivitäten…', true);
+async function _loadEventConversations(uid) {
+  // Events bei denen der Nutzer teilnimmt oder die er erstellt hat
+  let eventIds = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/event_participants?select=event_id&user_id=eq.${uid}`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (Array.isArray(data)) eventIds = data.map(r => r.event_id).filter(Boolean);
+  } catch(e) {}
 
-  // Frische Daten sicherstellen
-  if (typeof checkNotifications === 'function') await checkNotifications();
+  // Eigene Mitspieler-Gesuche ergänzen (Creator, auch ohne Teilnahme-Eintrag)
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/events?select=id&creator_id=eq.${uid}&mode=eq.player_search`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (Array.isArray(data)) {
+      data.forEach(r => { if (!eventIds.includes(r.id)) eventIds.push(r.id); });
+    }
+  } catch(e) {}
 
-  const connReqs   = typeof pendingConnectionRequests !== 'undefined' ? pendingConnectionRequests : [];
-  const evNotifs   = typeof pendingNotifs !== 'undefined' ? pendingNotifs : [];
+  if (!eventIds.length) return [];
 
-  // Tab-Dot
-  const dot = document.getElementById('inbox-tab-dot-akt');
-  const total = connReqs.length + evNotifs.length;
-  if (dot) dot.style.display = total ? '' : 'none';
+  // Events laden
+  let events = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/events?select=id,title,mode,event_date&id=in.(${eventIds.join(',')})`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    events = data || [];
+  } catch(e) { return []; }
 
-  if (!connReqs.length && !evNotifs.length) {
-    el.innerHTML = _inboxEmpty('✅', 'Keine neuen Aktivitäten.');
-    return;
-  }
+  // Letzte Nachricht pro Event
+  let lastMsgs = {};
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id,message,created_at,profiles(username,avatar_emoji,avatar_url)&event_id=in.(${eventIds.join(',')})&order=created_at.desc&limit=${eventIds.length * 5}`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (Array.isArray(data)) {
+      data.forEach(m => {
+        if (!lastMsgs[m.event_id]) lastMsgs[m.event_id] = m;
+      });
+    }
+  } catch(e) {}
 
-  // Spielpartner-Anfragen
-  const connHtml = typeof renderConnectionRequestNotifs === 'function'
-    ? renderConnectionRequestNotifs() : '';
+  // Ungelesene Event-Nachrichten aus pendingNotifs
+  const unreadByEvent = {};
+  const notifs = typeof pendingNotifs !== 'undefined' ? pendingNotifs : [];
+  notifs.forEach(m => {
+    unreadByEvent[m.event_id] = (unreadByEvent[m.event_id] || 0) + 1;
+  });
 
-  // Event-Benachrichtigungen
-  const evSrc = (typeof allEvents !== 'undefined' && allEvents.length) ? allEvents : (typeof FALLBACK_EVENTS !== 'undefined' ? FALLBACK_EVENTS : []);
-  const evMap = {};
-  evSrc.forEach(e => { evMap[e.id] = e; });
-  if (typeof allPlayerSearches !== 'undefined') {
-    allPlayerSearches.forEach(ps => {
-      if (!evMap[ps.id]) evMap[ps.id] = { id: ps.id, name: ps.username + ' sucht Mitspieler' };
+  // Events mit Metadaten anreichern, nach letzter Nachricht sortieren
+  return events
+    .map(e => ({
+      ...e,
+      lastMsg:  lastMsgs[e.id] || null,
+      unread:   unreadByEvent[e.id] || 0
+    }))
+    .sort((a, b) => {
+      const ta = a.lastMsg?.created_at || a.event_date || '';
+      const tb = b.lastMsg?.created_at || b.event_date || '';
+      return tb.localeCompare(ta);
     });
-  }
+}
 
-  const evHtml = evNotifs.slice(0, 20).map(m => {
-    const ev      = evMap[m.event_id];
-    const evTitle = ev ? ev.name : 'Spiel';
-    const sender  = m.profiles?.username || 'Jemand';
-    const uid     = m.user_id || '';
-    const emoji   = m.profiles?.avatar_emoji || '';
-    const avHtml  = getAvatarHtml(m.profiles, { size: 44 });
-    const preview = m.message.length > 55 ? m.message.slice(0, 55) + '…' : m.message;
-    const time    = _dmTime(m.created_at);
-    const avClick = uid
-      ? `onclick="event.stopPropagation();closeAllSheets();showPlayerProfile('${escAttr(uid)}','${escAttr(sender)}','${escAttr(emoji)}')"` : '';
-    return `
-      <div class="inbox-akt-row" onclick="closeAllSheets();openNotifEvent(${m.event_id})">
-        <div class="inbox-akt-av pp-clickable" ${avClick}>${avHtml}</div>
-        <div class="inbox-akt-body">
-          <div class="inbox-akt-title"><b>${escHtml(sender)}</b> in „${escHtml(evTitle)}"</div>
-          <div class="inbox-akt-preview">${escHtml(preview)}</div>
-        </div>
-        <div class="inbox-akt-meta">
-          <div class="inbox-akt-time">${time}</div>
-          <div class="inbox-akt-dot"></div>
-        </div>
-      </div>`;
-  }).join('');
+// ── Render-Helfer ─────────────────────────────────────────────
 
-  el.innerHTML = connHtml + evHtml;
+function _groupDmsByPartner(messages, uid) {
+  const convMap = {};
+  messages.forEach(m => {
+    const partnerId = m.sender_id === uid ? m.receiver_id : m.sender_id;
+    if (!convMap[partnerId]) convMap[partnerId] = { partnerId, lastMsg: m, unread: 0 };
+    if (m.receiver_id === uid && !m.read_at) convMap[partnerId].unread++;
+  });
+  return Object.values(convMap).sort(
+    (a, b) => new Date(b.lastMsg.created_at) - new Date(a.lastMsg.created_at)
+  );
+}
+
+function _renderDmRow(c, profiles, uid) {
+  const p       = profiles[c.partnerId] || { id: c.partnerId, username: 'Spieler' };
+  const av      = getAvatarHtml(p, { size: 56 });
+  const nm      = escHtml(p.username || 'Spieler');
+  const pid     = escAttr(c.partnerId);
+  const pnm     = escAttr(p.username || 'Spieler');
+  const pem     = escAttr(p.avatar_emoji || '');
+  const isMine  = c.lastMsg.sender_id === uid;
+  const preview = c.lastMsg.message.length > 60
+    ? c.lastMsg.message.slice(0, 60) + '…' : c.lastMsg.message;
+  const time    = _dmTime(c.lastMsg.created_at);
+  const hasNew  = c.unread > 0;
+  return `
+    <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}')">
+      <div class="inbox-conv-av">${av}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-top">
+          <div class="inbox-conv-name${hasNew ? ' inbox-conv-name-bold' : ''}">${nm}</div>
+          <div class="inbox-conv-time${hasNew ? ' inbox-conv-time-bold' : ''}">${time}</div>
+        </div>
+        <div class="inbox-conv-bottom">
+          <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">
+            ${isMine ? '<span class="inbox-conv-mine">Du: </span>' : ''}${escHtml(preview)}
+          </div>
+          ${hasNew ? `<span class="inbox-conv-badge">${c.unread > 9 ? '9+' : c.unread}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function _renderEventRow(e) {
+  const last    = e.lastMsg;
+  const sender  = last?.profiles?.username || '';
+  const preview = last
+    ? (sender ? sender + ': ' : '') + (last.message.length > 55 ? last.message.slice(0, 55) + '…' : last.message)
+    : 'Noch keine Nachrichten';
+  const time    = last ? _dmTime(last.created_at) : '';
+  const hasNew  = e.unread > 0;
+  const avHtml  = last?.profiles
+    ? getAvatarHtml(last.profiles, { size: 56 })
+    : `<div class="inbox-event-av">${e.mode === 'player_search' ? '🔍' : '🏓'}</div>`;
+  return `
+    <div class="inbox-conv-row" onclick="closeAllSheets();openNotifEvent(${e.id})">
+      <div class="inbox-conv-av">${avHtml}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-top">
+          <div class="inbox-conv-name${hasNew ? ' inbox-conv-name-bold' : ''}">${escHtml(e.title || 'Spielrunde')}</div>
+          <div class="inbox-conv-time${hasNew ? ' inbox-conv-time-bold' : ''}">${time}</div>
+        </div>
+        <div class="inbox-conv-bottom">
+          <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">${escHtml(preview)}</div>
+          ${hasNew ? `<span class="inbox-conv-badge">${e.unread > 9 ? '9+' : e.unread}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
 }
 
 function _inboxEmpty(icon, text, dim) {
@@ -236,14 +252,10 @@ function _inboxEmpty(icon, text, dim) {
 
 // ── DM Konversation ────────────────────────────────────────────
 
-// Öffnet DM aus der Inbox heraus — Inbox bleibt im Hintergrund offen
 async function openDmFromInbox(partnerId, partnerName, partnerEmoji) {
   await openDmConversation(partnerId, partnerName, partnerEmoji);
-  // Inbox bleibt offen (dm-overlay deckt sie ab)
-  // closeDmSheet() enthüllt sie wieder automatisch
 }
 
-// Öffnet DM vom Spielerprofil aus — schließt erst alle Sheets
 async function openDmFromProfile() {
   if (!_dmPartnerId) return;
   closeAllSheets();
@@ -260,12 +272,10 @@ async function openDmConversation(partnerId, partnerName, partnerEmoji) {
   const avEl     = document.getElementById('dm-partner-av');
   if (headerEl) headerEl.textContent = _dmPartnerName;
   if (avEl) avEl.innerHTML = getAvatarHtml(
-    { avatar_emoji: _dmPartnerEmoji, username: _dmPartnerName },
-    { size: 34 }
+    { avatar_emoji: _dmPartnerEmoji, username: _dmPartnerName }, { size: 34 }
   );
 
-  document.getElementById('dm-feed').innerHTML =
-    '<div class="chat-empty">Lade Nachrichten…</div>';
+  document.getElementById('dm-feed').innerHTML = '<div class="chat-empty">Lade Nachrichten…</div>';
   document.getElementById('dm-overlay').classList.add('open');
   document.getElementById('dm-sheet').classList.add('open');
 
@@ -278,8 +288,6 @@ function closeDmSheet() {
   stopDmPolling();
   document.getElementById('dm-overlay').classList.remove('open');
   document.getElementById('dm-sheet').classList.remove('open');
-  // Inbox re-erscheint automatisch falls sie noch offen ist
-  // (dm-overlay hatte sie nur visuell überdeckt)
 }
 
 async function loadDmMessages() {
@@ -303,19 +311,17 @@ function _renderDmMessages(messages) {
     el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
     return;
   }
-
-  // Datum-Trenner zwischen Tagen
   let lastDate = '';
   el.innerHTML = messages.map(m => {
-    const isMine   = m.sender_id === uid;
-    const msgDate  = new Date(m.created_at).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
-    const time     = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    let separator  = '';
+    const isMine  = m.sender_id === uid;
+    const msgDate = new Date(m.created_at).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+    const time    = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    let sep = '';
     if (msgDate !== lastDate) {
-      separator  = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
-      lastDate   = msgDate;
+      sep      = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
+      lastDate = msgDate;
     }
-    return `${separator}<div class="dm-msg ${isMine ? 'dm-mine' : 'dm-theirs'}">
+    return `${sep}<div class="dm-msg ${isMine ? 'dm-mine' : 'dm-theirs'}">
       <div class="dm-bubble">${escHtml(m.message)}</div>
       <div class="dm-meta">${time}</div>
     </div>`;
@@ -330,8 +336,7 @@ async function sendDm() {
   if (!msg || !_dmPartnerId) return;
   input.value = '';
   const uid = sb.getUserId();
-  const url = `${SUPABASE_URL}/rest/v1/direct_messages`;
-  const { ok } = await fetchWithRefresh(url, {
+  const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/direct_messages`, {
     method:  'POST',
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
     body:    JSON.stringify({ sender_id: uid, receiver_id: _dmPartnerId, message: msg })
@@ -343,13 +348,15 @@ async function sendDm() {
 async function markDmRead() {
   if (!sb.isLoggedIn() || !_dmPartnerId) return;
   const uid = sb.getUserId();
-  const url = `${SUPABASE_URL}/rest/v1/direct_messages?receiver_id=eq.${uid}&sender_id=eq.${encodeURIComponent(_dmPartnerId)}&read_at=is.null`;
   try {
-    await fetchWithRefresh(url, {
-      method:  'PATCH',
-      headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
-      body:    JSON.stringify({ read_at: new Date().toISOString() })
-    });
+    await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/direct_messages?receiver_id=eq.${uid}&sender_id=eq.${encodeURIComponent(_dmPartnerId)}&read_at=is.null`,
+      {
+        method:  'PATCH',
+        headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+        body:    JSON.stringify({ read_at: new Date().toISOString() })
+      }
+    );
     checkDmNotifications();
   } catch(e) {}
 }
@@ -373,9 +380,8 @@ function _dmTime(isoStr) {
   if (diff < 86400) return `${Math.floor(diff / 3600)} Std.`;
   const d = new Date(isoStr);
   const today = new Date();
-  if (d.getFullYear() === today.getFullYear()) {
+  if (d.getFullYear() === today.getFullYear())
     return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
-  }
   return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: '2-digit' });
 }
 
