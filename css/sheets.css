@@ -377,9 +377,11 @@
 
 #dm-sheet {
   z-index: 900;
-  max-height: 92vh;
+  max-height: 95vh;
+  height: 95vh;
   display: flex; flex-direction: column;
   overflow: hidden;
+  border-radius: var(--radius-lg, 20px) var(--radius-lg, 20px) 0 0;
 }
 
 .dm-sheet-header {
@@ -416,32 +418,171 @@
 }
 .dm-input:focus { border-color: var(--primary); }
 
+/* DM Nachrichten-Bubbles */
+.dm-msg {
+  display: flex; flex-direction: column;
+  max-width: 80%; margin-bottom: 2px;
+}
+.dm-mine {
+  align-self: flex-end; align-items: flex-end;
+}
+.dm-theirs {
+  align-self: flex-start; align-items: flex-start;
+}
+.dm-bubble {
+  padding: 9px 13px; border-radius: 18px; line-height: 1.45;
+  font-size: 0.9rem; word-break: break-word; white-space: pre-wrap;
+}
+.dm-mine .dm-bubble {
+  background: var(--primary); color: #fff;
+  border-bottom-right-radius: 5px;
+}
+.dm-theirs .dm-bubble {
+  background: var(--surface2); color: var(--text);
+  border-bottom-left-radius: 5px;
+}
+.dm-meta {
+  font-size: 0.65rem; color: var(--text-xdim, var(--text-dim));
+  margin-top: 2px; padding: 0 4px;
+}
+.dm-date-sep {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px 0 8px; color: var(--text-xdim, var(--text-dim));
+  font-size: 0.72rem; font-weight: 600;
+}
+.dm-date-sep::before, .dm-date-sep::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
 /* ── INBOX SHEET ─────────────────────────────────────────────────── */
-.inbox-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 13px 16px; cursor: pointer;
+#inbox-sheet {
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 20px) var(--radius-lg, 20px) 0 0;
+}
+
+.inbox-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 10px;
+  flex-shrink: 0;
+}
+.inbox-title {
+  font-family: var(--font-head, sans-serif);
+  font-size: 1.2rem; font-weight: 800; color: var(--text);
+}
+.inbox-close-btn {
+  width: 30px; height: 30px; border: none;
+  background: var(--surface2); border-radius: 50%;
+  font-size: 1.1rem; color: var(--text-dim); line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Tabs */
+.inbox-tabs {
+  display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  padding: 0 12px; gap: 4px;
+}
+.inbox-tab {
+  flex: 1; padding: 10px 0 8px; background: none; border: none;
+  font-size: 0.87rem; font-weight: 600; color: var(--text-dim);
+  cursor: pointer; position: relative;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: color 0.15s;
+}
+.inbox-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.inbox-tab-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent, var(--primary)); flex-shrink: 0;
+}
+
+/* Panels */
+.inbox-panel {
+  flex: 1; overflow-y: auto; min-height: 0;
+}
+
+/* Empty state */
+.inbox-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 20px; gap: 10px;
+  color: var(--text-dim); font-size: 0.88rem; text-align: center;
+}
+.inbox-empty-dim { opacity: 0.6; }
+.inbox-empty-icon { font-size: 2rem; }
+
+/* Conversation rows (WhatsApp-style) */
+.inbox-conv-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; cursor: pointer; min-height: 72px;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
-.inbox-row:hover  { background: var(--surface2); }
-.inbox-row:active { background: var(--primary-bg); }
-.inbox-av { flex-shrink: 0; }
-.inbox-info { flex: 1; min-width: 0; }
-.inbox-name {
-  font-size: 0.9rem; font-weight: 700; color: var(--text);
-  display: flex; align-items: center; gap: 6px;
+.inbox-conv-row:hover  { background: var(--surface2); }
+.inbox-conv-row:active { background: var(--primary-bg, rgba(255,255,255,0.05)); }
+.inbox-conv-av { flex-shrink: 0; }
+.inbox-conv-body { flex: 1; min-width: 0; }
+.inbox-conv-top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 3px;
 }
-.inbox-preview {
-  font-size: 0.78rem; color: var(--text-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+.inbox-conv-name {
+  font-size: 0.92rem; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.inbox-preview-bold { font-weight: 700; color: var(--text); }
-.inbox-time { font-size: 0.68rem; color: var(--text-xdim); flex-shrink: 0; }
-.inbox-unread-badge {
+.inbox-conv-name-bold { font-weight: 800; }
+.inbox-conv-time {
+  font-size: 0.7rem; color: var(--text-xdim, var(--text-dim)); flex-shrink: 0;
+}
+.inbox-conv-time-bold { color: var(--primary); font-weight: 700; }
+.inbox-conv-bottom {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.inbox-conv-preview {
+  font-size: 0.8rem; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+}
+.inbox-conv-preview-bold { font-weight: 700; color: var(--text); }
+.inbox-conv-mine { color: var(--text-xdim, var(--text-dim)); }
+.inbox-conv-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 18px; border-radius: 9px;
+  min-width: 20px; height: 20px; border-radius: 10px;
   background: var(--primary); color: #fff;
-  font-size: 0.6rem; font-weight: 800; padding: 0 4px;
+  font-size: 0.65rem; font-weight: 800; padding: 0 5px; flex-shrink: 0;
 }
+
+/* Aktivitäten rows */
+.inbox-akt-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer; min-height: 64px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.inbox-akt-row:hover  { background: var(--surface2); }
+.inbox-akt-row:active { background: var(--primary-bg, rgba(255,255,255,0.05)); }
+.inbox-akt-av { flex-shrink: 0; }
+.inbox-akt-body { flex: 1; min-width: 0; }
+.inbox-akt-title {
+  font-size: 0.85rem; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.inbox-akt-preview {
+  font-size: 0.78rem; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.inbox-akt-meta {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+}
+.inbox-akt-time { font-size: 0.7rem; color: var(--text-xdim, var(--text-dim)); }
+.inbox-akt-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--primary); flex-shrink: 0;
+}
+.pp-clickable { cursor: pointer; }
 
 /* notif-badge also used on dm-badge — no extra styles needed */

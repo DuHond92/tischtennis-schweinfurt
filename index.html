@@ -626,14 +626,32 @@
 <!-- INBOX SHEET -->
 <div class="bottom-sheet" id="inbox-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-title">💬 Nachrichten</div>
-    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  <div class="inbox-header">
+    <div class="inbox-title">Nachrichten</div>
+    <button class="inbox-close-btn" onclick="closeAllSheets()">×</button>
   </div>
-  <div id="inbox-body" style="padding:0;">
-    <div class="notif-empty">
-      <div class="notif-empty-icon">💬</div>
-      <div>Wird geladen…</div>
+  <div class="inbox-tabs" role="tablist">
+    <button class="inbox-tab active" id="inbox-tab-chats" onclick="switchInboxTab('chats')" role="tab">
+      💬 Chats
+      <span class="inbox-tab-dot" id="inbox-tab-dot-chats" style="display:none;"></span>
+    </button>
+    <button class="inbox-tab" id="inbox-tab-akt" onclick="switchInboxTab('akt')" role="tab">
+      🔔 Aktivitäten
+      <span class="inbox-tab-dot" id="inbox-tab-dot-akt" style="display:none;"></span>
+    </button>
+  </div>
+  <div id="inbox-panel-chats" class="inbox-panel">
+    <div id="inbox-body" style="padding:0;">
+      <div class="inbox-empty inbox-empty-dim">
+        <div class="inbox-empty-icon">⏳</div><div>Lade Chats…</div>
+      </div>
+    </div>
+  </div>
+  <div id="inbox-panel-akt" class="inbox-panel" style="display:none;">
+    <div id="inbox-akt-body" style="padding:0;">
+      <div class="inbox-empty inbox-empty-dim">
+        <div class="inbox-empty-icon">⏳</div><div>Lade Aktivitäten…</div>
+      </div>
     </div>
   </div>
 </div>
