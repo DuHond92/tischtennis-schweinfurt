@@ -81,7 +81,8 @@ function renderEvents(filter = 'all') {
   const c = document.getElementById('events-list');
   function gameCard(e, idx) {
     const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
-      : e.type === 'casual'     ? 'images/placeholders/thumbnail-justforfun.png'
+      : e.type === 'casual'    ? 'images/placeholders/thumbnail-justforfun.png'
+      : e.type === 'training'  ? 'images/placeholders/thumbnail-training.png'
       : null;
     const thumbInner = (e.photos && e.photos.length)
       ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`

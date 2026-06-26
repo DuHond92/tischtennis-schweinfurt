@@ -58,6 +58,7 @@ function showEventDetail(eventId) {
     ? ev.photos
     : ev.type === 'punktspiel' ? ['images/placeholders/thumbnail-punktspiel.png']
     : ev.type === 'casual'     ? ['images/placeholders/thumbnail-justforfun.png']
+    : ev.type === 'training'   ? ['images/placeholders/thumbnail-training.png']
     : null;
   document.getElementById('eds-slider').innerHTML = buildEventSlider(sliderPhotos);
 

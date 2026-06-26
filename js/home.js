@@ -78,7 +78,9 @@ function renderHome() {
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
   const _homeThumb = t => t === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
-    : t === 'casual' ? 'images/placeholders/thumbnail-justforfun.png' : null;
+    : t === 'casual'    ? 'images/placeholders/thumbnail-justforfun.png'
+    : t === 'training'  ? 'images/placeholders/thumbnail-training.png'
+    : null;
 
   evList.innerHTML = evSrc.slice(0, 5).map((e)=>{
     const thumbSrc = (e.photos && e.photos.length) ? e.photos[0] : _homeThumb(e.type);
