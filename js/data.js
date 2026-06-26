@@ -158,6 +158,7 @@ async function loadEvents() {
     return {
       id:        e.id,
       name:      e.title,
+      dateStr:   e.event_date,
       day:       String(d.getDate()).padStart(2,'0'),
       mon:       months[d.getMonth()],
       time:      e.event_time?.slice(0,5) || '??:??',

@@ -31,7 +31,7 @@ function renderPlayerSearchCard(ps) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
-  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht'};
+  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', punktspiel:'Punktspiel gesucht'};
   const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
   if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
@@ -50,6 +50,30 @@ function renderPlayerSearchCard(ps) {
       ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
       ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
     </div>`;
+}
+
+function _sortByDate(a, b) {
+  return ((a.dateStr || '') + (a.time || '')).localeCompare((b.dateStr || '') + (b.time || ''));
+}
+
+function getSortedEvents(events) {
+  if (currentSort === 'dist') {
+    return [...events].sort((a, b) => {
+      const tA = tables.find(t => t.id === a.tid);
+      const tB = tables.find(t => t.id === b.tid);
+      const dA = (typeof userLat !== 'undefined' && userLat && tA?.lat) ? calcDistance(userLat, userLng, tA.lat, tA.lng) : Infinity;
+      const dB = (typeof userLat !== 'undefined' && userLat && tB?.lat) ? calcDistance(userLat, userLng, tB.lat, tB.lng) : Infinity;
+      return dA !== dB ? dA - dB : _sortByDate(a, b);
+    });
+  }
+  return [...events].sort(_sortByDate);
+}
+
+function sortEvents(sort, btn) {
+  currentSort = sort;
+  document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents(currentFilter);
 }
 
 function renderEvents(filter = 'all') {
@@ -83,9 +107,9 @@ function renderEvents(filter = 'all') {
     ? allPlayerSearches
     : allPlayerSearches.filter(ps => ps.spielart === filter);
 
-  const games = filter === 'all'
-    ? gameSrc
-    : gameSrc.filter(e => e.type === filter);
+  const games = getSortedEvents(
+    filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter)
+  );
 
   if(!psFiltered.length && !games.length) {
     c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';

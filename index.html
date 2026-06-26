@@ -166,7 +166,12 @@
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
       <button class="filter-pill" onclick="filterEvents('casual',this)">🎉 Just 4 Fun</button>
       <button class="filter-pill" onclick="filterEvents('training',this)">🎯 Training</button>
-      <!-- Ranked play filter temporarily disabled -->
+      <button class="filter-pill" onclick="filterEvents('punktspiel',this)">🏓 Punktspiel</button>
+    </div>
+    <div class="events-sort-bar">
+      <span class="sort-bar-label">Sortierung:</span>
+      <button class="sort-pill active" id="sort-date-btn" onclick="sortEvents('date',this)">📅 Datum</button>
+      <button class="sort-pill" id="sort-dist-btn" onclick="sortEvents('dist',this)">📍 Entfernung</button>
     </div>
     <div class="events-grid-list" id="events-list"></div>
     <div class="pb-safe"></div>
@@ -531,9 +536,9 @@
     <div class="form-group">
       <label class="form-label">Spielmodus</label>
       <select class="form-select" id="ev-mode">
-        <option value="casual">Just 4 Fun – Spaß für alle</option>
-        <option value="training">Training</option>
-        <!-- Ranked option temporarily disabled -->
+        <option value="casual">🎉 Just 4 Fun – Spaß für alle</option>
+        <option value="training">🎯 Training</option>
+        <option value="punktspiel">🏓 Punktspiel</option>
       </select>
     </div>
     <div class="form-group">
@@ -562,7 +567,7 @@
       <select class="form-select" id="ms-spielart">
         <option value="casual">🎉 Just 4 Fun – Einfach spielen</option>
         <option value="training">🎯 Training – Technik verbessern</option>
-        <!-- Ranked play option temporarily disabled -->
+        <option value="punktspiel">🏓 Punktspiel – Etwas kompetitiver</option>
       </select>
     </div>
     <div class="form-row">
@@ -1070,10 +1075,10 @@
   <div class="sheet-body" style="padding:8px 20px 32px;">
     <div class="fms-section-label">Spielart</div>
     <div class="fms-options" id="fms-spielart-opts">
-      <div class="fms-option active" data-val="all"      onclick="setFmsSpielart('all',this)">Alle Spielarten</div>
-      <div class="fms-option"        data-val="casual"   onclick="setFmsSpielart('casual',this)">🎉 Just 4 Fun</div>
-      <div class="fms-option"        data-val="training" onclick="setFmsSpielart('training',this)">🎯 Training</div>
-      <!-- Ranked play option temporarily disabled -->
+      <div class="fms-option active" data-val="all"          onclick="setFmsSpielart('all',this)">Alle Spielarten</div>
+      <div class="fms-option"        data-val="casual"       onclick="setFmsSpielart('casual',this)">🎉 Just 4 Fun</div>
+      <div class="fms-option"        data-val="training"     onclick="setFmsSpielart('training',this)">🎯 Training</div>
+      <div class="fms-option"        data-val="punktspiel"   onclick="setFmsSpielart('punktspiel',this)">🏓 Punktspiel</div>
     </div>
     <div class="fms-section-label" style="margin-top:22px;">Plattentyp</div>
     <div class="fms-options" id="fms-place-opts">

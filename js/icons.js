@@ -44,9 +44,10 @@ function initAvatar(name, size) {
 
 // Einheitliche Typ-Labels mit Emojis (single source of truth)
 function typeLabel(type) {
-  return type === 'casual'   ? '🎉 Just 4 Fun'
-       : type === 'ranked'   ? '🏓 Spiel um Punkte'
-       : type === 'training' ? '🎯 Training'
+  return type === 'casual'     ? '🎉 Just 4 Fun'
+       : type === 'training'   ? '🎯 Training'
+       : type === 'punktspiel' ? '🏓 Punktspiel'
+       : type === 'ranked'     ? '🏓 Spiel um Punkte'
        : 'Spiel';
 }
 

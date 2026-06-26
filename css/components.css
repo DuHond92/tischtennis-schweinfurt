@@ -165,9 +165,27 @@
   flex-shrink: 0; padding: 4px 10px; border-radius: 20px;
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.3px;
 }
-.pill-casual { background: var(--green-bg); color: var(--green); }
-.pill-ranked { background: var(--primary-bg); color: var(--primary); }
-.pill-training { background: var(--gold-bg); color: var(--gold); }
+.pill-casual      { background: var(--green-bg); color: var(--green); }
+.pill-ranked      { background: var(--primary-bg); color: var(--primary); }
+.pill-training    { background: var(--gold-bg); color: var(--gold); }
+.pill-punktspiel  { background: rgba(239,68,68,0.12); color: #e05252; }
+
+.events-sort-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 16px 12px;
+}
+.sort-bar-label { font-size: 0.7rem; color: var(--text-dim); flex-shrink: 0; margin-right: 2px; }
+.sort-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 600;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.sort-pill.active {
+  border-color: var(--primary); color: var(--primary); background: var(--primary-bg);
+}
 .pill-turnier { background: var(--surface2); color: var(--text-dim); }
 .pill-spiel { background: var(--surface2); color: var(--text-dim); }
 
