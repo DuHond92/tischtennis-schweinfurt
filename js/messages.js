@@ -298,6 +298,22 @@ async function _loadEventConversations(uid) {
     });
   } catch(e) {}
 
+  // Mitspieler-Gesuche ergänzen, in denen der Nutzer mindestens eine Nachricht geschrieben hat
+  try {
+    const msgUrl = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id&user_id=eq.${uid}`;
+    const { data: msgData } = await fetchWithRefresh(msgUrl, { headers: dbHeaders() });
+    if (Array.isArray(msgData)) {
+      const msgEventIds = [...new Set(msgData.map(r => r.event_id).filter(Boolean))];
+      if (msgEventIds.length) {
+        const evUrl = `${SUPABASE_URL}/rest/v1/events?select=id&mode=eq.player_search&id=in.(${msgEventIds.join(',')})`;
+        const { data: psEvData } = await fetchWithRefresh(evUrl, { headers: dbHeaders() });
+        if (Array.isArray(psEvData)) psEvData.forEach(r => {
+          if (!eventIds.includes(r.id)) eventIds.push(r.id);
+        });
+      }
+    }
+  } catch(e) {}
+
   if (!eventIds.length) return [];
 
   let events = [];
