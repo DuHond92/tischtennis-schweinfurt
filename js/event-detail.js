@@ -105,6 +105,7 @@ function showEventDetail(eventId) {
 
   // Load data (don't block sheet open)
   loadEventParticipants(eventId);
+  loadEventImages(eventId);
   if(!isFallback) {
     loadEventChat(eventId);
     startChatPolling(eventId);
@@ -291,4 +292,60 @@ function openEditEvent(eventId) {
   document.getElementById('ev-name').value = ev.name;
   document.getElementById('ev-mode').value = ev.type;
   openSheet('create-event-sheet');
+}
+
+async function loadEventImages(eventId) {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/event_images?select=id,image_url,created_at&event_id=eq.${eventId}&status=eq.approved&order=created_at.asc`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (data && data.length) _appendDbImagesToEventSlider(data);
+  } catch(e) {}
+}
+
+function _appendDbImagesToEventSlider(dbImages) {
+  const slider = document.querySelector('#eds-slider .detail-slider');
+  if (!slider) return;
+  const slidesWrap = slider.querySelector('.ds-slides-wrap');
+  const thumbsRow  = slider.querySelector('.ds-thumbs');
+  const addBtn     = thumbsRow?.querySelector('.ds-thumb-add');
+  if (!slidesWrap || !thumbsRow) return;
+
+  const emptySlide = slidesWrap.querySelector('.ds-slide-empty');
+  const hadEmpty = !!emptySlide;
+  if (emptySlide) emptySlide.remove();
+
+  const existingUrls = new Set(
+    [...slidesWrap.querySelectorAll('.ds-db-slide')].map(el => el.dataset.imgUrl)
+  );
+
+  dbImages.forEach((img, idx) => {
+    if (existingUrls.has(img.image_url)) return;
+    const currentCount = slider.querySelectorAll('.ds-slide').length;
+    const slide = document.createElement('div');
+    slide.className = 'ds-slide ds-db-slide';
+    slide.style.display = (hadEmpty && idx === 0) ? '' : 'none';
+    slide.dataset.imgUrl = img.image_url;
+    slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${EVENT_FALLBACK}'" loading="lazy">`;
+    slidesWrap.appendChild(slide);
+
+    const thumb = document.createElement('div');
+    thumb.className = 'ds-thumb ds-db-thumb';
+    const i = currentCount;
+    thumb.onclick = () => detailSliderGo(slider, i);
+    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${EVENT_FALLBACK}'">`;
+    thumbsRow.insertBefore(thumb, addBtn);
+  });
+
+  const total = slider.querySelectorAll('.ds-slide').length;
+  slider.dataset.count = total;
+  if (total > 1 && !slider.querySelector('.ds-nav')) {
+    const main = slider.querySelector('.ds-main');
+    const prev = document.createElement('button');
+    prev.className = 'ds-nav ds-prev'; prev.textContent = '‹';
+    prev.onclick = () => detailSliderStep(slider, -1);
+    const next = document.createElement('button');
+    next.className = 'ds-nav ds-next'; next.textContent = '›';
+    next.onclick = () => detailSliderStep(slider, 1);
+    main.appendChild(prev); main.appendChild(next);
+  }
 }

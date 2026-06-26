@@ -155,11 +155,45 @@ function detailSliderStep(slider, dir) {
   detailSliderGo(slider, idx);
 }
 
-// Stub für Event-Detail (noch nicht implementiert)
-function handleDetailImageUpload(input) {
+// Event-Bild Upload (Weiterleitung an event-detail.js)
+async function handleDetailImageUpload(input) {
   if (!input.files || !input.files[0]) return;
-  showToast('📸 Bild ausgewählt – Upload folgt in Kürze');
+  if (!sb.isLoggedIn()) { input.value = ''; closeAllSheets(); openSheet('auth-sheet'); return; }
+  const file = input.files[0];
   input.value = '';
+  showToast('Bild wird hochgeladen…', '⏳');
+  try {
+    const blob     = await _resizeTableImage(file);
+    const token    = await sb.getValidToken();
+    const ts       = Date.now();
+    const uid      = sb.getUserId();
+    const path     = `${currentEventId}/${uid}_${ts}.jpg`;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/event-images/${path}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
+      body: blob
+    });
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || 'Storage-Upload fehlgeschlagen'); }
+    const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/event-images/${path}`;
+    const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+    const record = {
+      event_id:    currentEventId,
+      uploaded_by: uid,
+      image_url:   imageUrl,
+      status:      isMod ? 'approved' : 'pending',
+      ...(isMod ? { reviewed_by: uid, reviewed_at: new Date().toISOString() } : {})
+    };
+    const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/event_images`, {
+      method: 'POST',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify(record)
+    });
+    if (!ok) throw new Error('Datenbank-Eintrag fehlgeschlagen');
+    showToast(isMod ? 'Bild hochgeladen und sofort freigegeben.' : 'Bild hochgeladen! Wird nach Freigabe sichtbar.', '✅');
+    if (isMod && typeof loadEventImages === 'function') await loadEventImages(currentEventId);
+  } catch(e) {
+    showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
+  }
 }
 
 // ── Platten-Bild Upload ───────────────────────────────────────
@@ -221,7 +255,7 @@ async function _uploadTableImageToStorage(blob, tableId) {
   const path  = `${tableId}/${uid}_${ts}.jpg`;
   const r = await fetch(`${SUPABASE_URL}/storage/v1/object/table-images/${path}`, {
     method:  'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
+    headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
     body:    blob
   });
   if (!r.ok) {
@@ -360,7 +394,7 @@ async function deleteTableImage(slideEl) {
     const token = await sb.getValidToken();
     await fetch(`${SUPABASE_URL}/storage/v1/object/table-images/${storagePath}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` }
     });
   } catch(e) { /* Storage-Fehler ignorieren, DB trotzdem löschen */ }
 
