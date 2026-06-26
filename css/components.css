@@ -140,9 +140,10 @@
   position: relative;
 }
 .ev-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ev-thumb-casual  { background: linear-gradient(135deg,#4caf50,#1b5e20); }
-.ev-thumb-training { background: linear-gradient(135deg,#1e88e5,#0d47a1); }
-.ev-thumb-ranked  { background: linear-gradient(135deg,#fb8c00,#e65100); }
+.ev-thumb-casual      { background: linear-gradient(135deg,#4caf50,#1b5e20); }
+.ev-thumb-training    { background: linear-gradient(135deg,#1e88e5,#0d47a1); }
+.ev-thumb-ranked      { background: linear-gradient(135deg,#fb8c00,#e65100); }
+.ev-thumb-punktspiel  { background: linear-gradient(135deg,#e05252,#8b1a1a); }
 .ev-date-overlay {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: rgba(0,0,0,0.52); text-align: center; padding: 2px 0;

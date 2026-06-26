@@ -80,9 +80,14 @@ function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const c = document.getElementById('events-list');
   function gameCard(e, idx) {
+    const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
+      : e.type === 'casual'     ? 'images/placeholders/thumbnail-justforfun.png'
+      : null;
     const thumbInner = (e.photos && e.photos.length)
       ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
-      : `<div class="thumb-empty">🏓</div>`;
+      : thumbFallback
+        ? `<img src="${thumbFallback}" loading="lazy">`
+        : `<div class="thumb-empty">🏓</div>`;
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
       <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>

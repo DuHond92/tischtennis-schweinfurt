@@ -53,8 +53,13 @@ function showEventDetail(eventId) {
   if(!ev) return;
   currentEventId = eventId;
 
-  // Bild-Slider
-  document.getElementById('eds-slider').innerHTML = buildEventSlider(ev.photos || null);
+  // Bild-Slider – Punktspiel-Placeholder wenn kein Foto hochgeladen
+  const sliderPhotos = (ev.photos && ev.photos.length)
+    ? ev.photos
+    : ev.type === 'punktspiel' ? ['images/placeholders/thumbnail-punktspiel.png']
+    : ev.type === 'casual'     ? ['images/placeholders/thumbnail-justforfun.png']
+    : null;
+  document.getElementById('eds-slider').innerHTML = buildEventSlider(sliderPhotos);
 
   // Titel
   document.getElementById('eds-title').textContent = ev.name;
