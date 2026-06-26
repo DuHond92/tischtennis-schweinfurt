@@ -548,6 +548,48 @@
   background: var(--surface2); display: flex; align-items: center;
   justify-content: center; font-size: 1.5rem; flex-shrink: 0;
 }
+
+/* "+ X weitere" Expand-Button */
+.inbox-expand-btn {
+  display: block; width: 100%;
+  padding: 10px 20px;
+  background: none; border: none;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--primary); cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.inbox-expand-btn:hover  { background: var(--surface2); }
+.inbox-expand-btn:active { background: var(--primary-bg, rgba(0,0,0,0.05)); }
+
+/* Archiv-Zeile ganz unten */
+.inbox-archive-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px;
+  cursor: pointer;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.inbox-archive-row:hover  { background: var(--surface2); }
+.inbox-archive-row:active { background: var(--primary-bg, rgba(0,0,0,0.05)); }
+.inbox-archive-icon  { font-size: 1.2rem; flex-shrink: 0; }
+.inbox-archive-label { flex: 1; font-size: 0.88rem; color: var(--text-dim); font-weight: 500; }
+.inbox-archive-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; border-radius: 11px;
+  background: var(--surface2); color: var(--text-dim);
+  font-size: 0.72rem; font-weight: 700; padding: 0 6px;
+}
+.inbox-archive-chevron { font-size: 1.2rem; color: var(--text-xdim, var(--text-dim)); }
+
+/* Archiv-Detail (inline eingeklappt unterhalb der Archiv-Zeile) */
+.inbox-archive-detail {
+  border-top: 1px dashed var(--border);
+  padding-bottom: 8px;
+}
+
 .pp-clickable { cursor: pointer; }
 
 /* notif-badge also used on dm-badge — no extra styles needed */

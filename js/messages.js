@@ -8,17 +8,21 @@ let _dmPartnerEmoji = '';
 let _dmPollTimer    = null;
 let _dmUnreadCount  = 0;
 
+// Expand-Zustand pro Kategorie (bleibt innerhalb einer Session erhalten)
+let _inboxExpanded  = {};
+// Archivierte Events — wird beim Rendern befüllt und für openArchivedChats genutzt
+let _archivedEvents = [];
+
+const INBOX_PREVIEW  = 3;      // sichtbare Chats pro Kategorie bevor "mehr"
+const ARCHIVE_DAYS   = 14;     // Events nach X Tagen archivieren
+
 // ── Badge ──────────────────────────────────────────────────────
 function updateDmBadge(n) {
   _dmUnreadCount = n || 0;
   const el = document.getElementById('dm-badge');
   if (!el) return;
-  if (_dmUnreadCount > 0) {
-    el.textContent = _dmUnreadCount > 9 ? '9+' : String(_dmUnreadCount);
-    el.style.display = '';
-  } else {
-    el.style.display = 'none';
-  }
+  el.textContent  = _dmUnreadCount > 9 ? '9+' : String(_dmUnreadCount);
+  el.style.display = _dmUnreadCount > 0 ? '' : 'none';
 }
 
 async function checkDmNotifications() {
@@ -38,7 +42,7 @@ async function openInbox() {
   await renderInboxChats();
 }
 
-// ── Inbox rendern: drei Kategorien ────────────────────────────
+// ── Inbox rendern ─────────────────────────────────────────────
 async function renderInboxChats() {
   const el = document.getElementById('inbox-body');
   if (!el) return;
@@ -58,10 +62,9 @@ async function renderInboxChats() {
     _loadEventConversations(uid)
   ]);
 
-  // ── Spielpartner (1:1 DMs) ──────────────────────────────────
+  // ── Spielpartner (DMs) — werden NIE archiviert ──────────────
   const dmConvs = _groupDmsByPartner(dmMessages, uid);
 
-  // Profile für DM-Partner
   let dmProfiles = {};
   const partnerIds = dmConvs.map(c => c.partnerId).filter(Boolean);
   if (partnerIds.length) {
@@ -72,33 +75,124 @@ async function renderInboxChats() {
     } catch(e) {}
   }
 
-  // Unread-Badge im Topbar aktualisieren
-  const totalDmUnread = dmConvs.reduce((s, c) => s + c.unread, 0);
-  updateDmBadge(totalDmUnread);
+  updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
 
-  // ── Event-Kategorien aufteilen ──────────────────────────────
-  const spielrunden = eventData.filter(e => e.mode !== 'player_search');
-  const mitgesuch   = eventData.filter(e => e.mode === 'player_search');
+  // ── Archiv-Grenzwert ────────────────────────────────────────
+  const archiveBefore = Date.now() - ARCHIVE_DAYS * 86_400_000;
 
-  // ── HTML zusammenbauen ─────────────────────────────────────
+  // Spielrunden: Events mit Datum > 14 Tage in der Vergangenheit → Archiv
+  const allSpielrunden  = eventData.filter(e => e.mode !== 'player_search');
+  const spielrunden     = allSpielrunden.filter(e => !_isArchivedEvent(e, archiveBefore));
+  const archSpielrunden = allSpielrunden.filter(e =>  _isArchivedEvent(e, archiveBefore));
+
+  // Mitspieler-Gesuche: vorerst nach Datum archivieren (gleiche Regel);
+  // später erweiterbar um Status-Feld (z. B. status='closed')
+  const allMitgesuch  = eventData.filter(e => e.mode === 'player_search');
+  const mitgesuch     = allMitgesuch.filter(e => !_isArchivedEvent(e, archiveBefore));
+  const archMitgesuch = allMitgesuch.filter(e =>  _isArchivedEvent(e, archiveBefore));
+
+  // Archivliste merken (für openArchivedChats)
+  _archivedEvents = [...archSpielrunden, ...archMitgesuch];
+
+  // ── HTML aufbauen ───────────────────────────────────────────
+  const renderDm = c => _renderDmRow(c, dmProfiles, uid);
   let html = '';
 
-  if (dmConvs.length) {
-    html += `<div class="inbox-section-label">👤 Spielpartner</div>`;
-    html += dmConvs.map(c => _renderDmRow(c, dmProfiles, uid)).join('');
+  html += _renderSection('spielpartner', '👤 Spielpartner',      dmConvs,    renderDm);
+  html += _renderSection('spielrunden',  '🏓 Spielrunden',       spielrunden, _renderEventRow);
+  html += _renderSection('mitgesuch',    '🔍 Mitspieler gesucht', mitgesuch,  _renderEventRow);
+
+  if (!html) {
+    html = _inboxEmpty('💬', 'Noch keine Unterhaltungen.<br>Schreib einem Spielpartner!');
   }
 
-  if (spielrunden.length) {
-    html += `<div class="inbox-section-label">🏓 Spielrunden</div>`;
-    html += spielrunden.map(e => _renderEventRow(e)).join('');
+  // Archiv-Zeile (immer ganz unten)
+  html += _renderArchiveRow(_archivedEvents.length);
+
+  el.innerHTML = html;
+}
+
+// ── Archivierungs-Logik ───────────────────────────────────────
+
+function _isArchivedEvent(event, archiveBefore) {
+  if (!event.event_date) return false;
+  return new Date(event.event_date).getTime() < archiveBefore;
+}
+
+// ── Kollabierbare Sektions-Renderer ──────────────────────────
+
+function _renderSection(key, label, items, renderFn) {
+  if (!items.length) return '';
+
+  const visible  = items.slice(0, INBOX_PREVIEW);
+  const hidden   = items.slice(INBOX_PREVIEW);
+  const expanded = _inboxExpanded[key] || false;
+
+  let html = `<div class="inbox-section-label">${label}</div>`;
+  html += visible.map(renderFn).join('');
+
+  if (hidden.length) {
+    const moreStyle = expanded ? '' : 'style="display:none;"';
+    html += `<div id="inbox-more-${key}" ${moreStyle}>`;
+    html += hidden.map(renderFn).join('');
+    html += `</div>`;
+
+    const btnLabel = expanded
+      ? 'Weniger anzeigen ↑'
+      : `+ ${hidden.length} weitere`;
+    html += `<button class="inbox-expand-btn"
+      data-key="${key}"
+      data-hidden="${hidden.length}"
+      onclick="toggleInboxSection('${key}', this)">${btnLabel}</button>`;
   }
 
-  if (mitgesuch.length) {
-    html += `<div class="inbox-section-label">🔍 Mitspieler gesucht</div>`;
-    html += mitgesuch.map(e => _renderEventRow(e)).join('');
+  return html;
+}
+
+function toggleInboxSection(key, btn) {
+  _inboxExpanded[key] = !_inboxExpanded[key];
+  const moreEl = document.getElementById('inbox-more-' + key);
+  if (moreEl) moreEl.style.display = _inboxExpanded[key] ? '' : 'none';
+  if (btn) btn.textContent = _inboxExpanded[key]
+    ? 'Weniger anzeigen ↑'
+    : `+ ${btn.dataset.hidden} weitere`;
+}
+
+// ── Archiv-Zeile ──────────────────────────────────────────────
+
+function _renderArchiveRow(count) {
+  if (!count) return '';
+  return `
+    <div class="inbox-archive-row" onclick="openArchivedChats()">
+      <span class="inbox-archive-icon">📦</span>
+      <span class="inbox-archive-label">Archivierte Unterhaltungen</span>
+      <span class="inbox-archive-badge">${count}</span>
+      <span class="inbox-archive-chevron">›</span>
+    </div>`;
+}
+
+function openArchivedChats() {
+  // Volle Archiv-Ansicht wird in einer späteren Version implementiert.
+  // Vorerst: direkte Einblendung unterhalb der Archiv-Zeile.
+  const row = document.querySelector('.inbox-archive-row');
+  if (!row) return;
+
+  const existing = document.getElementById('inbox-archive-detail');
+  if (existing) { existing.remove(); return; }
+
+  const detail = document.createElement('div');
+  detail.id = 'inbox-archive-detail';
+  detail.className = 'inbox-archive-detail';
+
+  if (!_archivedEvents.length) {
+    detail.innerHTML = _inboxEmpty('📭', 'Keine archivierten Unterhaltungen.');
+  } else {
+    detail.innerHTML =
+      `<div class="inbox-section-label" style="padding-top:12px;">Archiv</div>` +
+      _archivedEvents.map(_renderEventRow).join('');
   }
 
-  el.innerHTML = html || _inboxEmpty('💬', 'Noch keine Unterhaltungen.<br>Schreib einem Spielpartner!');
+  row.insertAdjacentElement('afterend', detail);
 }
 
 // ── Datenlader ────────────────────────────────────────────────
@@ -112,7 +206,6 @@ async function _loadDmMessages(uid) {
 }
 
 async function _loadEventConversations(uid) {
-  // Events bei denen der Nutzer teilnimmt oder die er erstellt hat
   let eventIds = [];
   try {
     const url = `${SUPABASE_URL}/rest/v1/event_participants?select=event_id&user_id=eq.${uid}`;
@@ -120,18 +213,17 @@ async function _loadEventConversations(uid) {
     if (Array.isArray(data)) eventIds = data.map(r => r.event_id).filter(Boolean);
   } catch(e) {}
 
-  // Eigene Mitspieler-Gesuche ergänzen (Creator, auch ohne Teilnahme-Eintrag)
+  // Eigene Mitspieler-Gesuche ergänzen (Creator ohne eigenen Teilnahme-Eintrag)
   try {
     const url = `${SUPABASE_URL}/rest/v1/events?select=id&creator_id=eq.${uid}&mode=eq.player_search`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (Array.isArray(data)) {
-      data.forEach(r => { if (!eventIds.includes(r.id)) eventIds.push(r.id); });
-    }
+    if (Array.isArray(data)) data.forEach(r => {
+      if (!eventIds.includes(r.id)) eventIds.push(r.id);
+    });
   } catch(e) {}
 
   if (!eventIds.length) return [];
 
-  // Events laden
   let events = [];
   try {
     const url = `${SUPABASE_URL}/rest/v1/events?select=id,title,mode,event_date&id=in.(${eventIds.join(',')})`;
@@ -144,27 +236,19 @@ async function _loadEventConversations(uid) {
   try {
     const url = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id,message,created_at,profiles(username,avatar_emoji,avatar_url)&event_id=in.(${eventIds.join(',')})&order=created_at.desc&limit=${eventIds.length * 5}`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (Array.isArray(data)) {
-      data.forEach(m => {
-        if (!lastMsgs[m.event_id]) lastMsgs[m.event_id] = m;
-      });
-    }
+    if (Array.isArray(data)) data.forEach(m => {
+      if (!lastMsgs[m.event_id]) lastMsgs[m.event_id] = m;
+    });
   } catch(e) {}
 
-  // Ungelesene Event-Nachrichten aus pendingNotifs
+  // Ungelesene Benachrichtigungen aus pendingNotifs
   const unreadByEvent = {};
-  const notifs = typeof pendingNotifs !== 'undefined' ? pendingNotifs : [];
-  notifs.forEach(m => {
+  (typeof pendingNotifs !== 'undefined' ? pendingNotifs : []).forEach(m => {
     unreadByEvent[m.event_id] = (unreadByEvent[m.event_id] || 0) + 1;
   });
 
-  // Events mit Metadaten anreichern, nach letzter Nachricht sortieren
   return events
-    .map(e => ({
-      ...e,
-      lastMsg:  lastMsgs[e.id] || null,
-      unread:   unreadByEvent[e.id] || 0
-    }))
+    .map(e => ({ ...e, lastMsg: lastMsgs[e.id] || null, unread: unreadByEvent[e.id] || 0 }))
     .sort((a, b) => {
       const ta = a.lastMsg?.created_at || a.event_date || '';
       const tb = b.lastMsg?.created_at || b.event_date || '';
@@ -187,17 +271,17 @@ function _groupDmsByPartner(messages, uid) {
 }
 
 function _renderDmRow(c, profiles, uid) {
-  const p       = profiles[c.partnerId] || { id: c.partnerId, username: 'Spieler' };
-  const av      = getAvatarHtml(p, { size: 56 });
-  const nm      = escHtml(p.username || 'Spieler');
-  const pid     = escAttr(c.partnerId);
-  const pnm     = escAttr(p.username || 'Spieler');
-  const pem     = escAttr(p.avatar_emoji || '');
-  const isMine  = c.lastMsg.sender_id === uid;
-  const preview = c.lastMsg.message.length > 60
+  const p      = profiles[c.partnerId] || { id: c.partnerId, username: 'Spieler' };
+  const av     = getAvatarHtml(p, { size: 56 });
+  const nm     = escHtml(p.username || 'Spieler');
+  const pid    = escAttr(c.partnerId);
+  const pnm    = escAttr(p.username || 'Spieler');
+  const pem    = escAttr(p.avatar_emoji || '');
+  const isMine = c.lastMsg.sender_id === uid;
+  const prev   = c.lastMsg.message.length > 60
     ? c.lastMsg.message.slice(0, 60) + '…' : c.lastMsg.message;
-  const time    = _dmTime(c.lastMsg.created_at);
-  const hasNew  = c.unread > 0;
+  const time   = _dmTime(c.lastMsg.created_at);
+  const hasNew = c.unread > 0;
   return `
     <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}')">
       <div class="inbox-conv-av">${av}</div>
@@ -208,7 +292,7 @@ function _renderDmRow(c, profiles, uid) {
         </div>
         <div class="inbox-conv-bottom">
           <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">
-            ${isMine ? '<span class="inbox-conv-mine">Du: </span>' : ''}${escHtml(preview)}
+            ${isMine ? '<span class="inbox-conv-mine">Du: </span>' : ''}${escHtml(prev)}
           </div>
           ${hasNew ? `<span class="inbox-conv-badge">${c.unread > 9 ? '9+' : c.unread}</span>` : ''}
         </div>
@@ -217,14 +301,14 @@ function _renderDmRow(c, profiles, uid) {
 }
 
 function _renderEventRow(e) {
-  const last    = e.lastMsg;
-  const sender  = last?.profiles?.username || '';
-  const preview = last
+  const last   = e.lastMsg;
+  const sender = last?.profiles?.username || '';
+  const prev   = last
     ? (sender ? sender + ': ' : '') + (last.message.length > 55 ? last.message.slice(0, 55) + '…' : last.message)
     : 'Noch keine Nachrichten';
-  const time    = last ? _dmTime(last.created_at) : '';
-  const hasNew  = e.unread > 0;
-  const avHtml  = last?.profiles
+  const time   = last ? _dmTime(last.created_at) : '';
+  const hasNew = e.unread > 0;
+  const avHtml = last?.profiles
     ? getAvatarHtml(last.profiles, { size: 56 })
     : `<div class="inbox-event-av">${e.mode === 'player_search' ? '🔍' : '🏓'}</div>`;
   return `
@@ -236,7 +320,7 @@ function _renderEventRow(e) {
           <div class="inbox-conv-time${hasNew ? ' inbox-conv-time-bold' : ''}">${time}</div>
         </div>
         <div class="inbox-conv-bottom">
-          <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">${escHtml(preview)}</div>
+          <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">${escHtml(prev)}</div>
           ${hasNew ? `<span class="inbox-conv-badge">${e.unread > 9 ? '9+' : e.unread}</span>` : ''}
         </div>
       </div>
@@ -245,8 +329,7 @@ function _renderEventRow(e) {
 
 function _inboxEmpty(icon, text, dim) {
   return `<div class="inbox-empty${dim ? ' inbox-empty-dim' : ''}">
-    <div class="inbox-empty-icon">${icon}</div>
-    <div>${text}</div>
+    <div class="inbox-empty-icon">${icon}</div><div>${text}</div>
   </div>`;
 }
 
@@ -318,7 +401,7 @@ function _renderDmMessages(messages) {
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     let sep = '';
     if (msgDate !== lastDate) {
-      sep      = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
+      sep = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
       lastDate = msgDate;
     }
     return `${sep}<div class="dm-msg ${isMine ? 'dm-mine' : 'dm-theirs'}">
@@ -378,7 +461,7 @@ function _dmTime(isoStr) {
   if (diff < 60)    return 'Gerade';
   if (diff < 3600)  return `${Math.floor(diff / 60)} Min.`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} Std.`;
-  const d = new Date(isoStr);
+  const d     = new Date(isoStr);
   const today = new Date();
   if (d.getFullYear() === today.getFullYear())
     return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
