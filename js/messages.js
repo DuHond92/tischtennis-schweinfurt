@@ -494,7 +494,8 @@ async function loadDmMessages() {
 function _renderDmMessages(messages) {
   const el  = document.getElementById('dm-feed');
   if (!el) return;
-  const uid = sb.getUserId();
+  const uid   = sb.getUserId();
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if (!messages.length) {
     el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
     return;
@@ -504,6 +505,7 @@ function _renderDmMessages(messages) {
     const isMine  = m.sender_id === uid;
     const msgDate = new Date(m.created_at).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteDm('${escAttr(m.id)}')">🗑</button>` : '';
     let sep = '';
     if (msgDate !== lastDate) {
       sep = `<div class="dm-date-sep"><span>${msgDate}</span></div>`;
@@ -511,10 +513,21 @@ function _renderDmMessages(messages) {
     }
     return `${sep}<div class="dm-msg ${isMine ? 'dm-mine' : 'dm-theirs'}">
       <div class="dm-bubble">${escHtml(m.message)}</div>
-      <div class="dm-meta">${time}</div>
+      <div class="dm-meta">${time}${del}</div>
     </div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
+}
+
+async function deleteDm(messageId) {
+  if (!confirm('Nachricht wirklich löschen?')) return;
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/direct_messages?id=eq.${encodeURIComponent(messageId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  showToast('Nachricht gelöscht');
+  await loadDmMessages();
 }
 
 async function sendDm() {
