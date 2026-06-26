@@ -13,6 +13,25 @@ let _inboxExpanded  = {};
 // Archivierte Events — wird beim Rendern befüllt und für openArchivedChats genutzt
 let _archivedEvents = [];
 
+// Lösch-Dialog Zustand
+let _pendingDeleteType = null;
+let _pendingDeleteId   = null;
+
+// ── localStorage: nutzerspezifisch gelöschte Chats ────────────
+function _getHiddenChats() {
+  try { return JSON.parse(localStorage.getItem('tt_hidden_chats') || '[]'); } catch { return []; }
+}
+function _hideChat(type, id) {
+  const list = _getHiddenChats();
+  const key  = String(id);
+  if (!list.find(h => h.type === type && h.id === key))
+    list.push({ type, id: key });
+  localStorage.setItem('tt_hidden_chats', JSON.stringify(list));
+}
+function _isChatHidden(type, id) {
+  return _getHiddenChats().some(h => h.type === type && h.id === String(id));
+}
+
 const INBOX_PREVIEW  = 3;      // sichtbare Chats pro Kategorie bevor "mehr"
 const ARCHIVE_DAYS   = 14;     // Events nach X Tagen archivieren
 
@@ -189,10 +208,67 @@ function openArchivedChats() {
   } else {
     detail.innerHTML =
       `<div class="inbox-section-label" style="padding-top:12px;">Archiv</div>` +
-      _archivedEvents.map(_renderEventRow).join('');
+      _archivedEvents.map(e => _renderEventRow(e, true)).join('');
   }
 
   row.insertAdjacentElement('afterend', detail);
+}
+
+// ── Löschen: Bestätigungs-Dialog ──────────────────────────────
+
+function initDeleteChat(type, id, name) {
+  _pendingDeleteType = type;
+  _pendingDeleteId   = String(id);
+
+  let dlg = document.getElementById('inbox-delete-dlg');
+  if (!dlg) {
+    dlg = document.createElement('div');
+    dlg.id = 'inbox-delete-dlg';
+    document.body.appendChild(dlg);
+  }
+  dlg.innerHTML = `
+    <div class="idlg-backdrop" onclick="cancelDeleteChat()"></div>
+    <div class="idlg-box">
+      <div class="idlg-title">Chat löschen?</div>
+      <div class="idlg-body">„${escHtml(name)}" wird nur aus <b>deiner</b> Liste entfernt.
+        Nachrichten anderer Teilnehmer bleiben unberührt.</div>
+      <div class="idlg-actions">
+        <button class="idlg-btn-cancel" onclick="cancelDeleteChat()">Abbrechen</button>
+        <button class="idlg-btn-delete" onclick="confirmDeleteChat()">Löschen</button>
+      </div>
+    </div>`;
+  dlg.style.display = 'flex';
+}
+
+function cancelDeleteChat() {
+  const dlg = document.getElementById('inbox-delete-dlg');
+  if (dlg) dlg.style.display = 'none';
+  _pendingDeleteType = null;
+  _pendingDeleteId   = null;
+}
+
+function confirmDeleteChat() {
+  if (!_pendingDeleteType || !_pendingDeleteId) return;
+  _hideChat(_pendingDeleteType, _pendingDeleteId);
+  cancelDeleteChat();
+  // Archiv-Detail neu rendern ohne vollen Reload
+  const detail = document.getElementById('inbox-archive-detail');
+  if (detail) {
+    const remaining = _archivedEvents.filter(e => !_isChatHidden('event', e.id));
+    if (!remaining.length) {
+      detail.remove();
+      document.querySelector('.inbox-archive-row')?.remove();
+    } else {
+      detail.innerHTML =
+        `<div class="inbox-section-label" style="padding-top:12px;">Archiv</div>` +
+        remaining.map(e => _renderEventRow(e, true)).join('');
+      // Badge aktualisieren
+      const badge = document.querySelector('.inbox-archive-badge');
+      if (badge) badge.textContent = remaining.length;
+    }
+  } else {
+    renderInboxChats();
+  }
 }
 
 // ── Datenlader ────────────────────────────────────────────────
@@ -249,6 +325,7 @@ async function _loadEventConversations(uid) {
 
   return events
     .map(e => ({ ...e, lastMsg: lastMsgs[e.id] || null, unread: unreadByEvent[e.id] || 0 }))
+    .filter(e => !_isChatHidden('event', e.id))
     .sort((a, b) => {
       const ta = a.lastMsg?.created_at || a.event_date || '';
       const tb = b.lastMsg?.created_at || b.event_date || '';
@@ -265,9 +342,9 @@ function _groupDmsByPartner(messages, uid) {
     if (!convMap[partnerId]) convMap[partnerId] = { partnerId, lastMsg: m, unread: 0 };
     if (m.receiver_id === uid && !m.read_at) convMap[partnerId].unread++;
   });
-  return Object.values(convMap).sort(
-    (a, b) => new Date(b.lastMsg.created_at) - new Date(a.lastMsg.created_at)
-  );
+  return Object.values(convMap)
+    .filter(c => !_isChatHidden('dm', c.partnerId))
+    .sort((a, b) => new Date(b.lastMsg.created_at) - new Date(a.lastMsg.created_at));
 }
 
 function _renderDmRow(c, profiles, uid) {
@@ -300,7 +377,7 @@ function _renderDmRow(c, profiles, uid) {
     </div>`;
 }
 
-function _renderEventRow(e) {
+function _renderEventRow(e, deletable = false) {
   const last   = e.lastMsg;
   const sender = last?.profiles?.username || '';
   const prev   = last
@@ -311,8 +388,19 @@ function _renderEventRow(e) {
   const avHtml = last?.profiles
     ? getAvatarHtml(last.profiles, { size: 56 })
     : `<div class="inbox-event-av">${e.mode === 'player_search' ? '🔍' : '🏓'}</div>`;
+  const title  = escAttr(e.title || 'Spielrunde');
+  const delBtn = deletable ? `
+    <button class="inbox-delete-btn" title="Aus Archiv entfernen"
+      onclick="event.stopPropagation();initDeleteChat('event','${e.id}','${title}')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+    </button>` : '';
   return `
-    <div class="inbox-conv-row" onclick="closeAllSheets();openNotifEvent(${e.id})">
+    <div class="inbox-conv-row${deletable ? ' inbox-conv-row-arch' : ''}" onclick="closeAllSheets();openNotifEvent(${e.id})">
       <div class="inbox-conv-av">${avHtml}</div>
       <div class="inbox-conv-body">
         <div class="inbox-conv-top">
@@ -324,6 +412,7 @@ function _renderEventRow(e) {
           ${hasNew ? `<span class="inbox-conv-badge">${e.unread > 9 ? '9+' : e.unread}</span>` : ''}
         </div>
       </div>
+      ${delBtn}
     </div>`;
 }
 

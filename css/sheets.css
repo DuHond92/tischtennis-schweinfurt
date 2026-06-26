@@ -592,4 +592,60 @@
 
 .pp-clickable { cursor: pointer; }
 
+/* Papierkorb-Button in archivierten Zeilen */
+.inbox-conv-row-arch { position: relative; }
+.inbox-delete-btn {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  background: none; border: none;
+  color: var(--text-xdim, var(--text-dim)); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; transition: background 0.15s, color 0.15s;
+}
+.inbox-delete-btn:hover  { background: rgba(239,68,68,0.1); color: var(--red, #EF4444); }
+.inbox-delete-btn:active { background: rgba(239,68,68,0.2); }
+
+/* Bestätigungs-Dialog (Bottom-Sheet über allem) */
+#inbox-delete-dlg {
+  position: fixed; inset: 0; z-index: 1100;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.idlg-backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+}
+.idlg-box {
+  position: relative; width: 100%; max-width: 430px;
+  background: var(--surface);
+  border-radius: var(--radius-lg, 20px) var(--radius-lg, 20px) 0 0;
+  padding: 24px 20px max(28px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 14px;
+  animation: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.idlg-title {
+  font-family: var(--font-head, sans-serif);
+  font-size: 1.05rem; font-weight: 800; color: var(--text);
+}
+.idlg-body {
+  font-size: 0.88rem; color: var(--text-dim); line-height: 1.5;
+}
+.idlg-actions { display: flex; flex-direction: column; gap: 8px; }
+.idlg-btn-cancel {
+  width: 100%; padding: 13px;
+  background: var(--surface2); border: none; border-radius: 12px;
+  font-size: 0.92rem; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: background 0.15s;
+}
+.idlg-btn-cancel:hover { background: var(--border); }
+.idlg-btn-delete {
+  width: 100%; padding: 13px;
+  background: var(--red, #EF4444); border: none; border-radius: 12px;
+  font-size: 0.92rem; font-weight: 700; color: #fff;
+  cursor: pointer; transition: filter 0.15s;
+}
+.idlg-btn-delete:hover { filter: brightness(1.1); }
+
 /* notif-badge also used on dm-badge — no extra styles needed */
