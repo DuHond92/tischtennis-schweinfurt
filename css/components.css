@@ -740,6 +740,12 @@
 }
 .comment-author { font-weight: 700; font-size: 0.82rem; color: var(--text); }
 .comment-date { font-size: 0.7rem; color: var(--text-xdim); margin-left: auto; }
+.comment-delete-btn {
+  background: none; border: none; cursor: pointer; padding: 2px 4px;
+  color: var(--text-xdim); font-size: 0.85rem; border-radius: 4px;
+  line-height: 1; flex-shrink: 0; transition: color 0.15s;
+}
+.comment-delete-btn:hover { color: #e53935; }
 .comment-text { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
 
 /* OSM Loading state */
@@ -891,6 +897,7 @@
 .tds-comment-meta span { font-weight: 400; opacity: 0.75; }
 .tds-comment-text { font-size: 0.82rem; color: var(--text); line-height: 1.4; word-break: break-word; }
 .tds-comment-btn { margin-top: 10px; }
+.tds-comment-row .comment-delete-btn { align-self: flex-start; margin-left: auto; }
 .tds-loading, .tds-no-comments { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
 
 /* Rate Button im Detail */

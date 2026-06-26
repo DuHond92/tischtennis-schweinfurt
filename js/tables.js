@@ -503,6 +503,7 @@ function renderKingOfPlate(tableId, kings) {
 async function loadCommentsInline(tableId) {
   const el = document.getElementById(`tds-comments-${tableId}`);
   if(!el) return;
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   try {
     const qb = new QueryBuilder('comments');
     qb._select = 'id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
@@ -516,12 +517,14 @@ async function loadCommentsInline(tableId) {
       const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
       const av   = getAvatarContent(c.profiles);
       const name = c.profiles?.username || 'Anonym';
+      const del  = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','inline')">🗑</button>` : '';
       return `<div class="tds-comment-row">
         <div class="tds-comment-av">${av}</div>
         <div class="tds-comment-body">
           <div class="tds-comment-meta">${escHtml(name)} <span>· ${date}</span></div>
           <div class="tds-comment-text">${escHtml(c.text)}</div>
         </div>
+        ${del}
       </div>`;
     }).join('');
   } catch(e) {
@@ -549,6 +552,7 @@ async function openComments(tableId) {
 
 function renderComments(comments) {
   const el = document.getElementById('comment-list');
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if(!comments.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
       Noch keine Kommentare.<br>Sei der Erste! 💬</div>`;
@@ -556,15 +560,29 @@ function renderComments(comments) {
   }
   el.innerHTML = comments.map(c => {
     const date = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+    const del  = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','sheet')">🗑</button>` : '';
     return `<div class="comment-item">
       <div class="comment-header">
         <div class="comment-avatar">${getAvatarContent(c.profiles)}</div>
         <div class="comment-author">${c.profiles?.username||'Anonym'}</div>
         <div class="comment-date">${date}</div>
+        ${del}
       </div>
       <div class="comment-text">${c.text}</div>
     </div>`;
   }).join('');
+}
+
+async function deleteComment(commentId, context) {
+  if (!confirm('Kommentar wirklich löschen?')) return;
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/comments?id=eq.${encodeURIComponent(commentId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  showToast('Kommentar gelöscht');
+  if (context === 'sheet') openComments(currentDetailTableId);
+  else loadCommentsInline(currentDetailTableId);
 }
 
 async function submitComment() {
