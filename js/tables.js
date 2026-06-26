@@ -178,7 +178,13 @@ async function handleTableImageUpload(input) {
     const blob     = await _resizeTableImage(file);
     const imageUrl = await _uploadTableImageToStorage(blob, currentDetailTableId);
     await _saveTableImageRecord(currentDetailTableId, imageUrl);
-    showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
+    const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+    if (isMod) {
+      showToast('Bild hochgeladen und sofort freigegeben.', '✅');
+      await loadTableImages(currentDetailTableId);
+    } else {
+      showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
+    }
   } catch(e) {
     console.error('Table image upload error:', e);
     showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
@@ -226,13 +232,19 @@ async function _uploadTableImageToStorage(blob, tableId) {
 }
 
 async function _saveTableImageRecord(tableId, imageUrl) {
-  const qb = new QueryBuilder('table_images');
-  const { data, error } = await qb.insert({
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const record = {
     table_id:    tableId,
     uploaded_by: sb.getUserId(),
     image_url:   imageUrl,
-    status:      'pending'
-  });
+    status:      isMod ? 'approved' : 'pending',
+  };
+  if (isMod) {
+    record.reviewed_by = sb.getUserId();
+    record.reviewed_at = new Date().toISOString();
+  }
+  const qb = new QueryBuilder('table_images');
+  const { error } = await qb.insert(record);
   if (error) throw new Error('Datenbank-Eintrag fehlgeschlagen: ' + JSON.stringify(error));
 }
 
@@ -275,7 +287,13 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
   const hadEmpty = !!emptySlide;
   if (emptySlide) emptySlide.remove();
 
+  // Skip images already rendered (safe to call multiple times)
+  const existingUrls = new Set(
+    [...slidesWrap.querySelectorAll('.ds-db-slide')].map(el => el.dataset.imgUrl)
+  );
+
   dbImages.forEach((img, dbIdx) => {
+    if (existingUrls.has(img.image_url)) return;
     const currentCount = slider.querySelectorAll('.ds-slide').length;
     const date = new Date(img.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
     const uploader = (uploaderMap && uploaderMap[img.uploaded_by]) || 'Unbekannt';
