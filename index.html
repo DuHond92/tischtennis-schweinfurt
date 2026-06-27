@@ -75,6 +75,9 @@
       </div>
     </div>
 
+    <!-- Willkommenskarte (nur beim ersten Start) -->
+    <div id="home-welcome-card" style="display:none;"></div>
+
     <!-- Mitspieler gesucht (rendered by renderHomePsSection) -->
     <div id="home-ps-section"></div>
 
@@ -224,6 +227,27 @@
 
   <!-- PROFILE -->
   <div class="page" id="page-profile">
+
+    <!-- Nicht eingeloggt -->
+    <div id="profile-guest-view" style="display:none;">
+      <div class="profile-guest">
+        <div class="pg-icon">🏓</div>
+        <div class="pg-title">👋 Willkommen bei PlattenTreff</div>
+        <div class="pg-text">Mit einem kostenlosen Konto kannst du:</div>
+        <ul class="pg-benefits">
+          <li>✓ eigene Spiele erstellen</li>
+          <li>✓ an Spielen teilnehmen</li>
+          <li>✓ Mitspieler kontaktieren</li>
+          <li>✓ dein persönliches Profil verwalten</li>
+        </ul>
+        <button class="pg-btn-primary" onclick="openSheet('auth-sheet');setAuthMode('register')">Kostenlos registrieren</button>
+        <button class="pg-btn-secondary" onclick="openSheet('auth-sheet');setAuthMode('login')">Bereits ein Konto? Anmelden</button>
+      </div>
+    </div>
+
+    <!-- Eingeloggt -->
+    <div id="profile-logged-view" style="display:none;">
+    <div id="profile-setup-hint"></div>
     <div class="profile-top">
       <div class="profile-avatar-wrap" onclick="openAvatarPicker()">
         <div class="profile-avatar" id="profile-avatar-el">😎</div>
@@ -302,6 +326,7 @@
       </div>
     </div>
     <div class="pb-safe"></div>
+    </div><!-- /profile-logged-view -->
   </div>
 
   <!-- MODERATION PAGE -->

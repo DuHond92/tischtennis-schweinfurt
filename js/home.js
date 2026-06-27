@@ -37,7 +37,28 @@
   }, () => {}, { timeout: 8000, maximumAge: CACHE_TTL });
 })();
 
+function initWelcomeCard() {
+  if (localStorage.getItem('tt_welcomed')) return;
+  const el = document.getElementById('home-welcome-card');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="welcome-card">
+      <div class="welcome-card-title">👋 Willkommen bei PlattenTreff</div>
+      <div class="welcome-card-body">Entdecke Tischtennisplatten, finde Mitspieler und verabrede dich spontan zum Spielen.</div>
+      <button class="welcome-card-btn" onclick="dismissWelcomeCard()">Verstanden</button>
+    </div>`;
+  el.style.display = '';
+}
+
+function dismissWelcomeCard() {
+  localStorage.setItem('tt_welcomed', '1');
+  const el = document.getElementById('home-welcome-card');
+  if (el) el.style.display = 'none';
+}
+
 function renderHome() {
+  initWelcomeCard();
+
   // Begrüßung personalisieren
   if(currentUser) {
     document.querySelector('.hero-greeting').textContent =

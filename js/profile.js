@@ -2,7 +2,16 @@
 // ║           PROFIL                                             ║
 // ╚══════════════════════════════════════════════════════════════╝
 function renderProfile() {
-  if(!currentUser) return;
+  const guestView  = document.getElementById('profile-guest-view');
+  const loggedView = document.getElementById('profile-logged-view');
+  if (!currentUser) {
+    if (guestView)  guestView.style.display  = '';
+    if (loggedView) loggedView.style.display = 'none';
+    return;
+  }
+  if (guestView)  guestView.style.display  = 'none';
+  if (loggedView) loggedView.style.display = '';
+  _renderSetupHint(currentUser);
   // Avatar & Name oben
   updateProfileAvatarEl(currentUser);
   document.querySelector('.profile-name').textContent   = currentUser.username||'Spieler';
@@ -25,6 +34,30 @@ function renderProfile() {
     const canMod = currentUser.role === 'moderator' || currentUser.role === 'admin';
     adminItem.style.display = canMod ? '' : 'none';
   }
+}
+
+function _isProfileComplete(u) {
+  const hasAvatar = !!(u.avatar_emoji || u.avatar_url);
+  const hasSkill  = !!(u.skill_level);
+  return hasAvatar && hasSkill;
+}
+
+function _renderSetupHint(u) {
+  const el = document.getElementById('profile-setup-hint');
+  if (!el) return;
+  if (_isProfileComplete(u)) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="profile-setup-card">
+      <div class="psc-title">🎉 Schön, dass du da bist!</div>
+      <div class="psc-body">Vervollständige kurz dein Profil, damit andere Spieler dich besser einschätzen können.</div>
+      <ul class="psc-list">
+        <li>Avatar oder Emoji wählen</li>
+        <li>Anzeigename prüfen</li>
+        <li>Spielniveau auswählen</li>
+        <li>Ort optional ergänzen</li>
+      </ul>
+      <button class="psc-btn" onclick="openSheet('profile-edit-sheet')">Profil bearbeiten</button>
+    </div>`;
 }
 
 async function renderMatchHistory() {
