@@ -53,8 +53,8 @@ function renderHome() {
   scroll.innerHTML = src.slice(0,6).map(t=>{
     const evCount = t.events?.length || FALLBACK_EVENTS.filter(e=>e.tid===t.id).length;
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
-      : `<div class="thumb-empty">🏓</div>`;
+      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/thumbnail-platten-1.png'" loading="lazy">`
+      : `<img src="images/placeholders/thumbnail-platten-1.png" loading="lazy" class="thumb-placeholder-img">`;
     return `
     <div class="map-thumb-card" onclick="showTableDetail(${t.id})">
       <div class="map-thumb-img">

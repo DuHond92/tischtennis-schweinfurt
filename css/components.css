@@ -122,7 +122,17 @@
   overflow: hidden; position: relative;
 }
 .map-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; opacity: .35; }
+.thumb-empty {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef4fb;
+}
+.thumb-placeholder-img {
+  width: 100%; height: 100%;
+  object-fit: contain; object-position: center;
+  background: #eef4fb;
+  display: block;
+}
 
 .map-thumb-badge {
   position: absolute; top: 8px; right: 8px;
@@ -399,7 +409,7 @@
 }
 
 .map-list-item {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: flex-start; gap: 12px;
   padding: 10px 12px; margin: 0 12px 10px;
   background: var(--surface); border-radius: var(--radius);
   border: 1px solid var(--border); box-shadow: var(--shadow-sm);
@@ -409,17 +419,41 @@
   box-shadow: var(--shadow-md); border-color: var(--primary);
 }
 .mli-thumb {
-  flex-shrink: 0; width: 100px; height: 72px;
+  flex-shrink: 0; width: 92px; height: 72px;
   border-radius: 10px; overflow: hidden; background: var(--surface2);
 }
 .mli-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mli-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
-.map-list-info { flex: 1; min-width: 0; }
+.map-list-info { flex: 1; min-width: 0; padding-top: 1px; }
 .map-list-name { font-weight: 700; font-size: 0.88rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .map-list-sub { font-size: 0.73rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.map-list-ev { font-size: 0.72rem; color: var(--accent); font-weight: 700; margin-top: 4px; }
-.mli-dist { color: var(--primary); font-weight: 700; }
-.map-list-chevron { color: var(--text-xdim); font-size: 1.1rem; flex-shrink: 0; }
+.mli-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.mli-dist-badge, .mli-games-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 0.69rem; font-weight: 700;
+}
+.mli-dist-badge { background: var(--green-bg); color: var(--green); }
+.mli-games-badge { background: rgba(239,68,68,0.1); color: #ef4444; }
+.mli-meta { font-size: 0.69rem; color: var(--text-dim); margin-top: 5px; }
+.map-list-chevron { color: var(--text-xdim); font-size: 1.1rem; flex-shrink: 0; padding-top: 4px; }
+
+/* ── Standort-CTA in Plattenlistenansicht ───────────────────────── */
+.mli-loc-cta {
+  display: flex; gap: 12px; align-items: flex-start;
+  margin: 0 12px 12px; padding: 14px;
+  background: var(--green-bg); border-radius: var(--radius);
+  border: 1px solid rgba(34,197,94,0.2);
+}
+.mli-loc-cta-icon { flex-shrink: 0; color: var(--green); margin-top: 2px; }
+.mli-loc-cta-body { flex: 1; min-width: 0; }
+.mli-loc-cta-title { font-weight: 700; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
+.mli-loc-cta-text { font-size: 0.74rem; color: var(--text-dim); line-height: 1.45; margin-bottom: 10px; }
+.mli-loc-cta-btn {
+  display: inline-block; padding: 7px 14px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
 
 /* ======= PAGE: EVENTS ======= */
 .events-header {

@@ -261,7 +261,7 @@ function calcDistance(lat1, lng1, lat2, lng2) {
 }
 
 function formatDistance(m) {
-  return m < 1000 ? `${m}m` : `${(m/1000).toFixed(1)}km`;
+  return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
 function updateDistances() {
@@ -326,29 +326,49 @@ function renderMapList(list) {
     return;
   }
 
-  c.innerHTML = list.map(t => {
-    const evCount  = t.events?.length || 0;
-    const distHtml = t.distance != null
-      ? ` &nbsp;·&nbsp; <span class="mli-dist">${formatDistance(t.distance)}</span>` : '';
+  const _surfaceLabel = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
+
+  const _thumbPlaceholder = `<img src="images/placeholders/thumbnail-platten-1.png" loading="lazy" class="thumb-placeholder-img">`;
+
+  const locCta = (!userLat || !userLng) ? `
+    <div class="mli-loc-cta">
+      <div class="mli-loc-cta-icon">${ic('map-pinned', 22)}</div>
+      <div class="mli-loc-cta-body">
+        <div class="mli-loc-cta-title">Platten in deiner Nähe anzeigen</div>
+        <div class="mli-loc-cta-text">Aktiviere deinen Standort, um Entfernungen zu sehen und schneller eine passende Platte zu finden.</div>
+        <button class="mli-loc-cta-btn" data-action="locate">Standort verwenden</button>
+      </div>
+    </div>` : '';
+
+  c.innerHTML = locCta + list.map(t => {
+    const evCount = t.events?.length || 0;
+    const badgeParts = [];
+    if (t.distance != null) badgeParts.push(`<span class="mli-dist-badge">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>`);
+    if (evCount > 0) badgeParts.push(`<span class="mli-games-badge">${ic('calendar', 11)} ${evCount === 1 ? '1 Spiel geplant' : `${evCount} Spiele geplant`}</span>`);
+    const badgeRow = badgeParts.length ? `<div class="mli-badge-row">${badgeParts.join('')}</div>` : '';
+
+    const metaParts = [];
+    if (t.surface && _surfaceLabel[t.surface]) metaParts.push(_surfaceLabel[t.surface]);
+    metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
+
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
-      : `<div class="thumb-empty">🏓</div>`;
+      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/thumbnail-platten-1.png'" loading="lazy">`
+      : _thumbPlaceholder;
+
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
-      <div class="mli-thumb">
-        ${thumbInner}
-      </div>
+      <div class="mli-thumb">${thumbInner}</div>
       <div class="map-list-info">
-        <div class="mli-title-row">
-          <div class="map-list-name">${t.name}</div>
-          <span class="mli-badge ${t.type==='indoor'?'badge-in':'badge-out'}">${t.type==='indoor'?'Indoor':'Outdoor'}</span>
-        </div>
-        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}${distHtml}</div>
-        ${evCount ? `<div class="map-list-ev">${ic('calendar',13)} ${evCount} Event${evCount>1?'s':''} geplant</div>` : ''}
+        <div class="map-list-name">${t.name}</div>
+        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
+        ${badgeRow}
+        <div class="mli-meta">${metaParts.join(' · ')}</div>
       </div>
       <div class="map-list-chevron">›</div>
     </div>`;
   }).join('');
+
+  c.querySelector('[data-action="locate"]')?.addEventListener('click', locateUser);
 }
 
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
