@@ -70,7 +70,7 @@ function showTableDetail(id) {
       <button class="btn btn-primary btn-full" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
         openSheet('create-event-sheet')">🏓 Spiel organisieren</button>
-      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}','${escAttr(t.name||'')}','${escAttr(t.addr||'')}')">${ic('navigate',15)} In Karten öffnen</button>
+      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}','${_escJs(t.name||'')}','${_escJs(t.addr||'')}')">${ic('navigate',15)} In Karten öffnen</button>
     </div>
     <!-- Kommentare (inline) -->
     <div class="tds-section">
@@ -436,6 +436,11 @@ function _parseCoord(v) {
   return parseFloat(String(v).replace(',', '.'));
 }
 
+// Escapes backslashes and single quotes for use in a JS string inside a double-quoted HTML attribute
+function _escJs(s) {
+  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 function _openWithNativeFallback(appUrl, fallbackUrl) {
   let didHide = false;
   const markHidden = () => { didHide = true; };
@@ -446,57 +451,84 @@ function _openWithNativeFallback(appUrl, fallbackUrl) {
 }
 
 function openMapsDirections(rawLat, rawLng, name, addr) {
+  const lat = _parseCoord(rawLat);
+  const lng = _parseCoord(rawLng);
+  const hasCoords = !isNaN(lat) && !isNaN(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  _showMapsPicker(lat, lng, hasCoords, name, addr);
+}
+
+function _showMapsPicker(lat, lng, hasCoords, name, addr) {
+  document.getElementById('maps-picker-overlay')?.remove();
+
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
-  const lat = _parseCoord(rawLat);
-  const lng = _parseCoord(rawLng);
-  const hasCoords = !isNaN(lat) && !isNaN(lng) &&
-    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  const q = hasCoords ? null : encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
 
-  if (isStandalone) {
-    // PWA/App: Deep Link versuchen, nach 900ms auf HTTPS fallen
-    if (hasCoords) {
-      if (isIOS) {
-        _openWithNativeFallback(
-          `maps://?daddr=${lat},${lng}&dirflg=d`,
-          `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
-        );
-      } else if (isAndroid) {
-        _openWithNativeFallback(
-          `geo:${lat},${lng}?q=${lat},${lng}`,
-          `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-        );
-      } else {
-        window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-      }
-    } else {
-      const q = encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
-      if (isIOS) {
-        _openWithNativeFallback(`maps://?q=${q}`, `https://maps.apple.com/?q=${q}`);
-      } else if (isAndroid) {
-        _openWithNativeFallback(`geo:0,0?q=${q}`, `https://www.google.com/maps/search/?api=1&query=${q}`);
-      } else {
-        window.location.href = `https://www.google.com/maps/search/?api=1&query=${q}`;
-      }
-    }
+  const apps = [];
+  if (isIOS) {
+    apps.push({
+      label: 'Apple Karten', emoji: '🗺️',
+      appUrl: hasCoords ? `maps://?daddr=${lat},${lng}&dirflg=d` : `maps://?q=${q}`,
+      webUrl: hasCoords ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` : `https://maps.apple.com/?q=${q}`,
+    });
+  }
+  apps.push({
+    label: 'Google Maps', emoji: '📍',
+    appUrl: hasCoords
+      ? (isIOS ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `geo:${lat},${lng}?q=${lat},${lng}`)
+      : (isIOS ? null : `geo:0,0?q=${q}`),
+    webUrl: hasCoords
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${q}`,
+  });
+  apps.push({
+    label: 'OpenStreetMap', emoji: '🌍',
+    appUrl: null,
+    webUrl: hasCoords
+      ? `https://www.openstreetmap.org/directions?to=${lat},${lng}`
+      : `https://www.openstreetmap.org/search?query=${q}`,
+  });
+
+  const overlay = document.createElement('div');
+  overlay.id = 'maps-picker-overlay';
+  overlay.className = 'maps-picker-overlay';
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay._apps = apps;
+  overlay._isStandalone = isStandalone;
+
+  overlay.innerHTML = `
+    <div class="maps-picker-sheet">
+      <div class="maps-picker-handle"></div>
+      <div class="maps-picker-title">Navigation öffnen mit</div>
+      ${apps.map((app, i) => `
+        <button class="maps-picker-btn" onclick="_pickMapsApp(${i})">
+          <span class="maps-picker-emoji">${app.emoji}</span>
+          <span class="maps-picker-label">${app.label}</span>
+          <span class="maps-picker-arrow">›</span>
+        </button>`).join('')}
+      <button class="maps-picker-cancel" onclick="document.getElementById('maps-picker-overlay')?.remove()">Abbrechen</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.querySelector('.maps-picker-sheet').classList.add('maps-picker-sheet--in'));
+}
+
+function _pickMapsApp(index) {
+  const overlay = document.getElementById('maps-picker-overlay');
+  if (!overlay) return;
+  const app = overlay._apps[index];
+  const isStandalone = overlay._isStandalone;
+  overlay.remove();
+
+  if (isStandalone && app.appUrl) {
+    _openWithNativeFallback(app.appUrl, app.webUrl);
   } else {
-    // Browser: neuen Tab mit HTTPS-URL öffnen
-    let url;
-    if (hasCoords) {
-      url = isIOS
-        ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
-        : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-    } else {
-      const q = encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
-      url = isIOS
-        ? `https://maps.apple.com/?q=${q}`
-        : `https://www.google.com/maps/search/?api=1&query=${q}`;
-    }
-    window.open(url, '_blank', 'noopener');
+    window.open(app.webUrl, '_blank', 'noopener');
   }
 }
 
