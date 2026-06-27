@@ -55,7 +55,7 @@ function typeLabel(type) {
 }
 
 function formatEventDate(e) {
-  const timeStr = e.time ? ` um ${e.time} Uhr` : '';
+  const timeStr = e.time ? `, ${e.time} Uhr` : '';
   if (!e.dateStr) {
     return `${parseInt(e.day, 10)}. ${e.mon}${timeStr}`;
   }

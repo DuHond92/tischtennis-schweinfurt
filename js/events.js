@@ -96,8 +96,8 @@ function renderEventCard(e) {
       <div class="ecb-title-row">
         <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
       </div>
-      <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
       <div class="ecb-title">${e.name}</div>
+      <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
       <div class="ecb-creator">${ic('user',12)} ${e.creatorId
         ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}')">${escHtml(e.creator||'Anonym')}</b>`
         : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
