@@ -514,6 +514,9 @@ function renderMapList(list) {
     const badgeParts = [];
     if (t.distance != null) badgeParts.push(`<span class="mli-dist-badge">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>`);
     if (evCount > 0) badgeParts.push(`<span class="mli-games-badge">${ic('calendar', 11)} ${evCount === 1 ? '1 Spiel geplant' : `${evCount} Spiele geplant`}</span>`);
+    if (t.accessType === 'limited')            badgeParts.push(`<span class="mli-access-badge mli-access-limited">Eingeschränkt</span>`);
+    else if (t.accessType === 'private_or_unclear') badgeParts.push(`<span class="mli-access-badge mli-access-unclear">Zugang unklar</span>`);
+    else if (t.accessType === 'temporarily_closed') badgeParts.push(`<span class="mli-access-badge mli-access-closed">Aktuell geschlossen</span>`);
     const badgeRow = badgeParts.length ? `<div class="mli-badge-row">${badgeParts.join('')}</div>` : '';
 
     const metaParts = [];

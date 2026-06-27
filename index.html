@@ -1231,7 +1231,24 @@
     </div>
     <div class="form-group">
       <label class="form-label">Beschreibung (optional)</label>
-      <textarea class="form-textarea" id="sug-desc" placeholder="Besonderheiten, Öffnungszeiten, Zugangsbeschränkungen…"></textarea>
+      <textarea class="form-textarea" id="sug-desc" placeholder="Besonderheiten…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Zugänglichkeit</label>
+      <select class="form-select" id="sug-access-type">
+        <option value="public">Öffentlich / immer zugänglich</option>
+        <option value="limited">Eingeschränkt (z. B. nur tagsüber)</option>
+        <option value="private_or_unclear">Zugang unklar / eventuell privat</option>
+        <option value="temporarily_closed">Aktuell nicht nutzbar</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Öffnungszeiten (optional)</label>
+      <input class="form-input" id="sug-opening-hours" type="text" placeholder="z. B. Mo–Fr 08:00–18:00">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hinweis zur Zugänglichkeit (optional)</label>
+      <input class="form-input" id="sug-access-note" type="text" placeholder="z. B. Schulhof abends abgeschlossen">
     </div>
     <div class="sug-photo-hint">📷 Foto-Upload folgt in einer späteren Version</div>
     <div style="display:flex;gap:8px;margin-top:16px;">

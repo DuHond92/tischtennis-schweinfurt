@@ -31,6 +31,18 @@ function showTableDetail(id) {
         ${extraInfos.map(i=>`<span style="font-size:0.75rem;color:var(--text-dim);">${i}</span>`).join('')}
        </div>` : '';
 
+  // Zugang-Sektion (neue Felder)
+  const _aLabel = { public:'Öffentlich zugänglich', limited:'Eingeschränkt zugänglich', private_or_unclear:'Zugang unklar', temporarily_closed:'Aktuell geschlossen' };
+  const _aClass = { limited:'tds-access-limited', private_or_unclear:'tds-access-unclear', temporarily_closed:'tds-access-closed' };
+  const showAccess = (t.accessType && t.accessType !== 'public') || t.accessNote || t.openingHours;
+  const accessHtml = showAccess ? `
+    <div class="tds-section tds-access-section">
+      <div class="tds-section-label">${ic('lock',13)} Zugang</div>
+      ${(t.accessType && t.accessType !== 'public') ? `<span class="tds-access-status ${_aClass[t.accessType]||''}">${_aLabel[t.accessType]||''}</span>` : ''}
+      ${t.openingHours ? `<div class="tds-access-row">${ic('clock',13)} ${escHtml(t.openingHours)}</div>` : ''}
+      ${t.accessNote   ? `<div class="tds-access-note">${escHtml(t.accessNote)}</div>` : ''}
+    </div>` : '';
+
   // Events
   const evArr = t.events || [];
   const evHtml = evArr.length===0
@@ -65,6 +77,7 @@ function showTableDetail(id) {
     </div>
     ${t.description ? `<div class="tds-desc">${escHtml(t.description)}</div>` : ''}
     ${extraHtml}
+    ${accessHtml}
     <!-- Primäre Aktionen -->
     <div class="tds-cta-row">
       <button class="btn btn-primary btn-full" onclick="closeAllSheets();

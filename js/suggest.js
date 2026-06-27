@@ -27,12 +27,14 @@ function _resetSuggestForm() {
   suggestLng = null;
   _setSuggestStep(1);
   _clearSuggestPin();
-  ['sug-name', 'sug-address', 'sug-count', 'sug-desc'].forEach(id => {
+  ['sug-name', 'sug-address', 'sug-count', 'sug-desc', 'sug-opening-hours', 'sug-access-note'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   const cond = document.getElementById('sug-condition');
   if (cond) cond.value = '';
+  const acc = document.getElementById('sug-access-type');
+  if (acc) acc.value = 'public';
   document.querySelectorAll('.sug-type-btn').forEach((b, i) =>
     b.classList.toggle('active', i === 0));
   _updateCoordDisplay();
@@ -168,14 +170,17 @@ async function _submitSuggestion() {
   const name = document.getElementById('sug-name')?.value.trim();
   if (!name) { showToast('Name ist ein Pflichtfeld', '⚠️'); return; }
 
-  const address   = document.getElementById('sug-address')?.value.trim() || null;
-  const typeBtn   = document.querySelector('.sug-type-btn.active');
-  const type      = typeBtn?.dataset.type || 'outdoor';
-  const countVal  = document.getElementById('sug-count')?.value;
-  const count     = countVal ? parseInt(countVal) : null;
-  const condition = document.getElementById('sug-condition')?.value || null;
-  const desc      = document.getElementById('sug-desc')?.value.trim() || null;
-  const uid       = sb.getUserId();
+  const address      = document.getElementById('sug-address')?.value.trim() || null;
+  const typeBtn      = document.querySelector('.sug-type-btn.active');
+  const type         = typeBtn?.dataset.type || 'outdoor';
+  const countVal     = document.getElementById('sug-count')?.value;
+  const count        = countVal ? parseInt(countVal) : null;
+  const condition    = document.getElementById('sug-condition')?.value || null;
+  const desc         = document.getElementById('sug-desc')?.value.trim() || null;
+  const accessType   = document.getElementById('sug-access-type')?.value || 'public';
+  const openingHours = document.getElementById('sug-opening-hours')?.value.trim() || null;
+  const accessNote   = document.getElementById('sug-access-note')?.value.trim() || null;
+  const uid          = sb.getUserId();
 
   const submitBtn = document.getElementById('sug-submit-btn');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Wird gespeichert…'; }
@@ -184,14 +189,17 @@ async function _submitSuggestion() {
   const { error } = await qb.insert({
     name,
     address,
-    lat:          suggestLat,
-    lng:          suggestLng,
-    description:  desc,
+    lat:           suggestLat,
+    lng:           suggestLng,
+    description:   desc,
     type,
-    table_count:  count,
+    table_count:   count,
     condition,
-    submitted_by: uid,
-    status:       'pending'
+    access_type:   accessType,
+    opening_hours: openingHours,
+    access_note:   accessNote,
+    submitted_by:  uid,
+    status:        'pending'
   });
 
   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Absenden'; }

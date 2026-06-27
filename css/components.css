@@ -434,6 +434,10 @@
 }
 .mli-dist-badge { background: var(--green-bg); color: var(--green); }
 .mli-games-badge { background: rgba(239,68,68,0.1); color: #ef4444; }
+.mli-access-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 0.69rem; font-weight: 700; }
+.mli-access-limited { background: rgba(245,158,11,0.12); color: #b45309; }
+.mli-access-unclear  { background: var(--surface2); color: var(--text-dim); }
+.mli-access-closed   { background: rgba(239,68,68,0.1); color: #dc2626; }
 .mli-meta { font-size: 0.69rem; color: var(--text-dim); margin-top: 5px; }
 .map-list-chevron { color: var(--text-xdim); font-size: 1.1rem; flex-shrink: 0; padding-top: 4px; }
 
@@ -1010,6 +1014,13 @@
 .tds-section {
   padding: 12px 20px 10px; border-bottom: 1px solid var(--border);
 }
+.tds-access-section { display: flex; flex-direction: column; gap: 6px; }
+.tds-access-status { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+.tds-access-limited { background: rgba(245,158,11,0.12); color: #b45309; }
+.tds-access-unclear  { background: var(--surface2); color: var(--text-dim); }
+.tds-access-closed   { background: rgba(239,68,68,0.1); color: #dc2626; }
+.tds-access-row { font-size: 0.82rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px; }
+.tds-access-note { font-size: 0.82rem; color: var(--text-dim); font-style: italic; }
 .tds-section-label {
   display: flex; align-items: center; gap: 6px;
   font-size: 0.7rem; font-weight: 800; color: var(--text-dim);

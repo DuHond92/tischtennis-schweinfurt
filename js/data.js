@@ -4,7 +4,7 @@
 async function loadTables() {
   try {
     const qb = new QueryBuilder('tables');
-    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count';
+    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours';
     const {data} = await qb.order('name').execute();
     if(data && data.length) {
       tables = data.map(t => ({
@@ -13,6 +13,9 @@ async function loadTables() {
         type: t.type, icon: t.icon || '🏓',
         description: t.description || '',
         tablesCount: t.tables_count || null,
+        accessType: t.access_type || 'public',
+        accessNote: t.access_note || null,
+        openingHours: t.opening_hours || null,
         photos: [], comments: [], osmId: null, events: []
       }));
     }
