@@ -50,12 +50,13 @@ function renderHome() {
   // Platten-Karten
   const scroll = document.getElementById('home-tables-scroll');
   const src = tables.length ? tables : FALLBACK_TABLES;
-  scroll.innerHTML = src.slice(0,6).map(t=>{
+  scroll.innerHTML = src.slice(0,6).map((t, i)=>{
     const evCount = t.events?.length || FALLBACK_EVENTS.filter(e=>e.tid===t.id).length;
     const _plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+    const _load = i < 2 ? 'eager' : 'lazy';
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='${_plateFb}'" loading="lazy">`
-      : `<img src="${_plateFb}" loading="lazy" class="thumb-placeholder-img">`;
+      ? `<img src="${t.photos[0]}" onerror="this.src='${_plateFb}'" loading="${_load}" decoding="async">`
+      : `<img src="${_plateFb}" loading="${_load}" decoding="async" class="thumb-placeholder-img">`;
     return `
     <div class="map-thumb-card" onclick="showTableDetail(${t.id})">
       <div class="map-thumb-img">
@@ -78,7 +79,7 @@ function renderHome() {
   const evList = document.getElementById('home-events-list');
   const evFiltered = evSrc.filter(e => e.type !== 'player_search').slice(0, 3);
   evList.innerHTML = evFiltered.length
-    ? evFiltered.map(renderEventCard).join('')
+    ? evFiltered.map((e, i) => renderEventCard(e, i)).join('')
     : '<div style="text-align:center;padding:32px 16px;color:var(--text-dim);">Noch keine Spiele geplant.</div>';
 }
 

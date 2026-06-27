@@ -81,14 +81,15 @@ function sortEvents(sort, btn) {
   renderEvents(currentFilter);
 }
 
-function renderEventCard(e) {
+function renderEventCard(e, idx = 0) {
   const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
     : e.type === 'casual'    ? 'images/placeholders/game_fun.png'
     : e.type === 'training'  ? 'images/placeholders/game_training.png'
     : 'images/placeholders/game_fun.png';
+  const loadAttr = idx < 2 ? 'eager' : 'lazy';
   const thumbInner = (e.photos && e.photos.length)
-    ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="lazy">`
-    : `<img src="${thumbFallback}" loading="lazy">`;
+    ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">`
+    : `<img src="${thumbFallback}" loading="${loadAttr}" decoding="async">`;
   return `
   <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
     <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
@@ -138,7 +139,7 @@ function renderEvents(filter = 'all') {
 
   const gamesHtml = games.length
     ? `<div class="feed-section-title"${(psHtml || psEmptyHtml) ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
-       ${games.map(renderEventCard).join('')}`
+       ${games.map((e, i) => renderEventCard(e, i)).join('')}`
     : '';
 
   if (!psHtml && !psEmptyHtml && !gamesHtml) {

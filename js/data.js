@@ -129,8 +129,8 @@ async function loadEvents() {
   const pParticipants = {};
   try {
     const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id,profiles(id,username,avatar_emoji,avatar_url)';
-    const {data: pData} = await qbP.execute();
+    qbP._select = 'event_id,created_at,profiles(id,username,avatar_emoji,avatar_url)';
+    const {data: pData} = await qbP.order('created_at').execute();
     if(pData) pData.forEach(p => {
       pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
       if(!pParticipants[p.event_id]) pParticipants[p.event_id] = [];

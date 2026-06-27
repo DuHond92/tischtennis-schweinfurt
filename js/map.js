@@ -509,7 +509,7 @@ function renderMapList(list) {
       </div>
     </div>` : '';
 
-  c.innerHTML = locCta + list.map(t => {
+  c.innerHTML = locCta + list.map((t, i) => {
     const evCount = t.events?.length || 0;
     const badgeParts = [];
     if (t.distance != null) badgeParts.push(`<span class="mli-dist-badge">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>`);
@@ -525,9 +525,10 @@ function renderMapList(list) {
     metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
 
     const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+    const _load = i < 3 ? 'eager' : 'lazy';
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="lazy">`
-      : `<img src="${plateFb}" loading="lazy" class="thumb-placeholder-img">`;
+      ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="${_load}" decoding="async">`
+      : `<img src="${plateFb}" loading="${_load}" decoding="async" class="thumb-placeholder-img">`;
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
