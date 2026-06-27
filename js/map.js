@@ -258,11 +258,12 @@ function _dismissLocPrompt() {
 }
 
 function calcDistance(lat1, lng1, lat2, lng2) {
+  if (lat2 == null || lng2 == null || isNaN(+lat2) || isNaN(+lng2)) return null;
   const R = 6371000;
-  const dLat = (lat2-lat1) * Math.PI/180;
-  const dLng = (lng2-lng1) * Math.PI/180;
+  const dLat = (+lat2 - +lat1) * Math.PI / 180;
+  const dLng = (+lng2 - +lng1) * Math.PI / 180;
   const a = Math.sin(dLat/2)**2 +
-    Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+    Math.cos(+lat1 * Math.PI/180) * Math.cos(+lat2 * Math.PI/180) * Math.sin(dLng/2)**2;
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
@@ -326,6 +327,7 @@ function _buildStatusLine(filtered) {
 
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
+  if (!c) return;
 
   if(!list.length) {
     c.innerHTML = `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
