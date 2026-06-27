@@ -52,15 +52,25 @@ async function _loadApprovedTableImagesForTables(tableItems) {
 async function loadOSMTables() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
+  const OSM_ENDPOINTS = [
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.fr/api/interpreter',
+  ];
   try {
     const query = '[out:json][timeout:10];(node["leisure"="table_tennis"](49.85,10.05,50.15,10.45);way["leisure"="table_tennis"](49.85,10.05,50.15,10.45););out body center;';
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      signal: controller.signal
-    });
+    let res;
+    for (const endpoint of OSM_ENDPOINTS) {
+      try {
+        res = await fetch(endpoint, {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query),
+          signal: controller.signal
+        });
+        if (res.ok) break;
+      } catch(_) { res = null; }
+    }
     clearTimeout(timeout);
-    if(!res.ok) return;
+    if (!res || !res.ok) return;
     const data = await res.json();
     if(!data.elements || !data.elements.length) return;
 
