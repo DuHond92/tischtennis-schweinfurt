@@ -107,10 +107,10 @@ async function submitAuth() {
       }
       await loadCurrentUser();
       closeAllSheets();
-      showToast(`Willkommen zurück, ${currentUser?.username || 'Spieler'}! 👋`);
       updateTopBarForUser();
       checkNotifications();
       startNotifPolling();
+      showWelcomeSuccess();
 
     } else {
       const username = document.getElementById('auth-username').value.trim();
@@ -121,8 +121,9 @@ async function submitAuth() {
 
       const res = await sb.signUp(email, password, username);
       if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','❌'); return; }
+      await loadCurrentUser();
       closeAllSheets();
-      showToast('🎉 Willkommen! Bitte E-Mail bestätigen, dann einloggen.','🎉');
+      showWelcomeSuccess();
       setAuthMode('login');
     }
   } finally {
@@ -141,6 +142,57 @@ async function loadCurrentUser() {
 
 function updateTopBarForUser() {
   // topbar-profile-btn removed; avatar shown on profile page only
+}
+
+function showWelcomeSuccess() {
+  let el = document.getElementById('welcome-success-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'welcome-success-overlay';
+    el.className = 'auth-prompt-overlay';
+    el.addEventListener('click', e => { if (e.target === el) _dismissWelcomeSuccess(); });
+    document.body.appendChild(el);
+  }
+  const name = currentUser?.username || 'Spieler';
+  el.innerHTML = `
+    <div class="auth-prompt-card">
+      <div style="font-size:2rem;margin-bottom:10px;">🎉</div>
+      <div class="apc-title">Willkommen, ${escHtml(name)}!</div>
+      <div class="apc-body">Du kannst jetzt Spielen beitreten, Mitspieler kontaktieren und dein Profil einrichten.</div>
+      <button class="apc-btn apc-btn-primary" onclick="_dismissWelcomeSuccess();showPage('profile');setTimeout(()=>openSheet('profile-edit-sheet'),150)">Profil vervollständigen</button>
+      <button class="apc-btn apc-btn-ghost" onclick="_dismissWelcomeSuccess()">Später</button>
+    </div>`;
+  el.style.display = 'flex';
+}
+
+function _dismissWelcomeSuccess() {
+  const el = document.getElementById('welcome-success-overlay');
+  if (el) el.style.display = 'none';
+}
+
+function showAuthPrompt() {
+  let el = document.getElementById('auth-prompt-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'auth-prompt-overlay';
+    el.className = 'auth-prompt-overlay';
+    el.addEventListener('click', e => { if (e.target === el) dismissAuthPrompt(); });
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `
+    <div class="auth-prompt-card">
+      <div class="apc-title">👋 Kostenlos anmelden</div>
+      <div class="apc-body">Erstelle ein Profil, um mitzuspielen, Nachrichten zu schreiben und Mitspieler zu finden.</div>
+      <button class="apc-btn apc-btn-primary" onclick="dismissAuthPrompt();openSheet('auth-sheet');setAuthMode('register')">Kostenlos registrieren</button>
+      <button class="apc-btn apc-btn-secondary" onclick="dismissAuthPrompt();openSheet('auth-sheet');setAuthMode('login')">Anmelden</button>
+      <button class="apc-btn apc-btn-ghost" onclick="dismissAuthPrompt()">Später</button>
+    </div>`;
+  el.style.display = 'flex';
+}
+
+function dismissAuthPrompt() {
+  const el = document.getElementById('auth-prompt-overlay');
+  if (el) el.style.display = 'none';
 }
 
 async function doSignOut() {

@@ -171,31 +171,84 @@ function centerMap() {
 }
 
 function locateUser() {
-  if(!navigator.geolocation) { showToast('Standort nicht verfügbar','⚠️'); return; }
+  if (!navigator.geolocation) { showToast('Standort nicht verfügbar', '⚠️'); return; }
+  if (!navigator.permissions) { _showLocPrompt(); return; }
+  navigator.permissions.query({ name: 'geolocation' }).then(status => {
+    if (status.state === 'granted')      _doLocate();
+    else if (status.state === 'denied')  _showLocCard('blocked');
+    else                                 _showLocPrompt();
+  }).catch(() => _showLocPrompt());
+}
+
+function _doLocate() {
+  _dismissLocPrompt();
   const btn = document.getElementById('locate-btn');
   btn?.classList.add('locating');
   navigator.geolocation.getCurrentPosition(pos => {
     btn?.classList.remove('locating');
     userLat = pos.coords.latitude;
     userLng = pos.coords.longitude;
-    if(leafletMap) {
-      if(userMarker) leafletMap.removeLayer(userMarker);
+    if (leafletMap) {
+      if (userMarker) leafletMap.removeLayer(userMarker);
       userMarker = L.circle([userLat, userLng], {
         radius: pos.coords.accuracy,
-        color:'#3B7CF4', fillColor:'#3B7CF4', fillOpacity:0.1, weight:2
+        color: '#3B7CF4', fillColor: '#3B7CF4', fillOpacity: 0.1, weight: 2
       }).addTo(leafletMap);
       L.circleMarker([userLat, userLng], {
-        radius:8, color:'#fff', weight:3,
-        fillColor:'#3B7CF4', fillOpacity:1
+        radius: 8, color: '#fff', weight: 3,
+        fillColor: '#3B7CF4', fillOpacity: 1
       }).addTo(leafletMap).bindPopup('📍 Du bist hier');
-      leafletMap.setView([userLat, userLng], 15, { animate:true });
+      leafletMap.setView([userLat, userLng], 15, { animate: true });
     }
     updateDistances();
     showToast('📍 Standort gefunden!');
-  }, () => {
-    document.getElementById('locate-btn')?.classList.remove('locating');
-    showToast('Standort konnte nicht ermittelt werden','⚠️');
-  }, { enableHighAccuracy:true, timeout:10000 });
+  }, err => {
+    btn?.classList.remove('locating');
+    if (err.code === 1) _showLocCard('blocked');
+    else showToast('Standort konnte nicht ermittelt werden', '⚠️');
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function _locPromptEl() {
+  let el = document.getElementById('loc-prompt-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loc-prompt-overlay';
+    el.className = 'loc-prompt-overlay';
+    el.addEventListener('click', e => { if (e.target === el) _dismissLocPrompt(); });
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function _showLocPrompt() {
+  const el = _locPromptEl();
+  el.innerHTML = `
+    <div class="loc-prompt-card">
+      <div class="lpc-icon">📍</div>
+      <div class="lpc-title">Standort verwenden?</div>
+      <div class="lpc-body">Damit können wir dir Platten und Spiele in deiner Nähe anzeigen.</div>
+      <button class="lpc-btn lpc-btn-primary" onclick="_doLocate()">Standort erlauben</button>
+      <button class="lpc-btn lpc-btn-secondary" onclick="_dismissLocPrompt()">Später</button>
+    </div>`;
+  el.style.display = 'flex';
+}
+
+function _showLocCard(type) {
+  const el = _locPromptEl();
+  el.innerHTML = `
+    <div class="loc-prompt-card">
+      <div class="lpc-icon">🔒</div>
+      <div class="lpc-title">Standort blockiert</div>
+      <div class="lpc-body">Du kannst die Berechtigung in den Browser-Einstellungen ändern und die Seite neu laden.</div>
+      <button class="lpc-btn lpc-btn-secondary" onclick="_dismissLocPrompt()">Schließen</button>
+    </div>`;
+  el.style.display = 'flex';
+}
+
+function _dismissLocPrompt() {
+  const el = document.getElementById('loc-prompt-overlay');
+  if (el) el.style.display = 'none';
 }
 
 function calcDistance(lat1, lng1, lat2, lng2) {

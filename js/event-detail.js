@@ -102,7 +102,7 @@ function showEventDetail(eventId) {
 
   // Show/hide chat input for non-fallback events
   const isFallback = allEvents.length === 0;
-  document.getElementById('eds-chat-input-row').style.display = (isFallback || !sb.isLoggedIn()) ? 'none' : '';
+  document.getElementById('eds-chat-input-row').style.display = isFallback ? 'none' : '';
 
   openSheet('event-detail-sheet');
   markEventSeen(eventId);
@@ -227,7 +227,7 @@ function escHtml(s) {
 }
 
 async function sendChatMessage() {
-  if(!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden','⚠️'); return; }
+  if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
   const input = document.getElementById('eds-chat-input');
   const msg   = input.value.trim();
   if(!msg || !currentEventId) return;
@@ -255,7 +255,7 @@ function stopChatPolling() {
 }
 
 async function joinEventFromDetail(eventId) {
-  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
   const btn = document.getElementById('eds-join-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }
   const isFallback = allEvents.length === 0;

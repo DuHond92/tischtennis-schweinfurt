@@ -55,7 +55,7 @@ function showPlayerSearchDetail(psId) {
   if(isReal) {
     loadPsChat(psId);
     startPsChatPolling(psId);
-    inputRow.style.display = sb.isLoggedIn() ? '' : 'none';
+    inputRow.style.display = '';
   } else {
     document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Chat nur für echte Gesuche verfügbar.</div>';
     inputRow.style.display = 'none';
@@ -111,7 +111,7 @@ function _renderPsChatMessages(messages) {
 }
 
 async function sendPsChatMessage() {
-  if(!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden','⚠️'); return; }
+  if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
   const input = document.getElementById('psd-chat-input');
   const msg   = input.value.trim();
   if(!msg || !currentPsEventId) return;

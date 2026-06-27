@@ -3,9 +3,14 @@
 // ╚══════════════════════════════════════════════════════════════╝
 async function joinEvent(eventId, btn) {
   btn.disabled = true; btn.textContent = '…';
+  if (!sb.isLoggedIn()) {
+    btn.disabled = false; btn.textContent = 'Teilnehmen';
+    showAuthPrompt();
+    return;
+  }
   // Fallback-Events: kein DB-Eintrag nötig
   const isFallback = allEvents.length === 0;
-  if(isFallback || !sb.isLoggedIn()) {
+  if (isFallback) {
     setTimeout(()=>{
       btn.textContent='✅'; btn.style.background='var(--green)';
       showToast('🏓 Du nimmst am Event teil!');
@@ -162,7 +167,7 @@ function openCreateEventSheet() {
 }
 
 async function submitCreateEvent() {
-  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
   const title   = document.getElementById('ev-name').value.trim();
   const tableId = document.getElementById('ev-table').value;
   const date    = document.getElementById('ev-date').value;
@@ -198,7 +203,7 @@ async function submitCreateEvent() {
 }
 
 async function submitMitspieler() {
-  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
 
   const btn     = document.getElementById('ms-submit-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }

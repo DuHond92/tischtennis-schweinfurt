@@ -1612,3 +1612,83 @@
   transition: filter 0.15s;
 }
 .psc-btn:active { filter: brightness(0.88); }
+
+/* ── Standort-Vor-Prompt ─────────────────────────────────────────── */
+.loc-prompt-overlay {
+  position: fixed; inset: 0; z-index: 1400;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.loc-prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 20px 20px;
+  width: 100%; max-width: 340px;
+  text-align: center;
+}
+.lpc-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.lpc-title {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+}
+.lpc-body {
+  font-size: 0.82rem; color: var(--text-dim);
+  line-height: 1.5; margin-bottom: 18px;
+}
+.lpc-btn {
+  display: block; width: 100%;
+  padding: 11px 16px; border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-weight: 700;
+  border: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.15s; margin-bottom: 8px;
+}
+.lpc-btn:last-child { margin-bottom: 0; }
+.lpc-btn-primary { background: var(--primary); color: #fff; }
+.lpc-btn-primary:active { filter: brightness(0.88); }
+.lpc-btn-secondary {
+  background: var(--surface2); color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.lpc-btn-secondary:active { filter: brightness(0.93); }
+
+/* ── Auth-Hinweis-Overlay ────────────────────────────────────────── */
+.auth-prompt-overlay {
+  position: fixed; inset: 0; z-index: 1450;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.auth-prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 20px 20px;
+  width: 100%; max-width: 340px;
+  text-align: center;
+}
+.apc-title {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+}
+.apc-body {
+  font-size: 0.82rem; color: var(--text-dim);
+  line-height: 1.5; margin-bottom: 18px;
+}
+.apc-btn {
+  display: block; width: 100%;
+  padding: 11px 16px; border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-weight: 700;
+  border: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.15s; margin-bottom: 8px;
+}
+.apc-btn:last-child { margin-bottom: 0; }
+.apc-btn-primary { background: var(--primary); color: #fff; }
+.apc-btn-primary:active { filter: brightness(0.88); }
+.apc-btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.apc-btn-secondary:active { filter: brightness(0.93); }
+.apc-btn-ghost { background: none; color: var(--text-dim); font-weight: 600; }
+.apc-btn-ghost:active { color: var(--text); }

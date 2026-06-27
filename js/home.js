@@ -2,39 +2,15 @@
 // ║           HOME                                               ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// Detect city via GPS + Nominatim reverse geocoding (cached 6h)
+// Show cached city in hero — no automatic geolocation request
 (function detectCity() {
-  const CACHE_KEY = 'tt_hero_city';
-  const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
-
-  function setHeroCity(name) {
-    const el = document.getElementById('hero-city');
-    if(el) el.textContent = 'in ' + name;
-  }
-
-  // Check cache first
   try {
-    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if(cached && Date.now() - cached.ts < CACHE_TTL) {
-      setHeroCity(cached.city);
-      return;
+    const cached = JSON.parse(localStorage.getItem('tt_hero_city') || 'null');
+    if (cached && Date.now() - cached.ts < 6 * 60 * 60 * 1000) {
+      const el = document.getElementById('hero-city');
+      if (el) el.textContent = 'in ' + cached.city;
     }
   } catch(_) {}
-
-  if(!navigator.geolocation) return;
-
-  navigator.geolocation.getCurrentPosition(pos => {
-    const { latitude: lat, longitude: lon } = pos.coords;
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`)
-      .then(r => r.json())
-      .then(data => {
-        const a    = data.address || {};
-        const city = a.city || a.town || a.village || a.municipality || a.county || 'deiner Nähe';
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ city, ts: Date.now() }));
-        setHeroCity(city);
-      })
-      .catch(() => {});
-  }, () => {}, { timeout: 8000, maximumAge: CACHE_TTL });
 })();
 
 function initWelcomeCard() {
