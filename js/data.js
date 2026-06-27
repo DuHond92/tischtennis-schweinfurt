@@ -124,19 +124,34 @@ async function loadEvents() {
   const {data: evData} = await qbE.order('event_date').execute();
   if(!evData || !evData.length) return;
 
-  // 2. Teilnehmer-Anzahl + Profile für Avatar-Stack
+  // 2. Teilnehmer-Anzahl + Profile für Avatar-Stack (zweistufig — kein nested join)
   const pCounts       = {};
   const pParticipants = {};
   try {
+    // 2a. Teilnehmer-Rows (nur IDs, kein Join der 400 wirft)
     const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id,created_at,profiles(id,username,avatar_emoji,avatar_url)';
+    qbP._select = 'event_id,user_id,created_at';
     const {data: pData} = await qbP.order('created_at').execute();
-    if(pData) pData.forEach(p => {
-      pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
-      if(!pParticipants[p.event_id]) pParticipants[p.event_id] = [];
-      if(p.profiles) pParticipants[p.event_id].push(p.profiles);
-    });
-  } catch(e) {}
+    if(pData && pData.length) {
+      // 2b. Unique user_ids → Profile separat laden
+      const userIds = [...new Set(pData.map(p => p.user_id).filter(Boolean))];
+      const profMap = {};
+      if(userIds.length) {
+        try {
+          const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
+          const {data: profs} = await fetchWithRefresh(url, { headers: dbHeaders() });
+          if(Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+        } catch(e) { console.warn('Profil-Fetch fehlgeschlagen', e); }
+      }
+      // 2c. Counts + Avatar-Arrays aufbauen
+      pData.forEach(p => {
+        pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
+        if(!pParticipants[p.event_id]) pParticipants[p.event_id] = [];
+        const prof = profMap[p.user_id];
+        if(prof) pParticipants[p.event_id].push(prof);
+      });
+    }
+  } catch(e) { console.warn('Teilnehmer laden fehlgeschlagen', e); }
 
   // 3. Platten-Info für Name, Icon und Bilder aus bereits geladenen Tabellen sammeln
   const tableMap = Object.fromEntries((tables || []).map(t => [t.id, t]));

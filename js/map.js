@@ -341,39 +341,40 @@ function locateUser() {
   }).catch(() => _showLocPrompt());
 }
 
-function _doLocate(highAccuracy = true) {
+function _doLocate() {
   _dismissLocPrompt();
   const btn = document.getElementById('locate-btn');
   btn?.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(pos => {
-    btn?.classList.remove('locating');
-    userLat = pos.coords.latitude;
-    userLng = pos.coords.longitude;
-    if (leafletMap) {
-      if (userMarker) leafletMap.removeLayer(userMarker);
-      userMarker = L.circle([userLat, userLng], {
-        radius: pos.coords.accuracy,
-        color: '#3B7CF4', fillColor: '#3B7CF4', fillOpacity: 0.1, weight: 2
-      }).addTo(leafletMap);
-      L.circleMarker([userLat, userLng], {
-        radius: 8, color: '#fff', weight: 3,
-        fillColor: '#3B7CF4', fillOpacity: 1
-      }).addTo(leafletMap).bindPopup('📍 Du bist hier');
-      leafletMap.setView([userLat, userLng], 15, { animate: true });
-    }
-    updateDistances();
-    showToast('📍 Standort gefunden!');
-  }, err => {
-    btn?.classList.remove('locating');
-    if (err.code === 1) {
-      _showLocCard('blocked');
-    } else if (err.code === 2 && highAccuracy) {
-      // kCLErrorLocationUnknown — GPS-Fix fehlgeschlagen, Retry mit WLAN/Mobilfunk
-      _doLocate(false);
-    } else {
-      showToast('Standort konnte nicht ermittelt werden', '⚠️');
-    }
-  }, { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 12000 : 8000 });
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn?.classList.remove('locating');
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      if (leafletMap) {
+        if (userMarker) leafletMap.removeLayer(userMarker);
+        userMarker = L.circle([userLat, userLng], {
+          radius: pos.coords.accuracy,
+          color: '#3B7CF4', fillColor: '#3B7CF4', fillOpacity: 0.1, weight: 2
+        }).addTo(leafletMap);
+        L.circleMarker([userLat, userLng], {
+          radius: 8, color: '#fff', weight: 3,
+          fillColor: '#3B7CF4', fillOpacity: 1
+        }).addTo(leafletMap).bindPopup('📍 Du bist hier');
+        leafletMap.setView([userLat, userLng], 15, { animate: true });
+      }
+      updateDistances();
+      showToast('📍 Standort gefunden!');
+    },
+    err => {
+      btn?.classList.remove('locating');
+      if (err.code === 1) {                    // PERMISSION_DENIED
+        _showLocCard('blocked');
+      } else {                                 // POSITION_UNAVAILABLE oder TIMEOUT
+        showToast('Standort gerade nicht verfügbar', '⚠️');
+      }
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  );
 }
 
 function _locPromptEl() {

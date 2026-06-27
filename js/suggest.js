@@ -69,7 +69,7 @@ function suggestUseGPS() {
   }, () => {
     if (btn && orig) btn.innerHTML = orig;
     showToast('Standort nicht verfügbar', '⚠️');
-  }, { enableHighAccuracy: true, timeout: 8000 });
+  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
 
 function suggestActivateMapClick() {
