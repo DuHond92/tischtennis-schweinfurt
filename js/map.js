@@ -387,6 +387,7 @@ function initBottomSheet() {
   const bs     = document.getElementById('map-bottom-sheet');
   const handle = document.getElementById('mbs-handle');
   const pills  = document.getElementById('mbs-pills');
+  const list   = document.getElementById('map-list-container');
   if (!bs || !handle) return;
 
   const ANIM = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -416,6 +417,7 @@ function initBottomSheet() {
   let startX = null, startY = null, startH = null;
   let lastY = null, lastT = null, prevY = null, prevT = null;
   let didDrag = false, dragCancelled = false;
+  let listScrollAtStart = 0;
 
   function onDragStart(e) {
     startX = e.touches[0].clientX;
@@ -427,13 +429,12 @@ function initBottomSheet() {
     bs.style.transition = 'none';
   }
 
-  function onDragMove(e) {
+  function _applyMove(e) {
     if (startY === null || dragCancelled) return;
     const curX = e.touches[0].clientX;
     const curY = e.touches[0].clientY;
     const dxAbs = Math.abs(curX - startX);
     const dyAbs = Math.abs(curY - startY);
-    // Horizontal swipe on pills → cancel sheet drag, let pills scroll
     if (!didDrag && dxAbs > dyAbs && dxAbs > 8) {
       dragCancelled = true;
       bs.style.transition = ANIM;
@@ -448,6 +449,43 @@ function initBottomSheet() {
     lastY = curY;  lastT = Date.now();
   }
 
+  // Handle / pills: always control the sheet
+  function onHandleMove(e) { _applyMove(e); }
+
+  // List: only control the sheet when scrolled to the very top
+  function onListMove(e) {
+    if (startY === null) return;
+    const curY  = e.touches[0].clientY;
+    const dyAbs = Math.abs(curY - startY);
+    const dxAbs = Math.abs(e.touches[0].clientX - startX);
+
+    // Horizontal → cancel immediately, allow pill/horizontal scroll
+    if (!didDrag && dxAbs > dyAbs && dxAbs > 8) {
+      dragCancelled = true;
+      startX = null; startY = null;
+      return;
+    }
+
+    // Not enough movement yet — wait
+    if (dyAbs < 5) return;
+
+    if (!dragCancelled && !didDrag) {
+      const swipingDown = curY > startY;
+      if (listScrollAtStart > 0) {
+        // List is scrolled: let the list scroll in both directions
+        dragCancelled = true;
+        startX = null; startY = null;
+        return;
+      }
+      // At scroll top: swipe down collapses sheet, swipe up expands — take over
+      if (swipingDown) e.preventDefault();
+    }
+
+    if (dragCancelled) return;
+    e.preventDefault(); // block list-scroll while sheet is being dragged
+    _applyMove(e);
+  }
+
   function onDragEnd() {
     if (startY === null) return;
     const s = snaps();
@@ -455,7 +493,6 @@ function initBottomSheet() {
 
     let targetIdx = snapIdx;
     if (didDrag && !dragCancelled) {
-      // Velocity from last two move events (px/ms, positive = swipe up)
       let velocity = 0;
       if (prevT !== null && lastT - prevT > 0 && lastT - prevT < 250) {
         velocity = (prevY - lastY) / (lastT - prevT);
@@ -472,7 +509,6 @@ function initBottomSheet() {
 
     startX = null; startY = null;
 
-    // Dismiss preview content before snapping (content swap, no extra animation)
     if (_previewTableId && didDrag && !dragCancelled) {
       _dismissPreviewContent();
     }
@@ -480,11 +516,22 @@ function initBottomSheet() {
     snapTo(targetIdx);
   }
 
+  // Handle + pills: passive touchmove is fine (they don't contain a scroll container)
   [handle, pills].filter(Boolean).forEach(el => {
-    el.addEventListener('touchstart', onDragStart, { passive: true });
-    el.addEventListener('touchmove',  onDragMove,  { passive: true });
+    el.addEventListener('touchstart', onDragStart,   { passive: true });
+    el.addEventListener('touchmove',  onHandleMove,  { passive: true });
     el.addEventListener('touchend',   onDragEnd);
   });
+
+  // List: non-passive touchmove so we can call preventDefault() when taking over
+  if (list) {
+    list.addEventListener('touchstart', e => {
+      listScrollAtStart = list.scrollTop;
+      onDragStart(e);
+    }, { passive: true });
+    list.addEventListener('touchmove',  onListMove, { passive: false });
+    list.addEventListener('touchend',   onDragEnd);
+  }
 
   // Click on handle cycles through all 3 positions
   handle.addEventListener('click', () => {
@@ -493,7 +540,6 @@ function initBottomSheet() {
     snapTo((snapIdx + 1) % 3);
   });
 
-  // Expose for external callers (marker preview)
   _bsSnapTo = snapTo;
 }
 

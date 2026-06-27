@@ -310,7 +310,7 @@
   flex-shrink: 0; align-self: center; margin: 0 2px;
 }
 
-.map-list { flex: 1; overflow-y: auto; padding: 0 0 20px; }
+.map-list { flex: 1; overflow-y: auto; padding: 0 0 20px; overscroll-behavior: contain; }
 
 /* Status line above results */
 .mbs-status {
