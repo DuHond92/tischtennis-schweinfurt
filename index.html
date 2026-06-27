@@ -19,12 +19,6 @@
 </head>
 <body>
 
-<!-- Desktop top hint bar -->
-<div class="desktop-bar">
-  <span>PlattenTreff – Schweinfurt</span>
-  <span style="color:var(--border)">|</span>
-  <span style="color:var(--primary);font-weight:800;">Mobile App Preview</span>
-</div>
 
 <div class="app-shell">
 
@@ -137,16 +131,7 @@
           <div class="mbs-pip"></div>
         </div>
         <div class="mbs-preview" id="mbs-preview" style="display:none;"></div>
-        <div class="mbs-pills" id="mbs-pills">
-          <div class="mbs-pill active" data-spielart="all"      onclick="setMapSpielart('all',this)">Alle</div>
-          <div class="mbs-pill"        data-spielart="casual"   onclick="setMapSpielart('casual',this)">🎉 Just 4 Fun</div>
-          <div class="mbs-pill"        data-spielart="training" onclick="setMapSpielart('training',this)">🎯 Training</div>
-          <!-- Ranked play temporarily disabled -->
-          <div class="mbs-pill-sep"></div>
-          <div class="mbs-pill"        data-place="all"     onclick="setMapPlace('all',this)" id="mbs-place-all">Alle Platten</div>
-          <div class="mbs-pill"        data-place="outdoor" onclick="setMapPlace('outdoor',this)">☀️ Outdoor</div>
-          <div class="mbs-pill"        data-place="indoor"  onclick="setMapPlace('indoor',this)">🏠 Indoor</div>
-        </div>
+        <div class="map-bottom-sheet-title">24 Platten</div>
         <div class="map-list" id="map-list-container"></div>
       </div>
 
@@ -1059,6 +1044,15 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
   </div>
+</div>
+
+<!-- FULLSCREEN IMAGE LIGHTBOX -->
+<div id="img-lightbox" style="display:none;" onclick="if(event.target===this)closeLightbox()">
+  <button class="lbx-close" onclick="closeLightbox()">×</button>
+  <button class="lbx-prev" id="lbx-prev" onclick="lightboxStep(-1)">‹</button>
+  <img id="lbx-img" src="" alt="">
+  <button class="lbx-next" id="lbx-next" onclick="lightboxStep(1)">›</button>
+  <div class="lbx-counter" id="lbx-counter"></div>
 </div>
 
 <!-- JS: load order matters — globals must be defined before consumers -->

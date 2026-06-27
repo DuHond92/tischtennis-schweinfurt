@@ -119,12 +119,16 @@ function buildPhotoSlider(t, photos) {
     : '';
 
   const navHtml = hasPhotos && photos.length > 1 ? `
-    <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
-    <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+    <button class="ds-nav ds-prev" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
+    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+
+  const mainAttrs = hasPhotos
+    ? ` onclick="openLightbox(this.closest('.detail-slider'))" style="cursor:pointer;"`
+    : '';
 
   return `
     <div class="detail-slider" data-idx="0" data-count="${hasPhotos ? photos.length : 1}">
-      <div class="ds-main">
+      <div class="ds-main"${mainAttrs}>
         <div class="ds-slides-wrap">${slides}</div>
         ${hasPhotos && photos.length > 1 ? `<div class="ds-counter">1/${photos.length}</div>` : ''}
         ${navHtml}
@@ -338,7 +342,7 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
     slide.dataset.imgId  = img.id;
     slide.dataset.imgUrl = img.image_url;
     slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`
-      + (isMod ? `<button class="ds-delete-btn" onclick="deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen">🗑</button>` : '')
+      + (isMod ? `<button class="ds-delete-btn" onclick="event.stopPropagation();deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen">🗑</button>` : '')
       + (isMod ? `<div class="ds-mod-info">👤 ${escHtml(uploader)} · 📅 ${date}</div>` : '');
     slidesWrap.appendChild(slide);
 
@@ -671,4 +675,37 @@ async function submitComment() {
   document.getElementById('new-comment').value = '';
   showToast('💬 Kommentar gesendet!');
   openComments(currentDetailTableId);
+}
+
+// ── IMAGE LIGHTBOX ────────────────────────────────────────────────────────────
+
+let _lbxPhotos = [], _lbxIdx = 0;
+
+function openLightbox(sliderEl) {
+  const imgs = Array.from(sliderEl.querySelectorAll('.ds-slide:not(.ds-slide-empty) img'));
+  if (!imgs.length) return;
+  _lbxPhotos = imgs.map(img => img.src);
+  _lbxIdx = parseInt(sliderEl.dataset.idx || 0);
+  _lbxGo(_lbxIdx);
+  document.getElementById('img-lightbox').style.display = 'flex';
+}
+
+function closeLightbox() {
+  document.getElementById('img-lightbox').style.display = 'none';
+  _lbxPhotos = [];
+}
+
+function lightboxStep(dir) {
+  if (_lbxPhotos.length < 2) return;
+  _lbxIdx = (_lbxIdx + dir + _lbxPhotos.length) % _lbxPhotos.length;
+  _lbxGo(_lbxIdx);
+}
+
+function _lbxGo(idx) {
+  const count = _lbxPhotos.length;
+  document.getElementById('lbx-img').src = _lbxPhotos[idx] || '';
+  const show = count > 1;
+  document.getElementById('lbx-prev').style.display    = show ? '' : 'none';
+  document.getElementById('lbx-next').style.display    = show ? '' : 'none';
+  document.getElementById('lbx-counter').textContent   = show ? `${idx + 1} / ${count}` : '';
 }

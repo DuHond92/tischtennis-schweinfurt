@@ -267,14 +267,13 @@ function _buildStatusLine(filtered) {
 
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
-  const statusHtml = _buildStatusLine(list);
 
   if(!list.length) {
-    c.innerHTML = statusHtml + `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
+    c.innerHTML = `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
     return;
   }
 
-  c.innerHTML = statusHtml + list.map(t => {
+  c.innerHTML = list.map(t => {
     const evCount  = t.events?.length || 0;
     const distHtml = t.distance != null
       ? ` &nbsp;·&nbsp; <span class="mli-dist">${formatDistance(t.distance)}</span>` : '';
@@ -439,6 +438,7 @@ function _dismissPreviewContent() {
   const list  = document.getElementById('map-list-container');
   if (prev)  prev.style.display  = 'none';
   if (pills) pills.style.display = '';
+  document.querySelector('.map-bottom-sheet-title')?.style.setProperty('display', '');
   if (list)  list.style.display  = '';
   document.querySelectorAll('.map-list-item').forEach(el => el.classList.remove('selected'));
   _resetActiveMarker();
@@ -481,7 +481,8 @@ function showMapPreview(tableId) {
   `;
 
   if (!wasPreview) {
-    document.getElementById('mbs-pills').style.display = 'none';
+    document.getElementById('mbs-pills')?.style.setProperty('display', 'none');
+    document.querySelector('.map-bottom-sheet-title')?.style.setProperty('display', 'none');
     document.getElementById('map-list-container').style.display = 'none';
     document.getElementById('mbs-preview').style.display = '';
 
