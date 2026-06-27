@@ -436,27 +436,55 @@ function _parseCoord(v) {
   return parseFloat(String(v).replace(',', '.'));
 }
 
+function _openWithNativeFallback(appUrl, fallbackUrl) {
+  let didHide = false;
+  const markHidden = () => { didHide = true; };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) markHidden(); }, { once: true });
+  window.addEventListener('pagehide', markHidden, { once: true });
+  window.location.href = appUrl;
+  window.setTimeout(() => { if (!didHide) window.location.href = fallbackUrl; }, 900);
+}
+
 function openMapsDirections(rawLat, rawLng, name, addr) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(navigator.userAgent);
 
   const lat = _parseCoord(rawLat);
   const lng = _parseCoord(rawLng);
   const hasCoords = !isNaN(lat) && !isNaN(lng) &&
     lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 
-  let url;
   if (hasCoords) {
-    url = isIOS
-      ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
-      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    if (isIOS) {
+      _openWithNativeFallback(
+        `maps://?daddr=${lat},${lng}&dirflg=d`,
+        `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
+      );
+    } else if (isAndroid) {
+      _openWithNativeFallback(
+        `geo:${lat},${lng}?q=${lat},${lng}`,
+        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      );
+    } else {
+      window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    }
   } else {
     const q = encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
-    url = isIOS
-      ? `https://maps.apple.com/?q=${q}`
-      : `https://www.google.com/maps/search/?api=1&query=${q}`;
+    if (isIOS) {
+      _openWithNativeFallback(
+        `maps://?q=${q}`,
+        `https://maps.apple.com/?q=${q}`
+      );
+    } else if (isAndroid) {
+      _openWithNativeFallback(
+        `geo:0,0?q=${q}`,
+        `https://www.google.com/maps/search/?api=1&query=${q}`
+      );
+    } else {
+      window.location.href = `https://www.google.com/maps/search/?api=1&query=${q}`;
+    }
   }
-  window.location.href = url;
 }
 
 // ── RATINGS ───────────────────────────────────────────────────────
