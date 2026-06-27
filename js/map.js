@@ -336,7 +336,7 @@ function renderMapList(list) {
 
   const _surfaceLabel = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
 
-  const _thumbPlaceholder = `<img src="images/placeholders/thumbnail-platten-1.png" loading="lazy" class="thumb-placeholder-img">`;
+  // placeholder defined per-card below (type-aware)
 
   const locCta = (!userLat || !userLng) ? `
     <div class="mli-loc-cta">
@@ -360,9 +360,10 @@ function renderMapList(list) {
     if (t.surface && _surfaceLabel[t.surface]) metaParts.push(_surfaceLabel[t.surface]);
     metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
 
+    const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/thumbnail-platten-1.png'" loading="lazy">`
-      : _thumbPlaceholder;
+      ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="lazy">`
+      : `<img src="${plateFb}" loading="lazy" class="thumb-placeholder-img">`;
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
@@ -538,9 +539,10 @@ function showMapPreview(tableId) {
   const distHtml = t.distance != null
     ? `<span class="mbsp-dist">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>` : '';
   const thumbSrc = t.photos?.[0] || null;
+  const _bsFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
   const thumbHtml = thumbSrc
-    ? `<img src="${escAttr(thumbSrc)}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
-    : `<div class="mbsp-thumb-empty">🏓</div>`;
+    ? `<img src="${escAttr(thumbSrc)}" onerror="this.src='${_bsFb}'" loading="lazy">`
+    : `<img src="${_bsFb}" loading="lazy" class="thumb-placeholder-img">`;
 
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
 

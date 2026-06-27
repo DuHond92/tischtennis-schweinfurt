@@ -85,15 +85,13 @@ function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const c = document.getElementById('events-list');
   function gameCard(e, idx) {
-    const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
-      : e.type === 'casual'    ? 'images/placeholders/thumbnail-justforfun.png'
-      : e.type === 'training'  ? 'images/placeholders/thumbnail-training.png'
-      : null;
+    const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
+      : e.type === 'casual'    ? 'images/placeholders/game_fun.png'
+      : e.type === 'training'  ? 'images/placeholders/game_training.png'
+      : 'images/placeholders/game_fun.png';
     const thumbInner = (e.photos && e.photos.length)
-      ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
-      : thumbFallback
-        ? `<img src="${thumbFallback}" loading="lazy">`
-        : `<div class="thumb-empty">🏓</div>`;
+      ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="lazy">`
+      : `<img src="${thumbFallback}" loading="lazy">`;
     return `
     <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
       <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>

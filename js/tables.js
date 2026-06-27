@@ -95,25 +95,27 @@ function showTableDetail(id) {
   loadTableImages(id);
 }
 
-const PLATE_FALLBACK = 'images/placeholders/placeholder-plate.webp';
+const PLATE_FALLBACK = 'images/placeholders/plate_outdoor.png';
 
 function buildPhotoSlider(t, photos) {
   const hasPhotos = photos && photos.length;
+  const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
 
   const slides = hasPhotos
     ? photos.map((src, i) =>
         `<div class="ds-slide" style="${i===0?'':'display:none'}">
-          <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
+          <img src="${src}" onerror="this.src='${plateFb}'" loading="${i===0?'eager':'lazy'}">
         </div>`
       ).join('')
     : `<div class="ds-slide ds-slide-empty">
-        <div class="ds-no-img-hint"><span class="nimg-icon">🏓</span>Noch kein Bild</div>
+        <img src="${plateFb}" class="thumb-placeholder-img">
+        <div class="ds-no-img-hint">Noch kein Bild</div>
       </div>`;
 
   const thumbs = hasPhotos
     ? photos.map((src, i) =>
         `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-          <img src="${src}" onerror="this.src='${PLATE_FALLBACK}'">
+          <img src="${src}" onerror="this.src='${plateFb}'">
         </div>`
       ).join('')
     : '';

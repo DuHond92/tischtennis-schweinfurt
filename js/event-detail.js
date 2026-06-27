@@ -4,7 +4,7 @@
 let currentEventId = null;
 let chatPollTimer  = null;
 
-const EVENT_FALLBACK = 'images/placeholders/placeholder-plate.webp';
+const EVENT_FALLBACK = 'images/placeholders/game_fun.png';
 
 function buildEventSlider(images) {
   const hasImgs = images && images.length;
@@ -55,10 +55,10 @@ function showEventDetail(eventId) {
   // Bild-Slider – Punktspiel-Placeholder wenn kein Foto hochgeladen
   const sliderPhotos = (ev.photos && ev.photos.length)
     ? ev.photos
-    : ev.type === 'punktspiel' ? ['images/placeholders/thumbnail-punktspiel.png']
-    : ev.type === 'casual'     ? ['images/placeholders/thumbnail-justforfun.png']
-    : ev.type === 'training'   ? ['images/placeholders/thumbnail-training.png']
-    : null;
+    : ev.type === 'punktspiel' ? ['images/placeholders/game_tournament.png']
+    : ev.type === 'casual'     ? ['images/placeholders/game_fun.png']
+    : ev.type === 'training'   ? ['images/placeholders/game_training.png']
+    : ['images/placeholders/game_fun.png'];
   document.getElementById('eds-slider').innerHTML = buildEventSlider(sliderPhotos);
 
   // Titel

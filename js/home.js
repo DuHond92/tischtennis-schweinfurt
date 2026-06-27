@@ -52,9 +52,10 @@ function renderHome() {
   const src = tables.length ? tables : FALLBACK_TABLES;
   scroll.innerHTML = src.slice(0,6).map(t=>{
     const evCount = t.events?.length || FALLBACK_EVENTS.filter(e=>e.tid===t.id).length;
+    const _plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
     const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='images/placeholders/thumbnail-platten-1.png'" loading="lazy">`
-      : `<img src="images/placeholders/thumbnail-platten-1.png" loading="lazy" class="thumb-placeholder-img">`;
+      ? `<img src="${t.photos[0]}" onerror="this.src='${_plateFb}'" loading="lazy">`
+      : `<img src="${_plateFb}" loading="lazy" class="thumb-placeholder-img">`;
     return `
     <div class="map-thumb-card" onclick="showTableDetail(${t.id})">
       <div class="map-thumb-img">
@@ -75,9 +76,9 @@ function renderHome() {
   // Events
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
-  const _homeThumb = t => t === 'punktspiel' ? 'images/placeholders/thumbnail-punktspiel.png'
-    : t === 'casual'    ? 'images/placeholders/thumbnail-justforfun.png'
-    : t === 'training'  ? 'images/placeholders/thumbnail-training.png'
+  const _homeThumb = t => t === 'punktspiel' ? 'images/placeholders/game_tournament.png'
+    : t === 'casual'    ? 'images/placeholders/game_fun.png'
+    : t === 'training'  ? 'images/placeholders/game_training.png'
     : null;
 
   evList.innerHTML = evSrc.slice(0, 5).map((e)=>{
