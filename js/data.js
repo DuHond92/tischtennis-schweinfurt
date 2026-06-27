@@ -4,7 +4,7 @@
 async function loadTables() {
   try {
     const qb = new QueryBuilder('tables');
-    qb._select = 'id,name,address,lat,lng,type,icon,description';
+    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count';
     const {data} = await qb.order('name').execute();
     if(data && data.length) {
       tables = data.map(t => ({
@@ -12,6 +12,7 @@ async function loadTables() {
         lat: t.lat, lng: t.lng,
         type: t.type, icon: t.icon || '🏓',
         description: t.description || '',
+        tablesCount: t.tables_count || null,
         photos: [], comments: [], osmId: null, events: []
       }));
     }

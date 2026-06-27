@@ -348,6 +348,7 @@ function renderMapList(list) {
     const badgeRow = badgeParts.length ? `<div class="mli-badge-row">${badgeParts.join('')}</div>` : '';
 
     const metaParts = [];
+    if (t.tablesCount) metaParts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
     if (t.surface && _surfaceLabel[t.surface]) metaParts.push(_surfaceLabel[t.surface]);
     metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
 
