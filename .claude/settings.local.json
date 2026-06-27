@@ -4,7 +4,16 @@
       "Bash(vercel --prod)",
       "Bash(npx vercel *)",
       "Bash(awk NR>=1673 && NR<=1680 {print NR\": \"$0}\nNR>=1857 && NR<=1870 {print NR\": \"$0}\nNR>=1891 && NR<=1896 {print NR\": \"$0}\nNR>=1907 && NR<=1912 {print NR\": \"$0}\nNR>=1924 && NR<=1930 {print NR\": \"$0}\nNR>=1935 && NR<=1942 {print NR\": \"$0}\nNR>=2017 && NR<=2023 {print NR\": \"$0}\nNR>=2183 && NR<=2188 {print NR\": \"$0}\nNR>=2234 && NR<=2239 {print NR\": \"$0}\nNR>=2355 && NR<=2360 {print NR\": \"$0}\nNR>=2526 && NR<=2531 {print NR\": \"$0}\nNR>=2593 && NR<=2598 {print NR\": \"$0}\nNR>=2813 && NR<=2818 {print NR\": \"$0}\nNR>=3111 && NR<=3116 {print NR\": \"$0}\nNR>=3193 && NR<=3200 {print NR\": \"$0}\nNR>=3398 && NR<=3435 {print NR\": \"$0} *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(node --check js/events.js)",
+      "Bash(node --check js/data.js)",
+      "Bash(node --check js/player-profile.js)",
+      "Bash(node --check js/event-detail.js)",
+      "Bash(node --check js/main.js)",
+      "Bash(node --check js/notifications.js)",
+      "Bash(node --check js/ps-detail.js)",
+      "Bash(node --check js/admin.js)",
+      "Bash(node --check js/home.js)"
     ]
   }
 }
