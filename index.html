@@ -770,9 +770,11 @@
           <button class="auth-forgot-link" onclick="setAuthMode('reset')">Passwort vergessen?</button>
         </div>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
+          <input class="form-input" type="password" id="auth-pw" placeholder="••••••••"
+            onkeydown="checkCapsLock(event,this)" onkeyup="checkCapsLock(event,this)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
+        <div class="caps-hint" id="caps-hint-login" style="display:none;">Feststelltaste ist aktiviert.</div>
       </div>
     </div>
 
@@ -787,10 +789,17 @@
         <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de">
       </div>
       <div class="form-group">
-        <label class="form-label">Passwort (min. 6 Zeichen)</label>
+        <label class="form-label">Passwort</label>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
+          <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort"
+            oninput="checkPwStrength(this)" onkeydown="checkCapsLock(event,this)" onkeyup="checkCapsLock(event,this)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
+        </div>
+        <div class="caps-hint" id="caps-hint-reg" style="display:none;">Feststelltaste ist aktiviert.</div>
+        <div class="pw-strength-list" id="pw-strength-list" style="display:none;">
+          <div class="psl-item" data-rule="len">mindestens 8 Zeichen</div>
+          <div class="psl-item" data-rule="upper">mindestens ein Großbuchstabe</div>
+          <div class="psl-item" data-rule="num">mindestens eine Zahl</div>
         </div>
       </div>
     </div>

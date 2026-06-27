@@ -10,6 +10,30 @@ function togglePwVisibility(btn) {
   btn.innerHTML = ic(show ? 'eye-off' : 'eye', 18);
 }
 
+function checkCapsLock(e, input) {
+  if (navigator.maxTouchPoints > 1) return; // keine Caps-Hinweise auf Touch-Geräten
+  const hintId = input.id === 'auth-pw' ? 'caps-hint-login' : 'caps-hint-reg';
+  const hint = document.getElementById(hintId);
+  if (!hint) return;
+  const caps = e.getModifierState ? e.getModifierState('CapsLock') : false;
+  hint.style.display = caps ? '' : 'none';
+}
+
+function checkPwStrength(input) {
+  const val = input.value;
+  const list = document.getElementById('pw-strength-list');
+  if (!list) return;
+  list.style.display = val.length ? '' : 'none';
+  const rules = {
+    len:   val.length >= 8,
+    upper: /[A-Z]/.test(val),
+    num:   /[0-9]/.test(val)
+  };
+  list.querySelectorAll('.psl-item').forEach(el => {
+    el.classList.toggle('met', !!rules[el.dataset.rule]);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.pw-toggle').forEach(btn => {
     btn.innerHTML = ic('eye', 18);

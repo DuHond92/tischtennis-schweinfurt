@@ -1759,3 +1759,35 @@
   overflow: hidden; text-overflow: ellipsis;
 }
 .per-date { font-size: 0.75rem; color: var(--text-dim); flex-shrink: 0; }
+
+/* ── Caps-Lock-Hinweis ───────────────────────────────────────────── */
+.caps-hint {
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding-left: 2px;
+}
+
+/* ── Passwort-Stärke-Checkliste ─────────────────────────────────── */
+.pw-strength-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.psl-item {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.psl-item::before {
+  content: '○';
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.psl-item.met { color: var(--green, #10b981); }
+.psl-item.met::before { content: '✓'; }
