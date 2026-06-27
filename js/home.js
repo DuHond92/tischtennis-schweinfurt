@@ -76,28 +76,10 @@ function renderHome() {
   // Events
   const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const evList = document.getElementById('home-events-list');
-  const _homeThumb = t => t === 'punktspiel' ? 'images/placeholders/game_tournament.png'
-    : t === 'casual'    ? 'images/placeholders/game_fun.png'
-    : t === 'training'  ? 'images/placeholders/game_training.png'
-    : null;
-
-  evList.innerHTML = evSrc.slice(0, 5).map((e)=>{
-    const thumbSrc = (e.photos && e.photos.length) ? e.photos[0] : _homeThumb(e.type);
-    return `
-    <div class="event-list-item" onclick="showEventDetail(${e.id})">
-      <div class="ev-thumb ev-thumb-${e.type||'casual'}">
-        ${thumbSrc ? `<img src="${escAttr(thumbSrc)}" loading="lazy" onerror="this.remove()">` : ''}
-        <div class="ev-date-overlay"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
-      </div>
-      <div class="ev-info">
-        <div class="ev-type-pill pill-${e.type}" style="margin-bottom:5px;">${typeLabel(e.type)}</div>
-        <div class="ev-title">${e.name}</div>
-        <div class="ev-meta-loc">${ic('pin')} ${e.tname}</div>
-        <div class="ev-meta-time">${ic('clock')} ${e.time}</div>
-        <div class="ev-participants-row">${participantStack(e.participants,3,26)}<span class="ev-pcount">${e.p}/${e.max}</span></div>
-      </div>
-    </div>
-  `;}).join('');
+  const evFiltered = evSrc.filter(e => e.type !== 'player_search').slice(0, 3);
+  evList.innerHTML = evFiltered.length
+    ? evFiltered.map(renderEventCard).join('')
+    : '<div style="text-align:center;padding:32px 16px;color:var(--text-dim);">Noch keine Spiele geplant.</div>';
 }
 
 function renderHomePsSection() {

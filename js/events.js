@@ -81,35 +81,36 @@ function sortEvents(sort, btn) {
   renderEvents(currentFilter);
 }
 
+function renderEventCard(e) {
+  const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
+    : e.type === 'casual'    ? 'images/placeholders/game_fun.png'
+    : e.type === 'training'  ? 'images/placeholders/game_training.png'
+    : 'images/placeholders/game_fun.png';
+  const thumbInner = (e.photos && e.photos.length)
+    ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="lazy">`
+    : `<img src="${thumbFallback}" loading="lazy">`;
+  return `
+  <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
+    <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
+    <div class="ecb-info">
+      <div class="ecb-title-row">
+        <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
+      </div>
+      <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
+      <div class="ecb-title">${e.name}</div>
+      <div class="ecb-creator">${ic('user',12)} ${e.creatorId
+        ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}')">${escHtml(e.creator||'Anonym')}</b>`
+        : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
+      <div class="ecb-location">${ic('pin')} ${e.tname}</div>
+      <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
+    </div>
+    <div class="ecb-chevron">›</div>
+  </div>`;
+}
+
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
   const c = document.getElementById('events-list');
-  function gameCard(e, idx) {
-    const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
-      : e.type === 'casual'    ? 'images/placeholders/game_fun.png'
-      : e.type === 'training'  ? 'images/placeholders/game_training.png'
-      : 'images/placeholders/game_fun.png';
-    const thumbInner = (e.photos && e.photos.length)
-      ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="lazy">`
-      : `<img src="${thumbFallback}" loading="lazy">`;
-    return `
-    <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
-      <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
-      <div class="ecb-info">
-        <div class="ecb-title-row">
-          <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
-          <span style="font-size:0.72rem;color:var(--text-dim);">${ic('calendar',12)} ${e.day}. ${e.mon}</span>
-        </div>
-        <div class="ecb-title">${e.name}</div>
-        <div class="ecb-creator">${ic('user',12)} ${e.creatorId
-          ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}')">${escHtml(e.creator||'Anonym')}</b>`
-          : `<b>${escHtml(e.creator||'Anonym')}</b>`} &nbsp;·&nbsp; ${ic('clock',12)} ${e.time} Uhr</div>
-        <div class="ecb-location">${ic('pin')} ${e.tname}</div>
-        <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
-      </div>
-      <div class="ecb-chevron">›</div>
-    </div>`;
-  }
 
   // Spielart-Filter gilt für beide Bereiche
   const psFiltered = filter === 'all'
@@ -137,7 +138,7 @@ function renderEvents(filter = 'all') {
 
   const gamesHtml = games.length
     ? `<div class="feed-section-title"${(psHtml || psEmptyHtml) ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
-       ${games.map(gameCard).join('')}`
+       ${games.map(renderEventCard).join('')}`
     : '';
 
   if (!psHtml && !psEmptyHtml && !gamesHtml) {

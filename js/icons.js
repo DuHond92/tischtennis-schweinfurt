@@ -46,13 +46,28 @@ function initAvatar(name, size) {
   return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
 }
 
-// Einheitliche Typ-Labels mit Emojis (single source of truth)
 function typeLabel(type) {
-  return type === 'casual'     ? '🎉 Just 4 Fun'
-       : type === 'training'   ? '🎯 Training'
-       : type === 'punktspiel' ? '🏓 Punktspiel'
-       : type === 'ranked'     ? '🏓 Punktspiel'
+  return type === 'casual'     ? 'Just 4 Fun'
+       : type === 'training'   ? 'Training'
+       : type === 'punktspiel' ? 'Punktspiel'
+       : type === 'ranked'     ? 'Punktspiel'
        : 'Spiel';
+}
+
+function formatEventDate(e) {
+  const timeStr = e.time ? ` um ${e.time} Uhr` : '';
+  if (!e.dateStr) {
+    return `${parseInt(e.day, 10)}. ${e.mon}${timeStr}`;
+  }
+  const today    = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const tmrwStr  = tomorrow.toISOString().slice(0, 10);
+  if (e.dateStr === todayStr) return `Heute${timeStr}`;
+  if (e.dateStr === tmrwStr)  return `Morgen${timeStr}`;
+  const d = new Date(e.dateStr);
+  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}${timeStr}`;
 }
 
 // Encode attribute values (prevents XSS / quote-breakout in data attrs)

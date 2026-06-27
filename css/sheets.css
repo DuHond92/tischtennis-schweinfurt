@@ -167,7 +167,7 @@
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* Spacer for bottom nav */
-.pb-safe { padding-bottom: 16px; }
+.pb-safe { padding-bottom: 88px; }
 
 /* ── DETAIL IMAGE SLIDER (table + event) ────────────────────────── */
 .detail-slider { position: relative; }

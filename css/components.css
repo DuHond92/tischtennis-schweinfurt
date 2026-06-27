@@ -483,7 +483,7 @@
   border-color: var(--primary); color: var(--primary); background: var(--primary-bg);
 }
 
-.events-grid-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.events-grid-list, #home-events-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
 
 .event-card-big {
   display: flex; align-items: center; gap: 12px;
@@ -502,6 +502,7 @@
 .ecb-info { flex: 1; min-width: 0; }
 .ecb-title-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .ecb-title { font-weight: 800; font-size: 0.9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ecb-date { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-meta { font-size: 0.73rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-creator { font-size: 0.78rem; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-creator b { color: var(--primary); }
