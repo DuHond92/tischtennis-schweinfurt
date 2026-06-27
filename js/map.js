@@ -452,37 +452,39 @@ function initBottomSheet() {
   // Handle / pills: always control the sheet
   function onHandleMove(e) { _applyMove(e); }
 
-  // List: only control the sheet when scrolled to the very top
+  // List: only take over when list is at scrollTop=0 AND finger moves down (collapse)
   function onListMove(e) {
     if (startY === null) return;
     const curY  = e.touches[0].clientY;
     const dyAbs = Math.abs(curY - startY);
     const dxAbs = Math.abs(e.touches[0].clientX - startX);
 
-    // Horizontal → cancel immediately, allow pill/horizontal scroll
+    // Horizontal gesture → cancel, let horizontal scroll happen
     if (!didDrag && dxAbs > dyAbs && dxAbs > 8) {
       dragCancelled = true;
       startX = null; startY = null;
       return;
     }
 
-    // Not enough movement yet — wait
+    // Wait for minimum movement before deciding
     if (dyAbs < 5) return;
 
     if (!dragCancelled && !didDrag) {
-      const swipingDown = curY > startY;
-      if (listScrollAtStart > 0) {
-        // List is scrolled: let the list scroll in both directions
+      const swipingDown = curY > startY; // finger moving down = collapse intent
+
+      // List is scrolled, or finger is moving up (list-scroll intent) → hand off
+      if (listScrollAtStart > 0 || !swipingDown) {
         dragCancelled = true;
         startX = null; startY = null;
         return;
       }
-      // At scroll top: swipe down collapses sheet, swipe up expands — take over
-      if (swipingDown) e.preventDefault();
+
+      // Only case left: list at top + swiping down → collapse sheet
+      e.preventDefault();
     }
 
     if (dragCancelled) return;
-    e.preventDefault(); // block list-scroll while sheet is being dragged
+    e.preventDefault();
     _applyMove(e);
   }
 
