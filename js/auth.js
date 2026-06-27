@@ -3,6 +3,19 @@
 // ╚══════════════════════════════════════════════════════════════╝
 let authMode = 'login'; // 'login' | 'register' | 'reset' | 'new-password'
 
+function togglePwVisibility(btn) {
+  const input = btn.previousElementSibling;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.innerHTML = ic(show ? 'eye-off' : 'eye', 18);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.pw-toggle').forEach(btn => {
+    btn.innerHTML = ic('eye', 18);
+  });
+});
+
 function setAuthMode(mode) {
   authMode = mode;
   const isStandard = mode === 'login' || mode === 'register';

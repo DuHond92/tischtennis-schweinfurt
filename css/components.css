@@ -1692,3 +1692,70 @@
 .apc-btn-secondary:active { filter: brightness(0.93); }
 .apc-btn-ghost { background: none; color: var(--text-dim); font-weight: 600; }
 .apc-btn-ghost:active { color: var(--text); }
+
+/* ── Passwort-Sichtbarkeit ───────────────────────────────────────── */
+.pw-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.pw-wrap .form-input {
+  padding-right: 44px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 44px;
+  background: none; border: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.pw-toggle:active { color: var(--text); }
+
+/* ── Empty State Cards ───────────────────────────────────────────── */
+.empty-state-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+  margin: 4px 0 8px;
+}
+.esc-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.esc-title {
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--text); margin-bottom: 6px;
+}
+.esc-body {
+  font-size: 0.8rem; color: var(--text-dim);
+  line-height: 1.5; margin-bottom: 14px;
+}
+.esc-btn {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--primary); color: #fff;
+  font-size: 0.82rem; font-weight: 700;
+  border: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.15s;
+}
+.esc-btn:active { filter: brightness(0.88); }
+
+/* ── Profil: Meine Spiele ────────────────────────────────────────── */
+.profile-event-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.profile-event-row:last-child { border-bottom: none; }
+.per-name {
+  flex: 1; font-size: 0.83rem; font-weight: 600;
+  color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.per-date { font-size: 0.75rem; color: var(--text-dim); flex-shrink: 0; }

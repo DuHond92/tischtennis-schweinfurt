@@ -122,22 +122,32 @@ function renderEvents(filter = 'all') {
     filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter)
   );
 
-  if(!psFiltered.length && !games.length) {
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
-    return;
-  }
-
   const psHtml = psFiltered.length
     ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psFiltered.length}</span></div>
        ${psFiltered.map(renderPlayerSearchCard).join('')}`
     : '';
 
+  const psEmptyHtml = (!psFiltered.length && allPlayerSearches.length === 0)
+    ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht</div>
+       <div class="empty-state-card">
+         <div class="esc-icon">👥</div>
+         <div class="esc-title">Noch keine Mitspieler gefunden?</div>
+         <div class="esc-body">Erstelle ein Gesuch oder entdecke später neue Mitspieler in deiner Umgebung.</div>
+         <button class="esc-btn" onclick="openSheet('mitspieler-sheet')">Gesuch erstellen</button>
+       </div>`
+    : '';
+
   const gamesHtml = games.length
-    ? `<div class="feed-section-title"${psHtml ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
+    ? `<div class="feed-section-title"${(psHtml || psEmptyHtml) ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
        ${games.map(gameCard).join('')}`
     : '';
 
-  c.innerHTML = psHtml + gamesHtml;
+  if (!psHtml && !psEmptyHtml && !gamesHtml) {
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
+    return;
+  }
+
+  c.innerHTML = (psHtml || psEmptyHtml) + gamesHtml;
 }
 
 function filterEvents(type, btn) {

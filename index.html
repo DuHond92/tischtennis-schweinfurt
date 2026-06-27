@@ -287,7 +287,11 @@
       <div id="profile-spielpartner" style="padding:4px 12px 8px;"></div>
     </div>
 
-    <!-- Match History entfernt (v1: kein Match-System) -->
+    <!-- Meine Spiele -->
+    <div class="profile-section">
+      <div class="ps-header">🏓 Meine Spiele</div>
+      <div id="profile-my-events" style="padding:4px 12px 8px;"></div>
+    </div>
 
     <!-- Settings -->
     <div class="profile-section">
@@ -765,7 +769,10 @@
           <label class="form-label" style="margin:0;">Passwort</label>
           <button class="auth-forgot-link" onclick="setAuthMode('reset')">Passwort vergessen?</button>
         </div>
-        <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="auth-pw" placeholder="••••••••">
+          <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
+        </div>
       </div>
     </div>
 
@@ -781,7 +788,10 @@
       </div>
       <div class="form-group">
         <label class="form-label">Passwort (min. 6 Zeichen)</label>
-        <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort">
+          <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
+        </div>
       </div>
     </div>
 
@@ -805,11 +815,17 @@
       </p>
       <div class="form-group">
         <label class="form-label">Neues Passwort (min. 6 Zeichen)</label>
-        <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••">
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••">
+          <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Passwort bestätigen</label>
-        <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••">
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••">
+          <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
+        </div>
       </div>
       <button class="btn btn-primary btn-full" id="auth-newpw-btn" onclick="submitNewPassword()">Passwort speichern</button>
     </div>

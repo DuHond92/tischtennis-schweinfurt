@@ -23,6 +23,8 @@ function renderProfile() {
   });
   // Spielpartner
   if (typeof renderSpielpartnerSection === 'function') renderSpielpartnerSection();
+  // Meine Spiele
+  renderMyEventsSection();
   // Match History - temporarily disabled
   // renderMatchHistory();
   // Sign-out button
@@ -58,6 +60,32 @@ function _renderSetupHint(u) {
       </ul>
       <button class="psc-btn" onclick="openSheet('profile-edit-sheet')">Profil bearbeiten</button>
     </div>`;
+}
+
+function renderMyEventsSection() {
+  const el = document.getElementById('profile-my-events');
+  if (!el || !currentUser) return;
+  const uid = sb.getUserId();
+  const src = allEvents.length ? allEvents : [];
+  const myEvents = src.filter(e =>
+    e.creatorId === uid || (e.participants || []).some(p => p.id === uid)
+  );
+  if (!myEvents.length) {
+    el.innerHTML = `
+      <div class="empty-state-card">
+        <div class="esc-icon">🏓</div>
+        <div class="esc-title">Noch kein Spiel geplant?</div>
+        <div class="esc-body">Entdecke Spiele in deiner Nähe oder erstelle dein erstes eigenes Spiel.</div>
+        <button class="esc-btn" onclick="showPage('events')">Spiele entdecken</button>
+      </div>`;
+    return;
+  }
+  el.innerHTML = myEvents.slice(0, 3).map(e => `
+    <div class="profile-event-row" onclick="showEventDetail(${e.id})">
+      <span class="ev-type-pill pill-${e.type}" style="font-size:0.68rem;">${typeLabel(e.type)}</span>
+      <span class="per-name">${escHtml(e.name)}</span>
+      <span class="per-date">${e.day}. ${e.mon}</span>
+    </div>`).join('');
 }
 
 async function renderMatchHistory() {
