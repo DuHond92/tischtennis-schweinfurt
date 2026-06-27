@@ -486,14 +486,6 @@ function _showMapsPicker(lat, lng, hasCoords, name, addr) {
       ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
       : `https://www.google.com/maps/search/?api=1&query=${q}`,
   });
-  apps.push({
-    label: 'OpenStreetMap', emoji: '🌍',
-    appUrl: null,
-    webUrl: hasCoords
-      ? `https://www.openstreetmap.org/directions?to=${lat},${lng}`
-      : `https://www.openstreetmap.org/search?query=${q}`,
-  });
-
   const overlay = document.createElement('div');
   overlay.id = 'maps-picker-overlay';
   overlay.className = 'maps-picker-overlay';
