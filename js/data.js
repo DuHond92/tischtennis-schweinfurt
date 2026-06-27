@@ -21,7 +21,6 @@ async function loadTables() {
     }
   } catch(e) { console.warn('Supabase tables error', e); }
 
-  await loadOSMTables();
   await _loadApprovedTableImagesForTables(tables);
 
   const src = tables.length ? tables : FALLBACK_TABLES;

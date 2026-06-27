@@ -20,7 +20,7 @@ window.addEventListener('load', async () => {
   tables = FALLBACK_TABLES;
   renderHome();
 
-  // 2. Supabase-Daten laden
+  // 2. Supabase-Daten laden (OSM wird parallel im Hintergrund geladen)
   try {
     await loadTables();
     if(mapInit) _applyMapFilters();
@@ -43,4 +43,12 @@ window.addEventListener('load', async () => {
   } catch(e) {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
   }
+
+  // 3. OSM-Platten im Hintergrund laden — blockiert weder Events noch Home
+  loadOSMTables().then(() => {
+    if(!mapInit) return;
+    const known = new Set(markers.map(m => m.id));
+    tables.filter(t => t.osmId && !known.has(t.id)).forEach(t => addMarker(t));
+    _applyMapFilters();
+  }).catch(() => {});
 });
