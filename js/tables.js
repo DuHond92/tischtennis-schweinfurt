@@ -70,7 +70,7 @@ function showTableDetail(id) {
       <button class="btn btn-primary btn-full" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
         openSheet('create-event-sheet')">🏓 Spiel organisieren</button>
-      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections(${t.lat},${t.lng},${JSON.stringify(t.name||'')},${JSON.stringify(t.addr||'')})">${ic('navigate',15)} In Karten öffnen</button>
+      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}',${JSON.stringify(t.name||'')},${JSON.stringify(t.addr||'')})">${ic('navigate',15)} In Karten öffnen</button>
     </div>
     <!-- Kommentare (inline) -->
     <div class="tds-section">
@@ -431,23 +431,32 @@ async function deleteTableImage(slideEl) {
   await loadTableImages(currentDetailTableId);
 }
 
-function openMapsDirections(lat, lng, name, addr) {
+function _parseCoord(v) {
+  if (v == null || v === '') return NaN;
+  return parseFloat(String(v).replace(',', '.'));
+}
+
+function openMapsDirections(rawLat, rawLng, name, addr) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const hasCoords = lat != null && lng != null && !isNaN(lat) && !isNaN(lng);
+
+  const lat = _parseCoord(rawLat);
+  const lng = _parseCoord(rawLng);
+  const hasCoords = !isNaN(lat) && !isNaN(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+
   let url;
   if (hasCoords) {
-    const label = encodeURIComponent(name || 'Tischtennisplatte');
     url = isIOS
-      ? `https://maps.apple.com/?ll=${lat},${lng}&q=${label}`
-      : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
+      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
   } else {
     const q = encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
     url = isIOS
       ? `https://maps.apple.com/?q=${q}`
       : `https://www.google.com/maps/search/?api=1&query=${q}`;
   }
-  window.open(url, '_blank', 'noopener');
+  window.location.href = url;
 }
 
 // ── RATINGS ───────────────────────────────────────────────────────
