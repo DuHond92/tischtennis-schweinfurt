@@ -110,7 +110,7 @@ function renderEventCard(e, idx = 0) {
 }
 
 function renderEvents(filter = 'all') {
-  const gameSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const gameSrc = allEvents;
   const c = document.getElementById('events-list');
 
   // Spielart-Filter gilt für beide Bereiche

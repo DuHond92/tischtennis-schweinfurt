@@ -40,8 +40,8 @@ function showTableDetail(id) {
       ${t.accessNote   ? `<div class="tds-access-note">${escHtml(t.accessNote)}</div>` : ''}
     </div>` : '';
 
-  // Events
-  const evArr = t.events || [];
+  // Events direkt aus globalem allEvents filtern — nie Demo-Daten
+  const evArr = allEvents.filter(e => e.tid === id);
   const evHtml = evArr.length===0
     ? `<div class="tds-events-empty">
         Noch keine Spiele an dieser Platte geplant.

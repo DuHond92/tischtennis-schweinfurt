@@ -47,8 +47,7 @@ function buildEventSlider(images) {
 }
 
 function showEventDetail(eventId) {
-  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const ev  = src.find(e => e.id === eventId);
+  const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;
   currentEventId = eventId;
 
@@ -127,8 +126,7 @@ async function loadEventParticipants(eventId) {
     const {data, error} = await qb.execute();
     if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Teilnehmer gefunden.</div>'; return; }
 
-    const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
-    const ev  = src.find(e => e.id === eventId);
+    const ev  = allEvents.find(e => e.id === eventId);
     renderParticipantChips(data, ev?.creatorId);
   } catch(e) {
     el.innerHTML = '<div class="participants-empty">Teilnehmer konnten nicht geladen werden.</div>';
@@ -288,8 +286,7 @@ function startGame(eventId) {
 
 function openEditEvent(eventId) {
   closeAllSheets();
-  const src = allEvents.length ? allEvents : FALLBACK_EVENTS;
-  const ev  = src.find(e => e.id === eventId);
+  const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;
   _editingEventId = eventId;
   document.querySelector('#create-event-sheet .sheet-title').textContent = '✏️ Event bearbeiten';

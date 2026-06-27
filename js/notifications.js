@@ -119,7 +119,7 @@ function renderNotifSheet() {
     return;
   }
 
-  const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const evSrc = allEvents;
   const evMap = {};
   evSrc.forEach(e => { evMap[e.id] = e; });
   // Mitspieler-Gesuche auch in Map aufnehmen

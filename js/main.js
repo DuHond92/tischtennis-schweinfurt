@@ -16,15 +16,16 @@ window.addEventListener('load', async () => {
 
   applyTheme();
 
-  // 1. Sofort Fallback zeigen damit App nicht leer wirkt
+  // 1. Platten-Fallback zeigen (keine Demo-Events — events-list bleibt leer bis echte Daten da sind)
   tables = FALLBACK_TABLES;
   renderHome();
-  renderEvents('all');
 
   // 2. Supabase-Daten laden
   try {
     await loadTables();
+    if(mapInit) _applyMapFilters();
     await Promise.all([loadEvents(), loadPlayers()]);
+    if(mapInit) { _applyMapFilters(); _refreshMarkerIcons(); }
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {
       await loadCurrentUser();

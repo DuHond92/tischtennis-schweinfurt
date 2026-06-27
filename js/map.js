@@ -5,6 +5,14 @@
 // MAP_STYLE: 'voyager' | 'positron' | 'osm'
 const MAP_STYLE = 'voyager';
 
+// Lokales Datum als YYYY-MM-DD (kein UTC-Versatz, heutige Spiele zählen immer)
+function _localTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
 const MAP_TILES = {
   voyager:  { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>' },
@@ -42,10 +50,11 @@ function initMap() {
   });
 }
 
-function addMarker(t) {
-  const color   = t.type === 'indoor' ? '#3B7CF4' : '#22C55E';
-  const evCount = t.events?.length || 0;
-  const icon = L.divIcon({
+function _makeMarkerIcon(t) {
+  const color = t.type === 'indoor' ? '#3B7CF4' : '#22C55E';
+  const today = _localTodayISO();
+  const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
+  return L.divIcon({
     className: '',
     html: `<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font-size:1rem;
@@ -56,9 +65,20 @@ function addMarker(t) {
     </div>`,
     iconSize:[36,36], iconAnchor:[18,18]
   });
-  const m = L.marker([t.lat, t.lng], { icon }).addTo(leafletMap);
+}
+
+function addMarker(t) {
+  const m = L.marker([t.lat, t.lng], { icon: _makeMarkerIcon(t) }).addTo(leafletMap);
   m.on('click', () => showMapPreview(t.id));
   markers.push({ id: t.id, m });
+}
+
+function _refreshMarkerIcons() {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  markers.forEach(({ id, m }) => {
+    const t = src.find(x => x.id === id);
+    if (t) m.setIcon(_makeMarkerIcon(t));
+  });
 }
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
@@ -487,6 +507,13 @@ function _buildStatusLine(filtered) {
     : `<div class="mbs-status"><span class="mbs-status-count">${countText}</span></div>`;
 }
 
+function _mapThumbHtml(t, loadAttr) {
+  const fb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+  if (t.photos && t.photos.length)
+    return `<img src="${escAttr(t.photos[0])}" onerror="this.src='${fb}'" loading="${loadAttr || 'lazy'}" decoding="async">`;
+  return `<img src="${fb}" loading="${loadAttr || 'lazy'}" decoding="async" class="thumb-placeholder-img">`;
+}
+
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
   if (!c) return;
@@ -498,8 +525,6 @@ function renderMapList(list) {
 
   const _surfaceLabel = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
 
-  // placeholder defined per-card below (type-aware)
-
   const locCta = (!userLat || !userLng) ? `
     <div class="mli-loc-cta">
       <div class="mli-loc-cta-icon">${ic('map-pinned', 22)}</div>
@@ -510,8 +535,9 @@ function renderMapList(list) {
       </div>
     </div>` : '';
 
+  const _today = _localTodayISO();
   c.innerHTML = locCta + list.map((t, i) => {
-    const evCount = t.events?.length || 0;
+    const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
     const badgeParts = [];
     if (t.distance != null) badgeParts.push(`<span class="mli-dist-badge">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>`);
     if (evCount > 0) badgeParts.push(`<span class="mli-games-badge">${ic('calendar', 11)} ${evCount === 1 ? '1 Spiel geplant' : `${evCount} Spiele geplant`}</span>`);
@@ -525,11 +551,8 @@ function renderMapList(list) {
     if (t.surface && _surfaceLabel[t.surface]) metaParts.push(_surfaceLabel[t.surface]);
     metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
 
-    const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
     const _load = i < 3 ? 'eager' : 'lazy';
-    const thumbInner = (t.photos && t.photos.length)
-      ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="${_load}" decoding="async">`
-      : `<img src="${plateFb}" loading="${_load}" decoding="async" class="thumb-placeholder-img">`;
+    const thumbInner = _mapThumbHtml(t, _load);
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
@@ -749,14 +772,11 @@ function showMapPreview(tableId) {
   const wasPreview = !!_previewTableId;
   _previewTableId = tableId;
 
-  const evCount = t.events?.length || 0;
+  const _today = _localTodayISO();
+  const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
   const distHtml = t.distance != null
     ? `<span class="mbsp-dist">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>` : '';
-  const thumbSrc = t.photos?.[0] || null;
-  const _bsFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
-  const thumbHtml = thumbSrc
-    ? `<img src="${escAttr(thumbSrc)}" onerror="this.src='${_bsFb}'" loading="lazy">`
-    : `<img src="${_bsFb}" loading="lazy" class="thumb-placeholder-img">`;
+  const thumbHtml = _mapThumbHtml(t, 'eager');
 
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
 
@@ -769,7 +789,7 @@ function showMapPreview(tableId) {
           <button class="mbsp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen">×</button>
         </div>
         <div class="mbsp-badges">
-          <span class="mbsp-badge mbsp-badge-${t.type}">${t.type === 'indoor' ? '🏢 Indoor' : '🌳 Outdoor'}</span>
+          <span class="mbsp-badge mbsp-badge-${t.type}">${t.type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
           ${distHtml}
         </div>
         <div class="mbsp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>

@@ -51,7 +51,7 @@ function renderHome() {
   const scroll = document.getElementById('home-tables-scroll');
   const src = tables.length ? tables : FALLBACK_TABLES;
   scroll.innerHTML = src.slice(0,6).map((t, i)=>{
-    const evCount = t.events?.length || FALLBACK_EVENTS.filter(e=>e.tid===t.id).length;
+    const evCount = t.events?.length || 0;
     const _plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
     const _load = i < 2 ? 'eager' : 'lazy';
     const thumbInner = (t.photos && t.photos.length)
@@ -75,7 +75,7 @@ function renderHome() {
   renderHomePsSection();
 
   // Events
-  const evSrc = allEvents.length ? allEvents : FALLBACK_EVENTS;
+  const evSrc = allEvents;
   const evList = document.getElementById('home-events-list');
   const evFiltered = evSrc.filter(e => e.type !== 'player_search').slice(0, 3);
   evList.innerHTML = evFiltered.length
