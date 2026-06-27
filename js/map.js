@@ -63,6 +63,8 @@ function addMarker(t) {
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
 
+let _mapDdItems = [], _mapDdTimer = null, _mapDdActiveIdx = -1;
+
 function onMapSearch() {
   const input = document.getElementById('map-search');
   mapSearchQuery = (input?.value || '').toLowerCase().trim();
@@ -71,11 +73,170 @@ function onMapSearch() {
   _applyMapFilters();
 }
 
+// Entry point wired to oninput — runs both list filter and dropdown
+function onMapSearchInput() {
+  onMapSearch();
+  const q = (document.getElementById('map-search')?.value || '').trim();
+  clearTimeout(_mapDdTimer);
+  _mapDdActiveIdx = -1;
+  if (q.length < 2) { _closeMapDd(); return; }
+  _showMapDdLoading();
+  _mapDdTimer = setTimeout(() => _runMapDdSearch(q), 350);
+}
+
+async function _runMapDdSearch(q) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const local = src.filter(t =>
+    t.name.toLowerCase().includes(q.toLowerCase()) ||
+    (t.addr || '').toLowerCase().includes(q.toLowerCase())
+  );
+  let geo = [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(q + ' Schweinfurt')}&format=json&limit=4` +
+      `&addressdetails=1&countrycodes=de&accept-language=de`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+    geo = (await res.json()).slice(0, 4);
+  } catch(_) {}
+  _renderMapDd(q, local, geo);
+}
+
+function _renderMapDd(q, localMatches, geoResults) {
+  const dd = document.getElementById('map-search-dropdown');
+  if (!dd) return;
+  _mapDdItems = [];
+  const hl = s => {
+    if (!q) return escHtml(s);
+    return escHtml(s).replace(
+      new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+      '<mark>$1</mark>'
+    );
+  };
+  let html = '';
+
+  if (localMatches.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      🏓 Tischtennisplatten</div>`;
+    localMatches.slice(0, 3).forEach(t => {
+      const idx = _mapDdItems.length;
+      _mapDdItems.push({ type: 'table', data: t });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="_selectMapDdItem(${idx})"
+        onkeydown="if(event.key==='Enter')_selectMapDdItem(${idx})"
+        id="msdi-${idx}">
+        <div class="sdi-icon table">${t.icon || '🏓'}</div>
+        <div>
+          <div class="sdi-main">${hl(t.name)}</div>
+          <div class="sdi-sub">${ic('pin')} ${escHtml(t.addr || '')} · ${t.type === 'indoor' ? 'Indoor' : 'Outdoor'}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (geoResults.length) {
+    html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
+      color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
+      ${ic('pin')} Orte &amp; Adressen</div>`;
+    geoResults.forEach(r => {
+      const idx = _mapDdItems.length;
+      const name = r.name || r.display_name.split(',')[0];
+      const sub  = r.display_name.split(',').slice(1, 3).join(',').trim();
+      _mapDdItems.push({ type: 'geo', data: r });
+      html += `<div class="search-dropdown-item" tabindex="0"
+        onmousedown="_selectMapDdItem(${idx})"
+        onkeydown="if(event.key==='Enter')_selectMapDdItem(${idx})"
+        id="msdi-${idx}">
+        <div class="sdi-icon place">${ic('pin', 18)}</div>
+        <div>
+          <div class="sdi-main">${hl(name)}</div>
+          <div class="sdi-sub">${escHtml(sub)}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (!html) {
+    html = `<div class="search-empty">Keine Ergebnisse für „${escHtml(q)}"</div>`;
+  }
+  dd.innerHTML = html;
+  _openMapDd();
+}
+
+function _showMapDdLoading() {
+  const dd = document.getElementById('map-search-dropdown');
+  if (!dd) return;
+  dd.innerHTML = `<div class="search-loading"><div class="search-spinner"></div> Suche läuft…</div>`;
+  _openMapDd();
+}
+
+function _openMapDd() {
+  const input = document.getElementById('map-search');
+  const dd    = document.getElementById('map-search-dropdown');
+  if (!dd || !input) return;
+  const rect = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 6) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  dd.classList.add('open');
+}
+
+function _closeMapDd() {
+  document.getElementById('map-search-dropdown')?.classList.remove('open');
+  _mapDdActiveIdx = -1;
+}
+
+function _selectMapDdItem(idx) {
+  const item = _mapDdItems[idx];
+  if (!item) return;
+  _closeMapDd();
+  if (item.type === 'table') {
+    const t = item.data;
+    document.getElementById('map-search').value = t.name;
+    mapSearchQuery = '';
+    document.getElementById('map-search-clear').style.display = 'none';
+    _applyMapFilters();
+    if (leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate: true });
+    setTimeout(() => showMapPreview(t.id), 150);
+  } else {
+    const lat  = parseFloat(item.data.lat);
+    const lng  = parseFloat(item.data.lon);
+    const name = item.data.name || item.data.display_name.split(',')[0];
+    document.getElementById('map-search').value = name;
+    if (leafletMap) leafletMap.setView([lat, lng], 15, { animate: true });
+  }
+}
+
+function onMapSearchKey(e) {
+  const items = document.querySelectorAll('#map-search-dropdown .search-dropdown-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _mapDdActiveIdx = Math.min(_mapDdActiveIdx + 1, items.length - 1);
+    items[_mapDdActiveIdx]?.focus();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _mapDdActiveIdx = Math.max(_mapDdActiveIdx - 1, -1);
+    if (_mapDdActiveIdx === -1) document.getElementById('map-search').focus();
+    else items[_mapDdActiveIdx]?.focus();
+  } else if (e.key === 'Escape') {
+    _closeMapDd();
+    document.getElementById('map-search').blur();
+  }
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.map-search-wrap');
+  const dd   = document.getElementById('map-search-dropdown');
+  if (!wrap?.contains(e.target) && !dd?.contains(e.target)) _closeMapDd();
+});
+
 function clearMapSearch() {
   const input = document.getElementById('map-search');
   if(input) input.value = '';
   mapSearchQuery = '';
   document.getElementById('map-search-clear').style.display = 'none';
+  _closeMapDd();
   _applyMapFilters();
 }
 

@@ -112,7 +112,10 @@
           <span class="map-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
           <input class="map-search-input" id="map-search"
                  placeholder="Platte, Ort oder Adresse…"
-                 autocomplete="off" oninput="onMapSearch()">
+                 autocomplete="off"
+                 oninput="onMapSearchInput()"
+                 onkeydown="onMapSearchKey(event)"
+                 onfocus="if(this.value.length>1) _openMapDd()">
           <span class="map-search-clear" id="map-search-clear" onclick="clearMapSearch()" style="display:none;">×</span>
         </div>
         <div class="map-filter-btn" id="map-filter-btn" onclick="cycleMapTypeFilter()" title="Filter">
@@ -1053,6 +1056,7 @@
 </div>
 
 <div class="search-dropdown" id="search-dropdown"></div>
+<div class="search-dropdown" id="map-search-dropdown"></div>
 
 <!-- PLAYER PROFILE OVERLAY (stacks on top of other sheets) -->
 <div id="pp-overlay" onclick="closePlayerProfile()"></div>
