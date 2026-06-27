@@ -41,10 +41,11 @@ function renderHome() {
       `Hallo, ${currentUser.username}! 👋`;
   }
 
-  // Counter
-  animateCount(document.getElementById('c-tables'),   tables.length || 9);
-  animateCount(document.getElementById('c-events'),   allEvents.length || FALLBACK_EVENTS.length);
-  animateCount(document.getElementById('c-searches'), allPlayerSearches.length);
+  // Action-Card Icons einmalig befüllen
+  const _sacIcons = [['map-pinned',20],['users',20],['calendar-plus',20]];
+  document.querySelectorAll('.sac-icon-wrap').forEach((el, i) => {
+    if (!el.hasChildNodes() && _sacIcons[i]) el.innerHTML = ic(_sacIcons[i][0], _sacIcons[i][1]);
+  });
 
   // Platten-Karten
   const scroll = document.getElementById('home-tables-scroll');
@@ -115,7 +116,7 @@ function renderHomePsSection() {
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}')`;
   container.innerHTML = `
     <div class="section-header">
-      <div class="section-title">👥 Mitspieler gesucht</div>
+      <div class="section-title">Mitspieler gesucht</div>
       <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
     </div>
     <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">

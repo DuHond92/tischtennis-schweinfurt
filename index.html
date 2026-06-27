@@ -59,19 +59,22 @@
       </div>
     </div>
 
-    <!-- Stats -->
+    <!-- Action Cards -->
     <div class="stats-row fade-up">
       <div class="stat-card" onclick="navStat('map')">
-        <div class="stat-val" id="c-tables">9</div>
-        <div class="stat-label">Platten</div>
-      </div>
-      <div class="stat-card" onclick="navStat('events')">
-        <div class="stat-val" id="c-events">14</div>
-        <div class="stat-label">Spiele</div>
+        <div class="sac-icon-wrap" style="background:var(--primary-bg);color:var(--primary);"></div>
+        <div class="sac-title">Platten entdecken</div>
+        <div class="sac-sub">Finde Tische in deiner Umgebung</div>
       </div>
       <div class="stat-card" onclick="navStat('searches')">
-        <div class="stat-val" id="c-searches">0</div>
-        <div class="stat-label">Gesuche</div>
+        <div class="sac-icon-wrap" style="background:var(--green-bg);color:var(--green);"></div>
+        <div class="sac-title">Mitspieler finden</div>
+        <div class="sac-sub">Verabrede dich zum Spielen</div>
+      </div>
+      <div class="stat-card" onclick="openCreateEventSheet()">
+        <div class="sac-icon-wrap" style="background:var(--gold-bg);color:var(--gold);"></div>
+        <div class="sac-title">Spiel organisieren</div>
+        <div class="sac-sub">Erstelle ein neues Event</div>
       </div>
     </div>
 

@@ -63,16 +63,29 @@
 
 .stat-card {
   flex: 1; background: var(--surface);
-  border-radius: var(--radius); padding: 10px 12px;
+  border-radius: var(--radius); padding: 14px 10px 12px;
   text-align: center; box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer; user-select: none;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .stat-card:active { transform: scale(0.97); box-shadow: none; }
-.stat-val { font-family: var(--font-head); font-size: 1.75rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.stat-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+.sac-icon-wrap {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sac-title {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--text); line-height: 1.25;
+}
+.sac-sub {
+  font-size: 0.64rem; color: var(--text-dim);
+  line-height: 1.35; margin-top: -2px;
+}
 
 /* Section header */
 .section-header {

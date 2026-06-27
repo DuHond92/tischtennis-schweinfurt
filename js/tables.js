@@ -70,7 +70,7 @@ function showTableDetail(id) {
       <button class="btn btn-primary btn-full" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
         openSheet('create-event-sheet')">🏓 Spiel organisieren</button>
-      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections(${t.lat},${t.lng})">${ic('navigate',15)} Route</button>
+      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections(${t.lat},${t.lng},${JSON.stringify(t.name||'')},${JSON.stringify(t.addr||'')})">${ic('navigate',15)} In Karten öffnen</button>
     </div>
     <!-- Kommentare (inline) -->
     <div class="tds-section">
@@ -431,9 +431,23 @@ async function deleteTableImage(slideEl) {
   await loadTableImages(currentDetailTableId);
 }
 
-function openMapsDirections(lat, lng) {
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-  window.open(url, '_blank');
+function openMapsDirections(lat, lng, name, addr) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const hasCoords = lat != null && lng != null && !isNaN(lat) && !isNaN(lng);
+  let url;
+  if (hasCoords) {
+    const label = encodeURIComponent(name || 'Tischtennisplatte');
+    url = isIOS
+      ? `https://maps.apple.com/?ll=${lat},${lng}&q=${label}`
+      : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  } else {
+    const q = encodeURIComponent((addr || name || 'Tischtennisplatte').trim());
+    url = isIOS
+      ? `https://maps.apple.com/?q=${q}`
+      : `https://www.google.com/maps/search/?api=1&query=${q}`;
+  }
+  window.open(url, '_blank', 'noopener');
 }
 
 // ── RATINGS ───────────────────────────────────────────────────────
