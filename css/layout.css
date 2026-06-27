@@ -99,5 +99,5 @@
 }
 
 /* ======= PAGES ======= */
-.page { display: none; flex: 1; overflow-y: auto; overflow-x: visible; }
+.page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
 .page.active { display: flex; flex-direction: column; }
