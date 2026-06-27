@@ -35,7 +35,6 @@ function buildEventSlider(images) {
     <div class="detail-slider" data-idx="0" data-count="${hasImgs ? images.length : 1}">
       <div class="ds-main">
         <div class="ds-slides-wrap">${slides}</div>
-        <button class="ds-close" onclick="closeAllSheets()">×</button>
         ${hasImgs && images.length > 1 ? `<div class="ds-counter">1/${images.length}</div>` : ''}
         ${navHtml}
       </div>

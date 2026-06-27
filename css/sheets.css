@@ -27,6 +27,16 @@
 .sheet-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; }
 .sheet-close { font-size: 1.4rem; cursor: pointer; color: var(--text-dim); }
 
+/* Back button for fullscreen detail views */
+.sheet-back {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: var(--text-dim); display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex-shrink: 0; transition: color 0.15s;
+}
+.sheet-back:active { color: var(--text); }
+.sheet-header--nav { justify-content: flex-start; gap: 4px; }
+.sheet-header--nav .sheet-title { flex: 1; }
+
 .sheet-body { padding: 16px 20px; }
 
 /* ── EVENT DETAIL SHEET ─────────────────────────────────────────── */
@@ -498,13 +508,13 @@
 }
 
 .inbox-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: flex-start; gap: 6px;
   padding: 6px 18px 3px;
   flex-shrink: 0;
 }
 .inbox-title {
   font-family: var(--font-head, sans-serif);
-  font-size: 1.0rem; font-weight: 800; color: var(--text);
+  font-size: 1.0rem; font-weight: 800; color: var(--text); flex: 1;
 }
 .inbox-close-btn {
   width: 27px; height: 27px; border: none;

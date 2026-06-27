@@ -126,7 +126,6 @@ function buildPhotoSlider(t, photos) {
     <div class="detail-slider" data-idx="0" data-count="${hasPhotos ? photos.length : 1}">
       <div class="ds-main">
         <div class="ds-slides-wrap">${slides}</div>
-        <button class="ds-close" onclick="closeAllSheets()">×</button>
         ${hasPhotos && photos.length > 1 ? `<div class="ds-counter">1/${photos.length}</div>` : ''}
         ${navHtml}
       </div>

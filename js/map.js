@@ -19,6 +19,9 @@ let mapSearchQuery   = '';
 let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'ranked'
 let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 
+let _previewTableId = null; // currently shown in map preview card
+let _bsSnapTo = null;       // exposed by initBottomSheet for external snap calls
+
 function initMap() {
   leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
   const tile = MAP_TILES[MAP_STYLE] || MAP_TILES.voyager;
@@ -33,7 +36,10 @@ function initMap() {
   src.forEach(t => addMarker(t));
   renderMapList(src);
   initBottomSheet();
-  leafletMap.on('click', e => { if(typeof _handleSuggestMapClick === 'function') _handleSuggestMapClick(e); });
+  leafletMap.on('click', e => {
+    if (_previewTableId) hideMapPreview();
+    if (typeof _handleSuggestMapClick === 'function') _handleSuggestMapClick(e);
+  });
 }
 
 function addMarker(t) {
@@ -51,7 +57,7 @@ function addMarker(t) {
     iconSize:[36,36], iconAnchor:[18,18]
   });
   const m = L.marker([t.lat, t.lng], { icon }).addTo(leafletMap);
-  m.on('click', () => { showTableDetail(t.id); selectMapItem(t.id); });
+  m.on('click', () => showMapPreview(t.id));
   markers.push({ id: t.id, m });
 }
 
@@ -298,44 +304,201 @@ function renderMapList(list) {
 function initBottomSheet() {
   const bs     = document.getElementById('map-bottom-sheet');
   const handle = document.getElementById('mbs-handle');
-  if(!bs || !handle) return;
+  const pills  = document.getElementById('mbs-pills');
+  if (!bs || !handle) return;
 
-  const PEEK_H  = 200;
-  const expandH = () => Math.round(bs.parentElement.offsetHeight * 0.68);
-  const ANIM    = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+  const ANIM = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
 
-  bs.style.height     = PEEK_H + 'px';
-  bs.style.transition = ANIM;
+  function ph() { return bs.parentElement.offsetHeight || window.innerHeight; }
+  function snaps() {
+    return [
+      Math.max(80, Math.round(ph() * 0.12)),  // 0: collapsed
+      200,                                      // 1: standard (default)
+      Math.round(ph() * 0.90),                 // 2: expanded
+    ];
+  }
 
-  let startY = null, startH = null;
+  let snapIdx = 1;
 
-  handle.addEventListener('touchstart', e => {
+  function snapTo(idx, animate) {
+    if (animate === undefined) animate = true;
+    idx = Math.max(0, Math.min(2, idx));
+    snapIdx = idx;
+    bs.style.transition = animate ? ANIM : 'none';
+    if (!animate) void bs.offsetHeight;
+    bs.style.height = snaps()[idx] + 'px';
+  }
+
+  snapTo(1, false);
+
+  let startX = null, startY = null, startH = null;
+  let lastY = null, lastT = null, prevY = null, prevT = null;
+  let didDrag = false, dragCancelled = false;
+
+  function onDragStart(e) {
+    startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     startH = bs.offsetHeight;
+    lastY  = startY; lastT = Date.now();
+    prevY  = null;   prevT = null;
+    didDrag = false; dragCancelled = false;
     bs.style.transition = 'none';
-  }, { passive: true });
+  }
 
-  handle.addEventListener('touchmove', e => {
-    if(startY === null) return;
-    const dy   = startY - e.touches[0].clientY;
-    const newH = Math.max(80, Math.min(expandH(), startH + dy));
+  function onDragMove(e) {
+    if (startY === null || dragCancelled) return;
+    const curX = e.touches[0].clientX;
+    const curY = e.touches[0].clientY;
+    const dxAbs = Math.abs(curX - startX);
+    const dyAbs = Math.abs(curY - startY);
+    // Horizontal swipe on pills → cancel sheet drag, let pills scroll
+    if (!didDrag && dxAbs > dyAbs && dxAbs > 8) {
+      dragCancelled = true;
+      bs.style.transition = ANIM;
+      bs.style.height = snaps()[snapIdx] + 'px';
+      return;
+    }
+    const s = snaps();
+    const newH = Math.max(s[0], Math.min(s[2], startH + (startY - curY)));
     bs.style.height = newH + 'px';
-  }, { passive: true });
+    if (dyAbs > 5) didDrag = true;
+    prevY = lastY; prevT = lastT;
+    lastY = curY;  lastT = Date.now();
+  }
 
-  handle.addEventListener('touchend', () => {
-    if(startY === null) return;
+  function onDragEnd() {
+    if (startY === null) return;
+    const s = snaps();
     const h = bs.offsetHeight;
-    startY  = null;
-    bs.style.transition = ANIM;
-    // Force reflow so transition applies to the next height change
-    void bs.offsetHeight;
-    const mid = (PEEK_H + expandH()) / 2;
-    bs.style.height = (h > mid ? expandH() : PEEK_H) + 'px';
+
+    let targetIdx = snapIdx;
+    if (didDrag && !dragCancelled) {
+      // Velocity from last two move events (px/ms, positive = swipe up)
+      let velocity = 0;
+      if (prevT !== null && lastT - prevT > 0 && lastT - prevT < 250) {
+        velocity = (prevY - lastY) / (lastT - prevT);
+      }
+      if (Math.abs(velocity) > 0.3) {
+        targetIdx = velocity > 0
+          ? Math.min(2, snapIdx + 1)
+          : Math.max(0, snapIdx - 1);
+      } else {
+        const dist = s.map(v => Math.abs(h - v));
+        targetIdx = dist.indexOf(Math.min(...dist));
+      }
+    }
+
+    startX = null; startY = null;
+
+    // Dismiss preview content before snapping (content swap, no extra animation)
+    if (_previewTableId && didDrag && !dragCancelled) {
+      _dismissPreviewContent();
+    }
+
+    snapTo(targetIdx);
+  }
+
+  [handle, pills].filter(Boolean).forEach(el => {
+    el.addEventListener('touchstart', onDragStart, { passive: true });
+    el.addEventListener('touchmove',  onDragMove,  { passive: true });
+    el.addEventListener('touchend',   onDragEnd);
   });
 
+  // Click on handle cycles through all 3 positions
   handle.addEventListener('click', () => {
-    const h = bs.offsetHeight;
-    bs.style.transition = ANIM;
-    bs.style.height = (h <= PEEK_H + 20 ? expandH() : PEEK_H) + 'px';
+    if (didDrag) return;
+    if (_previewTableId) { hideMapPreview(); return; }
+    snapTo((snapIdx + 1) % 3);
   });
+
+  // Expose for external callers (marker preview)
+  _bsSnapTo = snapTo;
+}
+
+// ── MARKER PREVIEW ───────────────────────────────────────────────────────────
+
+function _setActiveMarker(id) {
+  markers.forEach(({ id: mId, m }) => {
+    const inner = m.getElement()?.querySelector('div');
+    if (inner) inner.style.transform = mId === id ? 'scale(1.25)' : '';
+  });
+}
+
+function _resetActiveMarker() {
+  markers.forEach(({ m }) => {
+    const inner = m.getElement()?.querySelector('div');
+    if (inner) inner.style.transform = '';
+  });
+}
+
+function _dismissPreviewContent() {
+  if (!_previewTableId) return;
+  _previewTableId = null;
+  const prev  = document.getElementById('mbs-preview');
+  const pills = document.getElementById('mbs-pills');
+  const list  = document.getElementById('map-list-container');
+  if (prev)  prev.style.display  = 'none';
+  if (pills) pills.style.display = '';
+  if (list)  list.style.display  = '';
+  document.querySelectorAll('.map-list-item').forEach(el => el.classList.remove('selected'));
+  _resetActiveMarker();
+}
+
+function showMapPreview(tableId) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x => x.id === tableId);
+  if (!t) return;
+
+  const wasPreview = !!_previewTableId;
+  _previewTableId = tableId;
+
+  const evCount = t.events?.length || 0;
+  const distHtml = t.distance != null
+    ? `<span class="mbsp-dist">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>` : '';
+  const thumbSrc = t.photos?.[0] || null;
+  const thumbHtml = thumbSrc
+    ? `<img src="${escAttr(thumbSrc)}" onerror="this.src='images/placeholders/placeholder-plate.webp'" loading="lazy">`
+    : `<div class="mbsp-thumb-empty">🏓</div>`;
+
+  const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
+
+  document.getElementById('mbs-preview').innerHTML = `
+    <div class="mbsp-card" onclick="showTableDetail(${t.id})">
+      <div class="mbsp-thumb">${thumbHtml}</div>
+      <div class="mbsp-info">
+        <div class="mbsp-title-row">
+          <div class="mbsp-name">${escHtml(t.name)}</div>
+          <button class="mbsp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen">×</button>
+        </div>
+        <div class="mbsp-badges">
+          <span class="mbsp-badge mbsp-badge-${t.type}">${t.type === 'indoor' ? '🏢 Indoor' : '🌳 Outdoor'}</span>
+          ${distHtml}
+        </div>
+        <div class="mbsp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
+        ${evCount ? `<div class="mbsp-ev">${ic('calendar', 11)} ${evCount} Event${evCount > 1 ? 's' : ''} geplant</div>` : '<div class="mbsp-ev mbsp-ev-empty">Noch keine Events</div>'}
+      </div>
+    </div>
+  `;
+
+  if (!wasPreview) {
+    document.getElementById('mbs-pills').style.display = 'none';
+    document.getElementById('map-list-container').style.display = 'none';
+    document.getElementById('mbs-preview').style.display = '';
+
+    const bs = document.getElementById('map-bottom-sheet');
+    const ph = bs.parentElement.offsetHeight || window.innerHeight;
+    const previewH = Math.max(155, Math.round(ph * 0.22));
+    bs.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    bs.style.height = previewH + 'px';
+  }
+
+  // Pan map to marker, center slightly below to give sheet room
+  if (leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate: true });
+  _setActiveMarker(tableId);
+}
+
+function hideMapPreview() {
+  if (!_previewTableId) return;
+  _dismissPreviewContent();
+  if (_bsSnapTo) _bsSnapTo(1); // animate back to standard position
 }

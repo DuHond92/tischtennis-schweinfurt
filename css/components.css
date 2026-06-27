@@ -270,7 +270,7 @@
 
 .mbs-pills {
   display: flex; gap: 6px; overflow-x: auto; padding: 0 12px 10px;
-  flex-shrink: 0; scrollbar-width: none;
+  flex-shrink: 0; scrollbar-width: none; touch-action: pan-x;
 }
 .mbs-pills::-webkit-scrollbar { display: none; }
 .mbs-pill {
@@ -308,6 +308,64 @@
   text-align: center; padding: 24px 20px 32px;
   color: var(--text-dim); font-size: 0.88rem; line-height: 1.6;
 }
+
+/* ── MAP MARKER PREVIEW CARD ──────────────────────────────────────────────── */
+.mbs-preview {
+  padding: 0 12px 12px;
+  flex-shrink: 0;
+}
+.mbsp-card {
+  display: flex; gap: 11px; align-items: flex-start;
+  background: var(--surface2); border-radius: 14px;
+  padding: 10px; cursor: pointer;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mbsp-card:active { background: var(--surface3, var(--surface2)); }
+.mbsp-thumb {
+  width: 76px; height: 76px; border-radius: 10px;
+  overflow: hidden; flex-shrink: 0;
+  background: var(--surface3, var(--surface2));
+}
+.mbsp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mbsp-thumb-empty {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+}
+.mbsp-info { flex: 1; min-width: 0; }
+.mbsp-title-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 6px; margin-bottom: 5px;
+}
+.mbsp-name {
+  font-weight: 800; font-size: 0.88rem; color: var(--text);
+  line-height: 1.25; flex: 1;
+}
+.mbsp-close {
+  background: none; border: none; color: var(--text-dim);
+  font-size: 1.3rem; line-height: 1; cursor: pointer;
+  padding: 0 2px; flex-shrink: 0; margin-top: -2px;
+}
+.mbsp-badges {
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap; margin-bottom: 4px;
+}
+.mbsp-badge {
+  font-size: 0.68rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+}
+.mbsp-badge-indoor  { background: rgba(59,124,244,0.12); color: #3B7CF4; }
+.mbsp-badge-outdoor { background: rgba(34,197,94,0.12);  color: #22C55E; }
+.mbsp-dist { font-size: 0.72rem; color: var(--text-dim); }
+.mbsp-addr {
+  font-size: 0.73rem; color: var(--text-dim); margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mbsp-ev       { font-size: 0.71rem; color: var(--accent); font-weight: 700; }
+.mbsp-ev-empty { color: var(--text-xdim); font-weight: 400; }
 
 /* Map filter sheet option rows */
 .fms-section-label {
