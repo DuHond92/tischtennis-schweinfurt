@@ -21,7 +21,6 @@ body {
   margin: 0 auto;
   position: relative;
   background: var(--bg);
-  overflow-x: hidden;
   /* On desktop: show phone frame */
 }
 
