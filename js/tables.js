@@ -19,17 +19,14 @@ function showTableDetail(id) {
 
   // OSM Badge
   const osmHtml = t.osmId
-    ? `<span class="osm-badge">🗺 OpenStreetMap</span>` : '';
+    ? `<span class="osm-badge">${ic('map-pinned',12)} OpenStreetMap</span>` : '';
 
-  // Zusatz-Infos aus OSM
-  const extraInfos = [];
-  if(t.surface)   extraInfos.push(`🏔 Belag: ${t.surface}`);
-  if(t.operator)  extraInfos.push(`🏢 Betreiber: ${t.operator}`);
-  if(t.access)    extraInfos.push(`🔓 Zugang: ${t.access}`);
-  const extraHtml = extraInfos.length
-    ? `<div style="padding:8px 20px;display:flex;flex-wrap:wrap;gap:8px;">
-        ${extraInfos.map(i=>`<span style="font-size:0.75rem;color:var(--text-dim);">${i}</span>`).join('')}
-       </div>` : '';
+  // Strukturierte Meta-Zeile (Fakten)
+  const metaParts = [];
+  if (t.tablesCount) metaParts.push(`${t.tablesCount} Platte${t.tablesCount > 1 ? 'n' : ''}`);
+  if (t.surface)     metaParts.push(t.surface);
+  metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
+  if (t.operator)    metaParts.push(`Betreiber: ${t.operator}`);
 
   // Zugang-Sektion (neue Felder)
   const _aLabel = { public:'Öffentlich zugänglich', limited:'Eingeschränkt zugänglich', private_or_unclear:'Zugang unklar', temporarily_closed:'Aktuell geschlossen' };
@@ -46,46 +43,46 @@ function showTableDetail(id) {
   // Events
   const evArr = t.events || [];
   const evHtml = evArr.length===0
-    ? `<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:0.85rem;">
-        Noch keine Spielrunden –<br>Sei der Erste! 🏓<br><br>
-        <button class="btn btn-primary btn-sm" onclick="openSheet('create-event-sheet')">Spiel organisieren</button>
+    ? `<div class="tds-events-empty">
+        Noch keine Spiele an dieser Platte geplant.
        </div>`
     : evArr.map(e=>`
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);">
+      <div class="tds-event-row">
         <div class="ev-date-box"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.88rem;">${e.name}</div>
-          <div style="font-size:0.74rem;color:var(--text-dim);">${ic('clock')} ${e.time} · ${ic('users')} ${e.p}/${e.max}</div>
+        <div class="tds-event-info">
+          <div class="tds-event-name">${e.name}</div>
+          <div class="tds-event-meta">${ic('clock',12)} ${e.time} · ${ic('users',12)} ${e.p}/${e.max}</div>
         </div>
         <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
-        <button class="btn btn-primary btn-sm" onclick="showEventDetail(${e.id})">Details →</button>
+        <button class="btn btn-secondary btn-sm" onclick="showEventDetail(${e.id})">Details</button>
       </div>`).join('');
 
   document.getElementById('tds-body').innerHTML = `
     ${sliderHtml}
-    <!-- Kompakter Info-Block -->
+    <!-- Info Block -->
     <div class="ds-info">
-      <div class="ds-name">${t.icon} ${t.name}</div>
+      <div class="ds-name">${t.name}</div>
       <div class="ds-badges">
-        <span class="ev-type-pill ${t.type==='indoor'?'pill-ranked':'pill-casual'}">${t.type==='indoor'?'🏢 Indoor':'🌳 Outdoor'}</span>
         ${distHtml}${osmHtml}
       </div>
       <div class="ds-address">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
+      <div class="tds-meta-line">${metaParts.join(' · ')}</div>
       <div class="tds-rating-inline" id="tds-rating-${t.id}">
-        <span style="font-size:0.78rem;color:var(--text-dim);">⭐ Lade…</span>
+        <span style="font-size:0.78rem;color:var(--text-dim);">Lade…</span>
       </div>
     </div>
-    ${t.description ? `<div class="tds-desc">${escHtml(t.description)}</div>` : ''}
-    ${extraHtml}
     ${accessHtml}
-    <!-- Primäre Aktionen -->
+    <!-- Aktionen -->
     <div class="tds-cta-row">
       <button class="btn btn-primary btn-full" onclick="closeAllSheets();
         document.getElementById('ev-table').value='${t.id}';
-        openSheet('create-event-sheet')">🏓 Spiel organisieren</button>
+        openSheet('create-event-sheet')">${ic('calendar-plus',15)} Spiel erstellen</button>
       <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}','${_escJs(t.name||'')}','${_escJs(t.addr||'')}')">${ic('navigate',15)} In Karten öffnen</button>
     </div>
-    <!-- Kommentare (inline) -->
+    <!-- Kommende Spiele -->
+    <div class="tds-events-heading">${ic('calendar',13)} Kommende Spiele</div>
+    ${evHtml}
+    <!-- Kommentare -->
     <div class="tds-section">
       <div class="tds-section-label">${ic('chat',13)} Kommentare</div>
       <div id="tds-comments-${t.id}">
@@ -93,13 +90,10 @@ function showTableDetail(id) {
       </div>
       <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" onclick="openComments(${t.id})">${ic('chat',13)} Kommentar schreiben</button>
     </div>
-    <!-- Bewertung abgeben -->
-    <div style="padding:8px 20px;border-bottom:1px solid var(--border);">
-      <button class="btn btn-secondary btn-full btn-sm" onclick="openRating(${t.id},'${escAttr(t.name)}')">⭐ Bewertung abgeben</button>
+    <!-- Bewertung -->
+    <div class="rate-btn-row">
+      <button class="btn btn-secondary btn-full btn-sm" onclick="openRating(${t.id},'${escAttr(t.name)}')">Bewertung abgeben</button>
     </div>
-    <!-- Spielrunden -->
-    <div style="padding:10px 20px 4px;font-weight:800;font-size:0.9rem;font-family:var(--font-head);">${ic('calendar',15)} Spielrunden</div>
-    ${evHtml}
     <div class="pb-safe"></div>`;
 
   openSheet('table-detail-sheet');
@@ -616,18 +610,17 @@ async function loadRatingsForTable(tableId) {
 }
 
 function renderRatingSummary(tableId, r, tableName) {
-  // Kompakte Anzeige im Info-Block
-  const inlineEl = document.getElementById(`tds-rating-${tableId}`);
+  const inlineEl  = document.getElementById(`tds-rating-${tableId}`);
+  const rateBtnRow = document.querySelector('.rate-btn-row');
   if(inlineEl) {
     if(!r || !r.rating_count) {
-      inlineEl.innerHTML = `<span style="font-size:0.78rem;color:var(--text-dim);">Noch keine Bewertungen</span>`;
+      inlineEl.innerHTML = `<button class="tds-rating-cta" onclick="openRating(${tableId},'${escAttr(tableName)}')">☆ Erste Bewertung abgeben</button>`;
+      if(rateBtnRow) rateBtnRow.style.display = 'none';
     } else {
       const avg = parseFloat(r.avg_overall);
-      let stars = '';
-      for(let i=1;i<=5;i++) {
-        stars += `<span style="color:${i<=Math.round(avg)?'var(--gold)':'var(--border)'};">★</span>`;
-      }
-      inlineEl.innerHTML = `<span style="display:flex;align-items:center;gap:5px;font-size:0.78rem;color:var(--text-dim);">${stars}<b style="color:var(--text);">${avg.toFixed(1)}</b> · ${r.rating_count} Bewertung${r.rating_count>1?'en':''}</span>`;
+      const count = r.rating_count;
+      inlineEl.innerHTML = `<span class="tds-rating-compact"><span class="tds-rating-star">★</span> ${avg.toFixed(1)} · ${count} Bewertung${count > 1 ? 'en' : ''}</span>`;
+      if(rateBtnRow) rateBtnRow.style.display = '';
     }
   }
 }
@@ -677,7 +670,7 @@ async function loadCommentsInline(tableId) {
     qb.eq('table_id', tableId).order('created_at', true).limit(3);
     const {data} = await qb.execute();
     if(!data || !data.length) {
-      el.innerHTML = `<div class="tds-no-comments">Noch keine Kommentare.</div>`;
+      el.innerHTML = `<div class="tds-no-comments">Noch keine Kommentare. Teile deine Erfahrung mit dieser Platte.</div>`;
       return;
     }
     el.innerHTML = data.map(c => {

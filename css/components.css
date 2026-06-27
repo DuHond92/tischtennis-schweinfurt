@@ -1028,15 +1028,15 @@
   margin-bottom: 8px;
 }
 .tds-comment-row {
-  display: flex; gap: 9px; padding: 7px 0;
+  display: flex; gap: 10px; padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
 .tds-comment-row:last-child { border-bottom: none; }
 .tds-comment-av { font-size: 1.15rem; flex-shrink: 0; line-height: 1.5; }
 .tds-comment-body { flex: 1; min-width: 0; }
-.tds-comment-meta { font-size: 0.68rem; color: var(--text-dim); margin-bottom: 2px; font-weight: 600; }
+.tds-comment-meta { font-size: 0.68rem; color: var(--text-dim); margin-bottom: 4px; font-weight: 600; }
 .tds-comment-meta span { font-weight: 400; opacity: 0.75; }
-.tds-comment-text { font-size: 0.82rem; color: var(--text); line-height: 1.4; word-break: break-word; }
+.tds-comment-text { font-size: 0.82rem; color: var(--text); line-height: 1.6; word-break: break-word; }
 .tds-comment-btn { margin-top: 10px; }
 .tds-comment-row .comment-delete-btn { align-self: flex-start; margin-left: auto; }
 .tds-loading, .tds-no-comments { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
@@ -1045,6 +1045,59 @@
 .rate-btn-row {
   display: flex; gap: 8px; padding: 10px 20px;
   border-bottom: 1px solid var(--border);
+}
+
+/* Beschreibungs-Sektion im Detail */
+.tds-desc-section { gap: 4px; }
+.tds-desc-text {
+  font-size: 0.84rem; color: var(--text-dim);
+  line-height: 1.65; white-space: pre-line;
+}
+
+/* Kompakte Bewertungsanzeige */
+.tds-rating-compact {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.78rem; color: var(--text-dim);
+}
+.tds-rating-star { color: var(--gold); font-size: 0.9rem; line-height: 1; }
+
+/* Keine Bewertungen – klickbare CTA-Zeile */
+.tds-rating-cta {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-size: 0.81rem; color: var(--primary); font-weight: 500;
+  display: flex; align-items: center; gap: 3px; line-height: 1;
+  text-align: left;
+}
+.tds-rating-cta:hover { opacity: 0.7; }
+
+/* Strukturierte Fakten-Zeile im Detail */
+.tds-meta-line {
+  font-size: 0.78rem; color: var(--text-dim); font-weight: 600;
+  margin-top: 5px;
+}
+
+/* Events-Sektion im Detail */
+.tds-events-heading {
+  padding: 16px 20px 6px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; font-weight: 800; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.7px;
+}
+.tds-events-empty {
+  text-align: center; padding: 18px 20px 22px;
+  color: var(--text-dim); font-size: 0.84rem; line-height: 1.7;
+  border-bottom: 1px solid var(--border);
+}
+.tds-events-create-btn { margin-top: 10px; }
+.tds-event-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.tds-event-info { flex: 1; min-width: 0; }
+.tds-event-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.tds-event-meta {
+  font-size: 0.74rem; color: var(--text-dim); margin-top: 2px;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
 }
 
 /* ── PARTICIPANT AVATARS ─────────────────────────────────────────── */
