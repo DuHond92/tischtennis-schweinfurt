@@ -130,8 +130,8 @@ async function loadEvents() {
   try {
     // 2a. Teilnehmer-Rows (nur IDs, kein Join der 400 wirft)
     const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id,user_id,created_at';
-    const {data: pData} = await qbP.order('created_at').execute();
+    qbP._select = 'event_id,user_id';
+    const {data: pData} = await qbP.order('event_id').execute();
     if(pData && pData.length) {
       // 2b. Unique user_ids → Profile separat laden
       const userIds = [...new Set(pData.map(p => p.user_id).filter(Boolean))];
