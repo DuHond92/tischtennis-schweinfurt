@@ -180,7 +180,7 @@ function locateUser() {
   }).catch(() => _showLocPrompt());
 }
 
-function _doLocate() {
+function _doLocate(highAccuracy = true) {
   _dismissLocPrompt();
   const btn = document.getElementById('locate-btn');
   btn?.classList.add('locating');
@@ -204,9 +204,15 @@ function _doLocate() {
     showToast('📍 Standort gefunden!');
   }, err => {
     btn?.classList.remove('locating');
-    if (err.code === 1) _showLocCard('blocked');
-    else showToast('Standort konnte nicht ermittelt werden', '⚠️');
-  }, { enableHighAccuracy: true, timeout: 10000 });
+    if (err.code === 1) {
+      _showLocCard('blocked');
+    } else if (err.code === 2 && highAccuracy) {
+      // kCLErrorLocationUnknown — GPS-Fix fehlgeschlagen, Retry mit WLAN/Mobilfunk
+      _doLocate(false);
+    } else {
+      showToast('Standort konnte nicht ermittelt werden', '⚠️');
+    }
+  }, { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 12000 : 8000 });
 }
 
 function _locPromptEl() {
