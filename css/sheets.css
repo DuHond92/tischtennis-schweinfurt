@@ -415,6 +415,12 @@
   font-size: 0.8rem; font-weight: 700;
   padding: 4px 14px; border-radius: 12px; pointer-events: none;
 }
+.lbx-info {
+  position: absolute; bottom: 60px; left: 0; right: 0;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+  color: #fff; font-size: 0.72rem; text-align: center;
+  padding: 5px 16px; pointer-events: none;
+}
 
 .ds-mod-info {
   position: absolute; bottom: 0; left: 0; right: 0;

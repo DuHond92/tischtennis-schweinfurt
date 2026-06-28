@@ -830,20 +830,22 @@ async function submitComment() {
 
 // ── IMAGE LIGHTBOX ────────────────────────────────────────────────────────────
 
-let _lbxPhotos = [], _lbxIdx = 0;
+let _lbxPhotos = [], _lbxInfos = [], _lbxIdx = 0;
 
 function openLightbox(sliderEl) {
-  const imgs = Array.from(sliderEl.querySelectorAll('.ds-slide:not(.ds-slide-empty) img'));
-  if (!imgs.length) return;
-  _lbxPhotos = imgs.map(img => img.src);
-  _lbxIdx = parseInt(sliderEl.dataset.idx || 0);
+  // Collect one entry per slide — only the foreground .ds-slide-img, not the bg copy
+  const slides = Array.from(sliderEl.querySelectorAll('.ds-slide:not(.ds-slide-empty)'));
+  if (!slides.length) return;
+  _lbxPhotos = slides.map(s => (s.querySelector('.ds-slide-img') || s.querySelector('img'))?.src || '');
+  _lbxInfos  = slides.map(s => s.querySelector('.ds-mod-info')?.textContent?.trim() || '');
+  _lbxIdx    = parseInt(sliderEl.dataset.idx || 0);
   _lbxGo(_lbxIdx);
   document.getElementById('img-lightbox').style.display = 'flex';
 }
 
 function closeLightbox() {
   document.getElementById('img-lightbox').style.display = 'none';
-  _lbxPhotos = [];
+  _lbxPhotos = []; _lbxInfos = [];
 }
 
 function lightboxStep(dir) {
@@ -853,12 +855,18 @@ function lightboxStep(dir) {
 }
 
 function _lbxGo(idx) {
-  const count = _lbxPhotos.length;
+  const count   = _lbxPhotos.length;
   document.getElementById('lbx-img').src = _lbxPhotos[idx] || '';
+  const infoEl  = document.getElementById('lbx-info');
+  if (infoEl) {
+    const info = _lbxInfos[idx] || '';
+    infoEl.textContent = info;
+    infoEl.style.display = info ? '' : 'none';
+  }
   const show = count > 1;
-  document.getElementById('lbx-prev').style.display    = show ? '' : 'none';
-  document.getElementById('lbx-next').style.display    = show ? '' : 'none';
-  document.getElementById('lbx-counter').textContent   = show ? `${idx + 1} / ${count}` : '';
+  document.getElementById('lbx-prev').style.display  = show ? '' : 'none';
+  document.getElementById('lbx-next').style.display  = show ? '' : 'none';
+  document.getElementById('lbx-counter').textContent = show ? `${idx + 1} / ${count}` : '';
 }
 
 // ── SHARE ─────────────────────────────────────────────────────────
