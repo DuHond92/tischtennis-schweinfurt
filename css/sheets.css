@@ -332,7 +332,7 @@
   display: flex; gap: 6px; align-items: center;
   flex-wrap: wrap; margin-bottom: 6px;
 }
-.ds-address { font-size: 0.8rem; color: var(--text-dim); }
+.ds-address { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 2px; }
 
 .edi-name {
   font-family: var(--font-head); font-size: 1.1rem;

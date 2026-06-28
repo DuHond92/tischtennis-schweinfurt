@@ -384,7 +384,7 @@
 .mbsp-badge-outdoor { background: rgba(34,197,94,0.12);  color: #22C55E; }
 .mbsp-dist { font-size: 0.72rem; color: var(--text-dim); }
 .mbsp-addr {
-  font-size: 0.73rem; color: var(--text-dim); margin-bottom: 3px;
+  font-size: 0.73rem; color: var(--text-dim); margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .mbsp-ev       { font-size: 0.71rem; color: var(--accent); font-weight: 700; }
@@ -800,6 +800,34 @@
   color: var(--primary); border-radius: 3px;
   padding: 0 2px; font-weight: 800;
 }
+
+/* ======= SHARED PLATE CARD BADGES (map list, map preview, detail) ======= */
+.plt-badge-row {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+}
+.plt-dist-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 0.69rem; font-weight: 700; white-space: nowrap;
+  background: var(--primary-bg); color: var(--primary);
+}
+.plt-games-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 0.69rem; font-weight: 700; white-space: nowrap;
+  background: var(--accent-bg); color: var(--accent);
+}
+.plt-access-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 0.69rem; font-weight: 700; white-space: nowrap;
+}
+.plt-access-limited  { background: rgba(245,158,11,0.12); color: #b45309; }
+.plt-access-unclear  { background: var(--surface2); color: var(--text-dim); }
+.plt-access-closed   { background: var(--accent-bg); color: var(--accent); }
+
+/* meta line shared across preview + detail */
+.mbsp-meta { font-size: 0.69rem; color: var(--text-dim); margin-top: 5px; }
 
 /* ======= OSM / DISTANCE / PHOTOS ======= */
 .distance-badge {

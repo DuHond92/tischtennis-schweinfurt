@@ -13,20 +13,10 @@ function showTableDetail(id) {
   const photos = t.photos && t.photos.length ? t.photos : [];
   const sliderHtml = buildPhotoSlider(t, photos);
 
-  // Distanz
-  const distHtml = t.distance != null
-    ? `<span class="distance-badge">${ic('pin',12)} ${formatDistance(t.distance)} entfernt</span>` : '';
-
-  // OSM Badge
+  // Distanz + OSM als Badge-Zeile (gleicher Stil wie Karten-Cards)
+  const distHtml = _tableDistBadge(t);
   const osmHtml = t.osmId
     ? `<span class="osm-badge">${ic('map-pinned',12)} OpenStreetMap</span>` : '';
-
-  // Strukturierte Meta-Zeile (Fakten)
-  const metaParts = [];
-  if (t.tablesCount) metaParts.push(`${t.tablesCount} Platte${t.tablesCount > 1 ? 'n' : ''}`);
-  if (t.surface)     metaParts.push(t.surface);
-  metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
-  if (t.operator)    metaParts.push(`Betreiber: ${t.operator}`);
 
   // Zugang-Sektion (neue Felder)
   const _aLabel = { public:'Öffentlich zugänglich', limited:'Eingeschränkt zugänglich', private_or_unclear:'Zugang unklar', temporarily_closed:'Aktuell geschlossen' };
@@ -62,11 +52,9 @@ function showTableDetail(id) {
     <!-- Info Block -->
     <div class="ds-info">
       <div class="ds-name">${t.name}</div>
-      <div class="ds-badges">
-        ${distHtml}${osmHtml}
-      </div>
-      <div class="ds-address">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
-      <div class="tds-meta-line">${metaParts.join(' · ')}</div>
+      <div class="ds-address">${t.addr||'Schweinfurt'}</div>
+      <div class="plt-badge-row" style="margin-top:8px;">${distHtml}${osmHtml}</div>
+      <div class="tds-meta-line">${_tableMetaLine(t, { operator: true })}</div>
       <div class="tds-rating-inline" id="tds-rating-${t.id}">
         <span style="font-size:0.78rem;color:var(--text-dim);">Lade…</span>
       </div>

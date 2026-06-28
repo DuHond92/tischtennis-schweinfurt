@@ -514,6 +514,40 @@ function _mapThumbHtml(t, loadAttr) {
   return `<img src="${fb}" loading="${loadAttr || 'lazy'}" decoding="async" class="thumb-placeholder-img">`;
 }
 
+// ── SHARED PLATE CARD HELPERS (used by map.js + tables.js) ───────────────────
+const _SURFACE_LABEL = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
+
+function _tableMetaLine(t, opts) {
+  const parts = [];
+  if (t.tablesCount) parts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
+  if (t.surface && _SURFACE_LABEL[t.surface]) parts.push(_SURFACE_LABEL[t.surface]);
+  parts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
+  if (opts?.operator && t.operator) parts.push(`Betreiber: ${escHtml(t.operator)}`);
+  return parts.join(' · ');
+}
+
+function _tableDistBadge(t) {
+  if (t.distance == null) return '';
+  return `<span class="plt-dist-badge">${formatDistance(t.distance)} entfernt</span>`;
+}
+
+function _tableGamesBadge(count) {
+  if (!count) return '';
+  return `<span class="plt-games-badge">${count === 1 ? '1 Spiel geplant' : `${count} Spiele geplant`}</span>`;
+}
+
+function _tableAccessBadge(t) {
+  if (t.accessType === 'limited')             return `<span class="plt-access-badge plt-access-limited">Eingeschränkt</span>`;
+  if (t.accessType === 'private_or_unclear')  return `<span class="plt-access-badge plt-access-unclear">Zugang unklar</span>`;
+  if (t.accessType === 'temporarily_closed')  return `<span class="plt-access-badge plt-access-closed">Aktuell geschlossen</span>`;
+  return '';
+}
+
+function _tableBadgeRow() {
+  const html = Array.from(arguments).filter(Boolean).join('');
+  return html ? `<div class="plt-badge-row">${html}</div>` : '';
+}
+
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
   if (!c) return;
@@ -522,8 +556,6 @@ function renderMapList(list) {
     c.innerHTML = `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
     return;
   }
-
-  const _surfaceLabel = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
 
   const locCta = (!userLat || !userLng) ? `
     <div class="mli-loc-cta">
@@ -538,19 +570,7 @@ function renderMapList(list) {
   const _today = _localTodayISO();
   c.innerHTML = locCta + list.map((t, i) => {
     const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-    const badgeParts = [];
-    if (t.distance != null) badgeParts.push(`<span class="mli-dist-badge">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>`);
-    if (evCount > 0) badgeParts.push(`<span class="mli-games-badge">${ic('calendar', 11)} ${evCount === 1 ? '1 Spiel geplant' : `${evCount} Spiele geplant`}</span>`);
-    if (t.accessType === 'limited')            badgeParts.push(`<span class="mli-access-badge mli-access-limited">Eingeschränkt</span>`);
-    else if (t.accessType === 'private_or_unclear') badgeParts.push(`<span class="mli-access-badge mli-access-unclear">Zugang unklar</span>`);
-    else if (t.accessType === 'temporarily_closed') badgeParts.push(`<span class="mli-access-badge mli-access-closed">Aktuell geschlossen</span>`);
-    const badgeRow = badgeParts.length ? `<div class="mli-badge-row">${badgeParts.join('')}</div>` : '';
-
-    const metaParts = [];
-    if (t.tablesCount) metaParts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
-    if (t.surface && _surfaceLabel[t.surface]) metaParts.push(_surfaceLabel[t.surface]);
-    metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
-
+    const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
     const _load = i < 3 ? 'eager' : 'lazy';
     const thumbInner = _mapThumbHtml(t, _load);
 
@@ -559,9 +579,9 @@ function renderMapList(list) {
       <div class="mli-thumb">${thumbInner}</div>
       <div class="map-list-info">
         <div class="map-list-name">${t.name}</div>
-        <div class="map-list-sub">${ic('pin')} ${t.addr||'Schweinfurt'}</div>
+        <div class="map-list-sub">${t.addr||'Schweinfurt'}</div>
         ${badgeRow}
-        <div class="mli-meta">${metaParts.join(' · ')}</div>
+        <div class="mli-meta">${_tableMetaLine(t)}</div>
       </div>
       <div class="map-list-chevron">›</div>
     </div>`;
@@ -774,11 +794,9 @@ function showMapPreview(tableId) {
 
   const _today = _localTodayISO();
   const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-  const distHtml = t.distance != null
-    ? `<span class="mbsp-dist">${ic('pin', 11)} ${formatDistance(t.distance)} entfernt</span>` : '';
   const thumbHtml = _mapThumbHtml(t, 'eager');
-
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
+  const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
 
   document.getElementById('mbs-preview').innerHTML = `
     <div class="mbsp-card" onclick="showTableDetail(${t.id})">
@@ -788,12 +806,9 @@ function showMapPreview(tableId) {
           <div class="mbsp-name">${escHtml(t.name)}</div>
           <button class="mbsp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen">×</button>
         </div>
-        <div class="mbsp-badges">
-          <span class="mbsp-badge mbsp-badge-${t.type}">${t.type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
-          ${distHtml}
-        </div>
-        <div class="mbsp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
-        ${evCount ? `<div class="mbsp-ev">${ic('calendar', 11)} ${evCount} Event${evCount > 1 ? 's' : ''} geplant</div>` : '<div class="mbsp-ev mbsp-ev-empty">Noch keine Events</div>'}
+        <div class="mbsp-addr">${escHtml(shortAddr)}</div>
+        ${badgeRow}
+        <div class="mbsp-meta">${_tableMetaLine(t)}</div>
       </div>
     </div>
   `;
