@@ -201,6 +201,21 @@
 /* Spacer for bottom nav */
 .pb-safe { padding-bottom: 88px; }
 
+/* ── COMMENT ACTION SHEET ───────────────────────────────────────── */
+.cmt-action-list { padding: 8px 0 8px; }
+.cmt-action-item {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; padding: 15px 20px;
+  background: none; border: none; cursor: pointer;
+  font-size: 0.95rem; font-weight: 500; color: var(--text);
+  font-family: var(--font-body); text-align: left;
+  transition: background 0.15s;
+}
+.cmt-action-item:hover, .cmt-action-item:active { background: var(--surface2); }
+.cmt-action-item svg { flex-shrink: 0; color: var(--text-dim); }
+.cmt-action-danger { color: #e53935; }
+.cmt-action-danger svg { color: #e53935; }
+
 /* ── DETAIL IMAGE SLIDER (table + event) ────────────────────────── */
 .detail-slider { position: relative; }
 

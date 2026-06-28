@@ -773,20 +773,6 @@
   font-size: 0.875rem; color: var(--text); line-height: 1.5;
   white-space: pre-wrap; word-break: break-word;
 }
-/* Drei-Punkte-Popup */
-.cdot-menu {
-  position: absolute; right: 0; top: calc(100% + 4px);
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 200; min-width: 136px; overflow: hidden;
-}
-.cdot-item {
-  display: block; width: 100%; padding: 11px 14px; text-align: left;
-  background: none; border: none; cursor: pointer;
-  font-size: 0.875rem; color: var(--text); font-family: var(--font-body);
-}
-.cdot-item:hover { background: var(--surface2); }
-.cdot-item.danger { color: #e53935; }
 
 /* OSM Loading state */
 .osm-loading {

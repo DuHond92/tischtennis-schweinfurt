@@ -760,7 +760,6 @@ function _commentItemHtml(c, ctx) {
 let _cmtMenuData = {};
 
 function openCommentDotMenu(btn) {
-  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
   _cmtMenuData = {
     id:      btn.dataset.cid,
     ctx:     btn.dataset.ctx,
@@ -768,30 +767,34 @@ function openCommentDotMenu(btn) {
     preview: btn.dataset.preview
   };
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const items = [];
-  if (!_cmtMenuData.isOwn && !isMod) {
-    items.push(`<button class="cdot-item" onclick="_cmtReport()">Melden</button>`);
-  }
-  if (isMod) {
-    items.push(`<button class="cdot-item danger" onclick="_cmtDelete()">Löschen</button>`);
-  }
-  if (!items.length) return;
-  const menu = document.createElement('div');
-  menu.className = 'cdot-menu';
-  menu.innerHTML = items.join('');
-  btn.closest('.comment-meta').appendChild(menu);
-  setTimeout(() => document.addEventListener('click', () => {
-    document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
-  }, { once: true }), 0);
+  const reportBtn = document.getElementById('cmt-action-report');
+  const deleteBtn = document.getElementById('cmt-action-delete');
+  if (reportBtn) reportBtn.style.display = (!_cmtMenuData.isOwn && !isMod) ? '' : 'none';
+  if (deleteBtn) deleteBtn.style.display = isMod ? '' : 'none';
+  openSheet('cmt-action-sheet');
 }
 
-function _cmtReport() {
-  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
-  openReport('comment', _cmtMenuData.id, _cmtMenuData.preview);
+async function submitCmtReport() {
+  closeAllSheets();
+  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
+  const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
+    method:  'POST',
+    headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      reporter_id:  sb.getUserId(),
+      content_type: 'comment',
+      content_id:   String(_cmtMenuData.id),
+      reason:       'inappropriate',
+      preview:      (_cmtMenuData.preview || '').slice(0, 200),
+      status:       'pending'
+    })
+  });
+  if (ok) showToast('Danke, wir prüfen den Kommentar und entfernen ihn bei Verstoß gegen die Community-Regeln.');
+  else showToast('Fehler beim Melden', '❌');
 }
 
-function _cmtDelete() {
-  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
+function submitCmtDelete() {
+  closeAllSheets();
   deleteComment(_cmtMenuData.id, _cmtMenuData.ctx);
 }
 
