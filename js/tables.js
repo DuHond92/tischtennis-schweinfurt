@@ -737,11 +737,12 @@ function _commentItemHtml(c, ctx) {
   const showDot = sb.isLoggedIn() && (isMod || !isOwn);
   const dotBtn = showDot
     ? `<button class="comment-dot-btn"
+         aria-label="Kommentaroptionen"
          data-cid="${escAttr(c.id)}"
          data-ctx="${ctx}"
          data-own="${isOwn ? '1' : ''}"
          data-preview="${escAttr((c.text || '').slice(0, 80))}"
-         onclick="openCommentDotMenu(this)">···</button>`
+         onclick="openCommentDotMenu(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>`
     : '';
   return `<div class="comment-item">
     <div class="comment-av">${av}</div>
