@@ -144,6 +144,8 @@ async function _resizeImage(file, maxSize) {
         const canvas = document.createElement('canvas');
         canvas.width = canvas.height = size;
         const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
         // Center-crop to square
         const sx = (img.width  - side) / 2;
         const sy = (img.height - side) / 2;
