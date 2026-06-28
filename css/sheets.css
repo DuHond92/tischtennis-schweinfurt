@@ -47,6 +47,14 @@
 .sheet-header--nav { justify-content: flex-start; gap: 4px; }
 .sheet-header--nav .sheet-title { flex: 1; }
 
+/* Sticky header for scrollable detail sheets */
+#table-detail-sheet .sheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+}
+
 .sheet-body { padding: 16px 20px; }
 
 /* ── EVENT DETAIL SHEET ─────────────────────────────────────────── */
