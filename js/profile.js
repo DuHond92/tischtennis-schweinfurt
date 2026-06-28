@@ -71,7 +71,7 @@ function _renderSetupHint(u) {
   if (_isProfileComplete(u)) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div class="profile-setup-card">
-      <div class="psc-title">🎉 Schön, dass du da bist!</div>
+      <div class="psc-title">Schön, dass du da bist!</div>
       <div class="psc-body">Vervollständige kurz dein Profil, damit andere Spieler dich besser einschätzen können.</div>
       <ul class="psc-list">
         <li>Avatar oder Emoji wählen</li>
@@ -94,7 +94,7 @@ function renderMyEventsSection() {
   if (!myEvents.length) {
     el.innerHTML = `
       <div class="empty-state-card">
-        <div class="esc-icon">🏓</div>
+        <div class="esc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
         <div class="esc-title">Noch kein Spiel geplant?</div>
         <div class="esc-body">Entdecke Spiele in deiner Nähe oder erstelle dein erstes eigenes Spiel.</div>
         <button class="esc-btn" onclick="showPage('events')">Spiele entdecken</button>

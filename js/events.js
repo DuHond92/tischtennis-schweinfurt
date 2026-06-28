@@ -1,6 +1,19 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           EVENTS                                             ║
 // ╚══════════════════════════════════════════════════════════════╝
+let _psCollapsed    = false;
+let _gamesCollapsed = false;
+
+function _toggleFeedSection(key) {
+  if (key === 'ps') _psCollapsed = !_psCollapsed;
+  else              _gamesCollapsed = !_gamesCollapsed;
+  const collapsed = key === 'ps' ? _psCollapsed : _gamesCollapsed;
+  const wrap    = document.getElementById(`feed-${key}-wrap`);
+  const chevron = document.getElementById(`feed-${key}-chevron`);
+  if (wrap)    wrap.style.display       = collapsed ? 'none' : '';
+  if (chevron) chevron.style.transform  = collapsed ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
 async function joinEvent(eventId, btn) {
   btn.disabled = true; btn.textContent = '…';
   if (!sb.isLoggedIn()) {
@@ -122,9 +135,10 @@ function renderEvents(filter = 'all') {
     filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter)
   );
 
+  const psChevron = `<span class="feed-section-chevron" id="feed-ps-chevron"${_psCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
   const psHtml = psFiltered.length
-    ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psFiltered.length}</span></div>
-       ${psFiltered.map(renderPlayerSearchCard).join('')}`
+    ? `<div class="feed-section-title feed-section-toggle" onclick="_toggleFeedSection('ps')">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psFiltered.length}</span>${psChevron}</div>
+       <div id="feed-ps-wrap"${_psCollapsed ? ' style="display:none"' : ''}>${psFiltered.map(renderPlayerSearchCard).join('')}</div>`
     : '';
 
   const psEmptyHtml = (!psFiltered.length && allPlayerSearches.length === 0)
@@ -137,9 +151,11 @@ function renderEvents(filter = 'all') {
        </div>`
     : '';
 
+  const gamesChevron = `<span class="feed-section-chevron" id="feed-games-chevron"${_gamesCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
+  const gamesStyle = (psHtml || psEmptyHtml) ? 'margin-top:4px;' : '';
   const gamesHtml = games.length
-    ? `<div class="feed-section-title"${(psHtml || psEmptyHtml) ? ' style="margin-top:4px;"' : ''}>${ic('calendar',13)} Geplante Spiele</div>
-       ${games.map((e, i) => renderEventCard(e, i)).join('')}`
+    ? `<div class="feed-section-title feed-section-toggle"${gamesStyle ? ` style="${gamesStyle}"` : ''} onclick="_toggleFeedSection('games')">${ic('calendar',13)} Geplante Spiele <span class="ps-count-chip">${games.length}</span>${gamesChevron}</div>
+       <div id="feed-games-wrap"${_gamesCollapsed ? ' style="display:none"' : ''}>${games.map((e, i) => renderEventCard(e, i)).join('')}</div>`
     : '';
 
   if (!psHtml && !psEmptyHtml && !gamesHtml) {
@@ -172,6 +188,8 @@ function openCreateEventSheet() {
   document.getElementById('ev-date').value  = '';
   document.getElementById('ev-time').value  = '15:00';
   document.getElementById('ev-mode').value  = 'casual';
+  const evDesc = document.getElementById('ev-desc');
+  if (evDesc) evDesc.value = '';
   closeAllSheets();
   openSheet('create-event-sheet');
 }
@@ -183,6 +201,7 @@ async function submitCreateEvent() {
   const date    = document.getElementById('ev-date').value;
   const time    = document.getElementById('ev-time').value;
   const mode    = document.getElementById('ev-mode').value;
+  const desc    = (document.getElementById('ev-desc')?.value || '').trim();
   if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
 
   const qb = new QueryBuilder('events');
@@ -190,7 +209,8 @@ async function submitCreateEvent() {
 
   if(_editingEventId) {
     ({ error } = await qb.eq('id', _editingEventId).update({
-      title, table_id: parseInt(tableId), event_date: date, event_time: time, mode
+      title, table_id: parseInt(tableId), event_date: date, event_time: time, mode,
+      description: desc || null
     }));
     if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
     _editingEventId = null;
@@ -200,7 +220,8 @@ async function submitCreateEvent() {
     ({ error } = await qb.insert({
       title, table_id: parseInt(tableId),
       creator_id: sb.getUserId(),
-      event_date: date, event_time: time, mode
+      event_date: date, event_time: time, mode,
+      description: desc || null
     }));
     if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
     closeAllSheets();

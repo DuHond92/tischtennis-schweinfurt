@@ -668,7 +668,7 @@
 }
 .skill-opt:hover { border-color: var(--primary); }
 .skill-opt.active { border-color: var(--primary); background: var(--primary-bg); }
-.skill-opt-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+.skill-opt-icon { display: flex; justify-content: center; margin-bottom: 6px; color: var(--text-dim); }
 .skill-opt-name { font-weight: 700; font-size: 0.75rem; color: var(--text); }
 .skill-opt-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
 
@@ -1237,6 +1237,14 @@
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
 }
+.feed-section-toggle { cursor: pointer; user-select: none; }
+.feed-section-chevron {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: auto; font-size: 1rem; color: var(--text-dim);
+  transition: transform 0.2s ease;
+  transform: rotate(90deg);
+  line-height: 1; flex-shrink: 0;
+}
 .ps-count-chip {
   background: var(--primary); color: #fff;
   font-size: 0.62rem; padding: 1px 7px;
@@ -1492,9 +1500,9 @@
 .profile-avatar-badge {
   position: absolute; bottom: 0; right: -2px;
   width: 22px; height: 22px; border-radius: 50%;
-  background: var(--surface); border: 2px solid rgba(255,255,255,0.6);
+  background: var(--primary); border: 2px solid var(--surface);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.6rem; line-height: 1; z-index: 2;
+  color: #fff; z-index: 2;
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
@@ -1643,7 +1651,7 @@
   padding: 52px 24px 36px;
   text-align: center;
 }
-.pg-icon { font-size: 3rem; margin-bottom: 18px; }
+.pg-icon { display: flex; justify-content: center; margin-bottom: 18px; }
 .pg-title {
   font-size: 1.12rem;
   font-weight: 700;
@@ -1865,7 +1873,7 @@
   text-align: center;
   margin: 4px 0 8px;
 }
-.esc-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.esc-icon { display: flex; justify-content: center; margin-bottom: 8px; color: var(--text-dim); }
 .esc-title {
   font-size: 0.9rem; font-weight: 700;
   color: var(--text); margin-bottom: 6px;

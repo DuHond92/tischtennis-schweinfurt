@@ -72,12 +72,13 @@ function showEventDetail(eventId) {
     `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${ev.creatorId ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}')">` : '<b>'}${escHtml(ev.creator||'')}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
 
   // Description
+  const descSection = document.getElementById('eds-desc-section');
   const descEl = document.getElementById('eds-desc');
-  if(ev.desc) {
+  if(ev.desc && descSection && descEl) {
     descEl.textContent = ev.desc;
-    descEl.style.display = '';
-  } else {
-    descEl.style.display = 'none';
+    descSection.style.display = '';
+  } else if(descSection) {
+    descSection.style.display = 'none';
   }
 
   // Actions (host vs. participant)
@@ -298,6 +299,8 @@ function openEditEvent(eventId) {
   document.getElementById('ev-date').value  = ev.dateStr || '';
   document.getElementById('ev-time').value  = ev.time    || '';
   document.getElementById('ev-mode').value  = ev.type    || 'casual';
+  const evDesc = document.getElementById('ev-desc');
+  if (evDesc) evDesc.value = ev.desc || '';
   openSheet('create-event-sheet');
 }
 

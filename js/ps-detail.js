@@ -35,7 +35,17 @@ function showPlayerSearchDetail(psId) {
         ${metaParts.length ? `<div style="font-size:0.78rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">${metaParts.join('<span style="margin:0 2px;opacity:.4;">·</span>')}</div>` : ''}
       </div>
     </div>
-    ${ps.message ? `<div style="margin:0 20px 14px;padding:10px 14px;background:var(--surface2);border-radius:10px;font-size:0.84rem;color:var(--text-dim);line-height:1.5;font-style:italic;">"${escHtml(ps.message)}"</div>` : ''}`;
+`;
+
+  // Beschreibung (message)
+  const psdDescSection = document.getElementById('psd-desc-section');
+  const psdDescEl = document.getElementById('psd-desc');
+  if(ps.message && psdDescSection && psdDescEl) {
+    psdDescEl.textContent = ps.message;
+    psdDescSection.style.display = '';
+  } else if(psdDescSection) {
+    psdDescSection.style.display = 'none';
+  }
 
   // Mod-Delete-Button
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
