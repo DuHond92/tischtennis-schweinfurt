@@ -1,0 +1,14 @@
+{
+  "name": "PlattenTreff",
+  "short_name": "PlattenTreff",
+  "description": "Entdecke Tischtennisplatten, finde Mitspieler und organisiere Spielrunden.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3f7cf4",
+  "lang": "de",
+  "icons": [
+    { "src": "favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
