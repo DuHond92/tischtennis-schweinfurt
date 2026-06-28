@@ -199,11 +199,24 @@
   object-fit: cover; object-position: center center; display: block;
 }
 
-@media (max-width: 599px) {
+@media (max-width: 768px) {
+  /* Größere Container-Höhe für sinnvolleres Seitenverhältnis */
   #table-detail-sheet .ds-main,
   #table-detail-sheet .ds-slide {
-    height: clamp(200px, 56vw, 280px);
+    height: clamp(220px, 62vw, 320px);
     background: var(--surface2);
+  }
+
+  /* contain statt cover: kein Reingezoomt-Effekt auf echten Geräten */
+  #table-detail-sheet .ds-slide img {
+    object-fit: contain;
+    object-position: center center;
+    background: var(--surface2);
+  }
+
+  /* Placeholder-Bilder bleiben cover (sind dafür gemacht) */
+  #table-detail-sheet .ds-slide img.thumb-placeholder-img {
+    object-fit: cover;
   }
 }
 .ds-slide-empty {
