@@ -684,8 +684,6 @@ function renderRatingSummary(tableId, r, tableName) {
 async function loadCommentsInline(tableId) {
   const el    = document.getElementById(`tds-comments-${tableId}`);
   if(!el) return;
-  const myId  = sb.getUserId();
-  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   try {
     const qb = new QueryBuilder('comments');
     qb._select = 'id,user_id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
@@ -695,25 +693,7 @@ async function loadCommentsInline(tableId) {
       el.innerHTML = `<div class="tds-no-comments">Noch keine Kommentare. Teile deine Erfahrung mit dieser Platte.</div>`;
       return;
     }
-    el.innerHTML = data.map(c => {
-      const date    = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-      const av      = getAvatarContent(c.profiles);
-      const name    = c.profiles?.username || 'Anonym';
-      const del     = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','inline')">🗑</button>` : '';
-      const isOwn   = c.user_id === myId;
-      const preview = escAttr((c.text || '').slice(0, 80));
-      const report  = (!isMod && sb.isLoggedIn() && !isOwn)
-        ? `<button class="report-btn" data-type="comment" data-id="${escAttr(c.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
-        : '';
-      return `<div class="tds-comment-row">
-        <div class="tds-comment-av">${av}</div>
-        <div class="tds-comment-body">
-          <div class="tds-comment-meta">${escHtml(name)} <span>· ${date}</span></div>
-          <div class="tds-comment-text">${escHtml(c.text)}</div>
-        </div>
-        ${report}${del}
-      </div>`;
-    }).join('');
+    el.innerHTML = data.map(c => _commentItemHtml(c, 'inline')).join('');
   } catch(e) {
     el.innerHTML = `<div class="tds-no-comments">Kommentare nicht verfügbar.</div>`;
   }
@@ -738,32 +718,80 @@ async function openComments(tableId) {
 }
 
 function renderComments(comments) {
-  const el    = document.getElementById('comment-list');
-  const myId  = sb.getUserId();
-  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const el = document.getElementById('comment-list');
   if(!comments.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
       Noch keine Kommentare.<br>Sei der Erste! 💬</div>`;
     return;
   }
-  el.innerHTML = comments.map(c => {
-    const date    = new Date(c.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-    const del     = isMod ? `<button class="comment-delete-btn" onclick="deleteComment('${escAttr(c.id)}','sheet')">🗑</button>` : '';
-    const isOwn   = c.user_id === myId;
-    const preview = escAttr((c.text || '').slice(0, 80));
-    const report  = (!isMod && sb.isLoggedIn() && !isOwn)
-      ? `<button class="report-btn" data-type="comment" data-id="${escAttr(c.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
-      : '';
-    return `<div class="comment-item">
-      <div class="comment-header">
-        <div class="comment-avatar">${getAvatarContent(c.profiles)}</div>
-        <div class="comment-author">${c.profiles?.username||'Anonym'}</div>
-        <div class="comment-date">${date}</div>
-        ${report}${del}
+  el.innerHTML = comments.map(c => _commentItemHtml(c, 'sheet')).join('');
+}
+
+function _commentItemHtml(c, ctx) {
+  const myId   = sb.getUserId();
+  const isMod  = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const isOwn  = c.user_id === myId;
+  const name   = c.profiles?.username || 'Anonym';
+  const date   = new Date(c.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+  const av     = getAvatarHtml(c.profiles, { size: 34 });
+  const showDot = sb.isLoggedIn() && (isMod || !isOwn);
+  const dotBtn = showDot
+    ? `<button class="comment-dot-btn"
+         data-cid="${escAttr(c.id)}"
+         data-ctx="${ctx}"
+         data-own="${isOwn ? '1' : ''}"
+         data-preview="${escAttr((c.text || '').slice(0, 80))}"
+         onclick="openCommentDotMenu(this)">···</button>`
+    : '';
+  return `<div class="comment-item">
+    <div class="comment-av">${av}</div>
+    <div class="comment-body">
+      <div class="comment-meta">
+        <span class="comment-author">${escHtml(name)}</span>
+        <span class="comment-date">· ${date}</span>
+        ${dotBtn}
       </div>
-      <div class="comment-text">${c.text}</div>
-    </div>`;
-  }).join('');
+      <div class="comment-text">${escHtml(c.text)}</div>
+    </div>
+  </div>`;
+}
+
+let _cmtMenuData = {};
+
+function openCommentDotMenu(btn) {
+  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
+  _cmtMenuData = {
+    id:      btn.dataset.cid,
+    ctx:     btn.dataset.ctx,
+    isOwn:   btn.dataset.own === '1',
+    preview: btn.dataset.preview
+  };
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const items = [];
+  if (!_cmtMenuData.isOwn && !isMod) {
+    items.push(`<button class="cdot-item" onclick="_cmtReport()">Melden</button>`);
+  }
+  if (isMod) {
+    items.push(`<button class="cdot-item danger" onclick="_cmtDelete()">Löschen</button>`);
+  }
+  if (!items.length) return;
+  const menu = document.createElement('div');
+  menu.className = 'cdot-menu';
+  menu.innerHTML = items.join('');
+  btn.closest('.comment-meta').appendChild(menu);
+  setTimeout(() => document.addEventListener('click', () => {
+    document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
+  }, { once: true }), 0);
+}
+
+function _cmtReport() {
+  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
+  openReport('comment', _cmtMenuData.id, _cmtMenuData.preview);
+}
+
+function _cmtDelete() {
+  document.querySelectorAll('.cdot-menu').forEach(el => el.remove());
+  deleteComment(_cmtMenuData.id, _cmtMenuData.ctx);
 }
 
 async function deleteComment(commentId, context) {
