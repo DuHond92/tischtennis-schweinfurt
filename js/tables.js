@@ -86,6 +86,8 @@ function showTableDetail(id) {
 
   openSheet('table-detail-sheet');
   _initSliderTouch(document.querySelector('#tds-body .ds-main'));
+  const shareBtn = document.getElementById('tds-share-btn');
+  if (shareBtn) shareBtn.onclick = () => shareTable(t);
   loadRatingsForTable(id);
   loadCommentsInline(id);
   loadTableImages(id);
@@ -844,4 +846,36 @@ function _lbxGo(idx) {
   document.getElementById('lbx-prev').style.display    = show ? '' : 'none';
   document.getElementById('lbx-next').style.display    = show ? '' : 'none';
   document.getElementById('lbx-counter').textContent   = show ? `${idx + 1} / ${count}` : '';
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────
+function buildTableShareUrl(t) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('table', t.id);
+  // Strip other search params to keep the URL clean
+  ['event'].forEach(k => url.searchParams.delete(k));
+  return url.toString();
+}
+
+async function shareTable(t) {
+  const name  = t.name || 'Tischtennisplatte';
+  const url   = buildTableShareUrl(t);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: name,
+        text:  `${name} – auf PlattenTreff ansehen`,
+        url
+      });
+    } catch (e) {
+      if (e?.name !== 'AbortError') console.warn('Teilen fehlgeschlagen:', e);
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link kopiert');
+  } catch (e) {
+    showToast('Link konnte nicht kopiert werden');
+  }
 }

@@ -5,6 +5,11 @@ window.addEventListener('load', async () => {
   // Passwort-Recovery aus URL-Hash erkennen (Supabase Magic Link)
   checkPasswordRecovery();
 
+  // TODO: Deep-Link ?table=ID beim App-Start öffnen
+  // Nach dem Laden der Daten prüfen und Detailansicht öffnen:
+  // const _dlTable = new URL(window.location.href).searchParams.get('table');
+  // if (_dlTable) { await loadTables(); showTableDetail(parseInt(_dlTable)); }
+
   // Token beim Start sofort prüfen und ggf. erneuern
   if(sb.isLoggedIn()) {
     await sb.refreshToken();
