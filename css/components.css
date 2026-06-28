@@ -1287,12 +1287,12 @@
 
 /* ── SUGGEST TABLE ──────────────────────────────────────────────── */
 .map-fab-suggest {
-  border-color: var(--amber, #F59E0B);
-  color: var(--amber, #F59E0B);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 .map-fab-suggest:hover {
-  background: #fefce8;
-  border-color: #d97706;
+  background: var(--primary-bg);
+  border-color: var(--primary-d);
 }
 
 .sug-steps {
