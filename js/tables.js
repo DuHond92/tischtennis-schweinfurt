@@ -680,39 +680,6 @@ function renderRatingSummary(tableId, r, tableName) {
   }
 }
 
-async function loadKingOfPlate(tableId) {
-  const el = document.getElementById(`king-section-${tableId}`);
-  if(!el) return;
-  try {
-    const qb = new QueryBuilder('king_of_plate');
-    qb.eq('table_id', tableId).order('wins_at_table', true).limit(3);
-    const {data} = await qb.execute();
-    renderKingOfPlate(tableId, data || []);
-  } catch(e) {
-    renderKingOfPlate(tableId, []);
-  }
-}
-
-function renderKingOfPlate(tableId, kings) {
-  const el = document.getElementById(`king-section-${tableId}`);
-  if(!el) return;
-  const medals = ['👑','🥈','🥉'];
-  if(!kings.length) {
-    el.innerHTML = `<div class="king-header">👑 King of the Plate</div>
-      <div class="king-empty">Noch keine Wertungsspiele an dieser Platte.<br>
-      <span style="font-size:0.78rem;">Spiele ein Wertungsspiel um König zu werden!</span></div>`;
-    return;
-  }
-  el.innerHTML = `<div class="king-header">👑 King of the Plate</div>` +
-    kings.map((k,i) => `
-      <div class="king-row">
-        <div class="king-rank">${medals[i]||`#${i+1}`}</div>
-        <div class="king-avatar">${getAvatarContent(k)}</div>
-        <div class="king-name">${k.username}</div>
-        <div class="king-wins"><b>${k.wins_at_table}</b> Siege</div>
-      </div>`).join('');
-}
-
 // ── KOMMENTARE ────────────────────────────────────────────────────
 async function loadCommentsInline(tableId) {
   const el    = document.getElementById(`tds-comments-${tableId}`);

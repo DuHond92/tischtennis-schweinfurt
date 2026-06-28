@@ -19,20 +19,14 @@ const FALLBACK_TABLES = [
 const FALLBACK_EVENTS = [
   {id:101,name:"Casual Runde für alle",day:"03",mon:"JUL",time:"15:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"Michael",p:3,max:6,
    participants:[{username:'Michael',avatar_emoji:'😎'},{username:'Sarah',avatar_emoji:''},{username:'Lukas',avatar_emoji:'⚡'}]},
-  {id:102,name:"Wertungsspiel 1v1",day:"04",mon:"JUL",time:"16:00",type:"ranked",tname:"Obere Marktstraße",ticon:"🏙️",tid:2,creator:"Anna",p:2,max:2,
-   participants:[{username:'Anna',avatar_emoji:'🎯'},{username:'Max',avatar_emoji:''}]},
   {id:103,name:"Spielrunde für Fortgeschrittene",day:"11",mon:"JUL",time:"13:00",type:"training",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"Julia",p:5,max:10,
    participants:[{username:'Julia',avatar_emoji:'🌟'},{username:'Tom',avatar_emoji:''},{username:'Felix',avatar_emoji:'🔥'},{username:'Sarah',avatar_emoji:''},{username:'Lukas',avatar_emoji:'⚡'}]},
   {id:104,name:"Anfänger Willkommen",day:"10",mon:"JUL",time:"14:00",type:"casual",tname:"Stadtpark",ticon:"🌳",tid:1,creator:"Tom",p:1,max:8,
    participants:[{username:'Tom',avatar_emoji:''}]},
-  {id:105,name:"Wertungsspiel Abend",day:"18",mon:"JUL",time:"19:00",type:"ranked",tname:"TTC Halle Bellevue",ticon:"🏢",tid:3,creator:"Felix",p:4,max:6,
-   participants:[{username:'Felix',avatar_emoji:'🔥'},{username:'Max',avatar_emoji:''},{username:'Anna',avatar_emoji:'🎯'},{username:'Michael',avatar_emoji:'😎'}]},
   {id:106,name:"Sunset Ping Pong",day:"16",mon:"JUL",time:"18:30",type:"casual",tname:"Mainkai",ticon:"🌊",tid:9,creator:"Michael",p:6,max:12,
    participants:[{username:'Michael',avatar_emoji:'😎'},{username:'Sarah',avatar_emoji:''},{username:'Julia',avatar_emoji:'🌟'},{username:'Lukas',avatar_emoji:'⚡'},{username:'Tom',avatar_emoji:''},{username:'Anna',avatar_emoji:'🎯'}]},
   {id:107,name:"Just 4 Fun Runde",day:"07",mon:"JUL",time:"16:00",type:"casual",tname:"Jugendtreff Haardt",ticon:"🎮",tid:6,creator:"Sarah",p:3,max:10,
    participants:[{username:'Sarah',avatar_emoji:''},{username:'Lukas',avatar_emoji:'⚡'},{username:'Felix',avatar_emoji:'🔥'}]},
-  {id:108,name:"Wertungsspiel Duo",day:"09",mon:"JUL",time:"10:00",type:"ranked",tname:"Sportanlage Oberndorf",ticon:"🏅",tid:8,creator:"Anna",p:2,max:2,
-   participants:[{username:'Anna',avatar_emoji:'🎯'},{username:'Max',avatar_emoji:''}]},
 ];
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -41,6 +35,6 @@ const FALLBACK_EVENTS = [
 const FALLBACK_PLAYER_SEARCHES = [
   {id:301, type:'player_search', userId:null, username:'Sarah',  avatarEmoji:'',   spielart:'casual',   wann:'Heute',       umkreis:'5 km',  message:'Suche jemanden für eine entspannte Runde heute Nachmittag. Alle Level willkommen!'},
   {id:302, type:'player_search', userId:null, username:'Lukas',  avatarEmoji:'⚡',  spielart:'training', wann:'Diese Woche', umkreis:'10 km', message:'Regelmäßiges Techniktraining gesucht. Schläger und Bälle vorhanden.'},
-  {id:303, type:'player_search', userId:null, username:'Anna',   avatarEmoji:'🎯', spielart:'ranked',   wann:'Egal',        umkreis:'5 km',  message:''},
+  {id:303, type:'player_search', userId:null, username:'Anna',   avatarEmoji:'🎯', spielart:'punktspiel', wann:'Egal',      umkreis:'5 km',  message:''},
   {id:304, type:'player_search', userId:null, username:'Max',    avatarEmoji:'',   spielart:'casual',   wann:'Diese Woche', umkreis:'2 km',  message:'Wer hat Lust auf Ping Pong am Wochenende?'},
 ];

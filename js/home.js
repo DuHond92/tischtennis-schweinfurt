@@ -91,7 +91,7 @@ function renderHomePsSection() {
     return;
   }
   const first = allPlayerSearches[0];
-  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', ranked: 'Punktspiel', punktspiel: 'Punktspiel'};
+  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', punktspiel: 'Punktspiel'};
   const avHtml = getAvatarHtml({ avatar_emoji: first.avatarEmoji, avatar_url: first.avatarUrl, username: first.username }, { size: 36 });
   const metaParts = [];
   if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');

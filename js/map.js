@@ -24,7 +24,7 @@ const MAP_TILES = {
 
 let leafletMap, markers = [];
 let mapSearchQuery   = '';
-let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'ranked'
+let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'punktspiel'
 let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 
 let _previewTableId = null; // currently shown in map preview card
@@ -489,7 +489,7 @@ function _buildStatusLine(filtered) {
   }
 
   if(hasSpiela) {
-    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', ranked:'🏓 Punktspiel', punktspiel:'🏓 Punktspiel'};
+    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', punktspiel:'🏓 Punktspiel'};
     parts.push(labels[mapSpielartFilter] || mapSpielartFilter);
   }
   if(hasPlace) {

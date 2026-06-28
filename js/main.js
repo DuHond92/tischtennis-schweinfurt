@@ -30,7 +30,7 @@ window.addEventListener('load', async () => {
   try {
     await loadTables();
     if(mapInit) _applyMapFilters();
-    await Promise.all([loadEvents(), loadPlayers()]);
+    await Promise.all([loadEvents()]);
     if(mapInit) { _applyMapFilters(); _refreshMarkerIcons(); }
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {

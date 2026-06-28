@@ -4,8 +4,6 @@
 let currentUser   = null;  // eingeloggtes Profil aus profiles-Tabelle
 let tables        = [];    // aus Supabase + OSM geladen
 let allEvents     = [];    // aus Supabase geladen (mit table-Join)
-let allPlayers    = [];    // Rangliste aus Supabase
-let myMatches     = [];    // Match-History des eingeloggten Users
 let currentFilter     = 'all';
 let currentSort       = 'date'; // 'date' | 'dist'
 let _editingEventId   = null;   // gesetzt wenn Event bearbeitet wird, sonst null

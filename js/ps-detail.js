@@ -19,7 +19,7 @@ function showPlayerSearchDetail(psId) {
     ? `<div class="${pClick?'pp-clickable':''}" style="width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;border:2px solid var(--border);cursor:${pClick?'pointer':'default'};" ${pClick?`onclick="${pClick}"`:''}>${ps.avatarEmoji}</div>`
     : `<div class="${pClick?'pp-clickable':''}" style="flex-shrink:0;" ${pClick?`onclick="${pClick}"`:''}>${initAvatar(ps.username || '?', 52)}</div>`;
 
-  const spielartMap = {casual:'Just 4 Fun', training:'Training', ranked:'Punktspiel', punktspiel:'Punktspiel'};
+  const spielartMap = {casual:'Just 4 Fun', training:'Training', punktspiel:'Punktspiel'};
   const spielartLabel = spielartMap[ps.spielart] || 'Mitspieler';
 
   const metaParts = [];

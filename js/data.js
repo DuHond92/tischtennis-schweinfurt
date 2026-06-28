@@ -210,10 +210,6 @@ async function loadEvents() {
   const playerSearchRaw = allEvents.filter(e => e.type === 'player_search');
   allEvents = allEvents.filter(e => e.type !== 'player_search');
   allPlayerSearches = playerSearchRaw
-    .filter(e => {
-      try { return JSON.parse(e.desc || '{}').spielart !== 'ranked'; }
-      catch(_) { return true; }
-    })
     .map(e => {
       let extra = {};
       try { extra = JSON.parse(e.desc || '{}'); } catch(_) {}
@@ -234,55 +230,3 @@ async function loadEvents() {
   tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
 }
 
-async function loadPlayers() {
-  const qb = new QueryBuilder('profiles');
-  qb._select = 'id,username,avatar_emoji,avatar_url,elo,wins,losses';
-  const {data} = await qb.order('elo', true).limit(20).execute();
-  if(data) allPlayers = data;
-}
-
-async function loadMyMatches() {
-  if(!sb.isLoggedIn()) return;
-  const uid = sb.getUserId();
-
-  // 1. Matches – einfacher Select, kein verschachtelter Join
-  // played_at existiert laut Schema (zurück von created_at)
-  const qb = new QueryBuilder('matches');
-  qb._select = 'id,winner_id,loser_id,score_winner,score_loser,elo_change,confirmed,played_at';
-  qb.order('played_at', true);
-  qb.limit(10);
-  const {data} = await qb.execute();
-  if(!data || !data.length) return;
-
-  // 2. Usernamen aus allPlayers (bereits geladen) oder frisch abfragen
-  const profileMap = {};
-  if(allPlayers.length) {
-    allPlayers.forEach(p => { profileMap[p.id] = p; });
-  } else {
-    try {
-      const qbP = new QueryBuilder('profiles');
-      qbP._select = 'id,username';
-      const {data: pData} = await qbP.execute();
-      if(pData) pData.forEach(p => { profileMap[p.id] = p; });
-    } catch(e) {}
-  }
-
-  // 3. Daten im JS zusammensetzen
-  myMatches = data
-    .filter(m => m.winner_id || m.loser_id)
-    .map(m => {
-      const table = tables.find(t => t.id === m.table_id);
-      const iWon = m.winner_id === uid;
-      return {
-        opp:  iWon ? (profileMap[m.loser_id]?.username  || '?')
-                   : (profileMap[m.winner_id]?.username || '?'),
-        res:  iWon ? 'win' : 'loss',
-        elo:  iWon ? +(m.elo_change) : -(m.elo_change),
-        sets: `${m.score_winner}:${m.score_loser}`,
-        date: formatDate(m.played_at),
-        table: table ? table.name : null
-          ? new Date(m.played_at).toLocaleDateString('de-DE',{day:'numeric',month:'short'})
-          : '–'
-      };
-    });
-}

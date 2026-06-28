@@ -34,9 +34,6 @@ function renderProfile() {
   if (psNameEl) psNameEl.textContent = currentUser.username || 'Spieler';
   const psAvEl = document.getElementById('ps-avatar-el');
   if (psAvEl) psAvEl.textContent = currentUser.avatar_emoji || '😎';
-  const rankNameEl = document.getElementById('myrank-name-el');
-  if (rankNameEl) rankNameEl.textContent = currentUser.username || 'Spieler';
-
   // Skill level
   const skill = currentUser.skill_level || 'anfaenger';
   document.querySelectorAll('.skill-opt').forEach((el, i) => {
@@ -106,34 +103,6 @@ function renderMyEventsSection() {
       <span class="ev-type-pill pill-${e.type}" style="font-size:0.68rem;">${typeLabel(e.type)}</span>
       <span class="per-name">${escHtml(e.name)}</span>
       <span class="per-date">${e.day}. ${e.mon}</span>
-    </div>`).join('');
-}
-
-async function renderMatchHistory() {
-  const c = document.getElementById('profile-match-history');
-  if(!myMatches.length) {
-    await loadMyMatches();
-    if(!myMatches.length) {
-      c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
-        Noch keine Matches gespielt.</div>`;
-      return;
-    }
-    c.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
-      Noch keine Matches gespielt.</div>`;
-    return;
-  }
-  c.innerHTML = myMatches.map(m=>`
-    <div class="match-row">
-      <div class="match-res ${m.res}">${m.res==='win'?'W':'L'}</div>
-      <div style="flex:1;">
-        <div class="match-opp">vs. ${m.opp||'?'}</div>
-        <div class="match-sets">Sätze: ${m.sets}</div>
-        ${m.table ? `<div class="match-table">${ic('map-pin',12)} ${m.table}</div>` : ''}
-      </div>
-      <div style="text-align:right;">
-        <div class="match-date">${m.date}</div>
-        <div class="match-elo">${m.elo > 0 ? '+' : ''}${m.elo}</div>
-      </div>
     </div>`).join('');
 }
 
