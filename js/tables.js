@@ -85,6 +85,7 @@ function showTableDetail(id) {
     <div class="pb-safe"></div>`;
 
   openSheet('table-detail-sheet');
+  _initSliderTouch(document.querySelector('#tds-body .ds-main'));
   loadRatingsForTable(id);
   loadCommentsInline(id);
   loadTableImages(id);
@@ -153,6 +154,35 @@ function detailSliderStep(slider, dir) {
   const count = parseInt(slider.dataset.count || 1);
   const idx   = (parseInt(slider.dataset.idx || 0) + dir + count) % count;
   detailSliderGo(slider, idx);
+}
+
+function _initSliderTouch(mainEl) {
+  if (!mainEl || mainEl._touchInited) return;
+  mainEl._touchInited = true;
+  let startX = 0, startY = 0, isHSwipe = false;
+  mainEl.addEventListener('touchstart', e => {
+    startX   = e.touches[0].clientX;
+    startY   = e.touches[0].clientY;
+    isHSwipe = false;
+  }, { passive: true });
+  mainEl.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - startX);
+    const dy = Math.abs(e.touches[0].clientY - startY);
+    if (!isHSwipe && dx > dy && dx > 8) isHSwipe = true;
+  }, { passive: true });
+  mainEl.addEventListener('touchend', e => {
+    if (!isHSwipe) return;
+    const dx     = e.changedTouches[0].clientX - startX;
+    const slider = mainEl.closest('.detail-slider');
+    if (!slider || parseInt(slider.dataset.count || 1) < 2) return;
+    if (Math.abs(dx) < 40) return;
+    e.preventDefault();
+    detailSliderStep(slider, dx < 0 ? 1 : -1);
+    isHSwipe = false;
+  }, { passive: false });
+  mainEl.addEventListener('click', e => {
+    if (isHSwipe) { e.stopImmediatePropagation(); isHSwipe = false; }
+  });
 }
 
 // Event-Bild Upload (Weiterleitung an event-detail.js)
