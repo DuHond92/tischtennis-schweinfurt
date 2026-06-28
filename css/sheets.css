@@ -200,21 +200,31 @@
 }
 
 @media (max-width: 768px) {
-  /* Größere Container-Höhe für sinnvolleres Seitenverhältnis */
-  #table-detail-sheet .ds-main,
-  #table-detail-sheet .ds-slide {
+  #table-detail-sheet .ds-main {
     height: clamp(220px, 62vw, 320px);
     background: var(--surface2);
   }
 
-  /* contain statt cover: kein Reingezoomt-Effekt auf echten Geräten */
-  #table-detail-sheet .ds-slide img {
-    object-fit: contain;
-    object-position: center center;
+  #table-detail-sheet .ds-slide {
+    width: 100%;
+    height: clamp(220px, 62vw, 320px);
+    position: relative;
+    overflow: hidden;
     background: var(--surface2);
   }
 
-  /* Placeholder-Bilder bleiben cover (sind dafür gemacht) */
+  #table-detail-sheet .ds-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    opacity: 1;
+    visibility: visible;
+  }
+
   #table-detail-sheet .ds-slide img.thumb-placeholder-img {
     object-fit: cover;
   }
