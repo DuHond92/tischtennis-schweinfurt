@@ -104,6 +104,8 @@ function showEventDetail(eventId) {
   document.getElementById('eds-chat-input-row').style.display = isFallback ? 'none' : '';
 
   openSheet('event-detail-sheet');
+  const edsShareBtn = document.getElementById('eds-share-btn');
+  if (edsShareBtn) edsShareBtn.onclick = () => shareEvent(ev);
   markEventSeen(eventId);
 
   // Load data (don't block sheet open)
@@ -352,5 +354,37 @@ function _appendDbImagesToEventSlider(dbImages) {
     next.className = 'ds-nav ds-next'; next.textContent = '›';
     next.onclick = () => detailSliderStep(slider, 1);
     main.appendChild(prev); main.appendChild(next);
+  }
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────
+function buildEventShareUrl(ev) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('event', ev.id);
+  url.searchParams.delete('table');
+  url.searchParams.delete('search');
+  return url.toString();
+}
+
+async function shareEvent(ev) {
+  const name = ev.name || 'Spielrunde';
+  const url  = buildEventShareUrl(ev);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: name,
+        text:  `${name} – auf PlattenTreff ansehen`,
+        url
+      });
+    } catch (e) {
+      if (e?.name !== 'AbortError') console.warn('Teilen fehlgeschlagen:', e);
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link kopiert');
+  } catch (e) {
+    showToast('Link konnte nicht kopiert werden');
   }
 }

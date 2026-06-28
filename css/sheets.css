@@ -54,7 +54,9 @@
 .sheet-share:active { color: var(--primary); }
 
 /* Sticky header for scrollable detail sheets */
-#table-detail-sheet .sheet-header {
+#table-detail-sheet .sheet-header,
+#event-detail-sheet .sheet-header,
+#ps-detail-sheet .sheet-header {
   position: sticky;
   top: 0;
   z-index: 20;

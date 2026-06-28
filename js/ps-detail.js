@@ -50,6 +50,8 @@ function showPlayerSearchDetail(psId) {
   document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Lade Nachrichten…</div>';
 
   openSheet('ps-detail-sheet');
+  const psdShareBtn = document.getElementById('psd-share-btn');
+  if (psdShareBtn) psdShareBtn.onclick = () => sharePlayerSearch(ps);
   markEventSeen(psId);
 
   if(isReal) {
@@ -135,4 +137,36 @@ function startPsChatPolling(eventId) {
 }
 function stopPsChatPolling() {
   if(psChatPollTimer) { clearInterval(psChatPollTimer); psChatPollTimer = null; }
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────
+function buildPsShareUrl(ps) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('search', ps.id);
+  url.searchParams.delete('table');
+  url.searchParams.delete('event');
+  return url.toString();
+}
+
+async function sharePlayerSearch(ps) {
+  const name = ps.username ? `${ps.username} sucht Mitspieler` : 'Mitspieler gesucht';
+  const url  = buildPsShareUrl(ps);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: name,
+        text:  `${name} – auf PlattenTreff`,
+        url
+      });
+    } catch (e) {
+      if (e?.name !== 'AbortError') console.warn('Teilen fehlgeschlagen:', e);
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link kopiert');
+  } catch (e) {
+    showToast('Link konnte nicht kopiert werden');
+  }
 }
