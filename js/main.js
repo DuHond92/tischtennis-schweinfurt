@@ -5,10 +5,11 @@ window.addEventListener('load', async () => {
   // Passwort-Recovery aus URL-Hash erkennen (Supabase Magic Link)
   checkPasswordRecovery();
 
-  // TODO: Deep-Link ?table=ID beim App-Start öffnen
-  // Nach dem Laden der Daten prüfen und Detailansicht öffnen:
-  // const _dlTable = new URL(window.location.href).searchParams.get('table');
-  // if (_dlTable) { await loadTables(); showTableDetail(parseInt(_dlTable)); }
+  // Deep-Link-Parameter einmalig auslesen, bevor URL gesäubert wird
+  const _dlParams  = new URLSearchParams(window.location.search);
+  const _dlTable   = _dlParams.get('table');
+  const _dlEvent   = _dlParams.get('event');
+  const _dlSearch  = _dlParams.get('search') || _dlParams.get('request');
 
   // Token beim Start sofort prüfen und ggf. erneuern
   if(sb.isLoggedIn()) {
@@ -45,6 +46,24 @@ window.addEventListener('load', async () => {
     // Select-Optionen befüllen
     const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+
+    // 2b. Deep-Link auflösen — nach allen Daten, URL danach säubern
+    if (_dlTable || _dlEvent || _dlSearch) {
+      history.replaceState(null, '', window.location.pathname);
+      if (_dlTable) {
+        const id = parseInt(_dlTable);
+        if (tables.find(t => t.id === id)) { showPage('map'); showTableDetail(id); }
+        else showToast('Platte nicht gefunden', '❌');
+      } else if (_dlEvent) {
+        const id = parseInt(_dlEvent);
+        if (allEvents.find(e => e.id === id)) { showPage('events'); showEventDetail(id); }
+        else showToast('Spiel nicht gefunden', '❌');
+      } else if (_dlSearch) {
+        const id = parseInt(_dlSearch);
+        if (allPlayerSearches.find(p => p.id === id)) { showPage('events'); showPlayerSearchDetail(id); }
+        else showToast('Gesuch nicht gefunden', '❌');
+      }
+    }
   } catch(e) {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
   }
