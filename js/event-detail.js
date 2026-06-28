@@ -69,7 +69,7 @@ function showEventDetail(eventId) {
 
   // Meta
   document.getElementById('eds-meta').innerHTML =
-    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${ev.creatorId ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}')">` : '<b>'}${escHtml(ev.creator||'')}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${ev.creatorId ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` : '<b>'}${escHtml(ev.creator||'')}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
 
   // Description
   const descSection = document.getElementById('eds-desc-section');
@@ -146,9 +146,10 @@ function renderParticipantChips(participants, creatorId) {
     const isHost  = p.user_id === creatorId;
     const name    = p.profiles?.username || 'Anonym';
     const emoji   = p.profiles?.avatar_emoji || '';
+    const avUrl   = p.profiles?.avatar_url   || '';
     const uid     = p.user_id || '';
     const ctx     = isHost ? '👑 Host dieser Spielrunde' : '';
-    const click   = `showPlayerProfile('${uid}','${escAttr(name)}','${escAttr(emoji)}','${ctx}')`;
+    const click   = `showPlayerProfile('${uid}','${escAttr(name)}','${escAttr(emoji)}','${ctx}','${escAttr(avUrl)}')`;
     const avatarHtml = `<div class="pc-avatar" style="position:relative;">
       ${getAvatarHtml(p.profiles, {size: 46})}
       ${isHost ? '<span class="pc-crown">👑</span>' : ''}
@@ -190,9 +191,10 @@ function renderChatMessages(messages) {
     const isMine  = m.user_id === myId;
     const name    = m.profiles?.username || 'Anonym';
     const emoji   = m.profiles?.avatar_emoji || '';
+    const avUrl   = m.profiles?.avatar_url   || '';
     const uid     = m.user_id || '';
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
+    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
     const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','event')">🗑</button>` : '';
     const preview = escAttr((m.message || '').slice(0, 80));

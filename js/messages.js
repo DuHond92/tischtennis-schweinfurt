@@ -5,6 +5,7 @@
 let _dmPartnerId    = null;
 let _dmPartnerName  = '';
 let _dmPartnerEmoji = '';
+let _dmPartnerUrl   = '';
 let _dmPollTimer    = null;
 let _dmUnreadCount  = 0;
 
@@ -375,8 +376,9 @@ function _renderDmRow(c, profiles, uid) {
     ? c.lastMsg.message.slice(0, 60) + '…' : c.lastMsg.message;
   const time   = _dmTime(c.lastMsg.created_at);
   const hasNew = c.unread > 0;
+  const pur = escAttr(p.avatar_url || '');
   return `
-    <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}')">
+    <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}','${pur}')">
       <div class="inbox-conv-av">${av}</div>
       <div class="inbox-conv-body">
         <div class="inbox-conv-top">
@@ -440,27 +442,28 @@ function _inboxEmpty(icon, text, dim) {
 
 // ── DM Konversation ────────────────────────────────────────────
 
-async function openDmFromInbox(partnerId, partnerName, partnerEmoji) {
-  await openDmConversation(partnerId, partnerName, partnerEmoji);
+async function openDmFromInbox(partnerId, partnerName, partnerEmoji, partnerUrl) {
+  await openDmConversation(partnerId, partnerName, partnerEmoji, partnerUrl);
 }
 
 async function openDmFromProfile() {
   if (!_dmPartnerId) return;
   closeAllSheets();
-  await openDmConversation(_dmPartnerId, _dmPartnerName, _dmPartnerEmoji);
+  await openDmConversation(_dmPartnerId, _dmPartnerName, _dmPartnerEmoji, _dmPartnerUrl);
 }
 
-async function openDmConversation(partnerId, partnerName, partnerEmoji) {
+async function openDmConversation(partnerId, partnerName, partnerEmoji, partnerUrl) {
   if (!sb.isLoggedIn()) { openSheet('auth-sheet'); return; }
   _dmPartnerId    = partnerId;
-  _dmPartnerName  = partnerName || 'Spieler';
+  _dmPartnerName  = partnerName  || 'Spieler';
   _dmPartnerEmoji = partnerEmoji || '';
+  _dmPartnerUrl   = partnerUrl   || '';
 
   const headerEl = document.getElementById('dm-partner-name');
   const avEl     = document.getElementById('dm-partner-av');
   if (headerEl) headerEl.textContent = _dmPartnerName;
   if (avEl) avEl.innerHTML = getAvatarHtml(
-    { avatar_emoji: _dmPartnerEmoji, username: _dmPartnerName }, { size: 34 }
+    { avatar_url: _dmPartnerUrl || null, avatar_emoji: _dmPartnerEmoji, username: _dmPartnerName }, { size: 34 }
   );
 
   document.getElementById('dm-feed').innerHTML = '<div class="chat-empty">Lade Nachrichten…</div>';

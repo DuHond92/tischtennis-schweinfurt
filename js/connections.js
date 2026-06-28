@@ -6,6 +6,7 @@ let _myConnections    = null;   // null = noch nicht geladen
 let _ppCurrentUserId  = null;   // aktuell geöffnetes Spielerprofil
 let _ppCurrentUserName  = '';
 let _ppCurrentUserEmoji = '';
+let _ppCurrentUserUrl   = null;
 
 // ── Verbindungen laden ────────────────────────────────────────────
 async function loadMyConnections() {
@@ -70,7 +71,8 @@ function getConnectionButtonHtml(otherUserId) {
   if (conn.status === 'accepted') {
     const pnm = escAttr(_ppCurrentUserName || '');
     const pem = escAttr(_ppCurrentUserEmoji || '');
-    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}')">💬 Nachricht schreiben</button>
+    const pur = escAttr(_ppCurrentUserUrl  || '');
+    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">💬 Nachricht schreiben</button>
 <button class="btn btn-secondary btn-full conn-accepted" onclick="removeConnection('${cid}','${oid}')">🤝 Spielpartner ✓ <span class="pp-soon">(entfernen)</span></button>`;
   }
 
@@ -257,7 +259,7 @@ async function renderSpielpartnerSection() {
   function profileRow(conn, otherId, actionHtml) {
     const p   = profiles[otherId] || { id: otherId, username: 'Spieler', avatar_emoji: '', skill_level: '' };
     const pid = escAttr(p.id);
-    const pClick = `showPlayerProfile('${pid}','${escAttr(p.username || '')}','${escAttr(p.avatar_emoji || '')}')`;
+    const pClick = `showPlayerProfile('${pid}','${escAttr(p.username || '')}','${escAttr(p.avatar_emoji || '')}',null,'${escAttr(p.avatar_url || '')}')`;
     return `<div class="spielpartner-row">
       <div class="sp-av pp-clickable" onclick="${pClick}">${getAvatarHtml(p, { size: 44 })}</div>
       <div class="sp-info">
@@ -278,10 +280,11 @@ async function renderSpielpartnerSection() {
       const p = profiles[otherId] || {};
       const pnm = escAttr(p.username || '');
       const pem = escAttr(p.avatar_emoji || '');
+      const pur = escAttr(p.avatar_url  || '');
       const oid = escAttr(otherId);
       return profileRow(c, otherId,
         `<div style="display:flex;gap:6px;">
-          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}')">💬</button>
+          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}','${pur}')">💬</button>
           <button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>
         </div>`
       );

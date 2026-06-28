@@ -97,7 +97,7 @@ function renderHomePsSection() {
   if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');
   if(first.wann && first.wann !== 'Egal') metaParts.push(first.wann);
   const extraCount = allPlayerSearches.length - 1;
-  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}')`;
+  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}',null,'${escAttr(first.avatarUrl||'')}')`;
   container.innerHTML = `
     <div class="section-header">
       <div class="section-title">Mitspieler gesucht</div>

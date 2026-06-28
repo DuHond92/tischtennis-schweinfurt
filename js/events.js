@@ -47,7 +47,7 @@ async function joinEvent(eventId, btn) {
 
 function renderPlayerSearchCard(ps) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
-  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}')`;
+  const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
   const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', punktspiel:'Punktspiel gesucht'};
   const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
@@ -113,7 +113,7 @@ function renderEventCard(e, idx = 0) {
       <div class="ecb-title">${e.name}</div>
       <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
       <div class="ecb-creator">${ic('user',12)} ${e.creatorId
-        ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}')">${escHtml(e.creator||'Anonym')}</b>`
+        ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
         : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
       <div class="ecb-location">${ic('pin')} ${e.tname}</div>
       <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>

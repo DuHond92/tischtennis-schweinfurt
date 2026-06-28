@@ -42,9 +42,9 @@ function _avColor(name) {
 
 function initAvatar(name, size) {
   size = size || 28;
-  const n  = name || '?';
-  const fs = Math.round(size * 0.4);
-  return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${n[0].toUpperCase()}</div>`;
+  const n  = name || '';
+  const fs = Math.round(size * 0.36);
+  return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${getInitials(n)}</div>`;
 }
 
 function typeLabel(type) {
@@ -93,9 +93,10 @@ function participantStack(participants, maxShow, size) {
     const uid = escAttr(p.id   || '');
     const nm  = escAttr(n);
     const em  = escAttr(p.avatar_emoji || '');
-    const clickHandler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji)`;
+    const ur  = escAttr(p.avatar_url   || '');
+    const clickHandler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji,null,this.dataset.url)`;
     const inner = getAvatarHtml(p, {size, extraStyle:'border:2px solid var(--surface);'});
-    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;">${inner}</div>`;
+    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" data-url="${ur}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;">${inner}</div>`;
   }).join('');
   const extraHtml = extra > 0
     ? `<div class="pstack-item pstack-extra" style="width:${size}px;height:${size}px;font-size:${fs}px;">+${extra}</div>`

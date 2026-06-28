@@ -133,8 +133,9 @@ function renderNotifSheet() {
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const sender  = m.profiles?.username || 'Jemand';
     const emoji   = m.profiles?.avatar_emoji || '';
+    const avUrl   = m.profiles?.avatar_url   || '';
     const uid     = m.user_id || '';
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(sender)}','${escAttr(emoji)}')"` : '';
+    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(sender)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
     const avHtml  = getAvatarHtml(m.profiles, {size: 38});
     const preview = m.message.length > 60 ? m.message.slice(0, 60) + '…' : m.message;
     const time    = _notifTime(m.created_at);

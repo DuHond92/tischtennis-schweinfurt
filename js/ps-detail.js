@@ -11,13 +11,11 @@ function showPlayerSearchDetail(psId) {
   currentPsEventId = psId;
 
   const pClick = ps.userId
-    ? `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId)}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}')`
+    ? `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId)}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`
     : '';
 
   // Avatar
-  const avHtml = ps.avatarEmoji
-    ? `<div class="${pClick?'pp-clickable':''}" style="width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;border:2px solid var(--border);cursor:${pClick?'pointer':'default'};" ${pClick?`onclick="${pClick}"`:''}>${ps.avatarEmoji}</div>`
-    : `<div class="${pClick?'pp-clickable':''}" style="flex-shrink:0;" ${pClick?`onclick="${pClick}"`:''}>${initAvatar(ps.username || '?', 52)}</div>`;
+  const avHtml = `<div class="${pClick?'pp-clickable':''}" style="flex-shrink:0;cursor:${pClick?'pointer':'default'};" ${pClick?`onclick="${pClick}"`:''}>${getAvatarHtml({ avatar_url: ps.avatarUrl || null, avatar_emoji: ps.avatarEmoji, username: ps.username }, { size: 52, extraStyle: 'border:2px solid var(--border);' })}</div>`;
 
   const spielartMap = {casual:'Just 4 Fun', training:'Training', punktspiel:'Punktspiel'};
   const spielartLabel = spielartMap[ps.spielart] || 'Mitspieler';
@@ -104,7 +102,8 @@ function _renderPsChatMessages(messages) {
     const emoji  = m.profiles?.avatar_emoji || '';
     const uid    = m.user_id || '';
     const time   = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}')"` : '';
+    const avUrl   = m.profiles?.avatar_url || '';
+    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
     const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','ps')">🗑</button>` : '';
     const preview = escAttr((m.message || '').slice(0, 80));

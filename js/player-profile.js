@@ -12,10 +12,11 @@ function closePlayerProfile() {
   document.getElementById('player-profile-sheet').classList.remove('open');
 }
 
-async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
+async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, avatarUrl) {
   _ppCurrentUserId    = userId;
-  _ppCurrentUserName  = username  || '';
+  _ppCurrentUserName  = username    || '';
   _ppCurrentUserEmoji = avatarEmoji || '';
+  _ppCurrentUserUrl   = avatarUrl   || null;
 
   // Sofort Basis-Info anzeigen
   const avEl   = document.getElementById('pp-avatar');
@@ -23,7 +24,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
   const hostEl = document.getElementById('pp-host-badge');
   const cityEl = document.getElementById('pp-city');
 
-  avEl.innerHTML = getAvatarHtml({ avatar_emoji: avatarEmoji, username }, {size: 72});
+  avEl.innerHTML = getAvatarHtml({ avatar_url: avatarUrl || null, avatar_emoji: avatarEmoji, username }, {size: 72});
   nameEl.textContent = username || 'Spieler';
 
   if(contextLabel) {
@@ -79,7 +80,9 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel) {
 }
 
 function renderPlayerProfileData(profile) {
-  // Avatar mit vollständigen Daten aktualisieren (inkl. avatar_url)
+  // Avatar + globale URL-State mit vollständigen Daten aktualisieren
+  _ppCurrentUserUrl   = profile.avatar_url   || null;
+  _ppCurrentUserEmoji = profile.avatar_emoji || '';
   const avEl = document.getElementById('pp-avatar');
   if (avEl) avEl.innerHTML = getAvatarHtml(profile, {size: 72});
 

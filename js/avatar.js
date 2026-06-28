@@ -3,17 +3,27 @@
 // ║  Priorität: Foto → Emoji → Initialen                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 
+function getInitials(name) {
+  const clean = String(name || '').trim();
+  if (!clean) return '?';
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return clean.slice(0, 2).toUpperCase();
+}
+
 // Vollständige Avatar-Kreis-Div (inkl. Größe, Border-Radius, Hintergrund)
 function getAvatarHtml(profile, { size = 40, border = 'none', extraStyle = '' } = {}) {
   const url   = profile?.avatar_url;
   const emoji = profile?.avatar_emoji;
-  const name  = profile?.username || profile?.name || '?';
+  const name  = profile?.username || profile?.name || '';
   const s     = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;${border !== 'none' ? `border:${border};` : ''}${extraStyle}`;
 
   if (url) {
     const bg   = _avatarBg(name);
-    const init = name.charAt(0).toUpperCase();
-    const fs   = Math.round(size * 0.38);
+    const init = getInitials(name);
+    const fs   = Math.round(size * 0.34);
     return `<div style="${s};background:${bg};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;color:#fff;">${init}<img src="${escAttr(url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" loading="lazy"></div>`;
   }
   if (emoji && emoji.trim()) {
@@ -21,22 +31,22 @@ function getAvatarHtml(profile, { size = 40, border = 'none', extraStyle = '' } 
     return `<div style="${s};background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:${efs}px;">${emoji}</div>`;
   }
   const bg   = _avatarBg(name);
-  const init = name.charAt(0).toUpperCase();
-  const fs   = Math.round(size * 0.38);
+  const init = getInitials(name);
+  const fs   = Math.round(size * 0.34);
   return `<div style="${s};background:${bg};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;color:#fff;">${init}</div>`;
 }
 
-// Nur Inhalts-HTML für bereits gestylte Container-Divs (.lb-avatar, .comment-avatar etc.)
+// Nur Inhalts-HTML für bereits gestylte Container-Divs (.comment-avatar etc.)
 // Der Container braucht: overflow:hidden; position:relative;
 function getAvatarContent(profile) {
   const url   = profile?.avatar_url;
   const emoji = profile?.avatar_emoji;
-  const name  = profile?.username || '?';
+  const name  = profile?.username || '';
   if (url) {
     return `<img src="${escAttr(url)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'" loading="lazy">`;
   }
   if (emoji && emoji.trim()) return emoji;
-  return (name || '?').charAt(0).toUpperCase();
+  return getInitials(name);
 }
 
 function _avatarBg(name) {
@@ -58,8 +68,8 @@ function updateProfileAvatarEl(user) {
   } else if (user.avatar_emoji) {
     el.textContent = user.avatar_emoji;
   } else {
-    el.textContent = (user.username || '?').charAt(0).toUpperCase();
-    el.style.fontSize   = '1.8rem';
+    el.textContent     = getInitials(user.username);
+    el.style.fontSize  = '1.4rem';
     el.style.fontWeight = '700';
   }
 }
