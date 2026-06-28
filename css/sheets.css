@@ -68,7 +68,7 @@
 /* ── EVENT DETAIL SHEET ─────────────────────────────────────────── */
 .edi-header { padding: 16px 20px 12px; }
 .edi-meta { font-size: 0.82rem; color: var(--text-dim); margin-top: 4px; line-height: 1.6; }
-.edi-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-top: 8px; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; }
+.edi-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-top: 8px; padding: 10px 12px; background: var(--surface2); border-radius: 10px; }
 .edi-desc-section { padding: 0 20px 16px; }
 .edi-section-label { font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
 #eds-desc, #psd-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; }
@@ -78,7 +78,7 @@
 .participants-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .participants-row::-webkit-scrollbar { display: none; }
 .participant-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 52px; cursor: default; }
-.pc-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 1.45rem; border: 2px solid var(--border); position: relative; }
+.pc-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.45rem; border: 2px solid var(--border); position: relative; }
 .pc-crown { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; }
 .pc-name { font-size: 0.63rem; color: var(--text-dim); text-align: center; max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-host-label { font-size: 0.58rem; background: var(--primary); color: #fff; border-radius: 4px; padding: 1px 5px; }
@@ -86,26 +86,39 @@
 /* Chat */
 .chat-section { border-top: 1px solid var(--border); }
 .chat-section-header { padding: 12px 20px 0; }
-.chat-feed { padding: 10px 16px; min-height: 120px; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.chat-msg { display: flex; gap: 8px; align-items: flex-end; }
+.chat-feed { padding: 12px 16px; min-height: 120px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+
+.chat-msg { display: flex; gap: 8px; align-items: flex-end; margin: 4px 0; }
 .chat-av { flex-shrink: 0; }
-.chat-msg.mine { flex-direction: row-reverse; }
-.chat-msg-avatar { font-size: 1.2rem; flex-shrink: 0; line-height: 1; }
+.chat-msg.mine { justify-content: flex-end; }
+.chat-msg.mine .chat-av { display: none; }
+
 .chat-bubble-wrap { display: flex; flex-direction: column; max-width: 76%; }
 .chat-msg.mine .chat-bubble-wrap { align-items: flex-end; }
-.chat-bubble { padding: 8px 12px; border-radius: 16px; font-size: 0.85rem; line-height: 1.4; word-break: break-word; }
-.chat-msg.mine .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
-.chat-msg:not(.mine) .chat-bubble { background: var(--surface-2); color: var(--text); border-bottom-left-radius: 4px; }
-.chat-msg-meta { font-size: 0.62rem; color: var(--text-xdim); margin-top: 3px; }
+.chat-msg:not(.mine) .chat-bubble-wrap { align-items: flex-start; }
+
+.chat-bubble {
+  width: fit-content; max-width: 100%;
+  padding: 9px 13px; border-radius: 18px;
+  font-size: 0.875rem; line-height: 1.45;
+  word-break: break-word; white-space: pre-wrap;
+}
+.chat-msg.mine .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 5px; }
+.chat-msg:not(.mine) .chat-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 5px; }
+
+.chat-msg-meta { font-size: 0.65rem; color: var(--text-xdim); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.chat-msg.mine .chat-msg-meta { justify-content: flex-end; }
+.chat-msg:not(.mine) .chat-msg-meta { justify-content: flex-start; }
+
 .msg-delete-btn {
-  background: none; border: none; cursor: pointer; padding: 0 2px;
+  background: none; border: none; cursor: pointer; padding: 0;
   font-size: 0.7rem; color: var(--text-xdim); opacity: 0.5;
-  vertical-align: middle; transition: opacity 0.15s, color 0.15s;
+  line-height: 1; transition: opacity 0.15s, color 0.15s;
 }
 .msg-delete-btn:hover { color: #e53935; opacity: 1; }
-.chat-empty { text-align: center; padding: 24px 16px; color: var(--text-dim); font-size: 0.82rem; }
+.chat-empty { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size: 0.82rem; }
 .chat-input-row { padding: 10px 16px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); z-index: 1; }
-.chat-input { flex: 1; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 0.85rem; color: var(--text); font-family: var(--font-body); }
+.chat-input { flex: 1; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 0.875rem; color: var(--text); font-family: var(--font-body); }
 .chat-input:focus { outline: none; border-color: var(--primary); }
 .chat-send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: #fff; border: none; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
 .chat-send-btn:active { opacity: 0.7; }
@@ -195,7 +208,7 @@
   position: relative;
   height: 260px;
   overflow: hidden;
-  background: var(--surface-2);
+  background: var(--surface2);
 }
 
 .ds-slides-wrap {
@@ -351,7 +364,7 @@
   flex-shrink: 0; width: 54px; height: 54px;
   border-radius: 8px; overflow: hidden; cursor: pointer;
   border: 2.5px solid transparent; transition: border-color 0.15s;
-  background: var(--surface-2);
+  background: var(--surface2);
 }
 .ds-thumb.active { border-color: var(--primary); }
 .ds-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -359,7 +372,7 @@
 .ds-thumb-add {
   flex-shrink: 0; width: 54px; height: 54px;
   border-radius: 8px; border: 2px dashed var(--border);
-  background: var(--surface-2);
+  background: var(--surface2);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.5rem; color: var(--text-dim); cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
