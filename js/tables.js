@@ -98,13 +98,15 @@ function buildPhotoSlider(t, photos) {
   const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
 
   const slides = hasPhotos
-    ? photos.map((src, i) =>
-        `<div class="ds-slide" style="${i===0?'':'display:none'}">
-          <img src="${src}" onerror="this.src='${plateFb}'" loading="${i===0?'eager':'lazy'}">
-        </div>`
-      ).join('')
+    ? photos.map((src, i) => {
+        const s = escAttr(src), f = escAttr(plateFb), l = i === 0 ? 'eager' : 'lazy';
+        return `<div class="ds-slide" style="${i===0?'':'display:none'}">
+          <img class="ds-slide-bg" src="${s}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="${l}">
+          <img class="ds-slide-img" src="${s}" onerror="this.src='${f}'" loading="${l}">
+        </div>`;
+      }).join('')
     : `<div class="ds-slide ds-slide-empty">
-        <img src="${plateFb}" class="thumb-placeholder-img">
+        <img src="${escAttr(plateFb)}" class="thumb-placeholder-img">
         <div class="ds-no-img-hint">Noch kein Bild</div>
       </div>`;
 
@@ -368,7 +370,9 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
     slide.style.display = (hadEmpty && dbIdx === 0) ? '' : 'none';
     slide.dataset.imgId  = img.id;
     slide.dataset.imgUrl = img.image_url;
-    slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`
+    const su = escAttr(img.image_url);
+    slide.innerHTML = `<img class="ds-slide-bg" src="${su}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="lazy">
+      <img class="ds-slide-img" src="${su}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`
       + (isMod ? `<button class="ds-delete-btn" onclick="event.stopPropagation();deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen">🗑</button>` : '')
       + (isMod ? `<div class="ds-mod-info">👤 ${escHtml(uploader)} · 📅 ${date}</div>` : '');
     slidesWrap.appendChild(slide);
