@@ -207,6 +207,8 @@
   opacity: 0.6;
   pointer-events: none;
   z-index: 0;
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+  will-change: opacity, transform;
 }
 
 /* Vordergrundbild */
@@ -218,6 +220,28 @@
   height: 100%;
   object-fit: cover;
   object-position: center center;
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+  will-change: opacity, transform;
+}
+
+/* Slide-Eingangs-Animation: kommt von rechts (next) */
+.ds-slide.ds-enter-next .ds-slide-img {
+  opacity: 0;
+  transform: translateX(28px);
+}
+.ds-slide.ds-enter-next .ds-slide-bg {
+  opacity: 0;
+  transform: scale(1.12) translateX(14px);
+}
+
+/* Slide-Eingangs-Animation: kommt von links (prev) */
+.ds-slide.ds-enter-prev .ds-slide-img {
+  opacity: 0;
+  transform: translateX(-28px);
+}
+.ds-slide.ds-enter-prev .ds-slide-bg {
+  opacity: 0;
+  transform: scale(1.12) translateX(-14px);
 }
 
 /* Fallback: einfaches <img> ohne dual-Struktur (Platzhalter) */

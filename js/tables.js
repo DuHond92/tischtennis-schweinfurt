@@ -141,21 +141,39 @@ function buildPhotoSlider(t, photos) {
     <input type="file" id="ds-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleTableImageUpload(this)">`;
 }
 
-function detailSliderGo(slider, idx) {
+function detailSliderGo(slider, idx, dir) {
   const slides  = slider.querySelectorAll('.ds-slide');
   const thumbs  = slider.querySelectorAll('.ds-thumb');
   const counter = slider.querySelector('.ds-counter');
   const count   = slides.length;
-  slides.forEach((s, i) => { s.style.display = i === idx ? '' : 'none'; });
+  const prevIdx = parseInt(slider.dataset.idx || 0);
+  if (idx === prevIdx || !slides[idx]) return;
+
+  // Determine direction for animation if not passed (thumb clicks)
+  const resolvedDir = dir || (idx > prevIdx ? 'next' : 'prev');
+  const entryCls    = resolvedDir === 'next' ? 'ds-enter-next' : 'ds-enter-prev';
+
+  const incoming = slides[idx];
+  const outgoing = slides[prevIdx];
+
+  // Hide outgoing immediately
+  if (outgoing) outgoing.style.display = 'none';
+
+  // Show incoming with entry class (offset + transparent)
+  incoming.style.display = '';
+  incoming.classList.add(entryCls);
+  incoming.offsetHeight; // force reflow so transition sees start state
+  incoming.classList.remove(entryCls);
+
   thumbs.forEach((th, i) => th.classList.toggle('active', i === idx));
   slider.dataset.idx = idx;
-  if(counter) counter.textContent = `${idx+1}/${count}`;
+  if (counter) counter.textContent = `${idx + 1}/${count}`;
 }
 
 function detailSliderStep(slider, dir) {
   const count = parseInt(slider.dataset.count || 1);
   const idx   = (parseInt(slider.dataset.idx || 0) + dir + count) % count;
-  detailSliderGo(slider, idx);
+  detailSliderGo(slider, idx, dir > 0 ? 'next' : 'prev');
 }
 
 function _initSliderTouch(mainEl) {
