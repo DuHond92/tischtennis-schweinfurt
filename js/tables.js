@@ -102,7 +102,7 @@ function buildPhotoSlider(t, photos) {
   const slides = hasPhotos
     ? photos.map((src, i) => {
         const s = escAttr(src), f = escAttr(plateFb), l = i === 0 ? 'eager' : 'lazy';
-        return `<div class="ds-slide" style="${i===0?'':'display:none'}">
+        return `<div class="ds-slide" data-img-url="${s}" style="${i===0?'':'display:none'}">
           <img class="ds-slide-bg" src="${s}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="${l}">
           <img class="ds-slide-img" src="${s}" onerror="this.src='${f}'" loading="${l}">
         </div>`;
@@ -249,14 +249,18 @@ async function handleDetailImageUpload(input) {
 }
 
 // ── Platten-Bild Upload ───────────────────────────────────────
+let _tableImgUploading = false;
+
 async function handleTableImageUpload(input) {
   if (!input.files || !input.files[0]) return;
+  if (_tableImgUploading) { input.value = ''; return; }
   if (!sb.isLoggedIn()) {
     input.value = '';
     closeAllSheets();
     openSheet('auth-sheet');
     return;
   }
+  _tableImgUploading = true;
   const file = input.files[0];
   input.value = '';
   showToast('Bild wird komprimiert und hochgeladen…', '⏳');
@@ -267,6 +271,12 @@ async function handleTableImageUpload(input) {
     const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
     if (isMod) {
       showToast('Bild hochgeladen und sofort freigegeben.', '✅');
+      // Reload fresh from Supabase so we never double-append local state
+      const slider = document.querySelector('#tds-body .detail-slider');
+      if (slider) {
+        slider.querySelectorAll('.ds-db-slide').forEach(el => el.remove());
+        slider.querySelectorAll('.ds-db-thumb').forEach(el => el.remove());
+      }
       await loadTableImages(currentDetailTableId);
     } else {
       showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
@@ -274,6 +284,8 @@ async function handleTableImageUpload(input) {
   } catch(e) {
     console.error('Table image upload error:', e);
     showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
+  } finally {
+    _tableImgUploading = false;
   }
 }
 
@@ -373,9 +385,10 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
   const hadEmpty = !!emptySlide;
   if (emptySlide) emptySlide.remove();
 
-  // Skip images already rendered (safe to call multiple times)
+  // Skip images already rendered — check ALL slides, not just ds-db-slide,
+  // because buildPhotoSlider may have pre-rendered the same Supabase URLs from t.photos.
   const existingUrls = new Set(
-    [...slidesWrap.querySelectorAll('.ds-db-slide')].map(el => el.dataset.imgUrl)
+    [...slidesWrap.querySelectorAll('.ds-slide[data-img-url]')].map(el => el.dataset.imgUrl)
   );
 
   dbImages.forEach((img, dbIdx) => {
