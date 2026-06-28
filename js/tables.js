@@ -767,16 +767,23 @@ function openCommentDotMenu(btn) {
     preview: btn.dataset.preview
   };
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const reportBtn = document.getElementById('cmt-action-report');
-  const deleteBtn = document.getElementById('cmt-action-delete');
-  if (reportBtn) reportBtn.style.display = (!_cmtMenuData.isOwn && !isMod) ? '' : 'none';
-  if (deleteBtn) deleteBtn.style.display = isMod ? '' : 'none';
+  const reportSection = document.getElementById('cmt-action-report-section');
+  const reportBtn     = document.getElementById('cmt-action-report');
+  const deleteBtn     = document.getElementById('cmt-action-delete');
+  const noteEl        = document.getElementById('cmt-report-note');
+  const showReport    = !_cmtMenuData.isOwn && !isMod;
+  if (reportSection) reportSection.style.display = showReport ? '' : 'none';
+  if (reportBtn)     reportBtn.style.display     = showReport ? '' : 'none';
+  if (deleteBtn)     deleteBtn.style.display     = isMod ? '' : 'none';
+  if (noteEl)        noteEl.value = '';
   openSheet('cmt-action-sheet');
 }
 
 async function submitCmtReport() {
   closeAllSheets();
   if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
+  const note    = (document.getElementById('cmt-report-note')?.value || '').trim();
+  const preview = [(_cmtMenuData.preview || ''), note ? `Hinweis: ${note}` : ''].filter(Boolean).join('\n\n').slice(0, 500);
   const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
     method:  'POST',
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
@@ -785,7 +792,7 @@ async function submitCmtReport() {
       content_type: 'comment',
       content_id:   String(_cmtMenuData.id),
       reason:       'inappropriate',
-      preview:      (_cmtMenuData.preview || '').slice(0, 200),
+      preview,
       status:       'pending'
     })
   });
