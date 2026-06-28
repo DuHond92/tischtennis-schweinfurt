@@ -184,7 +184,7 @@
       <div class="myrank-row">
         <div class="myrank-badge myrank-silver">🥈</div>
         <div class="myrank-info">
-          <div class="myrank-name">Max Mustermann</div>
+          <div class="myrank-name" id="myrank-name-el">Spieler</div>
           <div class="myrank-tier">Silber Division</div>
         </div>
         <div class="myrank-elo">520</div>
@@ -259,8 +259,8 @@
         <div class="profile-avatar" id="profile-avatar-el">😎</div>
         <div class="profile-avatar-badge">✏️</div>
       </div>
-      <div class="profile-name">Max Mustermann</div>
-      <div class="profile-sub">Schweinfurt · Mitglied seit März 2025</div>
+      <div class="profile-name">Spieler</div>
+      <div class="profile-sub" id="profile-sub-line"></div>
     </div>
 
     <!-- Match-Statistiken entfernt (v1: kein Match-System) -->
@@ -318,7 +318,7 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
-      <div class="settings-item" onclick="openSheet('profile-edit-sheet')">
+      <div class="settings-item" onclick="openProfileEditSheet()">
         <div class="si-icon" style="background:var(--green-bg);">✏️</div>
         <div class="si-text">Profil bearbeiten<div class="si-sub">Name, Avatar, Wohnort</div></div>
         <span class="si-arrow">›</span>
@@ -696,37 +696,96 @@
 <!-- PROFILE EDIT SHEET -->
 <div class="bottom-sheet" id="profile-edit-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-title">✏️ Profil bearbeiten</div>
-    <span class="sheet-close" onclick="closeAllSheets()">×</span>
+  <div class="pe-header">
+    <div class="pe-header-title">Profil bearbeiten</div>
+    <button class="pe-header-close" onclick="closeAllSheets()">×</button>
   </div>
-  <div class="sheet-body">
-    <div class="form-group">
-      <label class="form-label">Anzeigename</label>
-      <input class="form-input" id="edit-name" value="Max Mustermann">
+  <div class="pe-body">
+
+    <!-- Öffentliches Profil -->
+    <div class="pe-section-title">Öffentliches Profil</div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Spielername</div>
+      <input class="pe-field-input" id="edit-name" type="text" placeholder="z. B. MichaTT" autocomplete="off">
     </div>
-    <div class="form-group">
-      <label class="form-label">Wohnort</label>
-      <input class="form-input" id="edit-city" value="Schweinfurt">
+
+    <div class="pe-field">
+      <div class="pe-field-label">Wohnort</div>
+      <input class="pe-field-input" id="edit-city" type="text" list="pe-city-list" placeholder="z. B. Schweinfurt" autocomplete="off">
+      <datalist id="pe-city-list">
+        <option value="Schweinfurt"><option value="Gartenstadt"><option value="Bergl">
+        <option value="Innenstadt"><option value="Maintal"><option value="Deutschhof">
+        <option value="Hochfeld"><option value="Dittelbrunn"><option value="Niederwerrn">
+        <option value="Sennfeld"><option value="Gochsheim"><option value="Schonungen">
+        <option value="Bergrheinfeld"><option value="Geldersheim"><option value="Hambach">
+        <option value="Oberndorf">
+      </datalist>
     </div>
-    <div class="form-group">
-      <label class="form-label">Über mich</label>
-      <textarea class="form-textarea" id="edit-bio" placeholder="Kurze Beschreibung…">Spiele seit 3 Jahren Tischtennis, suche Gleichgesinnte!</textarea>
+    <div class="pe-field-hint">Ort oder Ortsteil reicht.</div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Verein</div>
+      <input class="pe-field-input" id="edit-club" type="text" list="pe-club-list" placeholder="z. B. DJK Schweinfurt" autocomplete="off">
+      <datalist id="pe-club-list">
+        <option value="Kein Verein"><option value="DJK Schweinfurt">
+        <option value="TSV Schonungen"><option value="TTC Niederwerrn">
+        <option value="SV Sennfeld"><option value="TSV Bergrheinfeld">
+      </datalist>
     </div>
-    <div class="form-group">
-      <label class="form-label">Avatar (Emoji)</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">😎</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🏓</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">⚡</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🔥</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">💪</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🎯</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🦅</span>
-        <span style="font-size:1.5rem;cursor:pointer;padding:4px;">🌟</span>
-      </div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Über mich</div>
+      <textarea class="pe-field-input pe-field-textarea" id="edit-bio" maxlength="160" rows="3"
+        oninput="_updateBioCounter()"
+        placeholder="Erzähl kurz etwas über dich …"></textarea>
+      <div class="pe-bio-counter"><span id="edit-bio-counter">0</span>/160</div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="closeAllSheets();showToast('✅ Profil gespeichert!')">Speichern</button>
+
+    <div class="pe-skill-row">
+      <span class="pe-skill-row-label">Spielniveau</span>
+      <span class="pe-skill-row-hint">Auf deiner Profilseite ändern</span>
+    </div>
+
+    <!-- Privates Konto -->
+    <div class="pe-section-title">Privates Konto</div>
+
+    <div class="pe-field pe-field--readonly">
+      <div class="pe-field-label">E-Mail <span class="pe-field-label-note">· Nicht öffentlich</span></div>
+      <input class="pe-field-input" id="edit-email" type="email" placeholder="deine@email.de" readonly>
+    </div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Geschlecht</div>
+      <select class="pe-field-input pe-field-select" id="edit-gender">
+        <option value="not_specified">Keine Angabe</option>
+        <option value="male">Männlich</option>
+        <option value="female">Weiblich</option>
+        <option value="diverse">Divers</option>
+      </select>
+    </div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Geburtsdatum <span class="pe-field-label-note">· Nicht öffentlich</span></div>
+      <input class="pe-field-input" id="edit-birthdate" type="date">
+    </div>
+
+    <button class="pe-save-btn" id="profile-save-btn" onclick="saveProfile()">Änderungen speichern</button>
+
+    <!-- Passwort -->
+    <div class="pe-section-title">Passwort</div>
+
+    <div class="pe-field">
+      <div class="pe-field-label">Neues Passwort</div>
+      <input class="pe-field-input" id="edit-pw-new" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password">
+    </div>
+    <div class="pe-field">
+      <div class="pe-field-label">Passwort bestätigen</div>
+      <input class="pe-field-input" id="edit-pw-confirm" type="password" placeholder="Passwort wiederholen" autocomplete="new-password">
+    </div>
+    <button class="pe-pw-btn" id="edit-pw-btn" onclick="changePassword()">Passwort ändern</button>
+
+    <div class="pb-safe"></div>
   </div>
 </div>
 
@@ -739,9 +798,8 @@
   </div>
   <div class="sheet-body">
     <div style="text-align:center;padding:16px 0 20px;">
-      <div style="font-size:3rem;margin-bottom:8px;">😎</div>
-      <div style="font-weight:800;font-size:1.1rem;font-family:var(--font-head);">Max Mustermann</div>
-      <!-- ELO/Rang entfernt (v1: kein Match-System) -->
+      <div id="ps-avatar-el" style="font-size:3rem;margin-bottom:8px;">😎</div>
+      <div id="ps-name-el" style="font-weight:800;font-size:1.1rem;font-family:var(--font-head);"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="closeAllSheets();showPage('profile')">Zum Profil</button>
     <div style="height:10px;"></div>

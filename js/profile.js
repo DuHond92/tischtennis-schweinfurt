@@ -12,29 +12,50 @@ function renderProfile() {
   if (guestView)  guestView.style.display  = 'none';
   if (loggedView) loggedView.style.display = '';
   _renderSetupHint(currentUser);
-  // Avatar & Name oben
+
+  // Avatar & Name
   updateProfileAvatarEl(currentUser);
-  document.querySelector('.profile-name').textContent   = currentUser.username||'Spieler';
+  document.querySelector('.profile-name').textContent = currentUser.username || 'Spieler';
+
+  // Sub-Zeile: Wohnort + Mitglied seit
+  const subEl = document.getElementById('profile-sub-line');
+  if (subEl) {
+    const subParts = [];
+    if (currentUser.city) subParts.push(currentUser.city);
+    if (currentUser.created_at) {
+      const since = new Date(currentUser.created_at).toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+      subParts.push('Mitglied seit ' + since);
+    }
+    subEl.textContent = subParts.join(' · ');
+  }
+
+  // Mini-Account-Sheet + Rank-Karte aktualisieren
+  const psNameEl = document.getElementById('ps-name-el');
+  if (psNameEl) psNameEl.textContent = currentUser.username || 'Spieler';
+  const psAvEl = document.getElementById('ps-avatar-el');
+  if (psAvEl) psAvEl.textContent = currentUser.avatar_emoji || '😎';
+  const rankNameEl = document.getElementById('myrank-name-el');
+  if (rankNameEl) rankNameEl.textContent = currentUser.username || 'Spieler';
+
   // Skill level
   const skill = currentUser.skill_level || 'anfaenger';
-  document.querySelectorAll('.skill-opt').forEach((el,i)=>{
-    const vals=['anfaenger','fortgeschritten','profi'];
-    el.classList.toggle('active', vals[i]===skill);
+  document.querySelectorAll('.skill-opt').forEach((el, i) => {
+    el.classList.toggle('active', ['anfaenger','fortgeschritten','profi'][i] === skill);
   });
+
   // Spielpartner
   if (typeof renderSpielpartnerSection === 'function') renderSpielpartnerSection();
   // Meine Spiele
   renderMyEventsSection();
-  // Match History - temporarily disabled
-  // renderMatchHistory();
+
   // Sign-out button
-  document.querySelector('#profile-signout-btn') &&
-    (document.querySelector('#profile-signout-btn').onclick = doSignOut);
-  // Moderation link — visible for moderators and admins
+  const signOutBtn = document.querySelector('#profile-signout-btn');
+  if (signOutBtn) signOutBtn.onclick = doSignOut;
+
+  // Moderation link
   const adminItem = document.getElementById('admin-nav-item');
   if (adminItem) {
-    const canMod = currentUser.role === 'moderator' || currentUser.role === 'admin';
-    adminItem.style.display = canMod ? '' : 'none';
+    adminItem.style.display = (currentUser.role === 'moderator' || currentUser.role === 'admin') ? '' : 'none';
   }
 }
 
@@ -58,7 +79,7 @@ function _renderSetupHint(u) {
         <li>Spielniveau auswählen</li>
         <li>Ort optional ergänzen</li>
       </ul>
-      <button class="psc-btn" onclick="openSheet('profile-edit-sheet')">Profil bearbeiten</button>
+      <button class="psc-btn" onclick="openProfileEditSheet()">Profil bearbeiten</button>
     </div>`;
 }
 
@@ -130,19 +151,89 @@ async function selectSkill(el) {
   showToast('✅ Spielniveau gespeichert!');
 }
 
+function openProfileEditSheet() {
+  if (!sb.isLoggedIn() || !currentUser) { openSheet('auth-sheet'); return; }
+  document.getElementById('edit-name').value      = currentUser.username  || '';
+  document.getElementById('edit-email').value     = localStorage.getItem('sb_email') || '';
+  document.getElementById('edit-city').value      = currentUser.city      || '';
+  document.getElementById('edit-gender').value    = currentUser.gender    || 'not_specified';
+  document.getElementById('edit-birthdate').value = currentUser.birthdate || '';
+  document.getElementById('edit-club').value      = currentUser.club_name || '';
+  document.getElementById('edit-bio').value       = currentUser.bio       || '';
+  _updateBioCounter();
+  openSheet('profile-edit-sheet');
+}
+
+function _updateBioCounter() {
+  const bio     = document.getElementById('edit-bio');
+  const counter = document.getElementById('edit-bio-counter');
+  if (bio && counter) counter.textContent = bio.value.length;
+}
+
 async function saveProfile() {
-  if(!sb.isLoggedIn()) return;
-  const name   = document.getElementById('edit-name').value.trim();
-  const city   = document.getElementById('edit-city').value.trim();
-  const bio    = document.getElementById('edit-bio').value.trim();
+  if (!sb.isLoggedIn()) return;
+  const name      = document.getElementById('edit-name').value.trim();
+  const city      = document.getElementById('edit-city').value.trim();
+  const gender    = document.getElementById('edit-gender')?.value || 'not_specified';
+  const birthdate = document.getElementById('edit-birthdate')?.value || null;
+  const club      = document.getElementById('edit-club')?.value.trim() || '';
+  const bio       = (document.getElementById('edit-bio')?.value || '').trim().slice(0, 160);
+
+  if (!name) { showToast('Spielername darf nicht leer sein', '⚠️'); return; }
+
+  const btn = document.getElementById('profile-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Speichern…'; }
+
   const qb = new QueryBuilder('profiles');
-  const {error} = await qb.eq('id', sb.getUserId()).update({
-    username: name||currentUser.username,
-    city: city||currentUser.city
+  const { error } = await qb.eq('id', sb.getUserId()).update({
+    username:   name,
+    city:       city   || null,
+    gender:     gender,
+    birthdate:  birthdate || null,
+    club_name:  club   || null,
+    bio:        bio    || null
   });
-  if(error) { showToast('Fehler beim Speichern','❌'); return; }
-  if(currentUser) { currentUser.username=name||currentUser.username; currentUser.city=city||currentUser.city; }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Speichern'; }
+  if (error) { showToast('Profil konnte nicht gespeichert werden', '❌'); return; }
+
+  if (currentUser) {
+    currentUser.username  = name;
+    currentUser.city      = city;
+    currentUser.gender    = gender;
+    currentUser.birthdate = birthdate;
+    currentUser.club_name = club;
+    currentUser.bio       = bio;
+  }
   closeAllSheets();
-  showToast('✅ Profil gespeichert!');
+  showToast('Profil gespeichert');
   renderProfile();
+}
+
+async function changePassword() {
+  const pw1 = document.getElementById('edit-pw-new')?.value  || '';
+  const pw2 = document.getElementById('edit-pw-confirm')?.value || '';
+  if (!pw1) { showToast('Bitte neues Passwort eingeben', '⚠️'); return; }
+  if (pw1.length < 6) { showToast('Passwort mindestens 6 Zeichen', '⚠️'); return; }
+  if (pw1 !== pw2)   { showToast('Passwörter stimmen nicht überein', '⚠️'); return; }
+
+  const btn = document.getElementById('edit-pw-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird gespeichert…'; }
+
+  try {
+    const res  = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sb.getToken()}`, 'apikey': SUPABASE_ANON },
+      body:    JSON.stringify({ password: pw1 })
+    });
+    const data = await res.json();
+    if (btn) { btn.disabled = false; btn.textContent = 'Passwort ändern'; }
+    if (!res.ok || data.error) { showToast(data.error?.message || 'Fehler beim Ändern', '❌'); return; }
+    document.getElementById('edit-pw-new').value     = '';
+    document.getElementById('edit-pw-confirm').value = '';
+    showToast('Passwort geändert');
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Passwort ändern'; }
+    showToast('Fehler beim Passwort ändern', '❌');
+  }
 }

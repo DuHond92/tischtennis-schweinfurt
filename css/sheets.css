@@ -744,3 +744,165 @@
 .idlg-btn-delete:hover { filter: brightness(1.1); }
 
 /* notif-badge also used on dm-badge — no extra styles needed */
+
+/* ── Profil bearbeiten — Card-Input-Design ──────────────────────── */
+.pe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 14px;
+}
+.pe-header-title {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.pe-header-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.pe-body {
+  padding: 0 18px 24px;
+}
+
+/* Section titles */
+.pe-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 26px 0 10px;
+}
+.pe-section-title:first-of-type { margin-top: 4px; }
+
+/* Card-style input */
+.pe-field {
+  background: var(--surface2);
+  border-radius: 13px;
+  padding: 12px 16px 13px;
+  margin-bottom: 10px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.18s;
+}
+.pe-field:focus-within {
+  border-color: var(--primary);
+}
+.pe-field--readonly {
+  opacity: 0.72;
+  cursor: default;
+}
+.pe-field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  line-height: 1;
+}
+.pe-field-label-note {
+  font-weight: 400;
+  opacity: 0.75;
+}
+.pe-field-input {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0;
+  margin: 0;
+  line-height: 1.4;
+}
+.pe-field-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.55;
+}
+.pe-field-select {
+  appearance: none;
+  cursor: pointer;
+}
+.pe-field-textarea {
+  resize: none;
+  min-height: 70px;
+  line-height: 1.5;
+}
+.pe-bio-counter {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 5px;
+}
+
+/* Hint text below a field */
+.pe-field-hint {
+  font-size: 0.73rem;
+  color: var(--text-dim);
+  margin: -6px 4px 10px;
+}
+
+/* Spielniveau-Hinweis-Zeile */
+.pe-skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-radius: 13px;
+  margin-bottom: 10px;
+}
+.pe-skill-row-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+.pe-skill-row-hint {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Speichern-Button */
+.pe-save-btn {
+  display: block;
+  width: 100%;
+  margin-top: 22px;
+  padding: 15px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s;
+  box-shadow: 0 4px 14px rgba(59,124,244,0.28);
+}
+.pe-save-btn:active { filter: brightness(0.9); }
+.pe-save-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Passwort-Button */
+.pe-pw-btn {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, filter 0.15s;
+}
+.pe-pw-btn:active { filter: brightness(0.93); }
+.pe-pw-btn:disabled { opacity: 0.6; cursor: default; }

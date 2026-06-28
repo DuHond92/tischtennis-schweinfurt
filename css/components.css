@@ -1999,3 +1999,49 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ── Profil bearbeiten ──────────────────────────────────────────── */
+.pe-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 20px 0 8px;
+}
+.pe-section-label:first-child { margin-top: 4px; }
+
+.pe-skill-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 10px 12px;
+  background: var(--surface2);
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.form-counter {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 2px;
+  padding-right: 2px;
+}
+
+.form-hint-text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  padding-left: 2px;
+}
+
+.form-hint-inline {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.pe-pw-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 8px 0 0;
+}
