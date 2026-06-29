@@ -2,7 +2,7 @@
 .home-hero {
   background: linear-gradient(160deg, var(--primary) 0%, var(--primary-d) 100%);
   padding: 32px 20px 28px;
-  position: relative; overflow: hidden;
+  position: relative;
 }
 
 .home-hero::before {
@@ -14,7 +14,7 @@
 
 .home-hero::after {
   content: '🏓';
-  position: absolute; right: -10px; bottom: -20px;
+  position: absolute; right: 0; bottom: 0;
   font-size: 9rem; opacity: 0.08;
   transform: rotate(-15deg);
   pointer-events: none;
