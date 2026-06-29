@@ -100,12 +100,15 @@ function renderEventCard(e, idx = 0) {
   const thumbInner = (e.photos && e.photos.length)
     ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">`
     : `<img src="${thumbFallback}" loading="${loadAttr}" decoding="async">`;
+  const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
+  const isDabei = myId && e.participants.some(p => String(p.id) === myId);
   return `
   <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
     <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
     <div class="ecb-info">
       <div class="ecb-title-row">
         <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
+        ${isDabei ? '<span class="ecb-dabei-badge">Dabei</span>' : ''}
       </div>
       <div class="ecb-title">${e.name}</div>
       <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
@@ -119,18 +122,27 @@ function renderEventCard(e, idx = 0) {
   </div>`;
 }
 
+function _applyEventFilter(games, filter) {
+  if (filter === 'all') return games;
+  const today = new Date().toISOString().slice(0, 10);
+  if (filter === 'today') return games.filter(e => e.dateStr === today);
+  if (filter === 'week') {
+    const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    return games.filter(e => e.dateStr >= today && e.dateStr <= weekEnd);
+  }
+  return games.filter(e => e.type === filter);
+}
+
 function renderEvents(filter = 'all') {
   const gameSrc = allEvents;
   const c = document.getElementById('events-list');
 
-  // Spielart-Filter gilt für beide Bereiche
-  const psFiltered = filter === 'all'
+  const isTimeFilter = filter === 'today' || filter === 'week';
+  const psFiltered = (filter === 'all' || isTimeFilter)
     ? allPlayerSearches
     : allPlayerSearches.filter(ps => ps.spielart === filter);
 
-  const games = getSortedEvents(
-    filter === 'all' ? gameSrc : gameSrc.filter(e => e.type === filter)
-  );
+  const games = getSortedEvents(_applyEventFilter(gameSrc, filter));
 
   const psChevron = `<span class="feed-section-chevron" id="feed-ps-chevron"${_psCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
   const psHtml = psFiltered.length

@@ -291,11 +291,11 @@ function showDropdownLoading() {
 }
 
 function openDropdown() {
-  document.getElementById('search-dropdown').classList.add('open');
+  document.getElementById('search-dropdown')?.classList.add('open');
 }
 
 function closeDropdown() {
-  document.getElementById('search-dropdown').classList.remove('open');
+  document.getElementById('search-dropdown')?.classList.remove('open');
   activeIdx = -1;
 }
 
@@ -350,6 +350,7 @@ function onSearchKey(e) {
 document.addEventListener('click', (e) => {
   const wrapper = document.getElementById('search-wrapper');
   const dd = document.getElementById('search-dropdown');
+  if (!wrapper && !dd) return;
   if(!wrapper?.contains(e.target) && !dd?.contains(e.target)) {
     closeDropdown();
   }

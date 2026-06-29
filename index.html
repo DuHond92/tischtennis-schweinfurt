@@ -59,19 +59,8 @@
   <div class="page active" id="page-home">
     <div class="home-hero">
       <div class="hero-greeting">Willkommen zurück 👋</div>
-      <div class="hero-title">Finde dein nächstes Spiel<span id="hero-city">in deiner Nähe</span></div>
-      <div class="hero-search" id="search-wrapper">
-        <span class="hero-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
-        <input class="hero-search-input"
-               placeholder="Platte, Ort oder Adresse suchen…"
-               id="home-search"
-               autocomplete="off"
-               oninput="onSearchInput()"
-               onkeydown="onSearchKey(event)"
-               onfocus="if(this.value.length>1) openDropdown()"
-        >
-        <div class="search-dropdown" id="search-dropdown"></div>
-      </div>
+      <div class="hero-title">Dein Tischtennis.<br>Deine Community.</div>
+      <div class="hero-sub">Finde Spiele, Mitspieler und Plätze <span id="hero-city">in deiner Nähe</span>.</div>
     </div>
 
     <!-- Action Cards -->
@@ -99,15 +88,15 @@
     <!-- Deine Aktivitäten (rendered by renderHomeActivities) -->
     <div id="home-activities-section"></div>
 
-    <!-- Mitspieler gesucht (rendered by renderHomePsSection) -->
-    <div id="home-ps-section"></div>
-
     <!-- Nearby tables -->
     <div class="section-header">
       <div class="section-title">Platten in der Nähe</div>
       <a class="section-link" onclick="showPage('map')">Alle sehen →</a>
     </div>
     <div class="cards-scroll" id="home-tables-scroll"></div>
+
+    <!-- Mitspieler gesucht (rendered by renderHomePsSection) -->
+    <div id="home-ps-section"></div>
 
     <!-- Upcoming events -->
     <div class="section-header">
@@ -129,12 +118,13 @@
         <div class="map-search-wrap">
           <span class="map-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
           <input class="map-search-input" id="map-search"
-                 placeholder="Platte, Ort oder Adresse…"
+                 placeholder="Platte, Ort oder Adresse suchen…"
                  autocomplete="off"
                  oninput="onMapSearchInput()"
                  onkeydown="onMapSearchKey(event)"
                  onfocus="if(this.value.length>1) _openMapDd()">
           <span class="map-search-clear" id="map-search-clear" onclick="clearMapSearch()" style="display:none;">×</span>
+          <div class="search-dropdown" id="map-search-dropdown"></div>
         </div>
         <div class="map-filter-btn" id="map-filter-btn" onclick="cycleMapTypeFilter()" title="Filter">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
@@ -177,14 +167,16 @@
     </div>
     <div class="filter-pills" id="event-filter-pills">
       <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
-      <button class="filter-pill" onclick="filterEvents('casual',this)">🎉 Just 4 Fun</button>
-      <button class="filter-pill" onclick="filterEvents('training',this)">🎯 Training</button>
-      <button class="filter-pill" onclick="filterEvents('punktspiel',this)">🏓 Punktspiel</button>
+      <button class="filter-pill" onclick="filterEvents('today',this)">Heute</button>
+      <button class="filter-pill" onclick="filterEvents('week',this)">Diese Woche</button>
+      <button class="filter-pill" onclick="filterEvents('casual',this)">Just 4 Fun</button>
+      <button class="filter-pill" onclick="filterEvents('training',this)">Training</button>
+      <button class="filter-pill" onclick="filterEvents('punktspiel',this)">Punktspiel</button>
     </div>
     <div class="events-sort-bar">
       <span class="sort-bar-label">Sortierung:</span>
-      <button class="sort-pill active" id="sort-date-btn" onclick="sortEvents('date',this)">📅 Datum</button>
-      <button class="sort-pill" id="sort-dist-btn" onclick="sortEvents('dist',this)">📍 Entfernung</button>
+      <button class="sort-pill active" id="sort-date-btn" onclick="sortEvents('date',this)">Datum</button>
+      <button class="sort-pill" id="sort-dist-btn" onclick="sortEvents('dist',this)">Entfernung</button>
     </div>
     <div class="events-grid-list" id="events-list"></div>
     <div class="pb-safe"></div>
@@ -1106,8 +1098,6 @@
   </div>
   <div class="pb-safe"></div>
 </div>
-
-<div class="search-dropdown" id="map-search-dropdown"></div>
 
 <!-- PLAYER PROFILE OVERLAY (stacks on top of other sheets) -->
 <div id="pp-overlay" onclick="closePlayerProfile()"></div>

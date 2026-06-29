@@ -112,9 +112,11 @@ async function _runMapDdSearch(q) {
   );
   let geo = [];
   try {
+    // viewbox biases results to the Schweinfurt region without restricting other areas
     const url = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(q + ' Schweinfurt')}&format=json&limit=4` +
-      `&addressdetails=1&countrycodes=de&accept-language=de`;
+      `q=${encodeURIComponent(q)}&format=json&limit=5` +
+      `&addressdetails=1&countrycodes=de&accept-language=de` +
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
     geo = (await res.json()).slice(0, 4);
   } catch(_) {}
@@ -191,14 +193,7 @@ function _showMapDdLoading() {
 }
 
 function _openMapDd() {
-  const input = document.getElementById('map-search');
-  const dd    = document.getElementById('map-search-dropdown');
-  if (!dd || !input) return;
-  const rect = input.getBoundingClientRect();
-  dd.style.top   = (rect.bottom + 6) + 'px';
-  dd.style.left  = rect.left + 'px';
-  dd.style.width = rect.width + 'px';
-  dd.classList.add('open');
+  document.getElementById('map-search-dropdown')?.classList.add('open');
 }
 
 function _closeMapDd() {
@@ -223,6 +218,9 @@ function _selectMapDdItem(idx) {
     const lng  = parseFloat(item.data.lon);
     const name = item.data.name || item.data.display_name.split(',')[0];
     document.getElementById('map-search').value = name;
+    document.getElementById('map-search-clear').style.display = '';
+    mapSearchQuery = '';
+    _applyMapFilters();
     if (leafletMap) leafletMap.setView([lat, lng], 15, { animate: true });
   }
 }
@@ -247,8 +245,7 @@ function onMapSearchKey(e) {
 
 document.addEventListener('click', e => {
   const wrap = document.querySelector('.map-search-wrap');
-  const dd   = document.getElementById('map-search-dropdown');
-  if (!wrap?.contains(e.target) && !dd?.contains(e.target)) _closeMapDd();
+  if (!wrap?.contains(e.target)) _closeMapDd();
 });
 
 function clearMapSearch() {
