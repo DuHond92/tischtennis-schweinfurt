@@ -1041,39 +1041,38 @@
   </div>
   <div id="eds-slider"></div>
   <!-- Info -->
-  <div class="edi-header">
+  <div class="eds-section eds-section--info">
     <div class="edi-name" id="eds-title">Event</div>
     <div id="eds-type-pill"></div>
     <div class="edi-meta" id="eds-meta"></div>
   </div>
-  <!-- Beschreibung -->
-  <div class="edi-desc-section" id="eds-desc-section" style="display:none;">
-    <div class="edi-desc-title">Beschreibung</div>
+  <!-- Beschreibung (ausgeblendet wenn leer) -->
+  <div class="eds-section" id="eds-desc-section" style="display:none;">
+    <div class="eds-section-title">Beschreibung</div>
     <div id="eds-desc"></div>
   </div>
-  <!-- Actions -->
-  <div class="edi-actions" id="eds-actions"></div>
-  <!-- Participants -->
-  <div class="participants-section">
-    <div class="section-label"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Teilnehmer</div>
+  <!-- Action-Button -->
+  <div class="eds-action-row" id="eds-actions"></div>
+  <!-- Teilnehmer -->
+  <div class="eds-section">
+    <div class="eds-section-title">Teilnehmer</div>
     <div class="participants-row" id="eds-participants">
       <div class="participants-empty">Lade…</div>
     </div>
   </div>
   <!-- Kommentare -->
-  <div class="chat-section">
-    <div class="chat-section-header">
-      <div class="section-label"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Kommentare</div>
-    </div>
+  <div class="eds-section eds-section--comments">
+    <div class="eds-section-title">Kommentare</div>
     <div class="evt-comment-feed" id="eds-chat-feed">
       <div class="chat-empty">Lade Kommentare…</div>
     </div>
-    <div class="chat-input-row" id="eds-chat-input-row">
-      <input class="chat-input" id="eds-chat-input" placeholder="Kommentar schreiben…"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
-      <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
-    </div>
   </div>
+  <div class="chat-input-row" id="eds-chat-input-row">
+    <input class="chat-input" id="eds-chat-input" placeholder="Kommentar schreiben…"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
+    <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+  </div>
+  <div class="pb-safe"></div>
 </div>
 
 <div class="search-dropdown" id="search-dropdown"></div>

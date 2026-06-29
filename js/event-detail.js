@@ -101,7 +101,7 @@ function showEventDetail(eventId) {
 
   // Reset participants & chat
   document.getElementById('eds-participants').innerHTML = '<div class="participants-empty">Lade…</div>';
-  document.getElementById('eds-chat-feed').innerHTML    = '<div class="chat-empty">Lade Nachrichten…</div>';
+  document.getElementById('eds-chat-feed').innerHTML    = '<div class="chat-empty">Lade Kommentare…</div>';
 
   // Show/hide chat input for non-fallback events
   const isFallback = allEvents.length === 0;
@@ -120,7 +120,7 @@ function showEventDetail(eventId) {
     loadEventChat(eventId);
     startChatPolling(eventId);
   } else {
-    document.getElementById('eds-chat-feed').innerHTML = '<div class="chat-empty">Chat für Demo-Events nicht verfügbar.</div>';
+    document.getElementById('eds-chat-feed').innerHTML = '<div class="chat-empty">Noch keine Kommentare – schreib als Erster!</div>';
   }
 }
 
@@ -143,7 +143,7 @@ async function loadEventParticipants(eventId) {
 function renderParticipantChips(participants, creatorId) {
   const el = document.getElementById('eds-participants');
   if(!participants.length) {
-    el.innerHTML = '<div class="participants-empty">Noch keine Teilnehmer 🏓</div>';
+    el.innerHTML = '<div class="participants-empty">Noch keine Teilnehmer</div>';
     return;
   }
   el.innerHTML = participants.map(p => {
