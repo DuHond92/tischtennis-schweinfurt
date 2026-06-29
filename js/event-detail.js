@@ -77,8 +77,8 @@ function showEventDetail(eventId) {
   // Description
   const descSection = document.getElementById('eds-desc-section');
   const descEl = document.getElementById('eds-desc');
-  if(ev.desc && descSection && descEl) {
-    descEl.textContent = ev.desc;
+  if(ev.desc && ev.desc.trim() && descSection && descEl) {
+    descEl.innerHTML = _descHtml(ev.desc);
     descSection.style.display = '';
   } else if(descSection) {
     descSection.style.display = 'none';
@@ -405,4 +405,25 @@ async function shareEvent(ev) {
   } catch (e) {
     showToast('Link konnte nicht kopiert werden');
   }
+}
+
+// ── Beschreibungs-Helper ──────────────────────────────────────────
+const _DESC_LIMIT = 280;
+
+function _descHtml(text) {
+  if (!text || !text.trim()) return '';
+  if (text.length <= _DESC_LIMIT) return escHtml(text);
+  const short = escHtml(text.slice(0, _DESC_LIMIT).trimEnd());
+  const full  = escHtml(text);
+  return `<span class="desc-short">${short}…</span><span class="desc-full" hidden>${full}</span><button class="desc-more-btn" onclick="toggleDescExpand(this)">Mehr anzeigen</button>`;
+}
+
+function toggleDescExpand(btn) {
+  const container = btn.parentElement;
+  const short     = container.querySelector('.desc-short');
+  const full      = container.querySelector('.desc-full');
+  const expanding = full && full.hidden;
+  if (short) short.hidden = expanding;
+  if (full)  full.hidden  = !expanding;
+  btn.textContent = expanding ? 'Weniger anzeigen' : 'Mehr anzeigen';
 }

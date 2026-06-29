@@ -38,8 +38,8 @@ function showPlayerSearchDetail(psId) {
   // Beschreibung (message)
   const psdDescSection = document.getElementById('psd-desc-section');
   const psdDescEl = document.getElementById('psd-desc');
-  if(ps.message && psdDescSection && psdDescEl) {
-    psdDescEl.textContent = ps.message;
+  if(ps.message && ps.message.trim() && psdDescSection && psdDescEl) {
+    psdDescEl.innerHTML = _descHtml(ps.message);
     psdDescSection.style.display = '';
   } else if(psdDescSection) {
     psdDescSection.style.display = 'none';
