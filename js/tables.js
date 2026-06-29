@@ -37,14 +37,14 @@ function showTableDetail(id) {
         Noch keine Spiele an dieser Platte geplant.
        </div>`
     : evArr.map(e=>`
-      <div class="tds-event-row">
-        <div class="ev-date-box"><div class="ev-day">${e.day}</div><div class="ev-mon">${e.mon}</div></div>
-        <div class="tds-event-info">
-          <div class="tds-event-name">${e.name}</div>
-          <div class="tds-event-meta">${ic('clock',12)} ${e.time} · ${ic('users',12)} ${e.p}/${e.max}</div>
+      <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
+        <div class="tds-event-card-body">
+          <div class="tds-event-name">${escHtml(e.name)}</div>
+          <div class="tds-event-tag-row">${gameTypePill(e.type)}</div>
+          <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Teilnehmer</div>
         </div>
-        ${gameTypePill(e.type)}
-        <button class="btn btn-secondary btn-sm" onclick="showEventDetail(${e.id})">Details</button>
+        <div class="tds-event-chevron">›</div>
       </div>`).join('');
 
   document.getElementById('tds-body').innerHTML = `

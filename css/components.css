@@ -486,7 +486,8 @@
   border-color: var(--primary); color: var(--primary); background: var(--primary-bg);
 }
 
-.events-grid-list, #home-events-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.events-grid-list { display: flex; flex-direction: column; }
+#home-events-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
 #feed-games-wrap { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 8px; }
 
 .event-card-big {
@@ -934,16 +935,21 @@
   border-bottom: 1px solid var(--border);
 }
 .tds-events-create-btn { margin-top: 10px; }
-.tds-event-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 20px; border-bottom: 1px solid var(--border);
+.tds-event-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; outline: none;
 }
-.tds-event-info { flex: 1; min-width: 0; }
-.tds-event-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.tds-event-card:active, .tds-event-card:focus-visible { background: var(--surface2); }
+.tds-event-card:last-child { border-bottom: none; }
+.tds-event-card-body { flex: 1; min-width: 0; }
+.tds-event-name { font-weight: 700; font-size: 0.88rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tds-event-tag-row { margin: 3px 0; }
 .tds-event-meta {
-  font-size: 0.74rem; color: var(--text-dim); margin-top: 2px;
-  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.tds-event-chevron { color: var(--text-xdim); font-size: 1.2rem; flex-shrink: 0; line-height: 1; }
 
 /* ── PARTICIPANT AVATARS ─────────────────────────────────────────── */
 .init-av {
