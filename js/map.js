@@ -836,3 +836,7 @@ function hideMapPreview() {
   _dismissPreviewContent();
   if (_bsSnapTo) _bsSnapTo(1); // animate back to standard position
 }
+
+function refreshActiveMapPreview() {
+  if (_previewTableId) showMapPreview(_previewTableId);
+}

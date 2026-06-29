@@ -345,6 +345,8 @@ function openEditEvent(eventId) {
   document.getElementById('ev-date').value  = ev.dateStr || '';
   document.getElementById('ev-time').value  = ev.time    || '';
   document.getElementById('ev-mode').value  = ev.type    || 'casual';
+  const evMax = document.getElementById('ev-max');
+  if (evMax) evMax.value = ev.max || 4;
   const evDesc = document.getElementById('ev-desc');
   if (evDesc) evDesc.value = ev.desc || '';
   openSheet('create-event-sheet');

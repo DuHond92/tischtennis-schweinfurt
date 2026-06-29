@@ -198,36 +198,59 @@ async function submitCreateEvent() {
   const date    = document.getElementById('ev-date').value;
   const time    = document.getElementById('ev-time').value;
   const mode    = document.getElementById('ev-mode').value;
+  const maxP    = parseInt(document.getElementById('ev-max')?.value || '4', 10) || 4;
   const desc    = (document.getElementById('ev-desc')?.value || '').trim();
   if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
 
-  const qb = new QueryBuilder('events');
-  let error;
-
   if(_editingEventId) {
-    ({ error } = await qb.eq('id', _editingEventId).update({
+    const { error } = await new QueryBuilder('events').eq('id', _editingEventId).update({
       title, table_id: parseInt(tableId), event_date: date, event_time: time, mode,
-      description: desc || null
-    }));
+      max_participants: maxP, description: desc || null
+    });
     if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
     _editingEventId = null;
     closeAllSheets();
     showToast('✅ Event gespeichert!');
   } else {
-    ({ error } = await qb.insert({
+    // 1. Event anlegen (insert gibt die neue Zeile zurück)
+    const { data: inserted, error } = await new QueryBuilder('events').insert({
       title, table_id: parseInt(tableId),
       creator_id: sb.getUserId(),
       event_date: date, event_time: time, mode,
-      description: desc || null
-    }));
+      max_participants: maxP, description: desc || null
+    });
     if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+
+    // 2. Ersteller sofort als Teilnehmer eintragen
+    const newId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
+    if(newId) {
+      const { error: pErr } = await new QueryBuilder('event_participants')
+        .insert({ event_id: newId, user_id: sb.getUserId() });
+      if(pErr && pErr.code !== '23505') {
+        console.warn('Participant-Insert fehlgeschlagen, versuche erneut:', pErr);
+        // Einmal wiederholen
+        await new QueryBuilder('event_participants')
+          .insert({ event_id: newId, user_id: sb.getUserId() });
+      }
+    }
+
     closeAllSheets();
-    showToast('🎉 Spiel organisiert!','🎉');
+    showToast('🎉 Spiel organisiert!');
   }
 
+  // 3. Globalen State neu laden (holt Event + Participants)
   await loadEvents();
+
+  // 4. Alle Ansichten neu rendern
   renderEvents(currentFilter);
   renderHome();
+
+  // 5. Karte aktualisieren: Marker-Badges, Liste, offene Preview
+  if(mapInit) {
+    _refreshMarkerIcons();
+    _applyMapFilters();
+    if(typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
+  }
 }
 
 async function submitMitspieler() {
