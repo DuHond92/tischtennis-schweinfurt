@@ -761,10 +761,11 @@ let _cmtMenuData = {};
 
 function openCommentDotMenu(btn) {
   _cmtMenuData = {
-    id:      btn.dataset.cid,
-    ctx:     btn.dataset.ctx,
-    isOwn:   btn.dataset.own === '1',
-    preview: btn.dataset.preview
+    id:          btn.dataset.cid,
+    contentType: btn.dataset.contentType || 'comment',
+    ctx:         btn.dataset.ctx,
+    isOwn:       btn.dataset.own === '1',
+    preview:     btn.dataset.preview
   };
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const reportSection = document.getElementById('cmt-action-report-section');
@@ -789,7 +790,7 @@ async function submitCmtReport() {
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
     body: JSON.stringify({
       reporter_id:  sb.getUserId(),
-      content_type: 'comment',
+      content_type: _cmtMenuData.contentType || 'comment',
       content_id:   String(_cmtMenuData.id),
       reason:       'inappropriate',
       preview,
@@ -802,7 +803,11 @@ async function submitCmtReport() {
 
 function submitCmtDelete() {
   closeAllSheets();
-  deleteComment(_cmtMenuData.id, _cmtMenuData.ctx);
+  if (_cmtMenuData.contentType === 'event_message') {
+    deleteEventMessage(_cmtMenuData.id, _cmtMenuData.ctx);
+  } else {
+    deleteComment(_cmtMenuData.id, _cmtMenuData.ctx);
+  }
 }
 
 async function deleteComment(commentId, context) {

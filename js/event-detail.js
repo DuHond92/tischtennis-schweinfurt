@@ -8,13 +8,16 @@ const EVENT_FALLBACK = 'images/placeholders/game_fun.png';
 
 function buildEventSlider(images) {
   const hasImgs = images && images.length;
+  const f = EVENT_FALLBACK;
 
   const slides = hasImgs
-    ? images.map((src, i) =>
-        `<div class="ds-slide" style="${i===0?'':'display:none'}">
-          <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'" loading="${i===0?'eager':'lazy'}">
-        </div>`
-      ).join('')
+    ? images.map((src, i) => {
+        const s = escAttr(src), l = i === 0 ? 'eager' : 'lazy';
+        return `<div class="ds-slide" data-img-url="${s}" style="${i===0?'':'display:none'}">
+          <img class="ds-slide-bg" src="${s}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="${l}">
+          <img class="ds-slide-img" src="${s}" onerror="this.src='${f}'" loading="${l}">
+        </div>`;
+      }).join('')
     : `<div class="ds-slide ds-slide-empty">
         <div class="ds-no-img-hint"><span class="nimg-icon">🏓</span>Kein Bild vorhanden</div>
       </div>`;
@@ -22,14 +25,14 @@ function buildEventSlider(images) {
   const thumbs = hasImgs
     ? images.map((src, i) =>
         `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-          <img src="${src}" onerror="this.src='${EVENT_FALLBACK}'">
+          <img src="${escAttr(src)}" onerror="this.src='${f}'">
         </div>`
       ).join('')
     : '';
 
   const navHtml = hasImgs && images.length > 1 ? `
-    <button class="ds-nav ds-prev" onclick="detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
-    <button class="ds-nav ds-next" onclick="detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+    <button class="ds-nav ds-prev" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
+    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
 
   return `
     <div class="detail-slider" data-idx="0" data-count="${hasImgs ? images.length : 1}">
@@ -105,6 +108,7 @@ function showEventDetail(eventId) {
   document.getElementById('eds-chat-input-row').style.display = isFallback ? 'none' : '';
 
   openSheet('event-detail-sheet');
+  _initSliderTouch(document.querySelector('#eds-slider .ds-main'));
   const edsShareBtn = document.getElementById('eds-share-btn');
   if (edsShareBtn) edsShareBtn.onclick = () => shareEvent(ev);
   markEventSeen(eventId);
@@ -176,40 +180,47 @@ async function loadEventChat(eventId) {
 }
 
 function renderChatMessages(messages) {
-  const el  = document.getElementById('eds-chat-feed');
-  const myId = sb.getUserId();
+  const el    = document.getElementById('eds-chat-feed');
+  const myId  = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  if(!messages) {
-    el.innerHTML = '<div class="chat-empty">Chat noch nicht verfügbar (Tabelle wird eingerichtet).</div>';
+  if (!messages) {
+    el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>';
     return;
   }
-  if(!messages.length) {
-    el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
+  if (!messages.length) {
+    el.innerHTML = '<div class="chat-empty">Noch keine Kommentare – schreib als Erster!</div>';
     return;
   }
-  el.innerHTML = messages.map(m => {
-    const isMine  = m.user_id === myId;
-    const name    = m.profiles?.username || 'Anonym';
-    const emoji   = m.profiles?.avatar_emoji || '';
-    const avUrl   = m.profiles?.avatar_url   || '';
-    const uid     = m.user_id || '';
-    const time    = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
-    const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
-    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','event')">🗑</button>` : '';
-    const preview = escAttr((m.message || '').slice(0, 80));
-    const report  = (!isMod && sb.isLoggedIn() && !isMine)
-      ? ` <button class="report-btn" data-type="event_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
-      : '';
-    return `<div class="chat-msg ${isMine?'mine':''}">
-      ${avatar}
-      <div class="chat-bubble-wrap">
-        <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine?'Du':escHtml(name)} · ${time}${del}${report}</div>
+  el.innerHTML = messages.map(m => _evtCommentItemHtml(m, myId, isMod)).join('');
+}
+
+function _evtCommentItemHtml(m, myId, isMod) {
+  const isOwn  = m.user_id === myId;
+  const name   = m.profiles?.username || 'Anonym';
+  const date   = new Date(m.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+  const av     = getAvatarHtml(m.profiles, { size: 34 });
+  const showDot = sb.isLoggedIn() && (isMod || !isOwn);
+  const dotBtn = showDot
+    ? `<button class="comment-dot-btn"
+         aria-label="Kommentaroptionen"
+         data-cid="${escAttr(m.id)}"
+         data-content-type="event_message"
+         data-ctx="event"
+         data-own="${isOwn ? '1' : ''}"
+         data-preview="${escAttr((m.message || '').slice(0, 80))}"
+         onclick="openCommentDotMenu(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>`
+    : '';
+  return `<div class="comment-item">
+    <div class="comment-av">${av}</div>
+    <div class="comment-body">
+      <div class="comment-meta">
+        <span class="comment-author">${escHtml(name)}</span>
+        <span class="comment-date">· ${date}</span>
+        ${dotBtn}
       </div>
-    </div>`;
-  }).join('');
-  el.scrollTop = el.scrollHeight;
+      <div class="comment-text">${escHtml(m.message)}</div>
+    </div>
+  </div>`;
 }
 
 async function deleteEventMessage(messageId, context) {
@@ -337,7 +348,9 @@ function _appendDbImagesToEventSlider(dbImages) {
     slide.className = 'ds-slide ds-db-slide';
     slide.style.display = (hadEmpty && idx === 0) ? '' : 'none';
     slide.dataset.imgUrl = img.image_url;
-    slide.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${EVENT_FALLBACK}'" loading="lazy">`;
+    const su = escAttr(img.image_url);
+    slide.innerHTML = `<img class="ds-slide-bg" src="${su}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="lazy">
+      <img class="ds-slide-img" src="${su}" onerror="this.src='${EVENT_FALLBACK}'" loading="lazy">`;
     slidesWrap.appendChild(slide);
 
     const thumb = document.createElement('div');
