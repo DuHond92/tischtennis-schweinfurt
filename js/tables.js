@@ -36,7 +36,7 @@ function showTableDetail(id) {
     ? `<div class="tds-events-empty">
         Noch keine Spiele an dieser Platte geplant.
        </div>`
-    : evArr.map(e=>`
+    : `<div class="tds-event-list">${evArr.map(e=>`
       <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
@@ -45,7 +45,7 @@ function showTableDetail(id) {
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Teilnehmer</div>
         </div>
         <div class="tds-event-chevron">›</div>
-      </div>`).join('');
+      </div>`).join('')}</div>`;
 
   document.getElementById('tds-body').innerHTML = `
     ${sliderHtml}
