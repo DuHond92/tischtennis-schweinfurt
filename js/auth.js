@@ -142,7 +142,9 @@ async function submitAuth() {
         showToast(res.error?.message || 'Anmeldung fehlgeschlagen','❌');
         return;
       }
+      _myConnections = null;
       await loadCurrentUser();
+      await loadMyConnections();
       closeAllSheets();
       updateTopBarForUser();
       checkNotifications();
@@ -158,7 +160,9 @@ async function submitAuth() {
 
       const res = await sb.signUp(email, password, username);
       if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','❌'); return; }
+      _myConnections = null;
       await loadCurrentUser();
+      await loadMyConnections();
       closeAllSheets();
       showWelcomeSuccess();
       setAuthMode('login');
@@ -233,6 +237,7 @@ function dismissAuthPrompt() {
 }
 
 async function doSignOut() {
+  _myConnections = null;
   await sb.signOut();
   closeAllSheets();
   showToast('👋 Bis bald!');
