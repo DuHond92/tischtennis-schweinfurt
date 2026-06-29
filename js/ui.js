@@ -17,7 +17,7 @@ function showPage(name) {
   });
   currentPage = name;
   document.getElementById('main-fab').style.display =
-    (name==='home'||name==='events') ? 'flex' : 'none';
+    name==='events' ? 'flex' : 'none';
   document.querySelector('.bottom-nav').style.display =
     name === 'admin' ? 'none' : '';
   if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
