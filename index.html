@@ -1045,6 +1045,22 @@
   <div class="pb-safe"></div>
 </div>
 
+<!-- LEAVE EVENT SHEET -->
+<div class="bottom-sheet" id="leave-event-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Teilnahme</div>
+    <span class="sheet-close" onclick="showEventDetail(currentEventId)">×</span>
+  </div>
+  <div class="sheet-body" style="padding:4px 20px 8px;">
+    <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 20px;">Du bist bei diesem Spiel dabei.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:max(28px,env(safe-area-inset-bottom));">
+      <button class="btn btn-full" style="background:var(--accent);color:#fff;" onclick="_confirmLeaveEvent()">Teilnahme zurückziehen</button>
+      <button class="btn btn-secondary btn-full" onclick="showEventDetail(currentEventId)">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <div class="bottom-sheet" id="event-detail-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header sheet-header--nav">

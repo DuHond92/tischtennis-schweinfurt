@@ -94,7 +94,7 @@ function showEventDetail(eventId) {
       <button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>
       ${delBtn}`;
   } else if(isAlreadyIn) {
-    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);opacity:0.9;" disabled>✅ Dabei</button>${delBtn}`;
+    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">✅ Dabei</button>${delBtn}`;
   } else {
     actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>${delBtn}`;
   }
@@ -288,6 +288,56 @@ function _patchEventParticipantJoin(eventId) {
   // Aktualisiere Meta-Zeile falls Detail noch offen
   const metaEl = document.getElementById('eds-meta');
   if (metaEl && currentEventId === ev.id) metaEl.innerHTML = _eventMetaHtml(ev);
+}
+
+function leaveEventFromDetail(eventId) {
+  if (!sb.isLoggedIn()) return;
+  currentEventId = eventId;
+  openSheet('leave-event-sheet');
+}
+
+function _patchEventParticipantLeave(eventId) {
+  const ev = allEvents.find(e => e.id === eventId);
+  if (!ev) return;
+  const uid = sb.getUserId();
+  ev.participants = ev.participants.filter(p => p.id !== uid);
+  ev.p = Math.max(0, ev.p - 1);
+  const metaEl = document.getElementById('eds-meta');
+  if (metaEl && currentEventId === ev.id) metaEl.innerHTML = _eventMetaHtml(ev);
+}
+
+async function _confirmLeaveEvent() {
+  const eventId = currentEventId;
+  if (!eventId || !sb.isLoggedIn()) return;
+
+  closeAllSheets();
+
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/event_participants?event_id=eq.${eventId}&user_id=eq.${encodeURIComponent(sb.getUserId())}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+
+  if (!ok) {
+    showToast('Teilnahme konnte nicht zurückgezogen werden', '❌');
+    showEventDetail(eventId);
+    return;
+  }
+
+  _patchEventParticipantLeave(eventId);
+  showToast('Du nimmst nicht mehr teil');
+
+  // Detail sofort mit aktuellem Stand neu öffnen
+  showEventDetail(eventId);
+
+  // Listen aktualisieren
+  renderHome();
+  renderEvents(currentFilter);
+
+  // Karten-Marker aktualisieren
+  if (typeof mapInit !== 'undefined' && mapInit) {
+    if (typeof _refreshMarkerIcons === 'function') _refreshMarkerIcons();
+    if (typeof _applyMapFilters === 'function') _applyMapFilters();
+  }
 }
 
 async function joinEventFromDetail(eventId) {
