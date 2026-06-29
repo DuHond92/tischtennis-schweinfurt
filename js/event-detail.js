@@ -71,8 +71,7 @@ function showEventDetail(eventId) {
     `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel(ev.type)}</span>`;
 
   // Meta
-  document.getElementById('eds-meta').innerHTML =
-    `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${ev.creatorId ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` : '<b>'}${escHtml(ev.creator||'')}</b><br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+  document.getElementById('eds-meta').innerHTML = _eventMetaHtml(ev);
 
   // Description
   const descSection = document.getElementById('eds-desc-section');
@@ -84,19 +83,21 @@ function showEventDetail(eventId) {
     descSection.style.display = 'none';
   }
 
-  // Actions (host vs. participant)
-  const myId    = sb.getUserId();
-  const isHost  = myId && ev.creatorId === myId;
-  const isMod   = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const actEl   = document.getElementById('eds-actions');
-  const delBtn  = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
+  // Actions (host / already joined / join)
+  const myId           = sb.getUserId();
+  const isHost         = myId && ev.creatorId === myId;
+  const isAlreadyIn    = !isHost && myId && ev.participants.some(p => p.id === myId);
+  const isMod          = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const actEl          = document.getElementById('eds-actions');
+  const delBtn         = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
   if(isHost) {
     actEl.innerHTML = `
       <button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>
       ${delBtn}`;
+  } else if(isAlreadyIn) {
+    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);opacity:0.9;" disabled>✅ Dabei</button>${delBtn}`;
   } else {
-    actEl.innerHTML =
-      `<button class="btn btn-primary" style="flex:1;" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>${delBtn}`;
+    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>${delBtn}`;
   }
 
   // Reset participants & chat
@@ -268,10 +269,33 @@ function stopChatPolling() {
   if(chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
 }
 
+function _eventMetaHtml(ev) {
+  const hostLink = ev.creatorId
+    ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` + escHtml(ev.creator || '') + '</b>'
+    : '<b>' + escHtml(ev.creator || '') + '</b>';
+  return `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+}
+
+function _patchEventParticipantJoin(eventId) {
+  const ev = allEvents.find(e => e.id === eventId);
+  if (!ev) return;
+  const uid = sb.getUserId();
+  if (ev.participants.some(p => p.id === uid)) return;
+  const prof = currentUser
+    ? { id: uid, username: currentUser.username || '', avatar_emoji: currentUser.avatar_emoji || '', avatar_url: currentUser.avatar_url || null }
+    : { id: uid, username: '', avatar_emoji: '', avatar_url: null };
+  ev.participants = [...ev.participants, prof];
+  ev.p = ev.participants.length;
+  // Aktualisiere Meta-Zeile falls Detail noch offen
+  const metaEl = document.getElementById('eds-meta');
+  if (metaEl && currentEventId === ev.id) metaEl.innerHTML = _eventMetaHtml(ev);
+}
+
 async function joinEventFromDetail(eventId) {
   if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
   const btn = document.getElementById('eds-join-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }
+
   const isFallback = allEvents.length === 0;
   if(isFallback) {
     setTimeout(() => {
@@ -280,20 +304,30 @@ async function joinEventFromDetail(eventId) {
     }, 400);
     return;
   }
+
   const qb = new QueryBuilder('event_participants');
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
+
   if(error && error.code === '23505') {
     if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
     showToast('Du nimmst bereits teil','ℹ️');
-  } else if(error) {
+    return;
+  }
+  if(error) {
     if(btn) { btn.disabled = false; btn.textContent = 'Teilnehmen'; }
     showToast('Fehler beim Beitreten','❌');
-  } else {
-    if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
-    showToast('🏓 Du nimmst am Event teil!');
-    await loadEvents();
-    loadEventParticipants(eventId);
+    return;
   }
+
+  if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
+  showToast('🏓 Du nimmst am Event teil!');
+  // Sofort in allEvents patchen — kein loadEvents() nötig
+  _patchEventParticipantJoin(eventId);
+  // Detail: Chips aus DB neu laden
+  await loadEventParticipants(eventId);
+  // Listen neu rendern (lesen allEvents, das jetzt aktuell ist)
+  renderHome();
+  renderEvents(currentFilter);
 }
 
 function startGame(eventId) {

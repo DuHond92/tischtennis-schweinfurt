@@ -21,7 +21,6 @@ async function joinEvent(eventId, btn) {
     showAuthPrompt();
     return;
   }
-  // Fallback-Events: kein DB-Eintrag nötig
   const isFallback = allEvents.length === 0;
   if (isFallback) {
     setTimeout(()=>{
@@ -41,7 +40,9 @@ async function joinEvent(eventId, btn) {
   } else {
     btn.textContent='✅'; btn.style.background='var(--green)';
     showToast('🏓 Du nimmst am Event teil!');
-    await loadEvents();
+    _patchEventParticipantJoin(eventId);
+    renderHome();
+    renderEvents(currentFilter);
   }
 }
 
