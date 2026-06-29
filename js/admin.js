@@ -499,7 +499,7 @@ const _ACTION_LABELS = {
 };
 
 const _CONTENT_LABELS = {
-  table_image: 'Plattenblid', event_message: 'Event-Chat',
+  table_image: 'Plattenbild', event_message: 'Event-Chat',
   direct_message: 'Direktnachricht', comment: 'Kommentar',
   event: 'Spielrunde', player_search: 'Mitspieler-Gesuch',
 };
