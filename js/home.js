@@ -32,6 +32,71 @@ function dismissWelcomeCard() {
   if (el) el.style.display = 'none';
 }
 
+function getMyActiveEvents() {
+  if (!sb.isLoggedIn()) return [];
+  const myId     = String(sb.getUserId());
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return allEvents.filter(ev =>
+    ev.dateStr >= todayStr &&
+    (ev.participants.some(p => String(p.id) === myId) || String(ev.creatorId) === myId)
+  );
+}
+
+function getMyActiveRequests() {
+  if (!sb.isLoggedIn()) return [];
+  const myId = String(sb.getUserId());
+  return allPlayerSearches.filter(ps => String(ps.userId) === myId);
+}
+
+function renderHomeActivities() {
+  const container = document.getElementById('home-activities-section');
+  if (!container) return;
+  if (!sb.isLoggedIn() || !currentUser) { container.innerHTML = ''; return; }
+
+  const myEvents   = getMyActiveEvents();
+  const myRequests = getMyActiveRequests();
+  const total      = myEvents.length + myRequests.length;
+  if (total === 0) { container.innerHTML = ''; return; }
+
+  let html = `<div class="home-act-header">${ic('calendar', 13)} Deine Aktivitäten <span class="act-badge">${total}</span></div>`;
+
+  if (myEvents.length) {
+    html += `<div class="home-act-sub-header">${ic('calendar', 12)} Deine Spiele <span class="act-badge">${myEvents.length}</span></div>`;
+    html += `<div class="home-act-list">${myEvents.map(e => `
+      <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
+        <div class="home-act-body">
+          <div class="home-act-title">${escHtml(e.name)}</div>
+          <div style="margin:2px 0 3px;">${gameTypePill(e.type)}</div>
+          <div class="home-act-meta">${ic('calendar',11)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin',11)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users',11)} ${e.p}/${e.max}</div>
+        </div>
+        <span class="home-act-chevron">›</span>
+      </div>`).join('')}</div>`;
+  }
+
+  if (myRequests.length) {
+    html += `<div class="home-act-sub-header">${ic('users', 12)} Deine Gesuche <span class="act-badge">${myRequests.length}</span></div>`;
+    html += `<div class="home-act-list">${myRequests.map(ps => {
+      const metaParts = [];
+      if (ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',11)} ${escHtml(ps.wann)}`);
+      if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',11)} ${escHtml(ps.umkreis)} Umkreis`);
+      return `
+      <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
+        <div class="home-act-body">
+          <div class="home-act-title">Mitspieler gesucht</div>
+          <div style="margin:2px 0 3px;">${gameTypePill(ps.spielart)}</div>
+          ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+          ${ps.message ? `<div class="home-act-meta" style="margin-top:1px;">"${escHtml(ps.message.slice(0, 55))}${ps.message.length > 55 ? '…' : ''}"</div>` : ''}
+        </div>
+        <span class="home-act-chevron">›</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
 function renderHome() {
   initWelcomeCard();
 
@@ -46,6 +111,9 @@ function renderHome() {
   document.querySelectorAll('.sac-icon-wrap').forEach((el, i) => {
     if (!el.hasChildNodes() && _sacIcons[i]) el.innerHTML = ic(_sacIcons[i][0], _sacIcons[i][1]);
   });
+
+  // Aktivitäten des eingeloggten Users
+  renderHomeActivities();
 
   // Platten-Karten
   const scroll = document.getElementById('home-tables-scroll');
