@@ -199,6 +199,48 @@
   box-shadow: var(--shadow-lg);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast--success { background: var(--green,  #16a34a); color: #fff; }
+.toast--info    { background: var(--primary,#3B7CF4); color: #fff; }
+.toast--warning { background: #d97706;                color: #fff; }
+.toast--error   { background: var(--accent, #e05252); color: #fff; }
+
+/* Snackbar — wichtige Meldungen oberhalb der Bottom Nav */
+.snackbar {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  left: 16px; right: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; transform: translateY(12px);
+  pointer-events: none; transition: all 0.3s;
+  z-index: 998;
+}
+.snackbar.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.snackbar--success { border-left: 4px solid var(--green,  #16a34a); }
+.snackbar--info    { border-left: 4px solid var(--primary,#3B7CF4); }
+.snackbar--warning { border-left: 4px solid #d97706; }
+.snackbar--error   { border-left: 4px solid var(--accent, #e05252); }
+.snackbar-body { flex: 1; min-width: 0; }
+.snackbar-title {
+  font-weight: 800; font-size: 0.88rem; color: var(--text);
+  margin-bottom: 2px;
+}
+.snackbar-msg { font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; }
+.snackbar-acts { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.snackbar-action {
+  font-size: 0.78rem; font-weight: 700; color: var(--primary);
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  border-radius: 8px; white-space: nowrap;
+}
+.snackbar-action:active { background: var(--surface2); }
+.snackbar-dismiss {
+  font-size: 0.9rem; color: var(--text-xdim);
+  background: none; border: none; cursor: pointer;
+  padding: 4px 6px; border-radius: 8px; line-height: 1;
+}
+.snackbar-dismiss:active { background: var(--surface2); }
 
 /* Spacer for bottom nav */
 .pb-safe { padding-bottom: 88px; }

@@ -352,7 +352,10 @@ function centerMap() {
 }
 
 function locateUser() {
-  if (!navigator.geolocation) { showToast('Standort nicht verfügbar', '⚠️'); return; }
+  if (!navigator.geolocation) {
+    showSnackbar({ title: 'Standort nicht verfügbar', message: 'Dein Gerät unterstützt keine Standortfunktion.', type: 'warning' });
+    return;
+  }
   if (!navigator.permissions) { _showLocPrompt(); return; }
   navigator.permissions.query({ name: 'geolocation' }).then(status => {
     if (status.state === 'granted')      _doLocate();
@@ -390,7 +393,13 @@ function _doLocate() {
       if (err.code === 1) {                    // PERMISSION_DENIED
         _showLocCard('blocked');
       } else {                                 // POSITION_UNAVAILABLE oder TIMEOUT
-        showToast('Standort gerade nicht verfügbar', '⚠️');
+        showSnackbar({
+          title: 'Standort nicht verfügbar',
+          message: 'Prüfe deine Standortfreigabe oder versuche es später erneut.',
+          type: 'warning',
+          actionLabel: 'Erneut versuchen',
+          onAction: locateUser
+        });
       }
     },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }

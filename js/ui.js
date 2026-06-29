@@ -109,12 +109,74 @@ function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           TOAST                                              ║
 // ╚══════════════════════════════════════════════════════════════╝
-function showToast(text, icon='✅') {
+const _TOAST_ICON_TYPE = { '❌': 'error', '⚠️': 'warning', 'ℹ️': 'info' };
+const _TOAST_DURATION  = { success: 3800, info: 4000, warning: 5500, error: 6500 };
+let _toastTimer = null;
+
+function showToast(text, iconOrOpts) {
+  let icon = '✅', type = 'success', duration;
+  if (iconOrOpts && typeof iconOrOpts === 'object') {
+    type     = iconOrOpts.type || 'success';
+    icon     = iconOrOpts.icon || { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' }[type] || '✅';
+    duration = iconOrOpts.duration;
+  } else if (iconOrOpts) {
+    icon = iconOrOpts;
+    type = _TOAST_ICON_TYPE[icon] || 'success';
+  }
+  duration = duration || _TOAST_DURATION[type] || 3800;
+
   const t = document.getElementById('toast');
   document.getElementById('toast-icon').textContent = icon;
   document.getElementById('toast-text').textContent = text;
+  t.className = 'toast toast--' + type;
+  void t.offsetHeight; // reflow to restart transition
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3200);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── SNACKBAR ────────────────────────────────────────────────────────
+const _SNACKBAR_DURATION = { success: 5000, info: 5000, warning: 7000, error: 8000 };
+let _snackbarTimer  = null;
+let _snackbarAction = null;
+
+function showSnackbar({ title, message, type = 'info', actionLabel, onAction, dismissible = true, duration } = {}) {
+  const sb        = document.getElementById('snackbar');
+  const titleEl   = document.getElementById('snackbar-title');
+  const msgEl     = document.getElementById('snackbar-msg');
+  const actionBtn = document.getElementById('snackbar-action');
+  const dismissBtn= document.getElementById('snackbar-dismiss');
+
+  titleEl.textContent  = title   || '';
+  titleEl.style.display = title  ? '' : 'none';
+  msgEl.textContent    = message || '';
+  _snackbarAction      = onAction || null;
+
+  if (actionLabel && onAction) {
+    actionBtn.textContent    = actionLabel;
+    actionBtn.style.display  = '';
+  } else {
+    actionBtn.style.display = 'none';
+  }
+  dismissBtn.style.display = dismissible ? '' : 'none';
+
+  sb.className = 'snackbar snackbar--' + type;
+  void sb.offsetHeight;
+  sb.classList.add('show');
+
+  clearTimeout(_snackbarTimer);
+  const dur = duration ?? _SNACKBAR_DURATION[type] ?? 6000;
+  if (dur > 0) _snackbarTimer = setTimeout(dismissSnackbar, dur);
+}
+
+function dismissSnackbar() {
+  clearTimeout(_snackbarTimer);
+  document.getElementById('snackbar')?.classList.remove('show');
+}
+
+function _triggerSnackbarAction() {
+  if (_snackbarAction) _snackbarAction();
+  dismissSnackbar();
 }
 
 // ╔══════════════════════════════════════════════════════════════╗

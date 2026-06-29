@@ -840,8 +840,20 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast">
-  <span id="toast-icon">✅</span>
-  <span id="toast-text">Erfolgreich!</span>
+  <span id="toast-icon"></span>
+  <span id="toast-text"></span>
+</div>
+
+<!-- SNACKBAR -->
+<div class="snackbar" id="snackbar">
+  <div class="snackbar-body">
+    <div class="snackbar-title" id="snackbar-title"></div>
+    <div class="snackbar-msg" id="snackbar-msg"></div>
+  </div>
+  <div class="snackbar-acts">
+    <button class="snackbar-action" id="snackbar-action" onclick="_triggerSnackbarAction()"></button>
+    <button class="snackbar-dismiss" id="snackbar-dismiss" onclick="dismissSnackbar()" aria-label="Schließen">✕</button>
+  </div>
 </div>
 
 <!-- BEWERTUNGS SHEET -->
