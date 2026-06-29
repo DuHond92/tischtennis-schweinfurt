@@ -43,7 +43,7 @@ function showTableDetail(id) {
           <div class="tds-event-name">${e.name}</div>
           <div class="tds-event-meta">${ic('clock',12)} ${e.time} · ${ic('users',12)} ${e.p}/${e.max}</div>
         </div>
-        <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
+        ${gameTypePill(e.type)}
         <button class="btn btn-secondary btn-sm" onclick="showEventDetail(${e.id})">Details</button>
       </div>`).join('');
 

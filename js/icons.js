@@ -47,11 +47,25 @@ function initAvatar(name, size) {
   return `<div class="init-av" style="width:${size}px;height:${size}px;font-size:${fs}px;background:${_avColor(n)};">${getInitials(n)}</div>`;
 }
 
+const _GAME_TYPE_META = {
+  casual:       { label: 'Just 4 Fun',  cls: 'pill-casual'     },
+  fun:          { label: 'Just 4 Fun',  cls: 'pill-casual'     },
+  just4fun:     { label: 'Just 4 Fun',  cls: 'pill-casual'     },
+  just_for_fun: { label: 'Just 4 Fun',  cls: 'pill-casual'     },
+  training:     { label: 'Training',    cls: 'pill-training'   },
+  punktspiel:   { label: 'Punktspiel',  cls: 'pill-punktspiel' },
+  ranked:       { label: 'Punktspiel',  cls: 'pill-punktspiel' },
+  competitive:  { label: 'Punktspiel',  cls: 'pill-punktspiel' },
+};
+
+function gameTypePill(type) {
+  const meta = _GAME_TYPE_META[type];
+  if (!meta) return '';
+  return `<span class="ev-type-pill ${meta.cls}">${meta.label}</span>`;
+}
+
 function typeLabel(type) {
-  return type === 'casual'     ? 'Just 4 Fun'
-       : type === 'training'   ? 'Training'
-       : type === 'punktspiel' ? 'Punktspiel'
-       : 'Spiel';
+  return _GAME_TYPE_META[type]?.label || 'Spiel';
 }
 
 function formatEventDate(e) {

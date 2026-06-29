@@ -50,8 +50,6 @@ function renderPlayerSearchCard(ps) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
-  const spielartMap = {casual:'Just 4 Fun gesucht', training:'Training gesucht', punktspiel:'Punktspiel gesucht'};
-  const spielartLabel = spielartMap[ps.spielart] || 'Just 4 Fun gesucht';
   const metaParts = [];
   if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
   if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
@@ -61,9 +59,7 @@ function renderPlayerSearchCard(ps) {
         <div class="pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="psc-identity">
           <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
-          <div class="psc-type-row">
-            <span class="ev-type-pill pill-${ps.spielart || 'casual'}">${spielartLabel}</span>
-          </div>
+          <div class="psc-type-row">${gameTypePill(ps.spielart)}</div>
         </div>
       </div>
       ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}

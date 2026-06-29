@@ -91,7 +91,6 @@ function renderHomePsSection() {
     return;
   }
   const first = allPlayerSearches[0];
-  const spielartLabels = {casual: 'Just 4 Fun', training: 'Training', punktspiel: 'Punktspiel'};
   const avHtml = getAvatarHtml({ avatar_emoji: first.avatarEmoji, avatar_url: first.avatarUrl, username: first.username }, { size: 36 });
   const metaParts = [];
   if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');
@@ -108,7 +107,7 @@ function renderHomePsSection() {
         <div class="hpsc-av pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="hpsc-info">
           <div class="hpsc-name pp-clickable" onclick="${profileClick}">${escHtml(first.username || 'Spieler')}</div>
-          <div class="hpsc-type">sucht <b>${spielartLabels[first.spielart] || 'Mitspieler'}</b></div>
+          <div class="hpsc-type">${gameTypePill(first.spielart)}</div>
           ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
         </div>
       </div>

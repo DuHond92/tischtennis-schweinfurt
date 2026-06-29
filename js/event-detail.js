@@ -67,8 +67,7 @@ function showEventDetail(eventId) {
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill
-  document.getElementById('eds-type-pill').innerHTML =
-    `<span class="ev-type-pill pill-${ev.type}" style="margin-bottom:6px;display:inline-block;">${typeLabel(ev.type)}</span>`;
+  document.getElementById('eds-type-pill').innerHTML = gameTypePill(ev.type);
 
   // Meta
   document.getElementById('eds-meta').innerHTML = _eventMetaHtml(ev);

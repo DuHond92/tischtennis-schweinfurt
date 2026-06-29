@@ -100,7 +100,7 @@ function renderMyEventsSection() {
   }
   el.innerHTML = myEvents.slice(0, 3).map(e => `
     <div class="profile-event-row" onclick="showEventDetail(${e.id})">
-      <span class="ev-type-pill pill-${e.type}" style="font-size:0.68rem;">${typeLabel(e.type)}</span>
+      ${gameTypePill(e.type)}
       <span class="per-name">${escHtml(e.name)}</span>
       <span class="per-date">${e.day}. ${e.mon}</span>
     </div>`).join('');
