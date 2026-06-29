@@ -487,6 +487,7 @@
 }
 
 .events-grid-list, #home-events-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+#feed-games-wrap { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 8px; }
 
 .event-card-big {
   display: flex; align-items: center; gap: 12px;
@@ -600,23 +601,23 @@
 }
 
 /* ======= SEARCH AUTOCOMPLETE ======= */
-.hero-search { position: relative; }
+.hero-search { position: relative; z-index: 20; }
 
 .search-dropdown {
-  position: fixed;
-  background: #fff;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-  z-index: 99999;
-  max-height: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  z-index: 30;
+  max-height: min(280px, 45vh);
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   display: none;
   border: 1px solid var(--border);
-  width: 100%;
-}
-[data-theme="dark"] .search-dropdown {
-  background: var(--surface);
 }
 .search-dropdown.open { display: block; }
 

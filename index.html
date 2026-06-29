@@ -70,6 +70,7 @@
                onkeydown="onSearchKey(event)"
                onfocus="if(this.value.length>1) openDropdown()"
         >
+        <div class="search-dropdown" id="search-dropdown"></div>
       </div>
     </div>
 
@@ -535,7 +536,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">Max. Teilnehmer</label>
-      <input class="form-input" type="number" id="ev-max" value="4" min="2" max="16">
+      <input class="form-input" type="number" id="ev-max" value="4" min="2" max="100">
     </div>
     <div class="form-group">
       <label class="form-label">Beschreibung (optional)</label>
@@ -1075,7 +1076,6 @@
   <div class="pb-safe"></div>
 </div>
 
-<div class="search-dropdown" id="search-dropdown"></div>
 <div class="search-dropdown" id="map-search-dropdown"></div>
 
 <!-- PLAYER PROFILE OVERLAY (stacks on top of other sheets) -->

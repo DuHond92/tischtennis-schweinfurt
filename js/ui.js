@@ -229,13 +229,7 @@ function showDropdownLoading() {
 }
 
 function openDropdown() {
-  const input = document.getElementById('home-search');
-  const dd    = document.getElementById('search-dropdown');
-  const rect  = input.getBoundingClientRect();
-  dd.style.top   = (rect.bottom + 6) + 'px';
-  dd.style.left  = rect.left + 'px';
-  dd.style.width = rect.width + 'px';
-  dd.classList.add('open');
+  document.getElementById('search-dropdown').classList.add('open');
 }
 
 function closeDropdown() {
@@ -299,19 +293,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Dropdown-Position bei Scroll/Resize aktualisieren
-function repositionDropdown() {
-  const dd = document.getElementById('search-dropdown');
-  if(!dd?.classList.contains('open')) return;
-  const input = document.getElementById('home-search');
-  if(!input) return;
-  const rect = input.getBoundingClientRect();
-  dd.style.top   = (rect.bottom + 6) + 'px';
-  dd.style.left  = rect.left + 'px';
-  dd.style.width = rect.width + 'px';
-}
-window.addEventListener('scroll', repositionDropdown, true);
-window.addEventListener('resize', repositionDropdown);
 
 
 function animateCount(el, target) {
