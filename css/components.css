@@ -1234,6 +1234,22 @@
 .admin-reject-btn  { color: var(--red, #EF4444) !important; border-color: var(--red, #EF4444) !important; }
 .admin-approve-btn { background: var(--green, #22C55E) !important; color: #fff !important; border: none; }
 
+.admin-report-actions { margin-top: 10px; }
+.admin-report-delete-btn {
+  background: #c62828; color: #fff; border: none;
+}
+.admin-report-delete-btn:active { background: #b71c1c; }
+
+.admin-card-meta { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 2px; }
+
+.admin-delete-confirm { padding: 4px 0; }
+.admin-delete-confirm-text {
+  font-size: 0.88rem; font-weight: 600; color: var(--text);
+  margin-bottom: 8px; text-align: center;
+}
+
+.btn-full { width: 100%; }
+
 /* ── AUTH FORGOT LINK ───────────────────────────────────────────── */
 .auth-forgot-link {
   background: none; border: none; padding: 0;

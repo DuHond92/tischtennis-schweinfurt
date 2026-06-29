@@ -3,6 +3,7 @@
 // ╚══════════════════════════════════════════════════════════════╝
 let notifPollTimer  = null;
 let pendingNotifs   = [];   // ungelesene message-Objekte
+let _reportNotifs   = [];   // ungelesene report_resolved Notifications
 
 // ── Prüfung auf ungelesene Nachrichten ──────────────────────────
 async function checkNotifications() {
@@ -56,7 +57,17 @@ async function checkNotifications() {
 
   if (typeof checkConnectionNotifications === 'function') await checkConnectionNotifications();
   if (typeof _pollAdminCounts === 'function') await _pollAdminCounts();
-  const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0);
+
+  // Report-Notifications (report_resolved)
+  _reportNotifs = [];
+  try {
+    const uid  = sb.getUserId();
+    const rurl = `${SUPABASE_URL}/rest/v1/notifications?user_id=eq.${uid}&read_at=is.null&type=eq.report_resolved&order=created_at.desc&limit=20`;
+    const { data: rn } = await fetchWithRefresh(rurl, { headers: dbHeaders() });
+    _reportNotifs = rn || [];
+  } catch(e) {}
+
+  const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0) + _reportNotifs.length;
   totalBadge ? showNotifBadge(totalBadge) : hideNotifBadge();
 }
 
@@ -92,7 +103,25 @@ function markAllSeen() {
 function openNotifSheet() {
   renderNotifSheet();
   openSheet('notif-sheet');
-  setTimeout(markAllSeen, 1200);  // Badge erst nach kurzem Moment löschen
+  setTimeout(markAllSeen, 1200);
+  setTimeout(_markReportNotifsRead, 1200);
+}
+
+async function _markReportNotifsRead() {
+  if (!_reportNotifs.length) return;
+  const ids = _reportNotifs.map(n => encodeURIComponent(n.id)).join(',');
+  _reportNotifs = [];
+  try {
+    await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/notifications?id=in.(${ids})`,
+      {
+        method:  'PATCH',
+        headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ read_at: new Date().toISOString() })
+      }
+    );
+  } catch(e) {}
+  checkNotifications();
 }
 
 function renderNotifSheet() {
@@ -110,7 +139,7 @@ function renderNotifSheet() {
     return;
   }
 
-  if(!pendingNotifs.length && !(pendingConnectionRequests?.length)) {
+  if(!pendingNotifs.length && !(pendingConnectionRequests?.length) && !_reportNotifs.length) {
     body.innerHTML = `
       <div class="notif-empty">
         <div class="notif-empty-icon">✅</div>
@@ -127,8 +156,21 @@ function renderNotifSheet() {
     if(!evMap[ps.id]) evMap[ps.id] = { id: ps.id, name: ps.username + ' sucht Mitspieler' };
   });
 
+  const reportHtml = _reportNotifs.map(n => {
+    const time = _notifTime(n.created_at);
+    return `<div class="notif-item notif-item--report">
+      <div class="notif-report-icon">${ic('bell', 20)}</div>
+      <div class="notif-content">
+        <div class="notif-title"><b>${escHtml(n.title || 'Meldung geprüft')}</b></div>
+        <div class="notif-preview">${escHtml(n.body || '')}</div>
+        <div class="notif-time">${time}</div>
+      </div>
+      <div class="notif-dot"></div>
+    </div>`;
+  }).join('');
+
   const connHtml = typeof renderConnectionRequestNotifs === 'function' ? renderConnectionRequestNotifs() : '';
-  body.innerHTML = connHtml + pendingNotifs.slice(0, 20).map(m => {
+  body.innerHTML = reportHtml + connHtml + pendingNotifs.slice(0, 20).map(m => {
     const ev      = evMap[m.event_id];
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const sender  = m.profiles?.username || 'Jemand';

@@ -550,8 +550,8 @@ async function _loadModLog() {
 // ── Gemeldete Inhalte ─────────────────────────────────────────────────
 
 const _REASON_LABELS = {
-  spam: '🚫 Spam', inappropriate: '⚠️ Unangemessen',
-  wrong_info: '🔧 Falsche Info', other: '💬 Sonstiges',
+  spam: 'Spam / Werbung', inappropriate: 'Unangemessener Inhalt',
+  wrong_info: 'Falsche Informationen', other: 'Sonstiges',
 };
 
 async function _loadReports() {
@@ -594,17 +594,26 @@ async function _loadReports() {
     const typeLabel = _CONTENT_LABELS[r.content_type] || r.content_type;
     const reason    = _REASON_LABELS[r.reason] || r.reason;
     const rid       = escAttr(r.id);
-    return `<div class="admin-card admin-report-card" id="admin-report-${rid}">
+    const canNav    = ['comment','event_message'].includes(r.content_type);
+    return `<div class="admin-card admin-report-card" id="admin-report-${rid}"
+        data-content-type="${escAttr(r.content_type)}"
+        data-content-id="${escAttr(r.content_id)}">
       <div class="admin-card-header">
-        <div class="admin-card-name">${typeLabel}</div>
+        <div class="admin-card-name">${escHtml(typeLabel)}</div>
         <div class="admin-card-date">${date}</div>
       </div>
-      <div class="admin-card-row">${reason}</div>
+      <div class="admin-card-row">${escHtml(reason)}</div>
       ${r.preview ? `<div class="admin-card-desc">"${escHtml(r.preview)}"</div>` : ''}
       <div class="admin-card-meta">Gemeldet von <strong>${escHtml(reporter)}</strong></div>
-      <div class="admin-card-actions" id="admin-report-actions-${rid}">
-        <button class="btn btn-secondary btn-sm" onclick="resolveReport('${rid}','dismissed')">Ignorieren</button>
-        <button class="btn btn-sm admin-approve-btn" onclick="resolveReport('${rid}','reviewed')" style="flex:1;">✓ Erledigt</button>
+      <div class="admin-report-actions" id="admin-report-actions-${rid}">
+        ${canNav ? `<button class="btn btn-secondary btn-sm btn-full" style="margin-bottom:6px;"
+          onclick="openReportedTarget(this.closest('.admin-report-card'))">Kontext anzeigen</button>` : ''}
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" style="flex:1;"
+            onclick="resolveReport('${rid}','dismissed')">Ignorieren</button>
+          <button class="btn btn-sm admin-report-delete-btn" style="flex:1;"
+            onclick="deleteReportedContent('${rid}')">Löschen</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -623,7 +632,7 @@ async function resolveReport(reportId, status) {
   );
   if (!ok) { if (card) _setCardLoading(card, false); showToast('Fehler', '❌'); return; }
   if (card) { card.classList.add('admin-card-done'); setTimeout(() => { card.remove(); _checkReportsEmpty(); }, 400); }
-  showToast(status === 'reviewed' ? 'Als erledigt markiert ✅' : 'Ignoriert');
+  showToast(status === 'dismissed' ? 'Meldung ignoriert' : 'Erledigt');
 }
 
 function _checkReportsEmpty() {
@@ -631,6 +640,145 @@ function _checkReportsEmpty() {
   if (list && !list.querySelector('.admin-report-card')) {
     list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
   }
+}
+
+async function openReportedTarget(cardEl) {
+  const contentType = cardEl.dataset.contentType;
+  const contentId   = cardEl.dataset.contentId;
+
+  if (contentType === 'comment') {
+    try {
+      const { data } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/comments?select=table_id&id=eq.${encodeURIComponent(contentId)}`,
+        { headers: dbHeaders() }
+      );
+      const tableId = data?.[0]?.table_id;
+      if (!tableId) { showToast('Kommentar nicht gefunden', '⚠️'); return; }
+      closeAllSheets();
+      showTableDetail(tableId);
+    } catch(e) { showToast('Fehler beim Laden', '❌'); }
+    return;
+  }
+
+  if (contentType === 'event_message') {
+    try {
+      const { data } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/event_messages?select=event_id&id=eq.${encodeURIComponent(contentId)}`,
+        { headers: dbHeaders() }
+      );
+      const eventId = data?.[0]?.event_id;
+      if (!eventId) { showToast('Nachricht nicht gefunden', '⚠️'); return; }
+      const ev = typeof allEvents !== 'undefined' && allEvents.find(e => e.id === eventId);
+      closeAllSheets();
+      if (ev && ev.type === 'player_search') showPlayerSearchDetail(eventId);
+      else showEventDetail(eventId);
+    } catch(e) { showToast('Fehler beim Laden', '❌'); }
+    return;
+  }
+
+  showToast('Kein direkter Kontext verfügbar', 'ℹ️');
+}
+
+function deleteReportedContent(reportId) {
+  const actionsEl = document.getElementById(`admin-report-actions-${reportId}`);
+  if (!actionsEl) return;
+  actionsEl.innerHTML = `
+    <div class="admin-delete-confirm">
+      <div class="admin-delete-confirm-text">Inhalt wirklich löschen?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="_loadReports()">Abbrechen</button>
+        <button class="btn btn-sm admin-report-delete-btn" style="flex:1;"
+          onclick="_confirmDeleteContent('${escAttr(reportId)}')">Löschen</button>
+      </div>
+    </div>`;
+}
+
+function _reportNotifBody(contentType) {
+  const suffix = {
+    comment:        'Der gemeldete Kommentar wurde entfernt.',
+    event_message:  'Die gemeldete Nachricht wurde entfernt.',
+    direct_message: 'Die gemeldete Nachricht wurde entfernt.',
+    event:          'Das gemeldete Spiel wurde entfernt.',
+    player_search:  'Das gemeldete Gesuch wurde entfernt.',
+  };
+  return 'Danke für deine Meldung. ' + (suffix[contentType] || 'Der gemeldete Inhalt wurde entfernt.');
+}
+
+async function _confirmDeleteContent(reportId) {
+  const card = document.getElementById(`admin-report-${reportId}`);
+  if (!card) return;
+  const contentType = card.dataset.contentType;
+  const contentId   = card.dataset.contentId;
+  _setCardLoading(card, true);
+
+  const tableMap = { comment: 'comments', event_message: 'event_messages', direct_message: 'direct_messages' };
+  const logMap   = { comment: 'delete_comment', event_message: 'delete_event_message', direct_message: 'delete_dm' };
+  const table    = tableMap[contentType];
+
+  if (!table) {
+    _setCardLoading(card, false);
+    showToast(`Löschen für "${contentType}" nicht unterstützt`, '⚠️');
+    return;
+  }
+
+  // 1. Inhalt löschen
+  const { ok: delOk } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(contentId)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!delOk) { _setCardLoading(card, false); showToast('Fehler beim Löschen', '❌'); return; }
+
+  _logModAction(logMap[contentType], contentType, contentId);
+
+  // 2. Alle offenen Reports zu diesem Inhalt laden
+  const myId = sb.getUserId();
+  let siblingIds = [];
+  let reporterIds = [];
+  try {
+    const { data: siblings } = await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/reports?content_type=eq.${encodeURIComponent(contentType)}&content_id=eq.${encodeURIComponent(contentId)}&status=eq.pending&select=id,reporter_id`,
+      { headers: dbHeaders() }
+    );
+    siblingIds  = (siblings || []).map(r => r.id);
+    reporterIds = [...new Set((siblings || []).map(r => r.reporter_id).filter(id => id && id !== myId))];
+  } catch(e) { siblingIds = [reportId]; }
+
+  // 3. Notification an jeden Reporter
+  const notifBody = _reportNotifBody(contentType);
+  for (const uid of reporterIds) {
+    await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/notifications`, {
+      method: 'POST',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        user_id: uid,
+        type: 'report_resolved',
+        title: 'Meldung geprüft',
+        body: notifBody,
+        data: { content_type: contentType, content_id: contentId, action: 'deleted' }
+      })
+    });
+  }
+
+  // 4. Alle zugehörigen Reports auf reviewed setzen
+  const ids = siblingIds.length ? siblingIds : [reportId];
+  await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/reports?id=in.(${ids.map(encodeURIComponent).join(',')})`,
+    {
+      method:  'PATCH',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'reviewed', reviewed_by: myId, reviewed_at: new Date().toISOString() })
+    }
+  );
+
+  // 5. Alle Karten für diesen Inhalt aus dem DOM entfernen
+  document.querySelectorAll('.admin-report-card').forEach(c => {
+    if (c.dataset.contentType === contentType && c.dataset.contentId === contentId) {
+      c.classList.add('admin-card-done');
+      setTimeout(() => { c.remove(); _checkReportsEmpty(); }, 400);
+    }
+  });
+
+  showToast(reporterIds.length > 0 ? 'Inhalt gelöscht und Reporter benachrichtigt' : 'Inhalt gelöscht');
 }
 
 // ── Events + Mitspieler-Gesuche löschen (Mod) ────────────────────────
