@@ -674,32 +674,35 @@ function openReportFromBtn(btn) {
 }
 
 function openReport(contentType, contentId, preview) {
-  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
+  if (!sb.isLoggedIn()) { showToast('Bitte melde dich an, um Inhalte zu melden.', '⚠️'); return; }
   _reportData = { contentType, contentId, reason: null };
   const prev = document.getElementById('report-preview');
   if (prev) prev.textContent = preview ? `"${preview}"` : '';
+  const noteEl = document.getElementById('report-note');
+  if (noteEl) noteEl.value = '';
   const reasons = [
-    { key: 'spam',          label: '🚫 Spam / Werbung' },
-    { key: 'inappropriate', label: '⚠️ Unangemessener Inhalt' },
-    { key: 'wrong_info',    label: '🔧 Falsche Informationen' },
-    { key: 'other',         label: '💬 Sonstiges' },
+    { key: 'spam',          label: 'Spam / Werbung' },
+    { key: 'inappropriate', label: 'Unangemessener Inhalt' },
+    { key: 'wrong_info',    label: 'Falsche Informationen' },
+    { key: 'other',         label: 'Sonstiges' },
   ];
   const btns = document.getElementById('report-reason-btns');
   if (btns) btns.innerHTML = reasons.map(r =>
-    `<button class="btn btn-secondary btn-sm report-reason-opt" onclick="selectReportReason('${r.key}',this)">${r.label}</button>`
+    `<button class="report-reason-opt" onclick="selectReportReason('${r.key}',this)">${r.label}</button>`
   ).join('');
-  document.getElementById('report-overlay')?.classList.add('open');
   openSheet('report-sheet');
 }
 
 function selectReportReason(key, btn) {
   _reportData.reason = key;
-  document.querySelectorAll('.report-reason-opt').forEach(b => b.classList.remove('btn-primary'));
-  btn.classList.add('btn-primary');
+  document.querySelectorAll('.report-reason-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
 async function submitReport() {
-  if (!_reportData.reason) { showToast('Bitte einen Grund auswählen', '⚠️'); return; }
+  if (!_reportData.reason) { showToast('Bitte wähle einen Grund aus.', '⚠️'); return; }
+  const note    = (document.getElementById('report-note')?.value || '').trim();
+  const preview = document.getElementById('report-preview')?.textContent?.replace(/^"|"$/g, '').slice(0, 200) || null;
   const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
     method:  'POST',
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
@@ -708,17 +711,15 @@ async function submitReport() {
       content_type: _reportData.contentType,
       content_id:   String(_reportData.contentId),
       reason:       _reportData.reason,
-      preview:      document.getElementById('report-preview')?.textContent?.replace(/^"|"$/g, '').slice(0, 200) || null,
+      preview:      note ? `${preview || ''}\n\nHinweis: ${note}`.trim().slice(0, 500) : preview,
       status:       'pending'
     })
   });
-  closeReportSheet();
-  if (ok) showToast('Danke – Inhalt wurde gemeldet 🚩');
+  closeAllSheets();
+  if (ok) showToast('Danke, wir prüfen den Inhalt.');
   else showToast('Fehler beim Melden', '❌');
 }
 
 function closeReportSheet() {
-  document.getElementById('report-overlay')?.classList.remove('open');
-  const sheet = document.getElementById('report-sheet');
-  if (sheet) sheet.classList.remove('open');
+  closeAllSheets();
 }

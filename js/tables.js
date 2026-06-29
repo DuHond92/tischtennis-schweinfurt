@@ -767,38 +767,22 @@ function openCommentDotMenu(btn) {
     isOwn:       btn.dataset.own === '1',
     preview:     btn.dataset.preview
   };
-  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const reportSection = document.getElementById('cmt-action-report-section');
-  const reportBtn     = document.getElementById('cmt-action-report');
-  const deleteBtn     = document.getElementById('cmt-action-delete');
-  const noteEl        = document.getElementById('cmt-report-note');
-  const showReport    = !_cmtMenuData.isOwn && !isMod;
-  if (reportSection) reportSection.style.display = showReport ? '' : 'none';
-  if (reportBtn)     reportBtn.style.display     = showReport ? '' : 'none';
-  if (deleteBtn)     deleteBtn.style.display     = isMod ? '' : 'none';
-  if (noteEl)        noteEl.value = '';
+  const isMod      = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const isMessage  = _cmtMenuData.contentType === 'event_message';
+  const reportBtn  = document.getElementById('cmt-action-report');
+  const deleteBtn  = document.getElementById('cmt-action-delete');
+  const titleEl    = document.getElementById('cmt-action-title');
+  const deleteLbl  = document.getElementById('cmt-delete-label');
+  const showReport = !_cmtMenuData.isOwn && !isMod;
+  if (titleEl)    titleEl.textContent   = isMessage ? 'Nachricht' : 'Kommentar';
+  if (deleteLbl)  deleteLbl.textContent = isMessage ? 'Nachricht löschen' : 'Kommentar löschen';
+  if (reportBtn)  reportBtn.style.display = showReport ? '' : 'none';
+  if (deleteBtn)  deleteBtn.style.display = isMod ? '' : 'none';
   openSheet('cmt-action-sheet');
 }
 
-async function submitCmtReport() {
-  closeAllSheets();
-  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
-  const note    = (document.getElementById('cmt-report-note')?.value || '').trim();
-  const preview = [(_cmtMenuData.preview || ''), note ? `Hinweis: ${note}` : ''].filter(Boolean).join('\n\n').slice(0, 500);
-  const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
-    method:  'POST',
-    headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      reporter_id:  sb.getUserId(),
-      content_type: _cmtMenuData.contentType || 'comment',
-      content_id:   String(_cmtMenuData.id),
-      reason:       'inappropriate',
-      preview,
-      status:       'pending'
-    })
-  });
-  if (ok) showToast('Danke, wir prüfen den Kommentar und entfernen ihn bei Verstoß gegen die Community-Regeln.');
-  else showToast('Fehler beim Melden', '❌');
+function openCmtReportDialog() {
+  openReport(_cmtMenuData.contentType || 'comment', _cmtMenuData.id, _cmtMenuData.preview);
 }
 
 function submitCmtDelete() {

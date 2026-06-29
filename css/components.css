@@ -1415,12 +1415,28 @@
 .report-btn:hover { opacity: 1; }
 
 /* ── Report-Sheet ────────────────────────────────────────────────── */
+.report-sheet-body { padding: 0 20px 8px; }
 .report-preview {
-  font-size: 0.8rem; color: var(--text-dim); font-style: italic;
-  margin-bottom: 4px; word-break: break-word;
+  font-size: 0.82rem; color: var(--text-dim); font-style: italic;
+  margin-bottom: 14px; word-break: break-word; line-height: 1.4;
+}
+.report-reason-label {
+  font-size: 0.82rem; font-weight: 700; color: var(--text-dim);
+  margin-bottom: 10px;
 }
 .report-reason-btns { display: flex; flex-direction: column; gap: 8px; }
-.report-reason-btns .btn { text-align: left; }
+.report-reason-opt {
+  width: 100%; text-align: left; padding: 12px 16px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 0.875rem; color: var(--text);
+  font-weight: 500; cursor: pointer; font-family: var(--font-body);
+  transition: border-color 0.15s, background 0.15s;
+}
+.report-reason-opt:active { background: var(--surface); }
+.report-reason-opt.selected {
+  border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary); font-weight: 600;
+}
 
 /* ── Willkommenskarte ────────────────────────────────────────────── */
 .welcome-card {

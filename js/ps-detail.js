@@ -105,16 +105,22 @@ function _renderPsChatMessages(messages) {
     const avUrl   = m.profiles?.avatar_url || '';
     const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
     const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
-    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteEventMessage('${escAttr(m.id)}','ps')">🗑</button>` : '';
-    const preview = escAttr((m.message || '').slice(0, 80));
-    const report  = (!isMod && sb.isLoggedIn() && !isMine)
-      ? ` <button class="report-btn" data-type="event_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+    const preview  = escAttr((m.message || '').slice(0, 80));
+    const showDots = sb.isLoggedIn() && (isMod || !isMine);
+    const dots     = showDots
+      ? `<button class="comment-dot-btn" aria-label="Optionen"
+           data-cid="${escAttr(m.id)}"
+           data-content-type="event_message"
+           data-ctx="ps"
+           data-own="${isMine ? '1' : ''}"
+           data-preview="${preview}"
+           onclick="openCommentDotMenu(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>`
       : '';
     return `<div class="chat-msg ${isMine?'mine':''}">
       ${avatar}
       <div class="chat-bubble-wrap">
         <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${del}${report}</div>
+        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${dots}</div>
       </div>
     </div>`;
   }).join('');
