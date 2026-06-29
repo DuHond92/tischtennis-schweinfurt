@@ -36,10 +36,12 @@ function getMyActiveEvents() {
   if (!sb.isLoggedIn()) return [];
   const myId     = String(sb.getUserId());
   const todayStr = new Date().toISOString().slice(0, 10);
-  return allEvents.filter(ev =>
-    ev.dateStr >= todayStr &&
-    (ev.participants.some(p => String(p.id) === myId) || String(ev.creatorId) === myId)
-  );
+  return allEvents
+    .filter(ev =>
+      ev.dateStr >= todayStr &&
+      (ev.participants.some(p => String(p.id) === myId) || String(ev.creatorId) === myId)
+    )
+    .sort((a, b) => (a.dateStr + (a.time || '')).localeCompare(b.dateStr + (b.time || '')));
 }
 
 function getMyActiveRequests() {
@@ -58,43 +60,68 @@ function renderHomeActivities() {
   const total      = myEvents.length + myRequests.length;
   if (total === 0) { container.innerHTML = ''; return; }
 
-  let html = `<div class="home-act-header">${ic('calendar', 13)} Deine Aktivitäten <span class="act-badge">${total}</span></div>`;
+  // Subtitle: "2 Spiele · 1 Gesuch"
+  const subtitleParts = [];
+  if (myEvents.length)   subtitleParts.push(`${myEvents.length} ${myEvents.length === 1 ? 'Spiel' : 'Spiele'}`);
+  if (myRequests.length) subtitleParts.push(`${myRequests.length} ${myRequests.length === 1 ? 'Gesuch' : 'Gesuche'}`);
 
-  if (myEvents.length) {
-    html += `<div class="home-act-sub-header">${ic('calendar', 12)} Deine Spiele <span class="act-badge">${myEvents.length}</span></div>`;
-    html += `<div class="home-act-list">${myEvents.map(e => `
-      <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
-           onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
-        <div class="home-act-body">
-          <div class="home-act-title">${escHtml(e.name)}</div>
-          <div style="margin:2px 0 3px;">${gameTypePill(e.type)}</div>
-          <div class="home-act-meta">${ic('calendar',11)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin',11)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users',11)} ${e.p}/${e.max}</div>
-        </div>
-        <span class="home-act-chevron">›</span>
-      </div>`).join('')}</div>`;
-  }
+  // Alle Items zusammenführen: Events zuerst (nach Datum), dann Gesuche
+  const MAX = 3;
+  const allItems = [
+    ...myEvents.map(e  => ({ kind: 'event',   data: e  })),
+    ...myRequests.map(ps => ({ kind: 'request', data: ps }))
+  ];
+  const visible = allItems.slice(0, MAX);
+  const hasMore = total > MAX;
 
-  if (myRequests.length) {
-    html += `<div class="home-act-sub-header">${ic('users', 12)} Deine Gesuche <span class="act-badge">${myRequests.length}</span></div>`;
-    html += `<div class="home-act-list">${myRequests.map(ps => {
-      const metaParts = [];
-      if (ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',11)} ${escHtml(ps.wann)}`);
-      if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',11)} ${escHtml(ps.umkreis)} Umkreis`);
+  const cardsHtml = visible.map(item => {
+    if (item.kind === 'event') {
+      const e = item.data;
       return `
-      <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
-           onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
-        <div class="home-act-body">
-          <div class="home-act-title">Mitspieler gesucht</div>
-          <div style="margin:2px 0 3px;">${gameTypePill(ps.spielart)}</div>
-          ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-          ${ps.message ? `<div class="home-act-meta" style="margin-top:1px;">"${escHtml(ps.message.slice(0, 55))}${ps.message.length > 55 ? '…' : ''}"</div>` : ''}
-        </div>
-        <span class="home-act-chevron">›</span>
-      </div>`;
-    }).join('')}</div>`;
-  }
+        <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
+          <div class="home-act-body">
+            <div class="home-act-title">${escHtml(e.name)}</div>
+            <div style="margin:2px 0 3px;">${gameTypePill(e.type)}</div>
+            <div class="home-act-meta">${ic('calendar',10)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin',10)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users',10)} ${e.p}/${e.max}</div>
+          </div>
+          <span class="home-act-chevron">›</span>
+        </div>`;
+    } else {
+      const ps = item.data;
+      const metaParts = [];
+      if (ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',10)} ${escHtml(ps.wann)}`);
+      if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',10)} ${escHtml(ps.umkreis)} Umkreis`);
+      return `
+        <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
+          <div class="home-act-body">
+            <div class="home-act-label">${ic('users', 10)} Aktives Gesuch</div>
+            <div class="home-act-title">Mitspieler gesucht</div>
+            <div style="margin:2px 0 3px;">${gameTypePill(ps.spielart)}</div>
+            ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+          </div>
+          <span class="home-act-chevron">›</span>
+        </div>`;
+    }
+  }).join('');
 
-  container.innerHTML = html;
+  const moreHtml = hasMore
+    ? `<div class="home-act-more" onclick="showPage('events')">${ic('calendar', 12)} Alle ${total} Aktivitäten ansehen</div>`
+    : '';
+
+  container.innerHTML = `
+    <div class="home-act-section">
+      <div class="home-act-head">
+        <div class="home-act-headrow">
+          <span class="home-act-headtitle">Deine Aktivitäten</span>
+          <span class="act-badge">${total}</span>
+        </div>
+        <div class="home-act-subtitle">${subtitleParts.join(' · ')}</div>
+      </div>
+      <div class="home-act-list">${cardsHtml}</div>
+      ${moreHtml}
+    </div>`;
 }
 
 function renderHome() {
