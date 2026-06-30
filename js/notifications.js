@@ -14,55 +14,65 @@ async function checkNotifications() {
   }
   const userId = sb.getUserId();
 
-  // 1. Events wo User Creator ist (bereits in allEvents)
-  const creatorIds = allEvents
-    .filter(e => e.creatorId === userId)
-    .map(e => e.id);
+  // 1. Events wo User Creator ist
+  const creatorIds = allEvents.filter(e => e.creatorId === userId).map(e => e.id);
 
-  // 2. Events wo User Teilnehmer ist
-  let participantIds = [];
-  try {
-    const qb = new QueryBuilder('event_participants');
-    qb._select  = 'event_id';
-    qb.eq('user_id', userId);
-    const {data} = await qb.execute();
-    if(data) participantIds = data.map(p => p.event_id);
-  } catch(e) { console.warn('notif: participant query failed', e); }
+  // 2. Gesuche die der User erstellt hat
+  const psCreatorIds = allPlayerSearches.filter(ps => ps.userId === userId).map(ps => ps.id);
 
-  // 3. Player-Search-Gesuche die der User erstellt hat
-  const psCreatorIds = allPlayerSearches
-    .filter(ps => ps.userId === userId)
-    .map(ps => ps.id);
+  // 3. Parallel: Event-Teilnahmen + Gesuche wo User geantwortet hat
+  let participantIds   = [];
+  let psParticipantIds = [];
+  const allPsIds = allPlayerSearches.map(ps => ps.id);
 
-  const myEventIds = [...new Set([...creatorIds, ...participantIds, ...psCreatorIds])];
-  if(!myEventIds.length) { hideNotifBadge(); return; }
+  await Promise.all([
+    // Events via event_participants
+    (async () => {
+      try {
+        const qb = new QueryBuilder('event_participants');
+        qb._select = 'event_id';
+        qb.eq('user_id', userId);
+        const {data} = await qb.execute();
+        if (data) participantIds = data.map(p => p.event_id);
+      } catch(e) { console.warn('notif: participant query failed', e); }
+    })(),
+    // Gesuche wo der User mindestens eine Antwort geschrieben hat
+    allPsIds.length ? (async () => {
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id&user_id=eq.${userId}&event_id=in.(${allPsIds.join(',')})`;
+        const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+        if (Array.isArray(data)) psParticipantIds = [...new Set(data.map(m => m.event_id))];
+      } catch(e) {}
+    })() : Promise.resolve()
+  ]);
 
-  // 3. Letzte 50 Nachrichten (mit Profil-Join)
-  let messages = [];
-  try {
-    const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)';
-    qb.order('created_at', true).limit(50);
-    const {data} = await qb.execute();
-    messages = data || [];
-  } catch(e) { console.warn('notif: message query failed', e); return; }
+  const myEventIds = [...new Set([...creatorIds, ...participantIds, ...psCreatorIds, ...psParticipantIds])];
 
-  // 4. Filtern: meine Events, nicht eigene Nachrichten, neuer als zuletzt gesehen
-  pendingNotifs = messages.filter(m => {
-    if(!myEventIds.includes(m.event_id)) return false;
-    if(m.user_id === userId)             return false;
-    const seenTs = localStorage.getItem('seen_chat_' + m.event_id) || '1970-01-01T00:00:00Z';
-    return m.created_at > seenTs;
-  });
+  // 4. Nachrichten aus meinen Events — server-seitig gefiltert, kein globales Limit-Problem
+  if (myEventIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/event_messages?select=id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)&event_id=in.(${myEventIds.join(',')})&order=created_at.desc&limit=200`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      const messages = Array.isArray(data) ? data : [];
+      pendingNotifs = messages.filter(m => {
+        if (m.user_id === userId) return false;
+        const seenTs = localStorage.getItem('seen_chat_' + m.event_id) || '1970-01-01T00:00:00Z';
+        return m.created_at > seenTs;
+      });
+    } catch(e) {
+      console.warn('notif: message query failed', e);
+    }
+  } else {
+    pendingNotifs = [];
+  }
 
   if (typeof checkConnectionNotifications === 'function') await checkConnectionNotifications();
   if (typeof _pollAdminCounts === 'function') await _pollAdminCounts();
 
-  // Report-Notifications (report_resolved)
+  // 5. Report-Notifications (report_resolved)
   _reportNotifs = [];
   try {
-    const uid  = sb.getUserId();
-    const rurl = `${SUPABASE_URL}/rest/v1/notifications?user_id=eq.${uid}&read_at=is.null&type=eq.report_resolved&order=created_at.desc&limit=20`;
+    const rurl = `${SUPABASE_URL}/rest/v1/notifications?user_id=eq.${userId}&read_at=is.null&type=eq.report_resolved&order=created_at.desc&limit=20`;
     const { data: rn } = await fetchWithRefresh(rurl, { headers: dbHeaders() });
     _reportNotifs = rn || [];
   } catch(e) {}
@@ -88,7 +98,7 @@ function markEventSeen(eventId) {
   if(!eventId) return;
   localStorage.setItem('seen_chat_' + eventId, new Date().toISOString());
   pendingNotifs = pendingNotifs.filter(m => m.event_id !== eventId);
-  pendingNotifs.length ? showNotifBadge(pendingNotifs.length) : hideNotifBadge();
+  _updateBadgeCount();
 }
 
 function markAllSeen() {
@@ -96,7 +106,12 @@ function markAllSeen() {
     localStorage.setItem('seen_chat_' + id, new Date().toISOString())
   );
   pendingNotifs = [];
-  hideNotifBadge();
+  _updateBadgeCount();
+}
+
+function _updateBadgeCount() {
+  const total = pendingNotifs.length + (_reportNotifs?.length || 0) + (pendingConnectionRequests?.length || 0);
+  total > 0 ? showNotifBadge(total) : hideNotifBadge();
 }
 
 // ── Notification-Sheet öffnen und rendern ────────────────────────
