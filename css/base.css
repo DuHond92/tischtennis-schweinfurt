@@ -86,6 +86,19 @@ body {
 /* ======= DARK MODE MAP TILE ======= */
 [data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
 
+/* ======= MAP ATTRIBUTION ======= */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(4px);
+}
+.leaflet-control-attribution a { color: #555 !important; }
+[data-theme="dark"] .leaflet-control-attribution {
+  background: rgba(24, 24, 28, 0.82) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+[data-theme="dark"] .leaflet-control-attribution a { color: rgba(255, 255, 255, 0.45) !important; }
+
 /* Misc */
 .divider { height: 1px; background: var(--border); }
 .text-center { text-align: center; }

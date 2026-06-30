@@ -2,9 +2,6 @@
 // ║           MAP                                                ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// MAP_STYLE: 'voyager' | 'positron' | 'osm'
-const MAP_STYLE = 'voyager';
-
 // Lokales Datum als YYYY-MM-DD (kein UTC-Versatz, heutige Spiele zählen immer)
 function _localTodayISO() {
   const d = new Date();
@@ -13,14 +10,10 @@ function _localTodayISO() {
     String(d.getDate()).padStart(2, '0');
 }
 
-const MAP_TILES = {
-  voyager:  { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>' },
-  positron: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>' },
-  osm:      { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-               attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
-};
+// Aktive Kartenquelle: CARTO Voyager
+// Attribution: OSM + CARTO sind beide lizenzrechtlich Pflicht und müssen sichtbar bleiben
+const _TILE_URL  = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const _TILE_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>';
 
 let leafletMap, markers = [];
 let mapSearchQuery   = '';
@@ -32,13 +25,14 @@ let _bsSnapTo = null;       // exposed by initBottomSheet for external snap call
 
 function initMap() {
   leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
-  const tile = MAP_TILES[MAP_STYLE] || MAP_TILES.voyager;
-  L.tileLayer(tile.url, {
-    attribution: tile.attr,
+  L.tileLayer(_TILE_URL, {
+    attribution: _TILE_ATTR,
     maxZoom: 19,
     subdomains: 'abcd',
     detectRetina: true
   }).addTo(leafletMap);
+  // Leaflet-Prefix entfernen — BSD 2-Clause erfordert keine UI-Attribution
+  leafletMap.attributionControl.setPrefix(false);
 
   const src = tables.length ? tables : FALLBACK_TABLES;
   src.forEach(t => addMarker(t));
