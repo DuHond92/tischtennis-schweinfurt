@@ -118,8 +118,13 @@
         <div class="map-search-wrap">
           <span class="map-search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
           <input class="map-search-input" id="map-search"
+                 type="search"
                  placeholder="Platte, Ort oder Adresse suchen…"
+                 enterkeyhint="search"
+                 inputmode="search"
                  autocomplete="off"
+                 autocapitalize="none"
+                 spellcheck="false"
                  oninput="onMapSearchInput()"
                  onkeydown="onMapSearchKey(event)"
                  onfocus="if(this.value.length>1) _openMapDd()">

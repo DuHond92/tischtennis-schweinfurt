@@ -246,8 +246,14 @@
   flex: 1; border: none; background: transparent;
   font-size: 0.88rem; color: var(--text); outline: none;
   font-family: var(--font-body);
+  /* Normalize type="search" across browsers */
+  -webkit-appearance: none;
+  appearance: none;
 }
 .map-search-input::placeholder { color: var(--text-xdim); }
+/* Hide WebKit native cancel button – we use our own × button */
+.map-search-input::-webkit-search-cancel-button,
+.map-search-input::-webkit-search-decoration { display: none; -webkit-appearance: none; }
 .map-search-clear {
   font-size: 1.1rem; color: var(--text-dim); cursor: pointer;
   line-height: 1; padding: 0 2px;

@@ -226,20 +226,54 @@ function _selectMapDdItem(idx) {
 }
 
 function onMapSearchKey(e) {
+  const input = document.getElementById('map-search');
+
+  if (e.key === 'Escape') {
+    _closeMapDd();
+    input?.blur();
+    return;
+  }
+
   const items = document.querySelectorAll('#map-search-dropdown .search-dropdown-item');
-  if (!items.length) return;
+
   if (e.key === 'ArrowDown') {
+    if (!items.length) return;
     e.preventDefault();
     _mapDdActiveIdx = Math.min(_mapDdActiveIdx + 1, items.length - 1);
     items[_mapDdActiveIdx]?.focus();
   } else if (e.key === 'ArrowUp') {
+    if (!items.length) return;
     e.preventDefault();
     _mapDdActiveIdx = Math.max(_mapDdActiveIdx - 1, -1);
-    if (_mapDdActiveIdx === -1) document.getElementById('map-search').focus();
+    if (_mapDdActiveIdx === -1) input?.focus();
     else items[_mapDdActiveIdx]?.focus();
-  } else if (e.key === 'Escape') {
-    _closeMapDd();
-    document.getElementById('map-search').blur();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (items.length > 0) {
+      // aktives Item oder erstes Ergebnis auswählen, Tastatur schließen
+      _selectMapDdItem(_mapDdActiveIdx >= 0 ? _mapDdActiveIdx : 0);
+      input?.blur();
+    } else {
+      // Noch kein Ergebnis geladen (Loading-State oder kurze Eingabe) →
+      // sofort suchen und erstes Ergebnis auswählen
+      const q = (input?.value || '').trim();
+      if (q.length >= 2) {
+        clearTimeout(_mapDdTimer);
+        _runMapDdSearch(q).then(() => {
+          const fresh = document.querySelectorAll('#map-search-dropdown .search-dropdown-item');
+          if (fresh.length > 0) {
+            _selectMapDdItem(0);
+          } else {
+            showToast('Kein Ergebnis gefunden', { type: 'info' });
+            _closeMapDd();
+          }
+          input?.blur();
+        });
+      } else {
+        _closeMapDd();
+        input?.blur();
+      }
+    }
   }
 }
 
