@@ -52,7 +52,7 @@ function showPlayerSearchDetail(psId) {
   // Chat state
   const isReal = allPlayerSearches.some(p => p.id === psId);
   const inputRow = document.getElementById('psd-chat-input-row');
-  document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Lade Nachrichten…</div>';
+  document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Lade Antworten…</div>';
 
   openSheet('ps-detail-sheet');
   const psdShareBtn = document.getElementById('psd-share-btn');
@@ -64,7 +64,7 @@ function showPlayerSearchDetail(psId) {
     startPsChatPolling(psId);
     inputRow.style.display = '';
   } else {
-    document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Chat nur für echte Gesuche verfügbar.</div>';
+    document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Antworten nur für echte Gesuche verfügbar.</div>';
     inputRow.style.display = 'none';
   }
 }
@@ -77,10 +77,10 @@ async function loadPsChat(eventId) {
     qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId).order('created_at');
     const {data, error} = await qb.execute();
-    if(error) { el.innerHTML = '<div class="chat-empty">Chat nicht verfügbar.</div>'; return; }
+    if(error) { el.innerHTML = '<div class="chat-empty">Antworten nicht verfügbar.</div>'; return; }
     _renderPsChatMessages(data || []);
   } catch(e) {
-    el.innerHTML = '<div class="chat-empty">Chat nicht verfügbar.</div>';
+    el.innerHTML = '<div class="chat-empty">Antworten nicht verfügbar.</div>';
   }
 }
 
@@ -89,7 +89,7 @@ function _renderPsChatMessages(messages) {
   if(!el) return;
   const myId = sb.getUserId();
   if(!messages.length) {
-    el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
+    el.innerHTML = '<div class="chat-empty">Noch keine Antworten – schreib als Erster!</div>';
     return;
   }
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);

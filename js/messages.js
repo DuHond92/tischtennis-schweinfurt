@@ -11,12 +11,6 @@ let _dmUnreadCount  = 0;
 
 // Expand-Zustand pro Kategorie (bleibt innerhalb einer Session erhalten)
 let _inboxExpanded  = {};
-// Archivierte Events — wird beim Rendern befüllt und für openArchivedChats genutzt
-let _archivedEvents = [];
-
-// Lösch-Dialog Zustand
-let _pendingDeleteType = null;
-let _pendingDeleteId   = null;
 
 // ── localStorage: nutzerspezifisch gelöschte Chats ────────────
 function _getHiddenChats() {
@@ -34,7 +28,6 @@ function _isChatHidden(type, id) {
 }
 
 const INBOX_PREVIEW  = 3;      // sichtbare Chats pro Kategorie bevor "mehr"
-const ARCHIVE_DAYS   = 14;     // Events nach X Tagen archivieren
 
 // ── Badge ──────────────────────────────────────────────────────
 function updateDmBadge(n) {
@@ -72,18 +65,11 @@ async function renderInboxChats() {
     return;
   }
 
-  el.innerHTML = _inboxEmpty('⏳', 'Lade Unterhaltungen…', true);
+  el.innerHTML = _inboxEmpty('⏳', 'Lade Nachrichten…', true);
 
   const uid = sb.getUserId();
-
-  // Parallel: DMs und Event-Beteiligungen laden
-  const [dmMessages, eventData] = await Promise.all([
-    _loadDmMessages(uid),
-    _loadEventConversations(uid)
-  ]);
-
-  // ── Spielpartner (DMs) — werden NIE archiviert ──────────────
-  const dmConvs = _groupDmsByPartner(dmMessages, uid);
+  const dmMessages = await _loadDmMessages(uid);
+  const dmConvs    = _groupDmsByPartner(dmMessages, uid);
 
   let dmProfiles = {};
   const partnerIds = dmConvs.map(c => c.partnerId).filter(Boolean);
@@ -97,46 +83,11 @@ async function renderInboxChats() {
 
   updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
 
-  // ── Archiv-Grenzwert ────────────────────────────────────────
-  const archiveBefore = Date.now() - ARCHIVE_DAYS * 86_400_000;
-
-  // Spielrunden: Events mit Datum > 14 Tage in der Vergangenheit → Archiv
-  const allSpielrunden  = eventData.filter(e => e.mode !== 'player_search');
-  const spielrunden     = allSpielrunden.filter(e => !_isArchivedEvent(e, archiveBefore));
-  const archSpielrunden = allSpielrunden.filter(e =>  _isArchivedEvent(e, archiveBefore));
-
-  // Mitspieler-Gesuche: vorerst nach Datum archivieren (gleiche Regel);
-  // später erweiterbar um Status-Feld (z. B. status='closed')
-  const allMitgesuch  = eventData.filter(e => e.mode === 'player_search');
-  const mitgesuch     = allMitgesuch.filter(e => !_isArchivedEvent(e, archiveBefore));
-  const archMitgesuch = allMitgesuch.filter(e =>  _isArchivedEvent(e, archiveBefore));
-
-  // Archivliste merken (für openArchivedChats)
-  _archivedEvents = [...archSpielrunden, ...archMitgesuch];
-
-  // ── HTML aufbauen ───────────────────────────────────────────
   const renderDm = c => _renderDmRow(c, dmProfiles, uid);
-  let html = '';
-
-  html += _renderSection('spielpartner', '👤 Spielpartner',      dmConvs,    renderDm);
-  html += _renderSection('spielrunden',  '🏓 Spielrunden',       spielrunden, _renderEventRow);
-  html += _renderSection('mitgesuch',    '🔍 Mitspieler gesucht', mitgesuch,  _renderEventRow);
-
-  if (!html) {
-    html = _inboxEmpty('💬', 'Noch keine Unterhaltungen.<br>Schreib einem Spielpartner!');
-  }
-
-  // Archiv-Zeile (immer ganz unten)
-  html += _renderArchiveRow(_archivedEvents.length);
+  const html = _renderSection('spielpartner', '👤 Spielpartner', dmConvs, renderDm)
+    || _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Schreib einem Mitspieler!');
 
   el.innerHTML = html;
-}
-
-// ── Archivierungs-Logik ───────────────────────────────────────
-
-function _isArchivedEvent(event, archiveBefore) {
-  if (!event.event_date) return false;
-  return new Date(event.event_date).getTime() < archiveBefore;
 }
 
 // ── Kollabierbare Sektions-Renderer ──────────────────────────
@@ -178,100 +129,6 @@ function toggleInboxSection(key, btn) {
     : `+ ${btn.dataset.hidden} weitere`;
 }
 
-// ── Archiv-Zeile ──────────────────────────────────────────────
-
-function _renderArchiveRow(count) {
-  if (!count) return '';
-  return `
-    <div class="inbox-archive-row" onclick="openArchivedChats()">
-      <span class="inbox-archive-icon">📦</span>
-      <span class="inbox-archive-label">Archivierte Unterhaltungen</span>
-      <span class="inbox-archive-badge">${count}</span>
-      <span class="inbox-archive-chevron">›</span>
-    </div>`;
-}
-
-function openArchivedChats() {
-  // Volle Archiv-Ansicht wird in einer späteren Version implementiert.
-  // Vorerst: direkte Einblendung unterhalb der Archiv-Zeile.
-  const row = document.querySelector('.inbox-archive-row');
-  if (!row) return;
-
-  const existing = document.getElementById('inbox-archive-detail');
-  if (existing) { existing.remove(); return; }
-
-  const detail = document.createElement('div');
-  detail.id = 'inbox-archive-detail';
-  detail.className = 'inbox-archive-detail';
-
-  if (!_archivedEvents.length) {
-    detail.innerHTML = _inboxEmpty('📭', 'Keine archivierten Unterhaltungen.');
-  } else {
-    detail.innerHTML =
-      `<div class="inbox-section-label" style="padding-top:12px;">Archiv</div>` +
-      _archivedEvents.map(e => _renderEventRow(e, true)).join('');
-  }
-
-  row.insertAdjacentElement('afterend', detail);
-}
-
-// ── Löschen: Bestätigungs-Dialog ──────────────────────────────
-
-function initDeleteChat(type, id, name) {
-  _pendingDeleteType = type;
-  _pendingDeleteId   = String(id);
-
-  let dlg = document.getElementById('inbox-delete-dlg');
-  if (!dlg) {
-    dlg = document.createElement('div');
-    dlg.id = 'inbox-delete-dlg';
-    document.body.appendChild(dlg);
-  }
-  dlg.innerHTML = `
-    <div class="idlg-backdrop" onclick="cancelDeleteChat()"></div>
-    <div class="idlg-box">
-      <div class="idlg-title">Chat löschen?</div>
-      <div class="idlg-body">„${escHtml(name)}" wird nur aus <b>deiner</b> Liste entfernt.
-        Nachrichten anderer Teilnehmer bleiben unberührt.</div>
-      <div class="idlg-actions">
-        <button class="idlg-btn-cancel" onclick="cancelDeleteChat()">Abbrechen</button>
-        <button class="idlg-btn-delete" onclick="confirmDeleteChat()">Löschen</button>
-      </div>
-    </div>`;
-  dlg.style.display = 'flex';
-}
-
-function cancelDeleteChat() {
-  const dlg = document.getElementById('inbox-delete-dlg');
-  if (dlg) dlg.style.display = 'none';
-  _pendingDeleteType = null;
-  _pendingDeleteId   = null;
-}
-
-function confirmDeleteChat() {
-  if (!_pendingDeleteType || !_pendingDeleteId) return;
-  _hideChat(_pendingDeleteType, _pendingDeleteId);
-  cancelDeleteChat();
-  // Archiv-Detail neu rendern ohne vollen Reload
-  const detail = document.getElementById('inbox-archive-detail');
-  if (detail) {
-    const remaining = _archivedEvents.filter(e => !_isChatHidden('event', e.id));
-    if (!remaining.length) {
-      detail.remove();
-      document.querySelector('.inbox-archive-row')?.remove();
-    } else {
-      detail.innerHTML =
-        `<div class="inbox-section-label" style="padding-top:12px;">Archiv</div>` +
-        remaining.map(e => _renderEventRow(e, true)).join('');
-      // Badge aktualisieren
-      const badge = document.querySelector('.inbox-archive-badge');
-      if (badge) badge.textContent = remaining.length;
-    }
-  } else {
-    renderInboxChats();
-  }
-}
-
 // ── Datenlader ────────────────────────────────────────────────
 
 async function _loadDmMessages(uid) {
@@ -280,74 +137,6 @@ async function _loadDmMessages(uid) {
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     return data || [];
   } catch(e) { return []; }
-}
-
-async function _loadEventConversations(uid) {
-  let eventIds = [];
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/event_participants?select=event_id&user_id=eq.${uid}`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (Array.isArray(data)) eventIds = data.map(r => r.event_id).filter(Boolean);
-  } catch(e) {}
-
-  // Eigene Mitspieler-Gesuche ergänzen (Creator ohne eigenen Teilnahme-Eintrag)
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/events?select=id&creator_id=eq.${uid}&mode=eq.player_search`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (Array.isArray(data)) data.forEach(r => {
-      if (!eventIds.includes(r.id)) eventIds.push(r.id);
-    });
-  } catch(e) {}
-
-  // Mitspieler-Gesuche ergänzen, in denen der Nutzer mindestens eine Nachricht geschrieben hat
-  try {
-    const msgUrl = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id&user_id=eq.${uid}`;
-    const { data: msgData } = await fetchWithRefresh(msgUrl, { headers: dbHeaders() });
-    if (Array.isArray(msgData)) {
-      const msgEventIds = [...new Set(msgData.map(r => r.event_id).filter(Boolean))];
-      if (msgEventIds.length) {
-        const evUrl = `${SUPABASE_URL}/rest/v1/events?select=id&mode=eq.player_search&id=in.(${msgEventIds.join(',')})`;
-        const { data: psEvData } = await fetchWithRefresh(evUrl, { headers: dbHeaders() });
-        if (Array.isArray(psEvData)) psEvData.forEach(r => {
-          if (!eventIds.includes(r.id)) eventIds.push(r.id);
-        });
-      }
-    }
-  } catch(e) {}
-
-  if (!eventIds.length) return [];
-
-  let events = [];
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/events?select=id,title,mode,event_date&id=in.(${eventIds.join(',')})`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    events = data || [];
-  } catch(e) { return []; }
-
-  // Letzte Nachricht pro Event
-  let lastMsgs = {};
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id,message,created_at,profiles(username,avatar_emoji,avatar_url)&event_id=in.(${eventIds.join(',')})&order=created_at.desc&limit=${eventIds.length * 5}`;
-    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (Array.isArray(data)) data.forEach(m => {
-      if (!lastMsgs[m.event_id]) lastMsgs[m.event_id] = m;
-    });
-  } catch(e) {}
-
-  // Ungelesene Benachrichtigungen aus pendingNotifs
-  const unreadByEvent = {};
-  (typeof pendingNotifs !== 'undefined' ? pendingNotifs : []).forEach(m => {
-    unreadByEvent[m.event_id] = (unreadByEvent[m.event_id] || 0) + 1;
-  });
-
-  return events
-    .map(e => ({ ...e, lastMsg: lastMsgs[e.id] || null, unread: unreadByEvent[e.id] || 0 }))
-    .filter(e => !_isChatHidden('event', e.id))
-    .sort((a, b) => {
-      const ta = a.lastMsg?.created_at || a.event_date || '';
-      const tb = b.lastMsg?.created_at || b.event_date || '';
-      return tb.localeCompare(ta);
-    });
 }
 
 // ── Render-Helfer ─────────────────────────────────────────────
@@ -392,45 +181,6 @@ function _renderDmRow(c, profiles, uid) {
           ${hasNew ? `<span class="inbox-conv-badge">${c.unread > 9 ? '9+' : c.unread}</span>` : ''}
         </div>
       </div>
-    </div>`;
-}
-
-function _renderEventRow(e, deletable = false) {
-  const last   = e.lastMsg;
-  const sender = last?.profiles?.username || '';
-  const prev   = last
-    ? (sender ? sender + ': ' : '') + (last.message.length > 55 ? last.message.slice(0, 55) + '…' : last.message)
-    : 'Noch keine Nachrichten';
-  const time   = last ? _dmTime(last.created_at) : '';
-  const hasNew = e.unread > 0;
-  const avHtml = last?.profiles
-    ? getAvatarHtml(last.profiles, { size: 56 })
-    : `<div class="inbox-event-av">${e.mode === 'player_search' ? '🔍' : '🏓'}</div>`;
-  const title  = escAttr(e.title || 'Spielrunde');
-  const delBtn = deletable ? `
-    <button class="inbox-delete-btn" title="Aus Archiv entfernen"
-      onclick="event.stopPropagation();initDeleteChat('event','${e.id}','${title}')">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-        <path d="M10 11v6"/><path d="M14 11v6"/>
-        <path d="M9 6V4h6v2"/>
-      </svg>
-    </button>` : '';
-  return `
-    <div class="inbox-conv-row${deletable ? ' inbox-conv-row-arch' : ''}" onclick="closeAllSheets();openNotifEvent(${e.id})">
-      <div class="inbox-conv-av">${avHtml}</div>
-      <div class="inbox-conv-body">
-        <div class="inbox-conv-top">
-          <div class="inbox-conv-name${hasNew ? ' inbox-conv-name-bold' : ''}">${escHtml(e.title || 'Spielrunde')}</div>
-          <div class="inbox-conv-time${hasNew ? ' inbox-conv-time-bold' : ''}">${time}</div>
-        </div>
-        <div class="inbox-conv-bottom">
-          <div class="inbox-conv-preview${hasNew ? ' inbox-conv-preview-bold' : ''}">${escHtml(prev)}</div>
-          ${hasNew ? `<span class="inbox-conv-badge">${e.unread > 9 ? '9+' : e.unread}</span>` : ''}
-        </div>
-      </div>
-      ${delBtn}
     </div>`;
 }
 

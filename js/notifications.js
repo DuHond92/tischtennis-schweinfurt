@@ -173,6 +173,8 @@ function renderNotifSheet() {
   body.innerHTML = reportHtml + connHtml + pendingNotifs.slice(0, 20).map(m => {
     const ev      = evMap[m.event_id];
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
+    const isPs    = allPlayerSearches.some(ps => ps.id === m.event_id);
+    const verb    = isPs ? 'hat geantwortet' : 'hat kommentiert';
     const sender  = m.profiles?.username || 'Jemand';
     const emoji   = m.profiles?.avatar_emoji || '';
     const avUrl   = m.profiles?.avatar_url   || '';
@@ -185,7 +187,7 @@ function renderNotifSheet() {
       <div class="notif-item" onclick="openNotifEvent(${m.event_id})">
         <div class="notif-av pp-clickable" ${avClick}>${avHtml}</div>
         <div class="notif-content">
-          <div class="notif-title"><b>${escHtml(sender)}</b> in „${escHtml(evTitle)}"</div>
+          <div class="notif-title"><b>${escHtml(sender)}</b> ${verb} in „${escHtml(evTitle)}"</div>
           <div class="notif-preview">${escHtml(preview)}</div>
           <div class="notif-time">${time}</div>
         </div>
