@@ -98,6 +98,15 @@ body {
   color: rgba(255, 255, 255, 0.55) !important;
 }
 [data-theme="dark"] .leaflet-control-attribution a { color: rgba(255, 255, 255, 0.45) !important; }
+body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-events: none; }
+
+.sheet-map-attr {
+  font-size: 10px;
+  color: var(--text-xdim);
+  text-align: right;
+  padding: 4px 16px 2px;
+}
+.sheet-map-attr a { color: var(--text-xdim); text-decoration: none; }
 
 /* Misc */
 .divider { height: 1px; background: var(--border); }

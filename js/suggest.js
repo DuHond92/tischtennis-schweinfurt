@@ -181,9 +181,44 @@ async function _submitSuggestion() {
   const openingHours = document.getElementById('sug-opening-hours')?.value.trim() || null;
   const accessNote   = document.getElementById('sug-access-note')?.value.trim() || null;
   const uid          = sb.getUserId();
+  const isMod        = currentUser && ['moderator', 'admin'].includes(currentUser.role);
 
   const submitBtn = document.getElementById('sug-submit-btn');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Wird gespeichert…'; }
+
+  if (isMod) {
+    const { error } = await (new QueryBuilder('tables')).insert({
+      name,
+      address:       address || '',
+      lat:           suggestLat,
+      lng:           suggestLng,
+      type,
+      icon:          '🏓',
+      description:   desc || '',
+      tables_count:  count,
+      access_type:   accessType,
+      opening_hours: openingHours,
+      access_note:   accessNote,
+      status:        'approved',
+      source:        'user_suggestion'
+    });
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Absenden'; }
+
+    if (error) {
+      console.error('Table insert error:', error);
+      showToast('Fehler beim Speichern. Bitte erneut versuchen.', '❌');
+      return;
+    }
+
+    _clearSuggestPin();
+    closeAllSheets();
+    showToast('Platte sofort eingetragen!', '✅');
+    await loadTables();
+    if (typeof _applyMapFilters === 'function') _applyMapFilters();
+    if (typeof renderHome === 'function') renderHome();
+    return;
+  }
 
   const qb = new QueryBuilder('table_suggestions');
   const { error } = await qb.insert({

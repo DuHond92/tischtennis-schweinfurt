@@ -82,6 +82,7 @@ function showTableDetail(id) {
     <div class="rate-btn-row">
       <button class="btn btn-secondary btn-full btn-sm" onclick="openRating(${t.id},'${escAttr(t.name)}')">Bewertung abgeben</button>
     </div>
+    <div class="sheet-map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></div>
     <div class="pb-safe"></div>`;
 
   openSheet('table-detail-sheet');

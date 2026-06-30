@@ -53,6 +53,7 @@ function openSheet(id) {
   if(openSheetId) closeAllSheets();
   document.getElementById('overlay').classList.add('open');
   document.getElementById(id).classList.add('open');
+  document.body.classList.add('has-open-sheet');
   openSheetId = id;
 }
 function closeAllSheets() {
@@ -68,6 +69,7 @@ function closeAllSheets() {
   if(ppOv) ppOv.classList.remove('open');
   const dmOv = document.getElementById('dm-overlay');
   if(dmOv) dmOv.classList.remove('open');
+  document.body.classList.remove('has-open-sheet');
   openSheetId = null;
 }
 
