@@ -52,7 +52,7 @@ function showPlayerSearchDetail(psId) {
   // Chat state
   const isReal = allPlayerSearches.some(p => p.id === psId);
   const inputRow = document.getElementById('psd-chat-input-row');
-  document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Lade Antworten…</div>';
+  document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Lade Kommentare…</div>';
 
   openSheet('ps-detail-sheet');
   const psdShareBtn = document.getElementById('psd-share-btn');
@@ -64,7 +64,7 @@ function showPlayerSearchDetail(psId) {
     startPsChatPolling(psId);
     inputRow.style.display = '';
   } else {
-    document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Antworten nur für echte Gesuche verfügbar.</div>';
+    document.getElementById('psd-chat-feed').innerHTML = '<div class="chat-empty">Kommentare nur für echte Gesuche verfügbar.</div>';
     inputRow.style.display = 'none';
   }
 }
@@ -77,51 +77,52 @@ async function loadPsChat(eventId) {
     qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId).order('created_at');
     const {data, error} = await qb.execute();
-    if(error) { el.innerHTML = '<div class="chat-empty">Antworten nicht verfügbar.</div>'; return; }
+    if(error) { el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>'; return; }
     _renderPsChatMessages(data || []);
   } catch(e) {
-    el.innerHTML = '<div class="chat-empty">Antworten nicht verfügbar.</div>';
+    el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>';
   }
 }
 
 function _renderPsChatMessages(messages) {
-  const el  = document.getElementById('psd-chat-feed');
-  if(!el) return;
-  const myId = sb.getUserId();
-  if(!messages.length) {
-    el.innerHTML = '<div class="chat-empty">Noch keine Antworten – schreib als Erster!</div>';
+  const el = document.getElementById('psd-chat-feed');
+  if (!el) return;
+  if (!messages.length) {
+    el.innerHTML = '<div class="chat-empty">Noch keine Kommentare – schreib als Erster!</div>';
     return;
   }
+  const myId  = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   el.innerHTML = messages.map(m => {
-    const isMine = m.user_id === myId;
-    const name   = m.profiles?.username || 'Anonym';
-    const emoji  = m.profiles?.avatar_emoji || '';
-    const uid    = m.user_id || '';
-    const time   = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-    const avUrl   = m.profiles?.avatar_url || '';
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(name)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
-    const avatar  = `<div class="chat-av pp-clickable" ${avClick}>${getAvatarHtml(m.profiles, {size: 32})}</div>`;
-    const preview  = escAttr((m.message || '').slice(0, 80));
-    const showDots = sb.isLoggedIn() && (isMod || !isMine);
-    const dots     = showDots
-      ? `<button class="comment-dot-btn" aria-label="Optionen"
+    const isOwn   = m.user_id === myId;
+    const name    = m.profiles?.username || 'Anonym';
+    const _d      = new Date(m.created_at);
+    const date    = _d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+    const time    = _d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const av      = getAvatarHtml(m.profiles, { size: 34 });
+    const preview = escAttr((m.message || '').slice(0, 80));
+    const showDot = sb.isLoggedIn() && (isMod || !isOwn);
+    const dotBtn  = showDot
+      ? `<button class="comment-dot-btn" aria-label="Kommentaroptionen"
            data-cid="${escAttr(m.id)}"
            data-content-type="event_message"
            data-ctx="ps"
-           data-own="${isMine ? '1' : ''}"
+           data-own="${isOwn ? '1' : ''}"
            data-preview="${preview}"
            onclick="openCommentDotMenu(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>`
       : '';
-    return `<div class="chat-msg ${isMine?'mine':''}">
-      ${avatar}
-      <div class="chat-bubble-wrap">
-        <div class="chat-bubble">${escHtml(m.message)}</div>
-        <div class="chat-msg-meta">${isMine ? 'Du' : escHtml(name)} · ${time}${dots}</div>
+    return `<div class="comment-item">
+      <div class="comment-av">${av}</div>
+      <div class="comment-body">
+        <div class="comment-meta">
+          <span class="comment-author">${escHtml(name)}</span>
+          <span class="comment-date">· ${date} · ${time}</span>
+          ${dotBtn}
+        </div>
+        <div class="comment-text">${escHtml(m.message)}</div>
       </div>
     </div>`;
   }).join('');
-  el.scrollTop = el.scrollHeight;
 }
 
 async function sendPsChatMessage() {

@@ -779,7 +779,9 @@ function _commentItemHtml(c, ctx) {
   const isMod  = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const isOwn  = c.user_id === myId;
   const name   = c.profiles?.username || 'Anonym';
-  const date   = new Date(c.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+  const _d     = new Date(c.created_at);
+  const date   = _d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+  const time   = _d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   const av     = getAvatarHtml(c.profiles, { size: 34 });
   const showDot = sb.isLoggedIn() && (isMod || !isOwn);
   const dotBtn = showDot
@@ -796,7 +798,7 @@ function _commentItemHtml(c, ctx) {
     <div class="comment-body">
       <div class="comment-meta">
         <span class="comment-author">${escHtml(name)}</span>
-        <span class="comment-date">· ${date}</span>
+        <span class="comment-date">· ${date} · ${time}</span>
         ${dotBtn}
       </div>
       <div class="comment-text">${escHtml(c.text)}</div>
@@ -815,14 +817,13 @@ function openCommentDotMenu(btn) {
     preview:     btn.dataset.preview
   };
   const isMod      = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const isMessage  = _cmtMenuData.contentType === 'event_message';
   const reportBtn  = document.getElementById('cmt-action-report');
   const deleteBtn  = document.getElementById('cmt-action-delete');
   const titleEl    = document.getElementById('cmt-action-title');
   const deleteLbl  = document.getElementById('cmt-delete-label');
   const showReport = !_cmtMenuData.isOwn && !isMod;
-  if (titleEl)    titleEl.textContent   = isMessage ? 'Nachricht' : 'Kommentar';
-  if (deleteLbl)  deleteLbl.textContent = isMessage ? 'Nachricht löschen' : 'Kommentar löschen';
+  if (titleEl)    titleEl.textContent   = 'Kommentar';
+  if (deleteLbl)  deleteLbl.textContent = 'Kommentar löschen';
   if (reportBtn)  reportBtn.style.display = showReport ? '' : 'none';
   if (deleteBtn)  deleteBtn.style.display = isMod ? '' : 'none';
   openSheet('cmt-action-sheet');

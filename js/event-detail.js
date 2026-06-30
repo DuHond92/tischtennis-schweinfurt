@@ -197,7 +197,9 @@ function renderChatMessages(messages) {
 function _evtCommentItemHtml(m, myId, isMod) {
   const isOwn  = m.user_id === myId;
   const name   = m.profiles?.username || 'Anonym';
-  const date   = new Date(m.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+  const _d     = new Date(m.created_at);
+  const date   = _d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+  const time   = _d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   const av     = getAvatarHtml(m.profiles, { size: 34 });
   const showDot = sb.isLoggedIn() && (isMod || !isOwn);
   const dotBtn = showDot
@@ -215,7 +217,7 @@ function _evtCommentItemHtml(m, myId, isMod) {
     <div class="comment-body">
       <div class="comment-meta">
         <span class="comment-author">${escHtml(name)}</span>
-        <span class="comment-date">· ${date}</span>
+        <span class="comment-date">· ${date} · ${time}</span>
         ${dotBtn}
       </div>
       <div class="comment-text">${escHtml(m.message)}</div>
