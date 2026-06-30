@@ -278,6 +278,16 @@ async function handleTableImageUpload(input) {
         slider.querySelectorAll('.ds-db-thumb').forEach(el => el.remove());
       }
       await loadTableImages(currentDetailTableId);
+
+      // In-Memory-Daten aktualisieren damit Thumbnails auf Karte + Home sofort stimmen
+      const tableObj = tables.find(t => t.id === currentDetailTableId);
+      if (tableObj) {
+        if (!Array.isArray(tableObj.photos)) tableObj.photos = [];
+        if (!tableObj.photos.includes(imageUrl)) tableObj.photos.push(imageUrl);
+      }
+      if (typeof _applyMapFilters === 'function') _applyMapFilters();
+      if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
+      if (typeof renderHome === 'function') renderHome();
     } else {
       showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
     }
@@ -493,6 +503,15 @@ async function deleteTableImage(slideEl) {
     }
   }
   await loadTableImages(currentDetailTableId);
+
+  // In-Memory-Foto entfernen damit Thumbnails auf Karte + Home sofort stimmen
+  const tableObj = tables.find(t => t.id === currentDetailTableId);
+  if (tableObj && Array.isArray(tableObj.photos)) {
+    tableObj.photos = tableObj.photos.filter(u => u !== imageUrl);
+  }
+  if (typeof _applyMapFilters === 'function') _applyMapFilters();
+  if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
+  if (typeof renderHome === 'function') renderHome();
 }
 
 function _parseCoord(v) {
