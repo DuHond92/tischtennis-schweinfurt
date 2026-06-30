@@ -812,20 +812,80 @@
 .star-sm { font-size: 1.1rem; }
 .star-xs { font-size: 0.85rem; gap: 2px; }
 
-.rating-category {
-  margin-bottom: 14px;
+/* ── Rating Sheet – neu gestaltet ─────────────────────────────── */
+.rating-intro {
+  font-size: 0.82rem; color: var(--text-dim);
+  margin: 12px 0 20px; line-height: 1.5;
 }
+.rating-main-section {
+  text-align: center; padding: 12px 0 22px;
+  border-bottom: 1px solid var(--border);
+}
+.rating-main-stars {
+  justify-content: center; gap: 12px;
+}
+.rating-main-stars .star {
+  font-size: 2.4rem;
+}
+.rating-overall-label {
+  font-size: 0.95rem; font-weight: 800; color: var(--gold);
+  min-height: 1.5em; margin-top: 8px; letter-spacing: 0.3px;
+}
+.rating-req-hint {
+  font-size: 0.78rem; color: var(--text-dim);
+  margin-top: 10px; font-style: italic;
+}
+@keyframes shake-h {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+.stars-shake { animation: shake-h 0.35s ease; }
+
+.rating-details-toggle {
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 0; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border);
+  -webkit-tap-highlight-color: transparent;
+}
+.rating-opt-title {
+  font-size: 0.82rem; font-weight: 700; color: var(--text);
+}
+.rating-opt-badge {
+  font-size: 0.65rem; font-weight: 700; color: var(--text-xdim);
+  background: var(--surface2); border-radius: 20px;
+  padding: 2px 8px; border: 1px solid var(--border);
+}
+.rating-details-chevron {
+  margin-left: auto; color: var(--text-dim); font-size: 1.1rem;
+  transition: transform 0.2s; line-height: 1;
+}
+#rating-details-body {
+  border-bottom: 1px solid var(--border);
+}
+.rating-detail-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rating-detail-row--last { border-bottom: none; }
+.rating-detail-label {
+  font-size: 0.78rem; font-weight: 600; color: var(--text-dim);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+}
+.rating-detail-sublabels {
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: var(--text-xdim);
+  margin-top: 5px; padding: 0 2px;
+}
+
+/* Legacy classes kept for compatibility (display of existing ratings) */
+.rating-category { margin-bottom: 14px; }
 .rating-cat-label {
   font-size: 0.78rem; font-weight: 700; color: var(--text);
   margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
 }
-.rating-cat-opt {
-  font-size: 0.68rem; color: var(--text-xdim);
-  font-weight: 400; margin-left: auto;
-}
-.rating-cat-desc {
-  font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; line-height: 1.4;
-}
+.rating-cat-opt { font-size: 0.68rem; color: var(--text-xdim); font-weight: 400; margin-left: auto; }
+.rating-cat-desc { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px; line-height: 1.4; }
 .rating-labels {
   display: flex; justify-content: space-between;
   font-size: 0.62rem; color: var(--text-xdim); margin-top: 4px;

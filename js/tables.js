@@ -591,21 +591,57 @@ function _pickMapsApp(index) {
 // ── RATINGS ───────────────────────────────────────────────────────
 let currentRatings = { overall: 0, surface: 0, ground: 0, windshield: 0 };
 let currentRatingTableId = null;
+let _currentTableHasRatings = false;
+let _ratingDetailsOpen = false;
+
+const _OVERALL_LABELS = ['', 'schlecht', 'nicht so gut', 'okay', 'gut', 'top!'];
 
 function openRating(tableId, tableName) {
   if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   currentRatingTableId = tableId;
-  document.getElementById('rating-sheet-title').textContent = `⭐ ${tableName} bewerten`;
+
   // Reset
   currentRatings = { overall:0, surface:0, ground:0, windshield:0 };
   ['overall','surface','ground','windshield'].forEach(cat => updateStarDisplay(cat, 0));
   document.getElementById('rating-comment').value = '';
+
+  // Reset dynamic label + hint
+  const labelEl = document.getElementById('rating-overall-label');
+  if (labelEl) labelEl.textContent = '';
+  const hint = document.getElementById('rating-req-hint');
+  if (hint) hint.style.display = 'none';
+
+  // Collapse details
+  _ratingDetailsOpen = false;
+  const detailsBody = document.getElementById('rating-details-body');
+  const chevron = document.getElementById('rating-details-chevron');
+  if (detailsBody) detailsBody.style.display = 'none';
+  if (chevron) chevron.style.transform = '';
+
+  // Reset submit btn
+  const btn = document.getElementById('rating-submit-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Bewertung abgeben'; }
+
   openSheet('rating-sheet');
+}
+
+function _toggleRatingDetails() {
+  _ratingDetailsOpen = !_ratingDetailsOpen;
+  const body    = document.getElementById('rating-details-body');
+  const chevron = document.getElementById('rating-details-chevron');
+  if (body)    body.style.display      = _ratingDetailsOpen ? '' : 'none';
+  if (chevron) chevron.style.transform = _ratingDetailsOpen ? 'rotate(90deg)' : '';
 }
 
 function setRating(category, value) {
   currentRatings[category] = value;
   updateStarDisplay(category, value);
+  if (category === 'overall') {
+    const labelEl = document.getElementById('rating-overall-label');
+    if (labelEl) labelEl.textContent = _OVERALL_LABELS[value] || '';
+    const hint = document.getElementById('rating-req-hint');
+    if (hint) hint.style.display = 'none';
+  }
 }
 
 function updateStarDisplay(category, value) {
@@ -618,11 +654,15 @@ function updateStarDisplay(category, value) {
 
 async function submitRating() {
   if(!currentRatings.overall) {
-    showToast('Bitte mindestens die Gesamtbewertung vergeben ⭐','⚠️');
+    const hint = document.getElementById('rating-req-hint');
+    if (hint) hint.style.display = '';
+    const starsEl = document.getElementById('stars-overall');
+    starsEl?.classList.add('stars-shake');
+    setTimeout(() => starsEl?.classList.remove('stars-shake'), 400);
     return;
   }
-  const btn = document.querySelector('#rating-sheet .btn-primary');
-  btn.disabled = true; btn.textContent = '…';
+  const btn = document.getElementById('rating-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
 
   const payload = {
     table_id:   currentRatingTableId,
@@ -638,15 +678,21 @@ async function submitRating() {
   const qb = new QueryBuilder('ratings');
   const {error} = await qb.upsert(payload, 'table_id,user_id');
 
-  btn.disabled = false; btn.textContent = 'Bewertung abgeben ⭐';
+  if (btn) { btn.disabled = false; btn.textContent = 'Bewertung abgeben'; }
 
   if(error) {
     console.error('Rating error:', JSON.stringify(error));
     showToast('Fehler: ' + (error.message || error.hint || JSON.stringify(error)), '❌');
     return;
   }
+
+  const wasFirst = !_currentTableHasRatings;
   closeAllSheets();
-  showToast('⭐ Bewertung gespeichert! Danke!','⭐');
+  if (wasFirst) {
+    showToast('Du hast die erste Bewertung für diese Platte abgegeben!');
+  } else {
+    showToast('Danke! Deine Bewertung hilft der Community.');
+  }
   await loadRatingsForTable(currentRatingTableId);
 }
 
@@ -665,6 +711,7 @@ async function loadRatingsForTable(tableId) {
 }
 
 function renderRatingSummary(tableId, r, tableName) {
+  _currentTableHasRatings = !!(r && r.rating_count > 0);
   const inlineEl  = document.getElementById(`tds-rating-${tableId}`);
   const rateBtnRow = document.querySelector('.rate-btn-row');
   if(inlineEl) {

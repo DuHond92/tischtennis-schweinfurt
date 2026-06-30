@@ -855,97 +855,82 @@
 <div class="bottom-sheet" id="rating-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="rating-sheet-title">⭐ Platte bewerten</div>
+    <div class="sheet-title">Wie war die Platte?</div>
     <span class="sheet-close" onclick="closeAllSheets()">×</span>
   </div>
-  <div class="sheet-body">
+  <div class="sheet-body" style="padding:0 20px 0;">
 
-    <!-- Gesamtbewertung (Pflicht) -->
-    <div class="rating-category">
-      <div class="rating-cat-label">
-        ⭐ Gesamtbewertung
-        <span style="font-size:0.68rem;color:var(--accent);font-weight:700;">Pflicht</span>
-      </div>
-      <div class="star-rating" id="stars-overall">
+    <p class="rating-intro">Hilf anderen Spielern, gute Platten zu finden. Dauert 10 Sekunden.</p>
+
+    <!-- Gesamtbewertung (Pflicht) – groß und zentriert -->
+    <div class="rating-main-section">
+      <div class="star-rating rating-main-stars" id="stars-overall">
         <span class="star" onclick="setRating('overall',1)">★</span>
         <span class="star" onclick="setRating('overall',2)">★</span>
         <span class="star" onclick="setRating('overall',3)">★</span>
         <span class="star" onclick="setRating('overall',4)">★</span>
         <span class="star" onclick="setRating('overall',5)">★</span>
       </div>
+      <div class="rating-overall-label" id="rating-overall-label"></div>
+      <div class="rating-req-hint" id="rating-req-hint" style="display:none;">Bitte vergib zuerst eine Gesamtbewertung.</div>
     </div>
 
-    <div class="divider" style="margin:12px 0 16px;"></div>
-    <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:12px;">Optional – hilft anderen Spielern:</div>
-
-    <!-- Tischoberfläche -->
-    <div class="rating-category">
-      <div class="rating-cat-label">
-        🏓 Tischoberfläche
-        <span class="rating-cat-opt">optional</span>
-      </div>
-      <div class="rating-cat-desc">Wie ist der Zustand der Tischoberfläche?</div>
-      <div class="star-rating star-sm" id="stars-surface">
-        <span class="star star-sm" onclick="setRating('surface',1)">★</span>
-        <span class="star star-sm" onclick="setRating('surface',2)">★</span>
-        <span class="star star-sm" onclick="setRating('surface',3)">★</span>
-        <span class="star star-sm" onclick="setRating('surface',4)">★</span>
-        <span class="star star-sm" onclick="setRating('surface',5)">★</span>
-      </div>
-      <div class="rating-labels">
-        <span>mangelhaft</span><span>schlecht</span><span>okay</span><span>gut</span><span>sehr gut</span>
-      </div>
+    <!-- Details (einklappbar) -->
+    <div class="rating-details-toggle" onclick="_toggleRatingDetails()" role="button" tabindex="0"
+         onkeydown="if(event.key==='Enter'||event.key===' ')_toggleRatingDetails()">
+      <span class="rating-opt-title">Details bewerten</span>
+      <span class="rating-opt-badge">optional</span>
+      <span class="rating-details-chevron" id="rating-details-chevron">›</span>
     </div>
-
-    <!-- Untergrund -->
-    <div class="rating-category">
-      <div class="rating-cat-label">
-        🌿 Untergrund
-        <span class="rating-cat-opt">optional</span>
+    <div id="rating-details-body" style="display:none;">
+      <div class="rating-detail-row">
+        <div class="rating-detail-label">🏓 Tischoberfläche</div>
+        <div class="star-rating" id="stars-surface">
+          <span class="star star-sm" onclick="setRating('surface',1)">★</span>
+          <span class="star star-sm" onclick="setRating('surface',2)">★</span>
+          <span class="star star-sm" onclick="setRating('surface',3)">★</span>
+          <span class="star star-sm" onclick="setRating('surface',4)">★</span>
+          <span class="star star-sm" onclick="setRating('surface',5)">★</span>
+        </div>
+        <div class="rating-detail-sublabels"><span>schlecht</span><span>okay</span><span>sehr gut</span></div>
       </div>
-      <div class="rating-cat-desc">Wie ist die Umgebung? Sand, Kies, Beton, sauber?</div>
-      <div class="star-rating star-sm" id="stars-ground">
-        <span class="star star-sm" onclick="setRating('ground',1)">★</span>
-        <span class="star star-sm" onclick="setRating('ground',2)">★</span>
-        <span class="star star-sm" onclick="setRating('ground',3)">★</span>
-        <span class="star star-sm" onclick="setRating('ground',4)">★</span>
-        <span class="star star-sm" onclick="setRating('ground',5)">★</span>
+      <div class="rating-detail-row">
+        <div class="rating-detail-label">🌿 Untergrund</div>
+        <div class="star-rating" id="stars-ground">
+          <span class="star star-sm" onclick="setRating('ground',1)">★</span>
+          <span class="star star-sm" onclick="setRating('ground',2)">★</span>
+          <span class="star star-sm" onclick="setRating('ground',3)">★</span>
+          <span class="star star-sm" onclick="setRating('ground',4)">★</span>
+          <span class="star star-sm" onclick="setRating('ground',5)">★</span>
+        </div>
+        <div class="rating-detail-sublabels"><span>schlecht</span><span>okay</span><span>sehr gut</span></div>
       </div>
-      <div class="rating-labels">
-        <span>mangelhaft</span><span>schlecht</span><span>okay</span><span>gut</span><span>sehr gut</span>
-      </div>
-    </div>
-
-    <!-- Windschutz -->
-    <div class="rating-category">
-      <div class="rating-cat-label">
-        💨 Windschutz
-        <span class="rating-cat-opt">optional</span>
-      </div>
-      <div class="rating-cat-desc">Wie windgeschützt ist die Platte?</div>
-      <div class="star-rating star-sm" id="stars-windshield">
-        <span class="star star-sm" onclick="setRating('windshield',1)">★</span>
-        <span class="star star-sm" onclick="setRating('windshield',2)">★</span>
-        <span class="star star-sm" onclick="setRating('windshield',3)">★</span>
-        <span class="star star-sm" onclick="setRating('windshield',4)">★</span>
-        <span class="star star-sm" onclick="setRating('windshield',5)">★</span>
-      </div>
-      <div class="rating-labels">
-        <span>gar nicht</span><span>wenig</span><span>okay</span><span>gut</span><span>perfekt</span>
+      <div class="rating-detail-row rating-detail-row--last">
+        <div class="rating-detail-label">💨 Windschutz</div>
+        <div class="star-rating" id="stars-windshield">
+          <span class="star star-sm" onclick="setRating('windshield',1)">★</span>
+          <span class="star star-sm" onclick="setRating('windshield',2)">★</span>
+          <span class="star star-sm" onclick="setRating('windshield',3)">★</span>
+          <span class="star star-sm" onclick="setRating('windshield',4)">★</span>
+          <span class="star star-sm" onclick="setRating('windshield',5)">★</span>
+        </div>
+        <div class="rating-detail-sublabels"><span>gar nicht</span><span>okay</span><span>perfekt</span></div>
       </div>
     </div>
 
     <!-- Kommentar -->
-    <div class="form-group">
-      <label class="form-label">Kommentar <span style="color:var(--text-xdim);font-weight:400;">optional</span></label>
+    <div class="form-group" style="margin-top:18px;">
+      <label class="form-label">Dein Tipp für andere Spieler <span class="rating-opt-badge">optional</span></label>
       <textarea class="form-textarea" id="rating-comment"
-        placeholder="z.B. Netz ist gut erhalten, Boden etwas rutschig nach Regen…"
-        style="min-height:70px;"></textarea>
+        placeholder="z. B. Netz gut erhalten, Boden rutschig nach Regen, abends viel Schatten…"
+        rows="3" style="min-height:72px;resize:none;"></textarea>
     </div>
 
-    <button class="btn btn-primary btn-full" onclick="submitRating()">
-      Bewertung abgeben ⭐
-    </button>
+    <div style="padding-bottom:max(24px,env(safe-area-inset-bottom));">
+      <button class="btn btn-primary btn-full" id="rating-submit-btn" onclick="submitRating()">
+        Bewertung abgeben
+      </button>
+    </div>
   </div>
 </div>
 
