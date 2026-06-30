@@ -194,7 +194,7 @@ function openCreateEventSheet() {
   document.querySelector('#create-event-sheet .sheet-title').textContent = 'Spiel organisieren';
   document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren 🏓';
   document.getElementById('ev-name').value  = '';
-  document.getElementById('ev-date').value  = '';
+  document.getElementById('ev-date').value  = new Date().toISOString().slice(0, 10);
   document.getElementById('ev-time').value  = '15:00';
   document.getElementById('ev-mode').value  = 'casual';
   const evDesc = document.getElementById('ev-desc');

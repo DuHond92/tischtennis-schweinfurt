@@ -13,6 +13,10 @@ function renderProfile() {
   if (loggedView) loggedView.style.display = '';
   _renderSetupHint(currentUser);
 
+  // Benachrichtigungen-Toggle: Zustand aus localStorage wiederherstellen
+  const notifToggle = document.getElementById('notif-toggle');
+  if (notifToggle) notifToggle.checked = localStorage.getItem('tt_notifs_enabled') !== '0';
+
   // Avatar & Name
   updateProfileAvatarEl(currentUser);
   document.querySelector('.profile-name').textContent = currentUser.username || 'Spieler';

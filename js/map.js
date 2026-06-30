@@ -586,6 +586,9 @@ function renderMapList(list) {
   const c = document.getElementById('map-list-container');
   if (!c) return;
 
+  const titleEl = document.getElementById('map-sheet-title');
+  if (titleEl) titleEl.textContent = `${list.length} Platte${list.length !== 1 ? 'n' : ''}`;
+
   if(!list.length) {
     c.innerHTML = `<div class="map-list-empty">Keine Platten gefunden.<br><span style="font-size:0.8rem;color:var(--text-xdim);">Filter anpassen oder Suche leeren.</span></div>`;
     return;

@@ -55,6 +55,14 @@ function renderHomeActivities() {
   if (!container) return;
   if (!sb.isLoggedIn() || !currentUser) { container.innerHTML = ''; return; }
 
+  if (!window._eventsLoaded) {
+    container.innerHTML = `<div class="home-act-section">
+      <div class="home-act-head"><div class="home-act-headrow"><span class="home-act-headtitle">Deine Aktivitäten</span></div></div>
+      <div class="skeleton-card"></div><div class="skeleton-card" style="opacity:0.6"></div>
+    </div>`;
+    return;
+  }
+
   const myEvents   = getMyActiveEvents();
   const myRequests = getMyActiveRequests();
   const total      = myEvents.length + myRequests.length;
@@ -128,9 +136,11 @@ function renderHome() {
   initWelcomeCard();
 
   // Begrüßung personalisieren
-  if(currentUser) {
-    document.querySelector('.hero-greeting').textContent =
-      `Hallo, ${currentUser.username}! 👋`;
+  const greetEl = document.querySelector('.hero-greeting');
+  if (greetEl) {
+    greetEl.textContent = currentUser
+      ? `Hallo, ${currentUser.username}! 👋`
+      : 'Willkommen! 👋';
   }
 
   // Action-Card Icons einmalig befüllen

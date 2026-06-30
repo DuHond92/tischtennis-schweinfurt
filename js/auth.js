@@ -25,7 +25,7 @@ function checkPwStrength(input) {
   if (!list) return;
   list.style.display = val.length ? '' : 'none';
   const rules = {
-    len:   val.length >= 8,
+    len:   val.length >= 6,
     upper: /[A-Z]/.test(val),
     num:   /[0-9]/.test(val)
   };

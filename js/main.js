@@ -41,6 +41,7 @@ window.addEventListener('load', async () => {
       if (typeof checkDmNotifications === 'function') checkDmNotifications();
     }
     // UI mit echten Daten aktualisieren
+    window._eventsLoaded = true;
     renderHome();
     renderEvents(currentFilter);
     // Select-Optionen befüllen
@@ -66,6 +67,9 @@ window.addEventListener('load', async () => {
     }
   } catch(e) {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
+    window._eventsLoaded = true;
+    renderEvents(currentFilter);
+    showToast('Offline – Inhalte könnten veraltet sein', '⚠️');
   }
 
   // 3. OSM-Platten im Hintergrund laden — blockiert weder Events noch Home

@@ -12,6 +12,10 @@ async function checkNotifications() {
     pendingNotifs = [];
     return;
   }
+  if (localStorage.getItem('tt_notifs_enabled') === '0') {
+    hideNotifBadge();
+    return;
+  }
   const userId = sb.getUserId();
 
   // 1. Events wo User Creator ist
@@ -91,6 +95,17 @@ function showNotifBadge(count) {
 function hideNotifBadge() {
   const dot = document.getElementById('notif-badge');
   if(dot) dot.style.display = 'none';
+}
+
+// ── Benachrichtigungen ein/ausschalten ───────────────────────────
+function toggleNotifications(enabled) {
+  localStorage.setItem('tt_notifs_enabled', enabled ? '1' : '0');
+  if (!enabled) {
+    pendingNotifs = [];
+    hideNotifBadge();
+  } else {
+    checkNotifications();
+  }
 }
 
 // ── Als gesehen markieren ────────────────────────────────────────
