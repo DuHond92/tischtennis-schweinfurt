@@ -10,8 +10,16 @@ function togglePwVisibility(btn) {
   btn.innerHTML = ic(show ? 'eye-off' : 'eye', 18);
 }
 
+function _authEnter(e) {
+  if (e.key !== 'Enter') return;
+  if (authMode === 'reset')        sendPasswordReset();
+  else if (authMode === 'new-password') submitNewPassword();
+  else                              submitAuth();
+}
+
 function checkCapsLock(e, input) {
-  if (navigator.maxTouchPoints > 1) return; // keine Caps-Hinweise auf Touch-Geräten
+  if (e.key === 'Enter') { _authEnter(e); return; }
+  if (navigator.maxTouchPoints > 1) return;
   const hintId = input.id === 'auth-pw' ? 'caps-hint-login' : 'caps-hint-reg';
   const hint = document.getElementById(hintId);
   if (!hint) return;
@@ -53,7 +61,7 @@ function setAuthMode(mode) {
   document.getElementById('auth-tabs').style.display            = isStandard                ? 'flex'  : 'none';
 
   // Titel
-  const titles = { login: `${ic('user',18)} Anmelden`, register: '🏓 Registrieren',
+  const titles = { login: 'Anmelden', register: 'Registrieren',
                    reset: '🔑 Passwort zurücksetzen', 'new-password': '🔑 Neues Passwort' };
   document.getElementById('auth-sheet-title').innerHTML = titles[mode] || titles.login;
 

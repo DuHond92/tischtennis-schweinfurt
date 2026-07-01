@@ -72,7 +72,7 @@ function getConnectionButtonHtml(otherUserId) {
     const pnm = escAttr(_ppCurrentUserName || '');
     const pem = escAttr(_ppCurrentUserEmoji || '');
     const pur = escAttr(_ppCurrentUserUrl  || '');
-    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">💬 Nachricht schreiben</button>
+    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',16)} Nachricht schreiben</button>
 <button class="btn btn-secondary btn-full conn-accepted" onclick="removeConnection('${cid}','${oid}')">🤝 Spielpartner ✓ <span class="pp-soon">(entfernen)</span></button>`;
   }
 
@@ -254,7 +254,7 @@ async function renderSpielpartnerSection() {
     } catch(e) {}
   }
 
-  const skillMap = { anfaenger: '🐣 Anfänger', fortgeschritten: '🏓 Fortgeschritten', profi: '⚡ Profi' };
+  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
 
   function profileRow(conn, otherId, actionHtml) {
     const p   = profiles[otherId] || { id: otherId, username: 'Spieler', avatar_emoji: '', skill_level: '' };
@@ -284,7 +284,7 @@ async function renderSpielpartnerSection() {
       const oid = escAttr(otherId);
       return profileRow(c, otherId,
         `<div style="display:flex;gap:6px;">
-          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}','${pur}')">💬</button>
+          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',15)}</button>
           <button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>
         </div>`
       );

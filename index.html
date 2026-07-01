@@ -510,7 +510,7 @@
   <div class="sheet-body">
     <div class="form-group">
       <label class="form-label">Name der Spielrunde</label>
-      <input class="form-input" placeholder="z.B. Casual Runde für alle" id="ev-name">
+      <input class="form-input" placeholder="z.B. Casual Runde für alle" id="ev-name" onkeydown="if(event.key==='Enter')submitCreateEvent()">
     </div>
     <div class="form-group">
       <label class="form-label">Platte</label>
@@ -635,12 +635,12 @@
 
     <div class="pe-field">
       <div class="pe-field-label">Spielername</div>
-      <input class="pe-field-input" id="edit-name" type="text" placeholder="z. B. MichaTT" autocomplete="off">
+      <input class="pe-field-input" id="edit-name" type="text" placeholder="z. B. MichaTT" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
     </div>
 
     <div class="pe-field">
       <div class="pe-field-label">Wohnort</div>
-      <input class="pe-field-input" id="edit-city" type="text" list="pe-city-list" placeholder="z. B. Schweinfurt" autocomplete="off">
+      <input class="pe-field-input" id="edit-city" type="text" list="pe-city-list" placeholder="z. B. Schweinfurt" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
       <datalist id="pe-city-list">
         <option value="Schweinfurt"><option value="Gartenstadt"><option value="Bergl">
         <option value="Innenstadt"><option value="Maintal"><option value="Deutschhof">
@@ -654,7 +654,7 @@
 
     <div class="pe-field">
       <div class="pe-field-label">Verein</div>
-      <input class="pe-field-input" id="edit-club" type="text" list="pe-club-list" placeholder="z. B. DJK Schweinfurt" autocomplete="off">
+      <input class="pe-field-input" id="edit-club" type="text" list="pe-club-list" placeholder="z. B. DJK Schweinfurt" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
       <datalist id="pe-club-list">
         <option value="Kein Verein"><option value="DJK Schweinfurt">
         <option value="TSV Schonungen"><option value="TTC Niederwerrn">
@@ -705,11 +705,11 @@
 
     <div class="pe-field">
       <div class="pe-field-label">Neues Passwort</div>
-      <input class="pe-field-input" id="edit-pw-new" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password">
+      <input class="pe-field-input" id="edit-pw-new" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" onkeydown="if(event.key==='Enter')changePassword()">
     </div>
     <div class="pe-field">
       <div class="pe-field-label">Passwort bestätigen</div>
-      <input class="pe-field-input" id="edit-pw-confirm" type="password" placeholder="Passwort wiederholen" autocomplete="new-password">
+      <input class="pe-field-input" id="edit-pw-confirm" type="password" placeholder="Passwort wiederholen" autocomplete="new-password" onkeydown="if(event.key==='Enter')changePassword()">
     </div>
     <button class="pe-pw-btn" id="edit-pw-btn" onclick="changePassword()">Passwort ändern</button>
 
@@ -754,7 +754,7 @@
     <div id="auth-login-fields">
       <div class="form-group">
         <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de">
+        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
       </div>
       <div class="form-group">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -774,11 +774,11 @@
     <div id="auth-reg-fields" style="display:none;">
       <div class="form-group">
         <label class="form-label">Spielername</label>
-        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname">
+        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname" onkeydown="_authEnter(event)">
       </div>
       <div class="form-group">
         <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de">
+        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
       </div>
       <div class="form-group">
         <label class="form-label">Passwort</label>
@@ -803,7 +803,7 @@
       </p>
       <div class="form-group">
         <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-reset-email" placeholder="deine@email.de">
+        <input class="form-input" type="email" id="auth-reset-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
       </div>
       <button class="btn btn-primary btn-full" id="auth-reset-btn" onclick="sendPasswordReset()">Reset-Link senden</button>
       <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
@@ -817,14 +817,14 @@
       <div class="form-group">
         <label class="form-label">Neues Passwort (min. 6 Zeichen)</label>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••">
+          <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••" onkeydown="_authEnter(event)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Passwort bestätigen</label>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••">
+          <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••" onkeydown="_authEnter(event)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
       </div>
@@ -1231,11 +1231,11 @@
     <div class="sug-step-title">Schritt 2 von 2 — Details</div>
     <div class="form-group">
       <label class="form-label">Name *</label>
-      <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off">
+      <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off" onkeydown="if(event.key==='Enter')suggestNextStep()">
     </div>
     <div class="form-group">
       <label class="form-label">Adresse (optional)</label>
-      <input class="form-input" id="sug-address" type="text" placeholder="Straße, Ort" autocomplete="off">
+      <input class="form-input" id="sug-address" type="text" placeholder="Straße, Ort" autocomplete="off" onkeydown="if(event.key==='Enter')suggestNextStep()">
     </div>
     <div class="form-group">
       <label class="form-label">Typ</label>
@@ -1275,11 +1275,11 @@
     </div>
     <div class="form-group">
       <label class="form-label">Öffnungszeiten (optional)</label>
-      <input class="form-input" id="sug-opening-hours" type="text" placeholder="z. B. Mo–Fr 08:00–18:00">
+      <input class="form-input" id="sug-opening-hours" type="text" placeholder="z. B. Mo–Fr 08:00–18:00" onkeydown="if(event.key==='Enter')suggestNextStep()">
     </div>
     <div class="form-group">
       <label class="form-label">Hinweis zur Zugänglichkeit (optional)</label>
-      <input class="form-input" id="sug-access-note" type="text" placeholder="z. B. Schulhof abends abgeschlossen">
+      <input class="form-input" id="sug-access-note" type="text" placeholder="z. B. Schulhof abends abgeschlossen" onkeydown="if(event.key==='Enter')suggestNextStep()">
     </div>
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-secondary" style="flex:0 0 auto;" onclick="suggestPrevStep()">← Zurück</button>

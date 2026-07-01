@@ -97,9 +97,9 @@ function renderPlayerProfileData(profile) {
 
   // Spielniveau
   const skillMap = {
-    anfaenger:     '🐣 Anfänger',
-    fortgeschritten:'🏓 Fortgeschritten',
-    profi:         '⚡ Profi'
+    anfaenger:      'Anfänger',
+    fortgeschritten: 'Fortgeschritten',
+    profi:           'Profi'
   };
   const skillText = profile.skill_level ? skillMap[profile.skill_level] : null;
 
