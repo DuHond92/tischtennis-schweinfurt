@@ -478,7 +478,7 @@
     <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body" style="display:flex;flex-direction:column;gap:12px;padding:8px 20px 28px;">
-    <button class="choice-card choice-card--primary" onclick="closeAllSheets();openSheet('mitspieler-sheet')">
+    <button class="choice-card choice-card--primary" onclick="closeAllSheets();openMitspielerSheet()">
       <div class="choice-card-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
@@ -567,6 +567,25 @@
   </div>
   <div class="sheet-body">
     <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:20px;">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
+
+    <!-- Wo suchst du? (Pflicht) -->
+    <div class="form-group">
+      <label class="form-label">Wo suchst du? <span style="color:var(--primary);font-size:0.75rem;font-weight:400;">Pflicht</span></label>
+      <div class="psr-input-wrap">
+        <input class="psr-input" id="ms-loc-input" type="search" autocomplete="off" inputmode="search"
+               placeholder="z. B. Schweinfurt, Innenstadt, PLZ…"
+               oninput="_msSearchInput(this.value)"
+               onkeydown="_msSearchKey(event)">
+        <button class="psr-input-clear" id="ms-loc-clear" onclick="_msClearSearch()" style="display:none" aria-label="Löschen">×</button>
+      </div>
+      <div class="psr-dropdown" id="ms-loc-dropdown"></div>
+      <button class="psr-loc-use-btn" style="margin-top:8px;" onclick="_msUseCurrentLocation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        Aktuellen Standort verwenden
+      </button>
+      <div id="ms-loc-status" class="psr-location-status" style="margin-top:6px;"></div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Spielart</label>
       <select class="form-select" id="ms-spielart">
@@ -587,10 +606,10 @@
       <div class="form-group">
         <label class="form-label">Umkreis</label>
         <select class="form-select" id="ms-umkreis">
-          <option>2 km</option>
-          <option>5 km</option>
-          <option>10 km</option>
-          <option>Egal</option>
+          <option value="2">2 km</option>
+          <option value="5" selected>5 km</option>
+          <option value="10">10 km</option>
+          <option value="25">25 km</option>
         </select>
       </div>
     </div>
@@ -601,6 +620,60 @@
     <button class="btn btn-primary btn-full" id="ms-submit-btn" onclick="submitMitspieler()">
       👥 Veröffentlichen
     </button>
+  </div>
+</div>
+
+<!-- UMKREIS WÄHLEN SHEET -->
+<div class="bottom-sheet" id="ps-radius-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Umkreis wählen</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="sheet-body">
+
+    <!-- Ort / Adresse -->
+    <div class="psr-section">
+      <div class="psr-label">Ort oder Adresse</div>
+      <div class="psr-input-wrap">
+        <input class="psr-input" id="psr-search-input" type="search" autocomplete="off" inputmode="search"
+               placeholder="z. B. Würzburg, Sanderau oder 97421 Schweinfurt"
+               oninput="_psSearchInput(this.value)"
+               onkeydown="_psSearchKey(event)">
+        <button class="psr-input-clear" id="psr-clear" onclick="_psClearSearch()" style="display:none" aria-label="Eingabe löschen">×</button>
+      </div>
+      <div class="psr-dropdown" id="psr-dropdown"></div>
+    </div>
+
+    <!-- Oder aktuellen Standort -->
+    <div class="psr-or-row">
+      <span class="psr-or-line"></span>
+      <span class="psr-or-text">oder</span>
+      <span class="psr-or-line"></span>
+    </div>
+    <button class="psr-loc-use-btn" onclick="_psUseCurrentLocation()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      Aktuellen Standort verwenden
+    </button>
+
+    <!-- Aktiver Suchort-Status -->
+    <div id="psr-location-status" class="psr-location-status"></div>
+
+    <!-- Umkreis-Chips -->
+    <div class="psr-section" style="margin-top:20px;">
+      <div class="psr-label">Umkreis</div>
+      <div class="radius-chips">
+        <button class="radius-chip" data-km="1" onclick="setPsRadius(1)">1 km</button>
+        <button class="radius-chip" data-km="3" onclick="setPsRadius(3)">3 km</button>
+        <button class="radius-chip active" data-km="5" onclick="setPsRadius(5)">5 km</button>
+        <button class="radius-chip" data-km="10" onclick="setPsRadius(10)">10 km</button>
+        <button class="radius-chip" data-km="25" onclick="setPsRadius(25)">25 km</button>
+        <button class="radius-chip" data-km="50" onclick="setPsRadius(50)">50 km</button>
+      </div>
+    </div>
+
+    <div id="psr-validation" class="psr-validation" style="display:none"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="applyPsRadius()">Ergebnisse anzeigen</button>
   </div>
 </div>
 

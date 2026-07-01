@@ -191,22 +191,46 @@ function renderHome() {
 function renderHomePsSection() {
   const container = document.getElementById('home-ps-section');
   if(!container) return;
-  if(!allPlayerSearches.length) {
-    container.innerHTML = '';
+  if(!allPlayerSearches.length) { container.innerHTML = ''; return; }
+
+  const radius = (typeof _psRadius !== 'undefined') ? _psRadius : 5;
+  const { list: filtered, noLocation } = (typeof _psGetFiltered === 'function')
+    ? _psGetFiltered(allPlayerSearches)
+    : { list: allPlayerSearches, noLocation: true };
+
+  const countBadge = filtered.length > 0
+    ? ` <span class="ps-count-chip" style="margin-left:5px;vertical-align:middle;">${filtered.length}</span>`
+    : '';
+
+  const headerHtml = `
+    <div class="section-header">
+      <div class="section-title">Mitspieler gesucht${countBadge}</div>
+      <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
+    </div>`;
+
+  const chipLabel = (typeof _psChipLabel === 'function') ? _psChipLabel() : `Umkreis: ${radius} km`;
+  const radiusChip = `<div class="hps-filter-line">
+    <button class="hps-radius-chip-btn" onclick="openPsRadiusSheet()">${ic('pin', 11)} ${chipLabel} ▾</button>
+  </div>`;
+
+  if (!filtered.length) {
+    container.innerHTML = `${headerHtml}
+      <div class="hps-filter-line">
+        <button class="hps-radius-chip-btn" onclick="openPsRadiusSheet()">${ic('pin', 11)} ${chipLabel} ▾</button>
+        <span class="hps-empty-note">Keine Gesuche gefunden</span>
+      </div>`;
     return;
   }
-  const first = allPlayerSearches[0];
+
+  const first = filtered[0];
   const avHtml = getAvatarHtml({ avatar_emoji: first.avatarEmoji, avatar_url: first.avatarUrl, username: first.username }, { size: 36 });
+  const dist = (typeof _psDist === 'function') ? _psDist(first) : null;
   const metaParts = [];
-  if(first.umkreis && first.umkreis !== 'Egal') metaParts.push(first.umkreis + ' Umkreis');
-  if(first.wann && first.wann !== 'Egal') metaParts.push(first.wann);
-  const extraCount = allPlayerSearches.length - 1;
+  if (dist != null) metaParts.push(`~${(Math.round(dist / 100) / 10).toFixed(1)} km`);
+  if (first.wann && first.wann !== 'Egal') metaParts.push(first.wann);
+
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}',null,'${escAttr(first.avatarUrl||'')}')`;
-  container.innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Mitspieler gesucht</div>
-      <a class="section-link" onclick="activateMitspielerFilter()">Alle ansehen →</a>
-    </div>
+  container.innerHTML = `${headerHtml}${radiusChip}
     <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">
       <div class="hpsc-left">
         <div class="hpsc-av pp-clickable" onclick="${profileClick}">${avHtml}</div>
@@ -214,11 +238,10 @@ function renderHomePsSection() {
           <div class="hpsc-name pp-clickable" onclick="${profileClick}">${escHtml(first.username || 'Spieler')}</div>
           <div class="hpsc-type">${gameTypePill(first.spielart)}</div>
           ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
+          ${first.message ? `<div class="hpsc-msg">${escHtml(first.message.length > 55 ? first.message.slice(0,55)+'…' : first.message)}</div>` : ''}
         </div>
       </div>
-      ${extraCount > 0
-        ? `<span class="hpsc-more">+${extraCount} weitere</span>`
-        : `<span class="hpsc-chevron">›</span>`}
+      <span class="hpsc-chevron">›</span>
     </div>`;
 }
 

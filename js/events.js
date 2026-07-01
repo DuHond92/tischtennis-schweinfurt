@@ -3,6 +3,237 @@
 // ╚══════════════════════════════════════════════════════════════╝
 let _psCollapsed    = false;
 let _gamesCollapsed = false;
+// ── Radius / Suchzentrum – State ──────────────────────────────────
+let _psRadius      = parseInt(localStorage.getItem('tt_ps_radius') || '5');
+let _psSearchLat   = parseFloat(localStorage.getItem('tt_ps_lat')  || '') || null;
+let _psSearchLng   = parseFloat(localStorage.getItem('tt_ps_lng')  || '') || null;
+let _psSearchLabel = localStorage.getItem('tt_ps_label') || '';
+let _psSearchType  = localStorage.getItem('tt_ps_type')  || ''; // 'manual_place' | 'current_location' | ''
+
+let _psGeoTimer = null;
+let _psGeoItems = [];
+
+// ── Standort-State für das Erstell-Formular (getrennt vom Filter) ─
+let _msFormLat = null, _msFormLng = null, _msFormLabel = '';
+let _msGeoTimer = null, _msGeoItems = [];
+
+// Liefert das aktive Suchzentrum (manuell oder GPS)
+function _psCenter() {
+  if (_psSearchLat && _psSearchLng) return { lat: _psSearchLat, lng: _psSearchLng };
+  if (typeof userLat !== 'undefined' && userLat && userLng) return { lat: userLat, lng: userLng };
+  return null;
+}
+
+function _psDist(ps) {
+  if (ps.lat == null || ps.lng == null) return null;
+  const c = _psCenter();
+  if (!c) return null;
+  return calcDistance(c.lat, c.lng, ps.lat, ps.lng);
+}
+
+function _psGetFiltered(src) {
+  const c = _psCenter();
+  if (!c) return { list: src, filteredOut: 0, noLocation: true };
+
+  const withCoords    = src.filter(ps => ps.lat != null && ps.lng != null);
+  const withoutCoords = src.filter(ps => ps.lat == null || ps.lng == null);
+  const inRadius      = withCoords.filter(ps => (_psDist(ps) || Infinity) <= _psRadius * 1000);
+
+  inRadius.sort((a, b) => (_psDist(a) || 0) - (_psDist(b) || 0));
+
+  // Wenn Zentrum aktiv: NUR Gesuche im Radius zeigen — ortslose Gesuche ausschließen
+  return {
+    list: inRadius,
+    filteredOut: withCoords.length - inRadius.length,
+    noCoords: withoutCoords.length,
+    noLocation: false
+  };
+}
+
+// Chip-Beschriftung für Home- und Gesuche-Seite
+function _psChipLabel() {
+  if (_psSearchType === 'manual_place' && _psSearchLabel) {
+    const short = _psSearchLabel.length > 14 ? _psSearchLabel.slice(0, 14) + '…' : _psSearchLabel;
+    return `${short} · ${_psRadius} km`;
+  }
+  return `Umkreis: ${_psRadius} km`;
+}
+
+// ── Radius-Sheet öffnen ───────────────────────────────────────────
+function openPsRadiusSheet() {
+  const input = document.getElementById('psr-search-input');
+  const clear  = document.getElementById('psr-clear');
+  const dd     = document.getElementById('psr-dropdown');
+  if (input) {
+    input.value = (_psSearchType === 'manual_place' && _psSearchLabel) ? _psSearchLabel : '';
+    if (clear) clear.style.display = input.value ? '' : 'none';
+  }
+  if (dd) { dd.innerHTML = ''; dd.classList.remove('open'); }
+  _psGeoItems = [];
+
+  _psUpdateLocationStatus();
+
+  document.querySelectorAll('.radius-chip').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.km) === _psRadius);
+  });
+  const v = document.getElementById('psr-validation');
+  if (v) v.style.display = 'none';
+
+  openSheet('ps-radius-sheet');
+}
+
+function _psUpdateLocationStatus() {
+  const el = document.getElementById('psr-location-status');
+  if (!el) return;
+  const hasGps = typeof userLat !== 'undefined' && userLat && userLng;
+  if (_psSearchType === 'manual_place' && _psSearchLabel) {
+    el.innerHTML = `<div class="psr-loc-ok">${ic('pin', 13)} ${escHtml(_psSearchLabel)} ausgewählt</div>`;
+  } else if (_psSearchType === 'current_location' || hasGps) {
+    el.innerHTML = `<div class="psr-loc-ok">${ic('pin', 13)} ${hasGps ? 'Aktueller Standort aktiv' : 'Standort wird angefordert…'}</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ── Geocoding-Suche im Sheet ──────────────────────────────────────
+function _psSearchInput(val) {
+  const clear = document.getElementById('psr-clear');
+  if (clear) clear.style.display = val ? '' : 'none';
+  clearTimeout(_psGeoTimer);
+  const dd = document.getElementById('psr-dropdown');
+  if (!dd) return;
+  if (val.length < 2) { dd.innerHTML = ''; dd.classList.remove('open'); return; }
+  dd.innerHTML = `<div class="search-loading"><div class="search-spinner"></div> Suche läuft…</div>`;
+  dd.classList.add('open');
+  _psGeoTimer = setTimeout(() => _psRunSearch(val), 350);
+}
+
+function _psSearchKey(e) {
+  if (e.key === 'Enter' && _psGeoItems.length) { e.preventDefault(); _psSelectPlace(0); }
+}
+
+async function _psRunSearch(q) {
+  _psGeoItems = [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(q)}&format=json&limit=6` +
+      `&addressdetails=1&countrycodes=de&accept-language=de` +
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+    const geo = (await res.json()).slice(0, 5);
+    _psGeoItems = geo.map(r => ({
+      lat:   parseFloat(r.lat),
+      lng:   parseFloat(r.lon),
+      label: r.name || r.display_name.split(',')[0],
+      sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
+    }));
+  } catch(_) {}
+  _psRenderDd(q);
+}
+
+function _psRenderDd(q) {
+  const dd = document.getElementById('psr-dropdown');
+  if (!dd) return;
+  if (!_psGeoItems.length) {
+    dd.innerHTML = `<div class="search-empty">Keine Ergebnisse für „${escHtml(q)}"</div>`;
+    dd.classList.add('open');
+    return;
+  }
+  const hl = s => {
+    if (!q) return escHtml(s);
+    return escHtml(s).replace(
+      new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+      '<mark>$1</mark>'
+    );
+  };
+  dd.innerHTML = _psGeoItems.map((item, i) => `
+    <div class="search-dropdown-item" tabindex="0"
+         onmousedown="_psSelectPlace(${i})"
+         ontouchend="event.preventDefault();_psSelectPlace(${i})"
+         onkeydown="if(event.key==='Enter')_psSelectPlace(${i})">
+      <div class="sdi-icon place">${ic('pin', 18)}</div>
+      <div>
+        <div class="sdi-main">${hl(item.label)}</div>
+        ${item.sub ? `<div class="sdi-sub">${escHtml(item.sub)}</div>` : ''}
+      </div>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+
+function _psSelectPlace(idx) {
+  const item = _psGeoItems[idx];
+  if (!item) return;
+  const dd    = document.getElementById('psr-dropdown');
+  const input = document.getElementById('psr-search-input');
+  if (dd)    { dd.innerHTML = ''; dd.classList.remove('open'); }
+  if (input) input.value = item.label;
+
+  _psSearchLat   = item.lat;
+  _psSearchLng   = item.lng;
+  _psSearchLabel = item.label;
+  _psSearchType  = 'manual_place';
+
+  _psUpdateLocationStatus();
+  const v = document.getElementById('psr-validation');
+  if (v) v.style.display = 'none';
+}
+
+function _psClearSearch() {
+  const input = document.getElementById('psr-search-input');
+  const clear  = document.getElementById('psr-clear');
+  const dd     = document.getElementById('psr-dropdown');
+  if (input) input.value = '';
+  if (clear) clear.style.display = 'none';
+  if (dd)   { dd.innerHTML = ''; dd.classList.remove('open'); }
+}
+
+function _psUseCurrentLocation() {
+  _psClearSearch();
+  _psSearchLat   = null;
+  _psSearchLng   = null;
+  _psSearchLabel = '';
+  _psSearchType  = 'current_location';
+  _psUpdateLocationStatus();
+  const v = document.getElementById('psr-validation');
+  if (v) v.style.display = 'none';
+  if (typeof userLat === 'undefined' || !userLat) locateUser();
+}
+
+// ── Chip-Auswahl & Anwenden ───────────────────────────────────────
+function setPsRadius(km) {
+  _psRadius = km;
+  document.querySelectorAll('.radius-chip').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.km) === km);
+  });
+}
+
+function applyPsRadius() {
+  const c = _psCenter();
+  if (!c) {
+    const v = document.getElementById('psr-validation');
+    if (v) { v.textContent = 'Bitte gib einen Ort ein oder verwende deinen aktuellen Standort.'; v.style.display = ''; }
+    return;
+  }
+  const v = document.getElementById('psr-validation');
+  if (v) v.style.display = 'none';
+
+  localStorage.setItem('tt_ps_radius', String(_psRadius));
+  if (_psSearchType === 'manual_place' && _psSearchLat && _psSearchLng) {
+    localStorage.setItem('tt_ps_lat',   String(_psSearchLat));
+    localStorage.setItem('tt_ps_lng',   String(_psSearchLng));
+    localStorage.setItem('tt_ps_label', _psSearchLabel);
+    localStorage.setItem('tt_ps_type',  'manual_place');
+  } else {
+    localStorage.removeItem('tt_ps_lat');
+    localStorage.removeItem('tt_ps_lng');
+    localStorage.removeItem('tt_ps_label');
+    localStorage.setItem('tt_ps_type', 'current_location');
+  }
+
+  closeAllSheets();
+  renderEvents(currentFilter);
+  if (typeof renderHomePsSection === 'function') renderHomePsSection();
+}
 
 function _toggleFeedSection(key) {
   if (key === 'ps') _psCollapsed = !_psCollapsed;
@@ -51,8 +282,19 @@ function renderPlayerSearchCard(ps) {
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
   const metaParts = [];
-  if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',12)} ${ps.umkreis} Umkreis`);
-  if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
+  const dist = _psDist(ps);
+  if (dist != null) {
+    const distStr = typeof formatDistance === 'function'
+      ? formatDistance(Math.round(dist))
+      : (dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(1).replace('.', ',') + ' km');
+    metaParts.push(`${ic('pin',12)} ${distStr} entfernt`);
+  } else if (ps.location_label) {
+    metaParts.push(`${ic('pin',12)} ${escHtml(ps.location_label)}`);
+  }
+  const srKm = ps.search_radius_km;
+  if (srKm) metaParts.push(`${ic('navigate',12)} ${srKm} km Umkreis`);
+  else if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('navigate',12)} ${escHtml(ps.umkreis)}`);
+  if(ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
     <div class="player-search-card fade-up" onclick="${cardClick}">
       <div class="psc-profile">
@@ -138,25 +380,46 @@ function renderEvents(filter = 'all') {
   const c = document.getElementById('events-list');
 
   const isTimeFilter = filter === 'today' || filter === 'week';
-  const psFiltered = (filter === 'all' || isTimeFilter)
+  const srcPs = (filter === 'all' || isTimeFilter)
     ? allPlayerSearches
     : allPlayerSearches.filter(ps => ps.spielart === filter);
 
+  const { list: psFiltered, filteredOut, noLocation } = _psGetFiltered(srcPs);
+  const hasLocation = !noLocation;
+
   const games = getSortedEvents(_applyEventFilter(gameSrc, filter));
 
-  const psChevron = `<span class="feed-section-chevron" id="feed-ps-chevron"${_psCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
-  const psHtml = psFiltered.length
-    ? `<div class="feed-section-title feed-section-toggle" onclick="_toggleFeedSection('ps')">${ic('users',13)} Mitspieler gesucht <span class="ps-count-chip">${psFiltered.length}</span>${psChevron}</div>
-       <div id="feed-ps-wrap"${_psCollapsed ? ' style="display:none"' : ''}>${psFiltered.map(renderPlayerSearchCard).join('')}</div>`
-    : '';
+  const psBarLabel = _psChipLabel() + (filteredOut > 0 ? ` · ${filteredOut} außerhalb` : '');
+  const radiusBarHtml = `<div class="ps-radius-bar" onclick="openPsRadiusSheet()" role="button">
+    <div class="ps-radius-info">${ic('pin', 12)} ${psBarLabel}</div>
+    <div class="ps-radius-tag">${ic('settings', 12)}</div>
+  </div>`;
 
-  const psEmptyHtml = (!psFiltered.length && allPlayerSearches.length === 0)
+  const psChevron = `<span class="feed-section-chevron" id="feed-ps-chevron"${_psCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
+
+  let psHtml = '';
+  if (srcPs.length > 0) {
+    const cardsOrEmpty = psFiltered.length
+      ? psFiltered.map(renderPlayerSearchCard).join('')
+      : `<div class="empty-state-card">
+           <div class="esc-title">Keine Gesuche in ${_psRadius} km</div>
+           <div class="esc-body">Erweitere den Radius oder erstelle selbst ein Gesuch.</div>
+           <div class="esc-actions">
+             <button class="esc-btn" onclick="openPsRadiusSheet()">Umkreis erweitern</button>
+             <button class="esc-btn esc-btn-ghost" onclick="openMitspielerSheet()">Gesuch erstellen</button>
+           </div>
+         </div>`;
+    psHtml = `<div class="feed-section-title feed-section-toggle" onclick="_toggleFeedSection('ps')">${ic('users',13)} Mitspieler gesucht ${psFiltered.length > 0 ? `<span class="ps-count-chip">${psFiltered.length}</span>` : ''}${psChevron}</div>
+       <div id="feed-ps-wrap"${_psCollapsed ? ' style="display:none"' : ''}>${radiusBarHtml}${cardsOrEmpty}</div>`;
+  }
+
+  const psEmptyHtml = (srcPs.length === 0)
     ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht</div>
        <div class="empty-state-card">
          <div class="esc-icon">👥</div>
-         <div class="esc-title">Noch keine Mitspieler gefunden?</div>
-         <div class="esc-body">Erstelle ein Gesuch oder entdecke später neue Mitspieler in deiner Umgebung.</div>
-         <button class="esc-btn" onclick="openSheet('mitspieler-sheet')">Gesuch erstellen</button>
+         <div class="esc-title">Noch keine Gesuche</div>
+         <div class="esc-body">Erstelle ein Gesuch und finde Mitspieler in deiner Umgebung.</div>
+         <button class="esc-btn" onclick="openMitspielerSheet()">Gesuch erstellen</button>
        </div>`
     : '';
 
@@ -265,21 +528,175 @@ async function submitCreateEvent() {
   }
 }
 
+// ── Mitspieler-Sheet öffnen (setzt Formular zurück) ──────────────
+function openMitspielerSheet() {
+  _msFormLat = null; _msFormLng = null; _msFormLabel = '';
+  _msGeoItems = [];
+  const locInput = document.getElementById('ms-loc-input');
+  const locClear = document.getElementById('ms-loc-clear');
+  const locDd    = document.getElementById('ms-loc-dropdown');
+  const locStat  = document.getElementById('ms-loc-status');
+  if (locInput) locInput.value = '';
+  if (locClear) locClear.style.display = 'none';
+  if (locDd)   { locDd.innerHTML = ''; locDd.classList.remove('open'); }
+  if (locStat) locStat.innerHTML = '';
+  openSheet('mitspieler-sheet');
+}
+
+// ── Geocoding für Erstell-Formular ────────────────────────────────
+function _msSearchInput(val) {
+  const clear = document.getElementById('ms-loc-clear');
+  if (clear) clear.style.display = val ? '' : 'none';
+  clearTimeout(_msGeoTimer);
+  const dd = document.getElementById('ms-loc-dropdown');
+  if (!dd) return;
+  if (val.length < 2) { dd.innerHTML = ''; dd.classList.remove('open'); return; }
+  dd.innerHTML = `<div class="search-loading"><div class="search-spinner"></div> Suche läuft…</div>`;
+  dd.classList.add('open');
+  _msGeoTimer = setTimeout(() => _msRunSearch(val), 350);
+}
+
+function _msSearchKey(e) {
+  if (e.key === 'Enter' && _msGeoItems.length) { e.preventDefault(); _msSelectPlace(0); }
+}
+
+async function _msRunSearch(q) {
+  _msGeoItems = [];
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(q)}&format=json&limit=6` +
+      `&addressdetails=1&countrycodes=de&accept-language=de` +
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+    const geo = (await res.json()).slice(0, 5);
+    _msGeoItems = geo.map(r => ({
+      lat:   parseFloat(r.lat),
+      lng:   parseFloat(r.lon),
+      label: r.name || r.display_name.split(',')[0],
+      sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
+    }));
+  } catch(_) {}
+  _msRenderDd(q);
+}
+
+function _msRenderDd(q) {
+  const dd = document.getElementById('ms-loc-dropdown');
+  if (!dd) return;
+  if (!_msGeoItems.length) {
+    dd.innerHTML = `<div class="search-empty">Keine Ergebnisse für „${escHtml(q)}"</div>`;
+    dd.classList.add('open');
+    return;
+  }
+  const hl = s => {
+    if (!q) return escHtml(s);
+    return escHtml(s).replace(
+      new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+      '<mark>$1</mark>'
+    );
+  };
+  dd.innerHTML = _msGeoItems.map((item, i) => `
+    <div class="search-dropdown-item" tabindex="0"
+         onmousedown="_msSelectPlace(${i})"
+         ontouchend="event.preventDefault();_msSelectPlace(${i})"
+         onkeydown="if(event.key==='Enter')_msSelectPlace(${i})">
+      <div class="sdi-icon place">${ic('pin', 18)}</div>
+      <div>
+        <div class="sdi-main">${hl(item.label)}</div>
+        ${item.sub ? `<div class="sdi-sub">${escHtml(item.sub)}</div>` : ''}
+      </div>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+
+function _msSelectPlace(idx) {
+  const item = _msGeoItems[idx];
+  if (!item) return;
+  const dd    = document.getElementById('ms-loc-dropdown');
+  const input = document.getElementById('ms-loc-input');
+  if (dd)    { dd.innerHTML = ''; dd.classList.remove('open'); }
+  if (input) input.value = item.label;
+  _msFormLat   = item.lat;
+  _msFormLng   = item.lng;
+  _msFormLabel = item.label;
+  _msUpdateLocStatus();
+}
+
+function _msClearSearch() {
+  const input = document.getElementById('ms-loc-input');
+  const clear  = document.getElementById('ms-loc-clear');
+  const dd     = document.getElementById('ms-loc-dropdown');
+  if (input) input.value = '';
+  if (clear) clear.style.display = 'none';
+  if (dd)   { dd.innerHTML = ''; dd.classList.remove('open'); }
+  _msFormLat = null; _msFormLng = null; _msFormLabel = '';
+  _msUpdateLocStatus();
+}
+
+function _msUseCurrentLocation() {
+  const input = document.getElementById('ms-loc-input');
+  const clear  = document.getElementById('ms-loc-clear');
+  const dd     = document.getElementById('ms-loc-dropdown');
+  if (input) input.value = '';
+  if (clear) clear.style.display = 'none';
+  if (dd)   { dd.innerHTML = ''; dd.classList.remove('open'); }
+  if (typeof userLat !== 'undefined' && userLat && userLng) {
+    _msFormLat   = userLat;
+    _msFormLng   = userLng;
+    _msFormLabel = 'Aktueller Standort';
+  } else {
+    _msFormLabel = 'Aktueller Standort';
+    locateUser();
+  }
+  _msUpdateLocStatus();
+}
+
+function _msUpdateLocStatus() {
+  const el = document.getElementById('ms-loc-status');
+  if (!el) return;
+  if (_msFormLabel && (_msFormLat || _msFormLabel === 'Aktueller Standort')) {
+    el.innerHTML = `<div class="psr-loc-ok">${ic('pin', 13)} ${escHtml(_msFormLabel)} ausgewählt</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
 async function submitMitspieler() {
   if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
 
-  const btn     = document.getElementById('ms-submit-btn');
+  const btn = document.getElementById('ms-submit-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }
 
-  const spielart = document.getElementById('ms-spielart').value;
-  const wann     = document.getElementById('ms-wann').value;
-  const umkreis  = document.getElementById('ms-umkreis').value;
-  const message  = (document.getElementById('ms-message').value || '').trim();
-  const today    = new Date().toISOString().slice(0, 10);
-  const title    = (currentUser?.username || 'Spieler') + ' sucht Mitspieler';
+  // Standort aus Formular — bei "Aktueller Standort" GPS-Globals nochmals abfragen
+  let lat = _msFormLat;
+  let lng = _msFormLng;
+  if (_msFormLabel === 'Aktueller Standort' && !lat) {
+    lat = (typeof userLat !== 'undefined') ? userLat : null;
+    lng = (typeof userLng !== 'undefined') ? userLng : null;
+  }
+
+  if (!lat || !lng) {
+    showToast('Bitte wähle einen Ort aus, damit andere dein Gesuch in der Nähe finden können.', '⚠️');
+    if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
+    return;
+  }
+
+  const spielart       = document.getElementById('ms-spielart').value;
+  const wann           = document.getElementById('ms-wann').value;
+  const searchRadiusKm = parseInt(document.getElementById('ms-umkreis').value) || 5;
+  const message        = (document.getElementById('ms-message').value || '').trim();
+  const today          = new Date().toISOString().slice(0, 10);
+  const title          = (currentUser?.username || 'Spieler') + ' sucht Mitspieler';
+
   const descJson = JSON.stringify({
-    spielart, wann, umkreis, message,
-    avatarEmoji: currentUser?.avatar_emoji || ''
+    spielart,
+    wann,
+    umkreis:          `${searchRadiusKm} km`,
+    search_radius_km: searchRadiusKm,
+    message,
+    avatarEmoji:      currentUser?.avatar_emoji || '',
+    lat,
+    lng,
+    location_label:   _msFormLabel || ''
   });
 
   const qb = new QueryBuilder('events');

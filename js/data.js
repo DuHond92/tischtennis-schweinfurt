@@ -223,7 +223,11 @@ async function loadEvents() {
         spielart:    extra.spielart  || 'casual',
         wann:        extra.wann      || 'Egal',
         umkreis:     extra.umkreis   || '5 km',
-        message:     extra.message   || ''
+        message:     extra.message   || '',
+        lat:             extra.lat != null ? +extra.lat : null,
+        lng:             extra.lng != null ? +extra.lng : null,
+        location_label:  extra.location_label   || '',
+        search_radius_km: extra.search_radius_km ? +extra.search_radius_km : null
       };
     });
 

@@ -1125,6 +1125,7 @@
 .hpsc-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
 .hpsc-more { background: var(--primary-bg); color: var(--primary); border-radius: 20px; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; flex-shrink: 0; white-space: nowrap; }
 .hpsc-chevron { font-size: 1.2rem; color: var(--text-dim); flex-shrink: 0; }
+.hpsc-msg { font-size: 0.71rem; color: var(--text-dim); margin-top: 2px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── FEED: SECTION TITLES ────────────────────────────────────────── */
 .feed-section-title {
@@ -2033,3 +2034,128 @@
   background: var(--surface2); transition: opacity 0.15s;
 }
 .home-act-more:active { opacity: 0.6; }
+
+/* ── Radius filter bar (Events feed) ─────────────────────────── */
+.ps-radius-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 16px 8px; cursor: pointer;
+}
+.ps-radius-info {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.74rem; color: var(--text-dim);
+}
+.ps-filtered-note { font-size: 0.7rem; color: var(--text-xdim); }
+.ps-radius-tag {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 0.74rem; font-weight: 700; color: var(--text);
+  white-space: nowrap; flex-shrink: 0;
+}
+.ps-radius-bar:active .ps-radius-tag { opacity: 0.7; }
+
+/* ── Radius filter chip on home page ─────────────────────────── */
+.hps-filter-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 20px 8px;
+}
+.hps-radius-chip-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 10px; min-height: 32px;
+  font-size: 0.72rem; font-weight: 600; color: var(--text-dim);
+  cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.hps-radius-chip-btn:active { opacity: 0.55; }
+.hps-empty-note {
+  font-size: 0.72rem; color: var(--text-xdim);
+}
+
+/* ── Radius chips (sheet) ────────────────────────────────────── */
+.radius-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.radius-chip {
+  padding: 8px 18px; border: 1.5px solid var(--border);
+  border-radius: 20px; background: var(--surface);
+  color: var(--text); font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.radius-chip.active {
+  border-color: var(--primary); background: var(--primary-bg); color: var(--primary);
+}
+.radius-chip:active { opacity: 0.7; }
+
+/* ── Location hint in radius sheet ──────────────────────────── */
+.psr-loc-ok {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; color: var(--green);
+  background: var(--green-bg); padding: 8px 12px; border-radius: 10px;
+}
+.psr-loc-missing {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 0.8rem; color: var(--text-dim);
+  background: var(--surface2); padding: 8px 12px; border-radius: 10px;
+}
+.psr-loc-btn {
+  background: none; border: none; color: var(--primary);
+  font-weight: 700; font-size: 0.8rem; cursor: pointer; padding: 0;
+}
+
+/* ── Empty state action buttons ──────────────────────────────── */
+.esc-actions {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px;
+}
+.esc-btn-ghost {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
+}
+
+/* ── PS-Radius-Sheet: Input, Dropdown, Standort-Optionen ─────── */
+.psr-section { margin-bottom: 4px; }
+.psr-label {
+  font-size: 0.72rem; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.psr-input-wrap { position: relative; }
+.psr-input {
+  width: 100%; box-sizing: border-box;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface2); color: var(--text);
+  font-size: 0.9rem; line-height: 1.4; outline: none;
+  -webkit-appearance: none; -webkit-tap-highlight-color: transparent;
+}
+.psr-input:focus { border-color: var(--primary); }
+.psr-input::placeholder { color: var(--text-xdim); }
+.psr-input-clear {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 36px;
+  background: none; border: none; color: var(--text-xdim);
+  font-size: 1.1rem; cursor: pointer; line-height: 1;
+}
+.psr-dropdown {
+  background: var(--surface); border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.14); border: 1px solid var(--border);
+  margin-top: 4px; max-height: 200px; overflow-y: auto;
+  display: none; -webkit-overflow-scrolling: touch;
+}
+.psr-dropdown.open { display: block; }
+.psr-or-row {
+  display: flex; align-items: center; gap: 8px; margin: 14px 0 10px;
+}
+.psr-or-line { flex: 1; height: 1px; background: var(--border); }
+.psr-or-text { font-size: 0.72rem; color: var(--text-xdim); white-space: nowrap; }
+.psr-loc-use-btn {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; padding: 10px 14px; box-sizing: border-box;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-size: 0.85rem; font-weight: 600; text-align: left; cursor: pointer;
+  min-height: 44px; -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.psr-loc-use-btn:active { background: var(--border); }
+.psr-location-status { min-height: 20px; margin-top: 8px; }
+.psr-validation {
+  font-size: 0.8rem; color: var(--gold); text-align: center;
+  padding: 6px 0 2px;
+}
