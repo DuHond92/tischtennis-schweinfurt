@@ -687,16 +687,13 @@ async function submitMitspieler() {
   const today          = new Date().toISOString().slice(0, 10);
   const title          = (currentUser?.username || 'Spieler') + ' sucht Mitspieler';
 
+  // description enthält nur beschreibende Inhalte — Koordinaten in echten Spalten
   const descJson = JSON.stringify({
     spielart,
     wann,
-    umkreis:          `${searchRadiusKm} km`,
-    search_radius_km: searchRadiusKm,
+    umkreis:     `${searchRadiusKm} km`,   // Rückwärtskompatibilität für alte Clients
     message,
-    avatarEmoji:      currentUser?.avatar_emoji || '',
-    lat,
-    lng,
-    location_label:   _msFormLabel || ''
+    avatarEmoji: currentUser?.avatar_emoji || ''
   });
 
   const qb = new QueryBuilder('events');
@@ -708,7 +705,12 @@ async function submitMitspieler() {
     event_time:       '00:00',
     mode:             'player_search',
     max_participants: 2,
-    description:      descJson
+    description:      descJson,
+    // echte DB-Spalten (nach Migration vorhanden)
+    lat,
+    lng,
+    location_label:   _msFormLabel || '',
+    search_radius_km: searchRadiusKm
   });
 
   if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }

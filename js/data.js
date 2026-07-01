@@ -119,7 +119,7 @@ async function loadOSMTables() {
 async function loadEvents() {
   // 1. Events – einfacher Select, kein verschachtelter Join
   const qbE = new QueryBuilder('events');
-  qbE._select = 'id,title,table_id,creator_id,event_date,event_time,mode,max_participants,description';
+  qbE._select = 'id,title,table_id,creator_id,event_date,event_time,mode,max_participants,description,lat,lng,location_label,search_radius_km';
   const {data: evData} = await qbE.order('event_date').execute();
   if(!evData || !evData.length) return;
 
@@ -202,7 +202,12 @@ async function loadEvents() {
       p:            pCounts[e.id] || 0,
       max:          e.max_participants,
       participants: pParticipants[e.id] || [],
-      photos:       tbl.photos || []
+      photos:       tbl.photos || [],
+      // echte DB-Spalten (nach Migration); null wenn Spalten noch nicht existieren
+      colLat:            e.lat              != null ? +e.lat              : null,
+      colLng:            e.lng              != null ? +e.lng              : null,
+      colLocationLabel:  e.location_label   || null,
+      colSearchRadiusKm: e.search_radius_km != null ? +e.search_radius_km : null
     };
   });
 
@@ -224,10 +229,11 @@ async function loadEvents() {
         wann:        extra.wann      || 'Egal',
         umkreis:     extra.umkreis   || '5 km',
         message:     extra.message   || '',
-        lat:             extra.lat != null ? +extra.lat : null,
-        lng:             extra.lng != null ? +extra.lng : null,
-        location_label:  extra.location_label   || '',
-        search_radius_km: extra.search_radius_km ? +extra.search_radius_km : null
+        // Spalte bevorzugen; JSON als Fallback für alte Gesuche
+        lat:             e.colLat  != null ? e.colLat  : (extra.lat  != null ? +extra.lat  : null),
+        lng:             e.colLng  != null ? e.colLng  : (extra.lng  != null ? +extra.lng  : null),
+        location_label:  e.colLocationLabel  || extra.location_label  || '',
+        search_radius_km: e.colSearchRadiusKm != null ? e.colSearchRadiusKm : (extra.search_radius_km ? +extra.search_radius_km : null)
       };
     });
 
