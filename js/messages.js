@@ -13,6 +13,7 @@ let _inboxExpanded    = {};
 let _inboxMode        = 'chats'; // 'chats' | 'requests'
 let _inboxSearchTimer = null;
 let _inboxSearchQ     = '';
+let _inboxSuggestMode = false;
 
 // ── localStorage: nutzerspezifisch gelöschte Chats ────────────
 function _getHiddenChats() {
@@ -108,6 +109,7 @@ function _setInboxView(view) {
 async function openInbox() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   _inboxMode = 'chats';
+  _inboxSuggestMode = false;
   _clearInboxSearch();
   openSheet('inbox-sheet');
   await renderInboxChats();
@@ -116,6 +118,7 @@ async function openInbox() {
 // ── Inbox rendern — nur Chatliste ─────────────────────────────
 async function renderInboxChats() {
   _inboxMode = 'chats';
+  _inboxSuggestMode = false;
   _setInboxView('messages');
   const el = document.getElementById('inbox-body');
   if (!el) return;
@@ -153,7 +156,7 @@ async function renderInboxChats() {
         <div class="inbox-empty-full-icon">${ic('users', 48)}</div>
         <div class="inbox-empty-full-title">Finde deine ersten Spielpartner</div>
         <div class="inbox-empty-full-text">Suche nach Spielern und sende eine Anfrage, um gemeinsam Tischtennis zu spielen.</div>
-        <button class="btn btn-primary inbox-empty-cta" onclick="document.getElementById('inbox-search-input').focus()">Spieler suchen</button>
+        <button class="btn btn-primary inbox-empty-cta" onclick="inboxFocusSearch()">Spieler suchen</button>
         <div class="inbox-empty-hint">Nach angenommener Anfrage könnt ihr direkt chatten.</div>
       </div>`;
     } else {
@@ -168,6 +171,7 @@ async function renderInboxChats() {
 // ── Anfragen-Ansicht (inline im Panel) ─────────────────────────
 async function inboxShowRequests() {
   _inboxMode = 'requests';
+  _inboxSuggestMode = false;
   _clearInboxSearch();
   _setInboxView('requests');
   const el = document.getElementById('inbox-body');
@@ -274,6 +278,7 @@ function _inboxSearch(val) {
   clearTimeout(_inboxSearchTimer);
   if (!_inboxSearchQ) {
     if (_inboxMode === 'requests') inboxShowRequests();
+    else if (_inboxSuggestMode) _inboxShowSuggestions();
     else renderInboxChats();
     return;
   }
@@ -289,17 +294,102 @@ function _clearInboxSearch() {
   const clear = document.getElementById('inbox-search-clear');
   if (inp)   inp.value = '';
   if (clear) clear.style.display = 'none';
+  if (_inboxSuggestMode) _inboxShowSuggestions();
+}
+
+// ── Gemeinsamer Row-Renderer für Suche und Vorschläge ─────────
+const _skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
+
+function _renderSearchRow(p, connMap, uid) {
+  const pid  = escAttr(p.id);
+  const pnm  = escAttr(p.username || '');
+  const pem  = escAttr(p.avatar_emoji || '');
+  const pur  = escAttr(p.avatar_url || '');
+  const conn = connMap[p.id];
+
+  let metaHtml = '';
+  if (p.skill_level) metaHtml += `<div class="inbox-partner-skill">${_skillMap[p.skill_level] || ''}</div>`;
+  if (p.city)        metaHtml += `<div class="inbox-partner-skill" style="opacity:.65">${escHtml(p.city)}</div>`;
+
+  let actionHtml = '';
+  if (!conn) {
+    actionHtml = `<button class="btn-sm-ghost" onclick="event.stopPropagation();_inboxSendRequest('${pid}',this)">Anfragen</button>`;
+  } else if (conn.status === 'accepted') {
+    actionHtml = `<button class="btn-sm-primary" onclick="event.stopPropagation();openDmConversation('${pid}','${pnm}','${pem}','${pur}')">${ic('chat',13)} Nachricht</button>`;
+  } else if (conn.status === 'pending' && conn.requester_id === uid) {
+    actionHtml = `<span class="inbox-search-status">Anfrage gesendet</span>`;
+  } else if (conn.status === 'pending' && conn.receiver_id === uid) {
+    const cid = escAttr(conn.id);
+    actionHtml = `<div class="inbox-req-actions">
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_reqAccept('${cid}','${pid}')">Annehmen</button>
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_reqReject('${cid}','${pid}')">Ablehnen</button>
+    </div>`;
+  }
+
+  return `<div class="inbox-partner-row" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')" style="cursor:pointer">
+    <div class="inbox-conv-av" onclick="event.stopPropagation();showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 46 })}</div>
+    <div class="inbox-conv-body">
+      <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
+      ${metaHtml}
+    </div>
+    <div class="inbox-search-action-wrap" onclick="event.stopPropagation()">${actionHtml}</div>
+  </div>`;
+}
+
+// ── Spieler-Vorschläge (Empty State CTA) ──────────────────────
+async function inboxFocusSearch() {
+  _inboxSuggestMode = true;
+  const inp = document.getElementById('inbox-search-input');
+  if (inp) inp.focus();
+  await _inboxShowSuggestions();
+}
+
+async function _inboxShowSuggestions() {
+  const el = document.getElementById('inbox-body');
+  if (!el) return;
+  el.innerHTML = _inboxEmpty('⏳', 'Lade Spieler…', true);
+
+  if (typeof loadMyConnections === 'function' && _myConnections === null) {
+    await loadMyConnections();
+  }
+  const uid     = sb.getUserId();
+  const myConns = Array.isArray(_myConnections) ? _myConnections : [];
+  const connMap = {};
+  myConns.forEach(c => {
+    const other = c.requester_id === uid ? c.receiver_id : c.requester_id;
+    connMap[other] = c;
+  });
+
+  // Profile laden: city einschließen; nach username sortiert, max 30
+  // TODO: lat/lng auf profiles speichern für echte Nähe-Sortierung
+  let results = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level,city&order=username.asc&limit=30`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (Array.isArray(data)) results = data.filter(p => p.id !== uid);
+  } catch(e) {}
+
+  if (!results.length) {
+    el.innerHTML = `<div class="inbox-empty">
+      <div class="inbox-empty-icon">🔍</div>
+      <div style="font-weight:700;color:var(--text);">Keine Spieler gefunden</div>
+      <div style="color:var(--text-dim);font-size:0.82rem;margin-top:4px;">Suche nach einem Namen oder aktiviere deinen Standort.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="inbox-section-label">Spieler entdecken</div>` +
+    results.map(p => _renderSearchRow(p, connMap, uid)).join('');
 }
 
 async function _runInboxSearch(q) {
   if (q !== _inboxSearchQ) return;
 
-  if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
+  if (typeof loadMyConnections === 'function' && _myConnections === null) {
     await loadMyConnections();
   }
   const uid     = sb.getUserId();
   const myConns = Array.isArray(_myConnections) ? _myConnections : [];
-
   const connMap = {};
   myConns.forEach(c => {
     const other = c.requester_id === uid ? c.receiver_id : c.requester_id;
@@ -308,7 +398,7 @@ async function _runInboxSearch(q) {
 
   let results = [];
   try {
-    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&username=ilike.*${encodeURIComponent(q)}*&limit=12`;
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level,city&username=ilike.*${encodeURIComponent(q)}*&limit=20`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     if (Array.isArray(data)) results = data.filter(p => p.id !== uid);
   } catch(e) {}
@@ -327,42 +417,8 @@ async function _runInboxSearch(q) {
     return;
   }
 
-  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
-
-  const rows = results.map(p => {
-    const pid   = escAttr(p.id);
-    const pnm   = escAttr(p.username || '');
-    const pem   = escAttr(p.avatar_emoji || '');
-    const pur   = escAttr(p.avatar_url || '');
-    const skill = p.skill_level ? skillMap[p.skill_level] || '' : '';
-    const conn  = connMap[p.id];
-
-    let actionHtml = '';
-    if (!conn) {
-      actionHtml = `<button class="btn-sm-ghost" onclick="event.stopPropagation();_inboxSendRequest('${pid}',this)">Anfrage senden</button>`;
-    } else if (conn.status === 'accepted') {
-      actionHtml = `<button class="btn-sm-primary" onclick="event.stopPropagation();openDmConversation('${pid}','${pnm}','${pem}','${pur}')">${ic('chat',13)} Nachricht</button>`;
-    } else if (conn.status === 'pending' && conn.requester_id === uid) {
-      actionHtml = `<span class="inbox-search-status">Anfrage gesendet</span>`;
-    } else if (conn.status === 'pending' && conn.receiver_id === uid) {
-      const cid = escAttr(conn.id);
-      actionHtml = `<div class="inbox-req-actions">
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_reqAccept('${cid}','${pid}')">Annehmen</button>
-        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_reqReject('${cid}','${pid}')">Ablehnen</button>
-      </div>`;
-    }
-
-    return `<div class="inbox-partner-row" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')" style="cursor:pointer">
-      <div class="inbox-conv-av" onclick="event.stopPropagation();showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 46 })}</div>
-      <div class="inbox-conv-body">
-        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
-        ${skill ? `<div class="inbox-partner-skill">${skill}</div>` : ''}
-      </div>
-      <div class="inbox-search-action-wrap" onclick="event.stopPropagation()">${actionHtml}</div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `<div class="inbox-section-label">Suchergebnisse</div>${rows}`;
+  el.innerHTML = `<div class="inbox-section-label">Suchergebnisse</div>` +
+    results.map(p => _renderSearchRow(p, connMap, uid)).join('');
 }
 
 async function _inboxSendRequest(otherId, btn) {
