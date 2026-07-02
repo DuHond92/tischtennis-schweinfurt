@@ -73,6 +73,57 @@ function closeAllSheets() {
   openSheetId = null;
 }
 
+// Swipe-right-to-close für slide-right-sheets (Inbox, DM-Chat)
+function initSwipeClose(sheetEl, closeFn) {
+  let startX = 0, startY = 0, dx = 0, tracking = null;
+
+  sheetEl.addEventListener('touchstart', e => {
+    startX   = e.touches[0].clientX;
+    startY   = e.touches[0].clientY;
+    dx       = 0;
+    tracking = null;
+  }, { passive: true });
+
+  sheetEl.addEventListener('touchmove', e => {
+    if (!sheetEl.classList.contains('open')) return;
+    const adx = e.touches[0].clientX - startX;
+    const ady = Math.abs(e.touches[0].clientY - startY);
+    if (tracking === null && (Math.abs(adx) > 6 || ady > 6)) {
+      tracking = adx > 0 && Math.abs(adx) > ady; // nur Rechtswisch
+    }
+    if (!tracking) return;
+    e.preventDefault();
+    dx = Math.max(0, adx);
+    sheetEl.style.transition = 'none';
+    sheetEl.style.transform  = `translateX(calc(-50% + ${dx}px))`;
+  }, { passive: false });
+
+  const _snapBack = () => {
+    if (!tracking) return;
+    tracking = null;
+    sheetEl.style.removeProperty('transition');
+    sheetEl.style.removeProperty('transform');
+  };
+
+  sheetEl.addEventListener('touchend', () => {
+    if (!tracking) return;
+    tracking = null;
+    if (dx > 90) {
+      // Nach rechts rausfliegen, dann schließen
+      sheetEl.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 1, 1)';
+      sheetEl.style.transform  = 'translateX(50%)';
+      setTimeout(() => {
+        sheetEl.style.removeProperty('transform');
+        sheetEl.style.removeProperty('transition');
+        closeFn();
+      }, 270);
+    } else {
+      _snapBack();
+    }
+  });
+  sheetEl.addEventListener('touchcancel', _snapBack);
+}
+
 // Drag-to-expand: Sheet zwischen zwei Snap-Punkten ziehbar machen
 function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
   const handle = sheetEl.querySelector('.sheet-handle');
@@ -368,5 +419,7 @@ function animateCount(el, target) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const inbox = document.getElementById('inbox-sheet');
-  if (inbox) initSheetDrag(inbox, 0.78, 0.95);
+  const dm    = document.getElementById('dm-sheet');
+  if (inbox) initSwipeClose(inbox, () => closeAllSheets());
+  if (dm)    initSwipeClose(dm,    () => closeDmSheet());
 });
