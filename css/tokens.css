@@ -30,6 +30,8 @@
   --radius-xl:   28px;
   --font-head:   'Outfit', sans-serif;
   --font-body:   'Nunito', sans-serif;
+  --sk-bg:       #eaeef6;
+  --sk-shine:    #f4f6fb;
 }
 
 [data-theme="dark"] {
@@ -56,4 +58,6 @@
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
   --shadow-lg:   0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+  --sk-bg:       rgba(255,255,255,0.05);
+  --sk-shine:    rgba(255,255,255,0.09);
 }

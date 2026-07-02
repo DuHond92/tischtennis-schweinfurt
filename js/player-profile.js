@@ -37,7 +37,7 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
   cityEl.textContent   = '';
 
   // pp-stats entfernt (v1: kein Match-System)
-  document.getElementById('pp-details').innerHTML = ptLoader('Lade Profil…', true);
+  document.getElementById('pp-details').innerHTML = '<div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;" aria-hidden="true"><div style="display:flex;gap:12px;align-items:center;"><div class="skeleton skeleton-avatar" style="width:52px;height:52px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px;"><div class="skeleton skeleton-line skeleton-line--lg" style="width:55%;"></div><div class="skeleton skeleton-line skeleton-line--sm" style="width:38%;"></div></div></div><div class="skeleton skeleton-line" style="width:72%;"></div><div class="skeleton skeleton-line skeleton-line--sm" style="width:58%;"></div><div class="skeleton skeleton-line skeleton-line--sm" style="width:44%;"></div></div>';
 
   // Verbindungs-Button rendern
   const connEl = document.getElementById('pp-connection-btn');

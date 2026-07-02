@@ -97,7 +97,7 @@ async function loadAdminPage() {
 async function _loadSuggestions() {
   const list = document.getElementById('admin-suggestions-list');
   if (!list) return;
-  list.innerHTML = ptLoader('Lade Vorschläge…', true);
+  list.innerHTML = skeletonList('admin', 4);
 
   const qb = new QueryBuilder('table_suggestions');
   qb._filters.push('status=eq.pending');
@@ -257,7 +257,7 @@ async function _loadImageModerations() {
   const list    = document.getElementById('admin-images-list');
   if (!section || !list) return;
   section.style.display = '';
-  list.innerHTML = ptLoader('Lade Bilder…', true);
+  list.innerHTML = skeletonList('admin', 4);
 
   // Pending-Bilder + zugehörige Platten-Namen laden
   let images = [];
@@ -384,7 +384,7 @@ function _checkImagesEmpty() {
 async function _loadUserManagement() {
   const list = document.getElementById('admin-users-list');
   if (!list) return;
-  list.innerHTML = ptLoader('Lade Nutzer…', true);
+  list.innerHTML = skeletonList('admin', 4);
 
   const qb = new QueryBuilder('profiles');
   qb.select('id,username,role,created_at').order('created_at');
@@ -509,7 +509,7 @@ async function _loadModLog() {
   const list    = document.getElementById('admin-modlog-list');
   if (!section || !list) return;
   section.style.display = '';
-  list.innerHTML = ptLoader('Lade Log…', true);
+  list.innerHTML = skeletonList('admin', 4);
 
   let entries = [];
   try {
@@ -559,7 +559,7 @@ async function _loadReports() {
   const list    = document.getElementById('admin-reports-list');
   if (!section || !list) return;
   section.style.display = '';
-  list.innerHTML = ptLoader('Lade Meldungen…', true);
+  list.innerHTML = skeletonList('admin', 4);
 
   let reports = [];
   try {

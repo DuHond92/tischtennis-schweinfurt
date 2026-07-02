@@ -115,6 +115,83 @@ function ptLoader(text, small) {
   </div>`;
 }
 
+// ── SKELETON TEMPLATES ────────────────────────────────────────
+function skeletonEventCard() {
+  return `<div class="event-card-big" aria-hidden="true">
+    <div class="ecb-thumb skeleton"></div>
+    <div class="ecb-info" style="display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;gap:6px;">
+        <div class="skeleton skeleton-pill" style="width:38px;height:15px;"></div>
+        <div class="skeleton skeleton-pill" style="width:58px;height:15px;"></div>
+      </div>
+      <div class="skeleton skeleton-line skeleton-line--lg" style="width:68%;"></div>
+      <div class="skeleton skeleton-line" style="width:50%;"></div>
+      <div class="skeleton skeleton-line" style="width:44%;"></div>
+      <div class="skeleton skeleton-line" style="width:48%;"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
+        <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
+        <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
+        <div class="skeleton skeleton-line" style="width:64px;height:9px;margin-left:2px;"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function skeletonPsCard() {
+  return `<div class="player-search-card" aria-hidden="true">
+    <div class="psc-profile" style="pointer-events:none;">
+      <div class="skeleton skeleton-avatar" style="width:40px;height:40px;flex-shrink:0;"></div>
+      <div class="psc-identity">
+        <div class="skeleton skeleton-line skeleton-line--lg" style="width:120px;margin-bottom:7px;"></div>
+        <div style="display:flex;gap:6px;">
+          <div class="skeleton skeleton-pill" style="width:42px;height:14px;"></div>
+          <div class="skeleton skeleton-pill" style="width:58px;height:14px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="skeleton skeleton-line skeleton-line--sm" style="width:58%;margin-top:8px;"></div>
+  </div>`;
+}
+
+function skeletonMessageRow() {
+  return `<div class="inbox-conv-row" aria-hidden="true" style="pointer-events:none;">
+    <div class="inbox-conv-av"><div class="skeleton skeleton-avatar" style="width:44px;height:44px;"></div></div>
+    <div class="inbox-conv-body">
+      <div class="inbox-conv-top">
+        <div class="skeleton skeleton-line" style="width:38%;height:13px;"></div>
+        <div class="skeleton skeleton-line skeleton-line--sm" style="width:36px;"></div>
+      </div>
+      <div class="skeleton skeleton-line skeleton-line--sm" style="width:62%;margin-top:5px;"></div>
+    </div>
+  </div>`;
+}
+
+function skeletonComment() {
+  return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);" aria-hidden="true">
+    <div class="skeleton skeleton-avatar" style="width:32px;height:32px;flex-shrink:0;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+      <div class="skeleton skeleton-line skeleton-line--sm" style="width:28%;"></div>
+      <div class="skeleton skeleton-line" style="width:72%;"></div>
+    </div>
+  </div>`;
+}
+
+function skeletonAdminRow() {
+  return `<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);" aria-hidden="true">
+    <div class="skeleton skeleton-avatar" style="width:40px;height:40px;flex-shrink:0;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+      <div class="skeleton skeleton-line" style="width:55%;height:13px;"></div>
+      <div class="skeleton skeleton-line skeleton-line--sm" style="width:40%;"></div>
+    </div>
+  </div>`;
+}
+
+function skeletonList(type, count) {
+  count = count || 3;
+  const fn = { event: skeletonEventCard, ps: skeletonPsCard, message: skeletonMessageRow, comment: skeletonComment, admin: skeletonAdminRow }[type] || skeletonAdminRow;
+  return Array.from({length: count}, fn).join('');
+}
+
 // Encode attribute values (prevents XSS / quote-breakout in data attrs)
 function escAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

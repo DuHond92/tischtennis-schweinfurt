@@ -194,6 +194,38 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
   .pt-loader-shadow { animation: none; opacity: 0.14; }
 }
 
+/* ── APP SPLASH (nur Appstart) ───────────────────────────────── */
+#app-splash {
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s ease;
+}
+#app-splash.hidden { opacity: 0; pointer-events: none; }
+#app-splash .pt-loader-text {
+  font-size: 1.05rem; font-weight: 800; color: var(--primary); margin-top: 14px; letter-spacing: -0.01em;
+}
+
+/* ── SKELETON LOADER ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--sk-bg) 25%, var(--sk-shine) 50%, var(--sk-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-line     { height: 12px; }
+.skeleton-line--sm { height: 9px; }
+.skeleton-line--lg { height: 16px; }
+.skeleton-avatar   { border-radius: 50%; }
+.skeleton-pill     { border-radius: 20px; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--sk-bg); }
+}
+
 /* Misc */
 .divider { height: 1px; background: var(--border); }
 .text-center { text-align: center; }

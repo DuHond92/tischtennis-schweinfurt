@@ -177,8 +177,8 @@ function showEventDetail(eventId) {
   }
 
   // Reset participants & chat
-  document.getElementById('eds-participants').innerHTML = ptLoader(false, true);
-  document.getElementById('eds-chat-feed').innerHTML    = ptLoader('Lade Kommentare…', true);
+  document.getElementById('eds-participants').innerHTML = '<div style="display:flex;gap:6px;" aria-hidden="true"><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div></div>';
+  document.getElementById('eds-chat-feed').innerHTML    = skeletonList('comment', 3);
 
   // Show/hide chat input for non-fallback events
   const isFallback = allEvents.length === 0;

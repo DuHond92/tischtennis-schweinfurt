@@ -74,7 +74,7 @@ function showTableDetail(id) {
     <div class="tds-section">
       <div class="tds-section-label">${ic('chat',13)} Kommentare</div>
       <div id="tds-comments-${t.id}">
-        ${ptLoader(false, true)}
+        <div aria-hidden="true">${skeletonComment()}${skeletonComment()}</div>
       </div>
       <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" onclick="openComments(${t.id})">${ic('chat',13)} Kommentar schreiben</button>
     </div>

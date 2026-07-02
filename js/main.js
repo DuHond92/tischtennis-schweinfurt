@@ -1,6 +1,13 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           STARTUP                                            ║
 // ╚══════════════════════════════════════════════════════════════╝
+function hideSplash() {
+  const el = document.getElementById('app-splash');
+  if (!el) return;
+  el.classList.add('hidden');
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
+}
+
 window.addEventListener('load', async () => {
   // Passwort-Recovery aus URL-Hash erkennen (Supabase Magic Link)
   checkPasswordRecovery();
@@ -44,6 +51,7 @@ window.addEventListener('load', async () => {
     window._eventsLoaded = true;
     renderHome();
     renderEvents();
+    hideSplash();
     // Select-Optionen befüllen
     const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
@@ -69,6 +77,7 @@ window.addEventListener('load', async () => {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
     window._eventsLoaded = true;
     renderEvents();
+    hideSplash();
     showToast('Offline – Inhalte könnten veraltet sein', '⚠️');
   }
 
