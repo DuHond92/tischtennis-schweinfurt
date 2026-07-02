@@ -2,16 +2,30 @@
 // ║           HOME                                               ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// Show cached city in hero — no automatic geolocation request
-(function detectCity() {
+// Zentraler Helper: liefert Ortsname oder null (Fallback: "in deiner Nähe")
+// Priorität: Profil-Stadt → localStorage-Cache (6 h) → null
+function getCurrentLocationLabel() {
+  if (typeof currentUser !== 'undefined' && currentUser?.city) return currentUser.city;
   try {
-    const cached = JSON.parse(localStorage.getItem('tt_hero_city') || 'null');
-    if (cached && Date.now() - cached.ts < 6 * 60 * 60 * 1000) {
-      const el = document.getElementById('hero-city');
-      if (el) el.textContent = 'in ' + cached.city;
-    }
+    const c = JSON.parse(localStorage.getItem('tt_hero_city') || 'null');
+    if (c?.city && Date.now() - c.ts < 6 * 60 * 60 * 1000) return c.city;
   } catch(_) {}
-})();
+  return null;
+}
+
+function updateHeroLocation() {
+  const el = document.getElementById('hero-city');
+  if (!el) return;
+  const label = getCurrentLocationLabel();
+  el.textContent = label ? `in ${label}` : 'in deiner Nähe';
+  // Profil-Stadt in Cache schreiben, damit sie beim nächsten Laden sofort da ist
+  if (label && typeof currentUser !== 'undefined' && currentUser?.city === label) {
+    try { localStorage.setItem('tt_hero_city', JSON.stringify({ city: label, ts: Date.now() })); } catch(_) {}
+  }
+}
+
+// Beim Laden sofort gecachten Ort zeigen (kein Geolocation-Request)
+updateHeroLocation();
 
 function initWelcomeCard() {
   if (localStorage.getItem('tt_welcomed')) return;
@@ -135,13 +149,14 @@ function renderHomeActivities() {
 function renderHome() {
   initWelcomeCard();
 
-  // Begrüßung personalisieren
+  // Begrüßung + Ort aktualisieren
   const greetEl = document.querySelector('.hero-greeting');
   if (greetEl) {
     greetEl.textContent = currentUser
       ? `Hallo, ${currentUser.username}! 👋`
       : 'Willkommen! 👋';
   }
+  updateHeroLocation();
 
   // Action-Card Icons einmalig befüllen
   const _sacIcons = [['map-pinned',20],['users',20],['calendar-plus',20]];

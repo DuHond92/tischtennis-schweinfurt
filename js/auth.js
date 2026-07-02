@@ -186,7 +186,10 @@ async function loadCurrentUser() {
   if(!uid) return;
   const qb = new QueryBuilder('profiles');
   const {data} = await qb.eq('id', uid).execute();
-  if(data && data[0]) currentUser = data[0];
+  if(data && data[0]) {
+    currentUser = data[0];
+    if (typeof updateHeroLocation === 'function') updateHeroLocation();
+  }
 }
 
 function updateTopBarForUser() {
