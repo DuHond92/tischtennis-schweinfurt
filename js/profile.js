@@ -106,7 +106,7 @@ function renderMyEventsSection() {
     <div class="profile-event-row" onclick="showEventDetail(${e.id})">
       ${gameTypePill(e.type)}
       <span class="per-name">${escHtml(e.name)}</span>
-      <span class="per-date">${e.day}. ${e.mon}</span>
+      <span class="per-date">${formatEventDateTime(e.dateStr, null)}</span>
     </div>`).join('');
 }
 

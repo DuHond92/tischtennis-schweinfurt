@@ -384,7 +384,7 @@ function _eventMetaHtml(ev) {
   const hostLink = ev.creatorId
     ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` + escHtml(ev.creator || '') + '</b>'
     : '<b>' + escHtml(ev.creator || '') + '</b>';
-  return `${ic('calendar')} ${ev.day}. ${ev.mon} &nbsp;·&nbsp; ${ic('clock')} ${ev.time} Uhr<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+  return `${ic('calendar')} ${formatEventDateTime(ev.dateStr, ev.time)}<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
 }
 
 function _patchEventParticipantJoin(eventId) {

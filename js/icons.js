@@ -68,20 +68,39 @@ function typeLabel(type) {
   return _GAME_TYPE_META[type]?.label || 'Spiel';
 }
 
+// Zentraler Datumshelper für alle Event-/Spiel-Anzeigen
+// Format: "So. 10. Juli, 14:00 Uhr" | "Heute, 14:00 Uhr" | "So. 10. Juli 2026, 14:00 Uhr"
+// timeStr = null → kein Uhrzeitteil
+function formatEventDateTime(dateStr, timeStr) {
+  const WEEKDAYS = ['So.','Mo.','Di.','Mi.','Do.','Fr.','Sa.'];
+  const MONTHS   = ['Januar','Februar','März','April','Mai','Juni','Juli',
+                    'August','September','Oktober','November','Dezember'];
+  const timeLabel = timeStr ? `, ${timeStr} Uhr` : '';
+  if (!dateStr) return `Datum offen${timeLabel}`;
+  let d;
+  try {
+    const [y, mo, day] = dateStr.split('-').map(Number);
+    d = new Date(y, mo - 1, day); // lokale Zeit, kein UTC-Offset
+    if (isNaN(d.getTime())) throw 0;
+  } catch (_) { return `Datum offen${timeLabel}`; }
+  const now  = new Date();
+  const pad  = n => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const tmrw     = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const tmrwStr  = `${tmrw.getFullYear()}-${pad(tmrw.getMonth()+1)}-${pad(tmrw.getDate())}`;
+  if (dateStr === todayStr) return `Heute${timeLabel}`;
+  if (dateStr === tmrwStr)  return `Morgen${timeLabel}`;
+  const yearPart = d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : '';
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}${yearPart}${timeLabel}`;
+}
+
 function formatEventDate(e) {
-  const timeStr = e.time ? `, ${e.time} Uhr` : '';
-  if (!e.dateStr) {
-    return `${parseInt(e.day, 10)}. ${e.mon}${timeStr}`;
+  // Wrapper mit Fallback für alte Fallback-Daten (kein dateStr, nur day+mon)
+  if (!e.dateStr && (e.day || e.mon)) {
+    const t = e.time ? `, ${e.time} Uhr` : '';
+    return `${parseInt(e.day || '0', 10)}. ${e.mon || ''}${t}`;
   }
-  const today    = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const tomorrow = new Date(today.getTime() + 86400000);
-  const tmrwStr  = tomorrow.toISOString().slice(0, 10);
-  if (e.dateStr === todayStr) return `Heute${timeStr}`;
-  if (e.dateStr === tmrwStr)  return `Morgen${timeStr}`;
-  const d = new Date(e.dateStr);
-  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}${timeStr}`;
+  return formatEventDateTime(e.dateStr || null, e.time || null);
 }
 
 // Encode attribute values (prevents XSS / quote-breakout in data attrs)
