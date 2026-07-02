@@ -82,10 +82,10 @@ function _setInboxView(view) {
   if (view === 'requests') {
     if (backBtn) {
       backBtn.onclick = inboxBackToChats;
-      backBtn.innerHTML = `${_backSvg}<span style="font-size:0.85rem;font-weight:700;color:var(--primary);margin-left:2px;">Zurück</span>`;
-      backBtn.style.display = 'flex';
-      backBtn.style.alignItems = 'center';
-      backBtn.style.gap = '2px';
+      backBtn.innerHTML = _backSvg;
+      backBtn.style.removeProperty('display');
+      backBtn.style.removeProperty('align-items');
+      backBtn.style.removeProperty('gap');
     }
     if (titleEl)    titleEl.textContent = 'Spielpartner-Anfragen';
     if (reqBtn)     reqBtn.style.display = 'none';
