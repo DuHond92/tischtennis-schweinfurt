@@ -464,10 +464,10 @@ function _applyTimeFilter(games) {
 function _applyTimePsFilter(src) {
   if (currentTimeFilter === 'all')      return src;
   if (currentTimeFilter === 'today')    return src.filter(ps => ps.wann === 'Heute' || ps.wann === 'Egal');
-  if (currentTimeFilter === 'tomorrow') return src.filter(ps => ['Heute','Diese Woche'].includes(ps.wann));
+  if (currentTimeFilter === 'tomorrow') return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
   if (currentTimeFilter === 'week')     return src.filter(ps => ['Heute','Diese Woche','Egal'].includes(ps.wann));
   if (currentTimeFilter === 'weekend')  return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
-  if (currentTimeFilter === 'later')    return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
+  if (currentTimeFilter === 'later')    return src.filter(ps => ps.wann === 'Egal');
   return src;
 }
 
