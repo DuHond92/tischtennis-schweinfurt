@@ -304,10 +304,7 @@ async function renderSpielpartnerSection() {
       const pur = escAttr(p.avatar_url  || '');
       const oid = escAttr(otherId);
       return profileRow(c, otherId,
-        `<div style="display:flex;gap:6px;">
-          <button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',15)}</button>
-          <button class="btn-icon-sm" title="Entfernen" onclick="event.stopPropagation();removeConnectionFromProfile('${escAttr(c.id)}','${escAttr(otherId)}')">✕</button>
-        </div>`
+        `<button class="btn-icon-sm" title="Nachricht" onclick="event.stopPropagation();openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',15)}</button>`
       );
     }).join('');
   }
