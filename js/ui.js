@@ -62,7 +62,8 @@ function openSheet(id) {
 }
 function closeAllSheets() {
   stopChatPolling();
-  if (typeof stopDmPolling === 'function') stopDmPolling();
+  if (typeof stopDmPolling     === 'function') stopDmPolling();
+  if (typeof _destroyEdsMap    === 'function') _destroyEdsMap();
   document.querySelectorAll('.bottom-sheet.open').forEach(s => {
     s.classList.remove('open');
     s.style.removeProperty('height');

@@ -1144,47 +1144,58 @@
   </div>
 </div>
 
-<div class="bottom-sheet" id="event-detail-sheet">
+<div class="bottom-sheet eds-flex-sheet" id="event-detail-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header sheet-header--nav">
     <button class="sheet-back" onclick="closeAllSheets()"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg></button>
     <div class="sheet-title">Spielrunde</div>
     <button class="sheet-share" id="eds-share-btn" aria-label="Spiel teilen"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></button>
   </div>
-  <div id="eds-slider"></div>
-  <!-- Info -->
-  <div class="eds-section eds-section--info">
-    <div class="edi-name" id="eds-title">Event</div>
-    <div id="eds-type-pill"></div>
-    <div class="edi-meta" id="eds-meta"></div>
-  </div>
-  <!-- Beschreibung (ausgeblendet wenn leer) -->
-  <div class="eds-section" id="eds-desc-section" style="display:none;">
-    <div class="eds-section-title">Beschreibung</div>
-    <div id="eds-desc"></div>
-  </div>
-  <!-- Action-Button -->
-  <div class="eds-action-row" id="eds-actions"></div>
-  <!-- Teilnehmer -->
-  <div class="eds-section">
-    <div class="eds-section-title">Teilnehmer</div>
-    <div class="participants-row" id="eds-participants">
-      <div class="participants-empty">Lade…</div>
+  <!-- Scrollbarer Inhalt -->
+  <div class="eds-scroll-body">
+    <div id="eds-slider"></div>
+    <!-- Info -->
+    <div class="eds-section eds-section--info">
+      <div class="edi-name" id="eds-title">Event</div>
+      <div id="eds-type-pill"></div>
+      <div class="edi-meta" id="eds-meta"></div>
+    </div>
+    <!-- Beschreibung (ausgeblendet wenn leer) -->
+    <div class="eds-section" id="eds-desc-section" style="display:none;">
+      <div class="eds-section-title">Beschreibung</div>
+      <div id="eds-desc"></div>
+    </div>
+    <!-- Standort (ausgeblendet wenn kein Ort bekannt) -->
+    <div class="eds-section" id="eds-location-section" style="display:none;">
+      <div class="eds-section-title">Standort</div>
+      <div id="eds-map-preview" class="eds-map-preview"></div>
+      <div id="eds-location-info" class="eds-location-info"></div>
+    </div>
+    <!-- Teilnehmer -->
+    <div class="eds-section">
+      <div class="eds-section-title">Teilnehmer</div>
+      <div class="participants-row" id="eds-participants">
+        <div class="participants-empty">Lade…</div>
+      </div>
+    </div>
+    <!-- Kommentare -->
+    <div class="eds-section eds-section--comments">
+      <div class="eds-section-title">Kommentare</div>
+      <div class="evt-comment-feed" id="eds-chat-feed">
+        <div class="chat-empty">Lade Kommentare…</div>
+      </div>
+      <!-- Kommentar-Input im Kommentarbereich (nicht sticky) -->
+      <div class="chat-input-row eds-comment-input" id="eds-chat-input-row">
+        <input class="chat-input" id="eds-chat-input" placeholder="Kommentar schreiben…"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
+        <button class="chat-send-btn" onclick="sendChatMessage()" aria-label="Senden">➤</button>
+      </div>
     </div>
   </div>
-  <!-- Kommentare -->
-  <div class="eds-section eds-section--comments">
-    <div class="eds-section-title">Kommentare</div>
-    <div class="evt-comment-feed" id="eds-chat-feed">
-      <div class="chat-empty">Lade Kommentare…</div>
-    </div>
+  <!-- Floating Teilnahme-Bar -->
+  <div class="eds-float-bar">
+    <div class="eds-float-actions" id="eds-actions"></div>
   </div>
-  <div class="chat-input-row" id="eds-chat-input-row">
-    <input class="chat-input" id="eds-chat-input" placeholder="Kommentar schreiben…"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}">
-    <button class="chat-send-btn" onclick="sendChatMessage()" aria-label="Senden">➤</button>
-  </div>
-  <div class="pb-safe"></div>
 </div>
 
 <!-- PLAYER PROFILE OVERLAY (stacks on top of other sheets) -->

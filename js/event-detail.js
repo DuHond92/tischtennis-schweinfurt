@@ -1,10 +1,75 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           EVENT DETAIL                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
-let currentEventId = null;
-let chatPollTimer  = null;
+let currentEventId  = null;
+let chatPollTimer   = null;
+let _edsMapInstance = null;
 
 const EVENT_FALLBACK = 'images/placeholders/game_fun.png';
+
+// ── Standort-Karte ────────────────────────────────────────────────
+function _destroyEdsMap() {
+  if (_edsMapInstance) {
+    _edsMapInstance.remove();
+    _edsMapInstance = null;
+  }
+}
+
+function _initEdsMapPreview(lat, lng) {
+  _destroyEdsMap();
+  const container = document.getElementById('eds-map-preview');
+  if (!container) return;
+
+  _edsMapInstance = L.map(container, {
+    center: [lat, lng],
+    zoom: 15,
+    scrollWheelZoom: false,
+    dragging: false,
+    zoomControl: false,
+    touchZoom: false,
+    doubleClickZoom: false,
+    boxZoom: false,
+    keyboard: false,
+    tap: false,
+    attributionControl: true
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/" target="_blank">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(_edsMapInstance);
+
+  L.circleMarker([lat, lng], {
+    radius: 10,
+    fillColor: '#3b7cf4',
+    color: '#fff',
+    weight: 2.5,
+    opacity: 1,
+    fillOpacity: 0.95
+  }).addTo(_edsMapInstance);
+
+  // Leaflet braucht sichtbaren Container — nach Sheet-Animation invalidieren
+  setTimeout(() => { if (_edsMapInstance) _edsMapInstance.invalidateSize(); }, 400);
+}
+
+function _buildLocationInfoHtml(ev) {
+  const tbl       = tables.find(t => t.id === ev.tid) || {};
+  const placeName = (ev.tname && ev.tname !== '?') ? ev.tname : (tbl.name || '');
+  const addr      = tbl.addr || ev.colLocationLabel || '';
+  const lat       = ev.colLat ?? tbl.lat ?? null;
+  const lng       = ev.colLng ?? tbl.lng ?? null;
+
+  const mapsHref = (lat != null && lng != null)
+    ? `geo:${lat},${lng}?q=${lat},${lng}`
+    : (placeName ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName)}` : null);
+
+  return `
+    ${placeName ? `<div class="eds-loc-name">${escHtml(placeName)}</div>` : ''}
+    ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>`      : ''}
+    ${mapsHref  ? `<a href="${escAttr(mapsHref)}" class="eds-maps-link" target="_blank" rel="noopener">${ic('map-pin',13)} In Karten öffnen</a>` : ''}
+  `;
+}
 
 function buildEventSlider(images) {
   const hasImgs = images && images.length;
@@ -82,19 +147,39 @@ function showEventDetail(eventId) {
     descSection.style.display = 'none';
   }
 
-  // Actions (host / already joined / join)
-  const myId           = sb.getUserId();
-  const isHost         = myId && ev.creatorId === myId;
-  const isAlreadyIn    = !isHost && myId && ev.participants.some(p => p.id === myId);
-  const isMod          = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const actEl          = document.getElementById('eds-actions');
-  const delBtn         = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
-  if(isHost) {
-    actEl.innerHTML = `
-      <button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>
-      ${delBtn}`;
-  } else if(isAlreadyIn) {
+  // Standort-Sektion
+  const tbl        = tables.find(t => t.id === ev.tid) || {};
+  const mapLat     = ev.colLat ?? tbl.lat ?? null;
+  const mapLng     = ev.colLng ?? tbl.lng ?? null;
+  const hasPlace   = !!(ev.tname && ev.tname !== '?') || !!(tbl.name) || !!(ev.colLocationLabel);
+  const locSection = document.getElementById('eds-location-section');
+  const locInfo    = document.getElementById('eds-location-info');
+  const mapEl      = document.getElementById('eds-map-preview');
+  _destroyEdsMap();
+  if (locSection && locInfo) {
+    if (hasPlace || (mapLat != null && mapLng != null)) {
+      locInfo.innerHTML = _buildLocationInfoHtml(ev);
+      locSection.style.display = '';
+      if (mapEl) mapEl.style.display = (mapLat != null && mapLng != null) ? '' : 'none';
+    } else {
+      locSection.style.display = 'none';
+    }
+  }
+
+  // Floating CTA (host / bereits dabei / teilnehmen)
+  const myId        = sb.getUserId();
+  const isHost      = myId && ev.creatorId === myId;
+  const isAlreadyIn = !isHost && myId && ev.participants.some(p => p.id === myId);
+  const isFull      = ev.p >= ev.max && !isHost && !isAlreadyIn;
+  const isMod       = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const actEl       = document.getElementById('eds-actions');
+  const delBtn      = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
+  if (isHost) {
+    actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>${delBtn}`;
+  } else if (isAlreadyIn) {
     actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">✅ Dabei</button>${delBtn}`;
+  } else if (isFull) {
+    actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" disabled>Ausgebucht</button>${delBtn}`;
   } else {
     actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;" id="eds-join-btn" onclick="joinEventFromDetail(${ev.id})">Teilnehmen</button>${delBtn}`;
   }
@@ -108,6 +193,11 @@ function showEventDetail(eventId) {
   document.getElementById('eds-chat-input-row').style.display = isFallback ? 'none' : '';
 
   openSheet('event-detail-sheet');
+
+  // Map-Init nach Sheet-Animation
+  if (mapLat != null && mapLng != null) {
+    setTimeout(() => _initEdsMapPreview(mapLat, mapLng), 420);
+  }
   _initSliderTouch(document.querySelector('#eds-slider .ds-main'));
   const edsShareBtn = document.getElementById('eds-share-btn');
   if (edsShareBtn) edsShareBtn.onclick = () => shareEvent(ev);

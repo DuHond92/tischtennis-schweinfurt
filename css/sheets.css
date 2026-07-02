@@ -91,9 +91,8 @@
 }
 .sheet-share:active { color: var(--primary); }
 
-/* Sticky header for scrollable detail sheets */
+/* Sticky header for scrollable detail sheets (table + ps, not event which uses flex layout) */
 #table-detail-sheet .sheet-header,
-#event-detail-sheet .sheet-header,
 #ps-detail-sheet .sheet-header {
   position: sticky;
   top: 0;
@@ -103,10 +102,80 @@
 
 .sheet-body { padding: 16px 20px; }
 
+/* ── EVENT DETAIL: Flex-Layout mit scrollbarem Body + Floating-Bar ── */
+.bottom-sheet.eds-flex-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bottom-sheet.eds-flex-sheet .sheet-handle { flex-shrink: 0; }
+.bottom-sheet.eds-flex-sheet .sheet-header { flex-shrink: 0; border-bottom: 1px solid var(--border); }
+.eds-scroll-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Floating Teilnahme-Bar */
+.eds-float-bar {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.eds-float-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Standort-Abschnitt: Map-Preview */
+.eds-map-preview {
+  height: 170px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  margin-bottom: 12px;
+}
+.eds-location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.eds-loc-name { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.eds-loc-addr { font-size: 0.8rem; color: var(--text-dim); }
+.eds-maps-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--primary-bg);
+  width: fit-content;
+}
+
+/* Kommentar-Input im Kommentarbereich (nicht sticky) */
+.chat-input-row.eds-comment-input {
+  position: static;
+  background: transparent;
+  z-index: auto;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding: 12px 0 0;
+}
+
 /* ── EVENT DETAIL SHEET ─────────────────────────────────────────── */
 .eds-section { padding: 16px 20px 20px; border-top: 1px solid var(--border); }
 .eds-section--info { border-top: none; padding-bottom: 12px; }
-.eds-section--comments { padding-bottom: 8px; }
+.eds-section--comments { padding-bottom: 16px; }
 .eds-section-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
 .edi-meta { font-size: 0.82rem; color: var(--text-dim); margin-top: 4px; line-height: 1.6; }
 #eds-desc, #psd-desc { font-size: 0.94rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin: 0; }
