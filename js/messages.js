@@ -110,6 +110,7 @@ async function openInbox() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   _inboxMode = 'chats';
   _inboxSuggestMode = false;
+  _showCancelBtn(false);
   _clearInboxSearch();
   openSheet('inbox-sheet');
   await renderInboxChats();
@@ -119,6 +120,7 @@ async function openInbox() {
 async function renderInboxChats() {
   _inboxMode = 'chats';
   _inboxSuggestMode = false;
+  _showCancelBtn(false);
   _setInboxView('messages');
   const el = document.getElementById('inbox-body');
   if (!el) return;
@@ -172,6 +174,7 @@ async function renderInboxChats() {
 async function inboxShowRequests() {
   _inboxMode = 'requests';
   _inboxSuggestMode = false;
+  _showCancelBtn(false);
   _clearInboxSearch();
   _setInboxView('requests');
   const el = document.getElementById('inbox-body');
@@ -275,6 +278,7 @@ function _inboxSearch(val) {
   _inboxSearchQ = val.trim();
   const clear = document.getElementById('inbox-search-clear');
   if (clear) clear.style.display = val ? '' : 'none';
+  if (val) { _inboxSuggestMode = true; _showCancelBtn(true); }
   clearTimeout(_inboxSearchTimer);
   if (!_inboxSearchQ) {
     if (_inboxMode === 'requests') inboxShowRequests();
@@ -336,11 +340,31 @@ function _renderSearchRow(p, connMap, uid) {
   </div>`;
 }
 
-// ── Spieler-Vorschläge (Empty State CTA) ──────────────────────
+// ── Abbrechen-Button steuern ───────────────────────────────────
+function _showCancelBtn(show) {
+  const btn = document.getElementById('inbox-search-cancel');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
+function _inboxCancelSearch() {
+  _inboxSuggestMode = false;
+  _showCancelBtn(false);
+  _inboxSearchQ = '';
+  clearTimeout(_inboxSearchTimer);
+  const inp   = document.getElementById('inbox-search-input');
+  const clear = document.getElementById('inbox-search-clear');
+  if (inp)   { inp.value = ''; inp.blur(); }
+  if (clear) clear.style.display = 'none';
+  renderInboxChats();
+}
+
+// ── Spieler-Vorschläge (Suchleiste fokussiert / Empty State CTA) ─
 async function inboxFocusSearch() {
+  if (_inboxSuggestMode && !_inboxSearchQ) return; // schon aktiv, kein Reload
   _inboxSuggestMode = true;
+  _showCancelBtn(true);
   const inp = document.getElementById('inbox-search-input');
-  if (inp) inp.focus();
+  if (inp && document.activeElement !== inp) inp.focus();
   await _inboxShowSuggestions();
 }
 
