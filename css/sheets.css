@@ -16,6 +16,29 @@
 }
 .bottom-sheet.open { transform: translateX(-50%) translateY(0); }
 
+/* ── Fullscreen-Sheet (Nachrichten, Benachrichtigungen) ──────── */
+.bottom-sheet.fullscreen-sheet {
+  top: 0;
+  max-height: 100vh;
+  max-height: 100dvh;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: 0;
+}
+.bottom-sheet.fullscreen-sheet .sheet-handle { display: none; }
+
+/* Scrollbarer Inhalt-Bereich in Fullscreen-Sheets */
+.bottom-sheet.fullscreen-sheet #notif-body {
+  flex: 1; overflow-y: auto; min-height: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-sheet.fullscreen-sheet .inbox-panel {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 .sheet-handle {
   width: 36px; height: 4px; background: var(--border);
   border-radius: 2px; margin: 16px auto 8px;
