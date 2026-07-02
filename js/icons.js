@@ -90,8 +90,7 @@ function formatEventDateTime(dateStr, timeStr) {
   const tmrwStr  = `${tmrw.getFullYear()}-${pad(tmrw.getMonth()+1)}-${pad(tmrw.getDate())}`;
   if (dateStr === todayStr) return `Heute${timeLabel}`;
   if (dateStr === tmrwStr)  return `Morgen${timeLabel}`;
-  const yearPart = d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : '';
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}${yearPart}${timeLabel}`;
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}${timeLabel}`;
 }
 
 function formatEventDate(e) {
