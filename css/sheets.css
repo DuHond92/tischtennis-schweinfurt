@@ -18,7 +18,8 @@
 
 /* ── Fullscreen-Sheet (Nachrichten, Benachrichtigungen) ──────── */
 .bottom-sheet.fullscreen-sheet {
-  top: 0;
+  height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
   max-height: 100dvh;
   border-radius: 0;
@@ -27,6 +28,8 @@
   overflow: hidden;
   padding-top: env(safe-area-inset-top);
   padding-bottom: 0;
+  /* Kein top: 0 — bleibt bei bottom: 0 verankert.
+     translateY(100%) = 100dvh nach unten = vollständig aus dem Viewport. */
 }
 .bottom-sheet.fullscreen-sheet .sheet-handle { display: none; }
 
