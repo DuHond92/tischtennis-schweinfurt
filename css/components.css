@@ -203,6 +203,22 @@
   padding: 0 16px 12px;
 }
 .sort-bar-label { font-size: 0.7rem; color: var(--text-dim); flex-shrink: 0; margin-right: 2px; }
+
+/* ── EVENTS META BAR (location chip + sort) ──────────────────────── */
+.events-meta-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px 10px; gap: 8px;
+}
+.events-loc-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 0.73rem; font-weight: 600; color: var(--text);
+  cursor: pointer; white-space: nowrap; max-width: 58%;
+  overflow: hidden; text-overflow: ellipsis; transition: opacity 0.15s;
+}
+.events-loc-chip:active { opacity: 0.65; }
+.events-sort-pills { display: flex; gap: 4px; flex-shrink: 0; }
 .sort-pill {
   display: inline-flex; align-items: center; gap: 4px;
   flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
@@ -502,15 +518,47 @@
 #home-events-list { padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
 #feed-games-wrap { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 8px; }
 
-/* ── FILTER TWO-ROW LAYOUT ───────────────────────────────────────── */
-.filter-pills--sm { padding-top: 0; padding-bottom: 10px; }
-.filter-pills--sm .filter-pill { padding: 5px 12px; font-size: 0.73rem; }
-#event-type-pills .filter-pill[data-type="casual"].active,
-#event-type-pills .filter-pill[data-type="casual"]:hover  { background: var(--green-bg);  color: var(--green);  border-color: var(--green); }
-#event-type-pills .filter-pill[data-type="training"].active,
-#event-type-pills .filter-pill[data-type="training"]:hover { background: var(--gold-bg);   color: var(--gold);   border-color: var(--gold); }
-#event-type-pills .filter-pill[data-type="punktspiel"].active,
-#event-type-pills .filter-pill[data-type="punktspiel"]:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+/* ── EVENTS FILTER CHIPS ─────────────────────────────────────────── */
+.events-filter-chips {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 12px; overflow-x: auto; scrollbar-width: none;
+}
+.events-filter-chips::-webkit-scrollbar { display: none; }
+.efc-chip {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 7px 13px; border-radius: 20px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  font-size: 0.78rem; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: all 0.18s; font-family: var(--font-body);
+  white-space: nowrap;
+}
+.efc-chip:active { opacity: 0.7; }
+.efc-chip--active { background: var(--primary-bg); color: var(--primary); border-color: var(--primary); }
+.efc-chevron { opacity: 0.45; flex-shrink: 0; }
+.efc-chip--active .efc-chevron { opacity: 0.75; }
+.efc-reset {
+  display: inline-flex; align-items: center; flex-shrink: 0;
+  padding: 7px 10px; border-radius: 20px; border: none;
+  background: transparent; color: var(--text-dim);
+  font-size: 0.74rem; font-weight: 600; cursor: pointer;
+  font-family: var(--font-body); white-space: nowrap; transition: color 0.15s;
+}
+.efc-reset:active { color: var(--text); }
+
+/* ── FILTER SELECTION SHEET ──────────────────────────────────────── */
+.fso-list { display: flex; flex-direction: column; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.fso-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 20px; text-align: left; width: 100%;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 0.93rem; font-weight: 500; color: var(--text);
+  font-family: var(--font-body); transition: background 0.12s;
+  border-bottom: 1px solid var(--border);
+}
+.fso-item:last-child { border-bottom: none; }
+.fso-item:active { background: var(--surface2); }
+.fso-item--active { color: var(--primary); font-weight: 700; }
+.fso-item--active::after { content: '✓'; font-size: 1rem; color: var(--primary); }
 
 /* ── FEED TYPE BADGES (SPIEL / GESUCH) ───────────────────────────── */
 .fc-type-badge {
@@ -519,8 +567,9 @@
   padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
   text-transform: uppercase; line-height: 1.6;
 }
-.fc-type-badge--spiel { background: var(--primary); color: #fff; }
-.fc-type-badge--gesuch { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+.fc-type-badge--spiel { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(63,124,244,0.3); }
+.fc-type-badge--gesuch { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(245,158,11,0.25); }
+[data-theme="dark"] .fc-type-badge--spiel  { border-color: rgba(59,124,244,0.25); }
 [data-theme="dark"] .fc-type-badge--gesuch { border-color: rgba(252,211,77,0.2); }
 
 /* ── EVENTS COMBINED FEED ────────────────────────────────────────── */

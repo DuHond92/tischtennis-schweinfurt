@@ -1,8 +1,9 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           EVENTS                                             ║
 // ╚══════════════════════════════════════════════════════════════╝
-let _psCollapsed    = false;
-let _gamesCollapsed = false;
+let _psCollapsed       = false;
+let _gamesCollapsed    = false;
+let _eventsRadiusActive = false;
 // ── Radius / Suchzentrum – State ──────────────────────────────────
 let _psRadius      = parseInt(localStorage.getItem('tt_ps_radius') || '5');
 let _psSearchLat   = parseFloat(localStorage.getItem('tt_ps_lat')  || '') || null;
@@ -53,10 +54,58 @@ function _psGetFiltered(src) {
 // Chip-Beschriftung für Home- und Gesuche-Seite
 function _psChipLabel() {
   if (_psSearchType === 'manual_place' && _psSearchLabel) {
-    const short = _psSearchLabel.length > 14 ? _psSearchLabel.slice(0, 14) + '…' : _psSearchLabel;
+    const short = _psSearchLabel.length > 16 ? _psSearchLabel.slice(0, 16) + '…' : _psSearchLabel;
     return `${short} · ${_psRadius} km`;
   }
+  const city = (typeof currentUser !== 'undefined' && currentUser?.city) ? currentUser.city : null;
+  if (city) return `${city} · ${_psRadius} km`;
+  if (typeof userLat !== 'undefined' && userLat) return `In deiner Nähe · ${_psRadius} km`;
   return `Umkreis: ${_psRadius} km`;
+}
+
+function _updateEfcRadius() {
+  const el = document.getElementById('efc-radius-label');
+  if (el) el.textContent = _eventsRadiusActive ? _psChipLabel() : 'Umkreis';
+  document.getElementById('efc-radius')?.classList.toggle('efc-chip--active', _eventsRadiusActive);
+}
+
+function _updateEfcReset() {
+  const anyActive = currentTimeFilter !== 'all' || currentTypeFilter !== 'all' || _eventsRadiusActive;
+  const el = document.getElementById('efc-reset');
+  if (el) el.style.display = anyActive ? '' : 'none';
+}
+
+function openFilterSheet(type) {
+  if (type === 'time') {
+    document.querySelectorAll('#filter-time-sheet .fso-item').forEach(b =>
+      b.classList.toggle('fso-item--active', b.dataset.value === currentTimeFilter));
+    openSheet('filter-time-sheet');
+  } else if (type === 'mode') {
+    document.querySelectorAll('#filter-mode-sheet .fso-item').forEach(b =>
+      b.classList.toggle('fso-item--active', b.dataset.value === currentTypeFilter));
+    openSheet('filter-mode-sheet');
+  }
+}
+
+function applyTimeFilter(value, chipLabel) {
+  currentTimeFilter = value;
+  const el = document.getElementById('efc-time-label');
+  if (el) el.textContent = chipLabel;
+  document.getElementById('efc-time')?.classList.toggle('efc-chip--active', value !== 'all');
+  _updateEfcReset();
+  closeAllSheets();
+  renderEvents();
+}
+
+function applyModeFilter(value, chipLabel) {
+  currentTypeFilter = value;
+  currentFilter = value;
+  const el = document.getElementById('efc-mode-label');
+  if (el) el.textContent = chipLabel;
+  document.getElementById('efc-mode')?.classList.toggle('efc-chip--active', value !== 'all');
+  _updateEfcReset();
+  closeAllSheets();
+  renderEvents();
 }
 
 // ── Radius-Sheet öffnen ───────────────────────────────────────────
@@ -230,6 +279,7 @@ function applyPsRadius() {
     localStorage.setItem('tt_ps_type', 'current_location');
   }
 
+  _eventsRadiusActive = true;
   closeAllSheets();
   renderEvents();
   if (typeof renderHomePsSection === 'function') renderHomePsSection();
@@ -282,6 +332,8 @@ function renderPlayerSearchCard(ps) {
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
   const metaParts = [];
+  // wann first, then distance, then search radius
+  if (ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${escHtml(ps.wann)}</b>`);
   const dist = _psDist(ps);
   if (dist != null) {
     const distStr = typeof formatDistance === 'function'
@@ -292,9 +344,8 @@ function renderPlayerSearchCard(ps) {
     metaParts.push(`${ic('pin',12)} ${escHtml(ps.location_label)}`);
   }
   const srKm = ps.search_radius_km;
-  if (srKm) metaParts.push(`${ic('navigate',12)} ${srKm} km Umkreis`);
+  if (srKm) metaParts.push(`${ic('navigate',12)} sucht im Umkreis ${srKm} km`);
   else if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('navigate',12)} ${escHtml(ps.umkreis)}`);
-  if (ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
     <div class="player-search-card fade-up" onclick="${cardClick}">
       <div class="psc-profile">
@@ -306,6 +357,7 @@ function renderPlayerSearchCard(ps) {
             ${gameTypePill(ps.spielart)}
           </div>
         </div>
+        <div class="ecb-chevron">›</div>
       </div>
       ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
       ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
@@ -314,6 +366,18 @@ function renderPlayerSearchCard(ps) {
 
 function _sortByDate(a, b) {
   return ((a.dateStr || '') + (a.time || '')).localeCompare((b.dateStr || '') + (b.time || ''));
+}
+
+function _psDateSortKey(ps) {
+  const now  = new Date();
+  const pad  = n => String(n).padStart(2, '0');
+  const str  = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T00:00`;
+  switch (ps.wann) {
+    case 'Heute': return str(now);
+    case 'Diese Woche': { const d = new Date(now); d.setDate(d.getDate() + 3); return str(d); }
+    case 'Wochenende': { const d = new Date(now); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return str(d); }
+    default: return '9999-12-31T00:00'; // Egal / unbekannt → ans Ende
+  }
 }
 
 function getSortedEvents(events) {
@@ -370,28 +434,40 @@ function renderEventCard(e, idx = 0) {
 
 function _applyTimeFilter(games) {
   if (currentTimeFilter === 'all') return games;
-  const today = new Date().toISOString().slice(0, 10);
-  if (currentTimeFilter === 'today') return games.filter(e => e.dateStr === today);
+  const now   = new Date();
+  const pad   = n => String(n).padStart(2, '0');
+  const ds    = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const today = ds(now);
+  if (currentTimeFilter === 'today')   return games.filter(e => e.dateStr === today);
+  if (currentTimeFilter === 'tomorrow') {
+    const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 1);
+    return games.filter(e => e.dateStr === ds(tmrw));
+  }
   if (currentTimeFilter === 'week') {
-    const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-    return games.filter(e => e.dateStr >= today && e.dateStr <= weekEnd);
+    const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+    return games.filter(e => e.dateStr >= today && e.dateStr <= ds(weekEnd));
   }
   if (currentTimeFilter === 'weekend') {
     return games.filter(e => {
       if (!e.dateStr) return false;
       const [y, mo, d] = e.dateStr.split('-').map(Number);
-      const dow = new Date(y, mo - 1, d).getDay();
-      return dow === 0 || dow === 6;
+      return [0, 6].includes(new Date(y, mo - 1, d).getDay());
     });
+  }
+  if (currentTimeFilter === 'later') {
+    const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+    return games.filter(e => e.dateStr > ds(weekEnd));
   }
   return games;
 }
 
 function _applyTimePsFilter(src) {
-  if (currentTimeFilter === 'all') return src;
-  if (currentTimeFilter === 'today') return src.filter(ps => ps.wann === 'Heute' || ps.wann === 'Egal');
-  if (currentTimeFilter === 'week')  return src.filter(ps => ['Heute','Diese Woche','Egal'].includes(ps.wann));
-  if (currentTimeFilter === 'weekend') return src.filter(ps => ['Wochenende','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'all')      return src;
+  if (currentTimeFilter === 'today')    return src.filter(ps => ps.wann === 'Heute' || ps.wann === 'Egal');
+  if (currentTimeFilter === 'tomorrow') return src.filter(ps => ['Heute','Diese Woche'].includes(ps.wann));
+  if (currentTimeFilter === 'week')     return src.filter(ps => ['Heute','Diese Woche','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'weekend')  return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
+  if (currentTimeFilter === 'later')    return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
   return src;
 }
 
@@ -403,39 +479,60 @@ function renderEvents() {
   const typeGames = currentTypeFilter === 'all'
     ? timeGames
     : timeGames.filter(e => e.type === currentTypeFilter);
-  const games = getSortedEvents(typeGames);
+  const games = typeGames; // sorting handled in combined merge below
 
   // Apply type + time + radius filter to player searches
   let srcPs = currentTypeFilter === 'all'
     ? allPlayerSearches
     : allPlayerSearches.filter(ps => ps.spielart === currentTypeFilter);
   srcPs = _applyTimePsFilter(srcPs);
-  const { list: psFiltered, filteredOut } = _psGetFiltered(srcPs);
+  const { list: psFiltered, filteredOut } = _eventsRadiusActive
+    ? _psGetFiltered(srcPs)
+    : { list: srcPs, filteredOut: 0, noLocation: false };
+
+  _updateEfcRadius();
+  _updateEfcReset();
 
   const hasItems = games.length > 0 || psFiltered.length > 0;
 
-  const psBarLabel = _psChipLabel() + (filteredOut > 0 ? ` · ${filteredOut} außerhalb` : '');
-  const radiusBar = `<div class="ps-radius-bar" onclick="openPsRadiusSheet()" role="button">
-    <div class="ps-radius-info">${ic('pin', 12)} ${psBarLabel}</div>
-    <div class="ps-radius-tag">${ic('settings', 12)}</div>
-  </div>`;
-
   if (!hasItems) {
     const canReset = currentTimeFilter !== 'all' || currentTypeFilter !== 'all';
-    c.innerHTML = radiusBar + `<div class="empty-state-card">
+    c.innerHTML = `<div class="empty-state-card">
       <div class="esc-icon">📅</div>
-      <div class="esc-title">Kein Treffer</div>
-      <div class="esc-body">Für diesen Filter gibt es gerade keine Spiele oder Gesuche in deiner Nähe.</div>
+      <div class="esc-title">Keine passenden Einträge gefunden</div>
+      <div class="esc-body">Passe deine Filter an oder erstelle ein neues Spiel/Gesuch.</div>
       <div class="esc-actions">
         ${canReset ? `<button class="esc-btn esc-btn-ghost" onclick="resetEventFilters()">Filter zurücksetzen</button>` : ''}
-        <button class="esc-btn" onclick="openSheet('create-choice-sheet')">+ Spielen</button>
+        <button class="esc-btn" onclick="openSheet('create-choice-sheet')">+ Erstellen</button>
       </div>
     </div>`;
     return;
   }
 
-  let feedHtml = games.map((e, i) => renderEventCard(e, i)).join('');
-  feedHtml += psFiltered.map(renderPlayerSearchCard).join('');
+  // Merge + sort events and player searches into one chronological list
+  const combined = [
+    ...games.map(e => ({
+      kind: 'event', data: e,
+      sortKey: (e.dateStr || '9999-12-31') + 'T' + (e.time || '00:00'),
+      dist: (() => { const t = tables.find(t => t.id === e.tid); return (typeof userLat !== 'undefined' && userLat && t?.lat) ? calcDistance(userLat, userLng, t.lat, t.lng) : Infinity; })()
+    })),
+    ...psFiltered.map(ps => ({
+      kind: 'ps', data: ps,
+      sortKey: _psDateSortKey(ps),
+      dist: _psDist(ps) ?? Infinity
+    }))
+  ];
+  const autoSortDist = _eventsRadiusActive && currentTimeFilter === 'all';
+  if (autoSortDist) {
+    combined.sort((a, b) => a.dist !== b.dist ? a.dist - b.dist : a.sortKey.localeCompare(b.sortKey));
+  } else {
+    combined.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  }
+
+  let feedHtml = combined.map((item, idx) =>
+    item.kind === 'event' ? renderEventCard(item.data, idx) : renderPlayerSearchCard(item.data)
+  ).join('');
+
   if (psFiltered.length === 0 && filteredOut > 0) {
     feedHtml += `<div class="ps-radius-note">
       ${ic('users', 13)} ${filteredOut} Gesuch${filteredOut !== 1 ? 'e' : ''} außerhalb des Radius —
@@ -443,7 +540,7 @@ function renderEvents() {
     </div>`;
   }
 
-  c.innerHTML = radiusBar + `<div class="events-feed">${feedHtml}</div>`;
+  c.innerHTML = `<div class="events-feed">${feedHtml}</div>`;
 }
 
 function filterTime(type, btn) {
@@ -465,8 +562,13 @@ function resetEventFilters() {
   currentTimeFilter = 'all';
   currentTypeFilter = 'all';
   currentFilter = 'all';
-  document.querySelectorAll('#event-time-pills .filter-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
-  document.querySelectorAll('#event-type-pills .filter-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
+  _eventsRadiusActive = false;
+  const tl = document.getElementById('efc-time-label'); if (tl) tl.textContent = 'Zeitraum';
+  const ml = document.getElementById('efc-mode-label'); if (ml) ml.textContent = 'Spielmodus';
+  document.getElementById('efc-time')?.classList.remove('efc-chip--active');
+  document.getElementById('efc-mode')?.classList.remove('efc-chip--active');
+  _updateEfcRadius();
+  _updateEfcReset();
   renderEvents();
 }
 

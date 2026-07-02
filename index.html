@@ -163,27 +163,25 @@
   <!-- EVENTS -->
   <div class="page" id="page-events">
     <div class="events-header">
-      <h1>Events</h1>
-      <p>Finde Mitspieler und verabrede dich zum Tischtennis.</p>
+      <h1>Spielen</h1>
+      <p>Finde Mitspieler und organisiere Tischtennisrunden.</p>
     </div>
-    <div class="filter-pills" id="event-time-pills">
-      <button class="filter-pill active" onclick="filterTime('all',this)">Alle</button>
-      <button class="filter-pill" onclick="filterTime('today',this)">Heute</button>
-      <button class="filter-pill" onclick="filterTime('week',this)">Diese Woche</button>
-      <button class="filter-pill" onclick="filterTime('weekend',this)">Wochenende</button>
+    <div class="events-filter-chips">
+      <button class="efc-chip" id="efc-time" onclick="openFilterSheet('time')">
+        <span id="efc-time-label">Zeitraum</span>
+        <svg class="efc-chevron" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="efc-chip" id="efc-mode" onclick="openFilterSheet('mode')">
+        <span id="efc-mode-label">Spielmodus</span>
+        <svg class="efc-chevron" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="efc-chip" id="efc-radius" onclick="openPsRadiusSheet()">
+        <span id="efc-radius-label">Umkreis</span>
+        <svg class="efc-chevron" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="efc-reset" id="efc-reset" style="display:none" onclick="resetEventFilters()">✕ Zurücksetzen</button>
     </div>
-    <div class="filter-pills filter-pills--sm" id="event-type-pills">
-      <button class="filter-pill active" data-type="all" onclick="filterType('all',this)">Alle</button>
-      <button class="filter-pill" data-type="casual" onclick="filterType('casual',this)">Just 4 Fun</button>
-      <button class="filter-pill" data-type="training" onclick="filterType('training',this)">Training</button>
-      <button class="filter-pill" data-type="punktspiel" onclick="filterType('punktspiel',this)">Punktspiel</button>
-    </div>
-    <div class="events-sort-bar">
-      <span class="sort-bar-label">Sortierung:</span>
-      <button class="sort-pill active" id="sort-date-btn" onclick="sortEvents('date',this)">Datum</button>
-      <button class="sort-pill" id="sort-dist-btn" onclick="sortEvents('dist',this)">Entfernung</button>
-    </div>
-    <div class="events-grid-list" id="events-list"><div class="events-loading"><div class="events-spinner"></div>Lade Spiele…</div></div>
+    <div class="events-grid-list" id="events-list"><div class="pt-loader"><div class="pt-loader-ball"></div><div class="pt-loader-shadow"></div><div class="pt-loader-line"></div><div class="pt-loader-text">Spiele werden geladen…</div></div></div>
     <div class="pb-safe"></div>
   </div>
 
@@ -393,7 +391,7 @@
     </button>
     <button class="nav-item" id="nav-events" onclick="showPage('events')">
       <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.1 61.7" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M14.1,28.1c.2,1.9.7,3.8,1.4,5.5h0s0,0,0,0c0,.2.2.4.3.6.5,1.3,1.1,4.7-3.1,8.6L.8,54.6c-1.1,1.1-1.1,2.8-.1,3.9l2,2.2c1.1,1.2,3,1.3,4.1.1l13.6-13.5s3-2.6,7.5-1.3c0,0,0,0,0,0,1.5.6,3.1,1,4.7,1.3L14.1,28.1h0Z"/><path fill="currentColor" d="M56.8,7.9C48.5-1.9,33.3-2.7,22.9,6.1c-5.6,4.8-8.7,11.4-9,18l22.8,23.6c5.7,0,11.5-2,16.3-6.1,10.4-8.8,12.1-23.9,3.8-33.7h0Z"/></svg></div>
-      <div class="nav-label">Events</div>
+      <div class="nav-label">Spielen</div>
     </button>
     <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
       <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 58.8" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M29.5,33.8c9.3,0,16.9-7.6,16.9-16.9S38.9,0,29.5,0,12.6,7.6,12.6,16.9s7.6,16.9,16.9,16.9Z"/><path fill="currentColor" d="M58.9,53.9c-3.1-9.6-15-16.8-29.3-16.8S3.2,44.3.2,53.9c-.8,2.4,1.1,4.9,3.6,4.9h51.5c2.5,0,4.4-2.5,3.6-4.9Z"/></svg></div>
@@ -500,6 +498,38 @@
       </div>
       <div class="choice-card-chevron">›</div>
     </button>
+  </div>
+</div>
+
+<!-- FILTER: ZEITRAUM -->
+<div class="bottom-sheet" id="filter-time-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Zeitraum</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="fso-list">
+    <button class="fso-item" data-value="all"     onclick="applyTimeFilter('all','Zeitraum')">Gesamt</button>
+    <button class="fso-item" data-value="today"   onclick="applyTimeFilter('today','Heute')">Heute</button>
+    <button class="fso-item" data-value="tomorrow" onclick="applyTimeFilter('tomorrow','Morgen')">Morgen</button>
+    <button class="fso-item" data-value="week"    onclick="applyTimeFilter('week','Diese Woche')">Diese Woche</button>
+    <button class="fso-item" data-value="weekend" onclick="applyTimeFilter('weekend','Wochenende')">Wochenende</button>
+    <button class="fso-item" data-value="later"   onclick="applyTimeFilter('later','Später')">Später</button>
+  </div>
+</div>
+
+<!-- FILTER: SPIELMODUS -->
+<div class="bottom-sheet" id="filter-mode-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Spielmodus</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="fso-list">
+    <button class="fso-item" data-value="all"        onclick="applyModeFilter('all','Spielmodus')">Alle</button>
+    <button class="fso-item" data-value="casual"     onclick="applyModeFilter('casual','Just 4 Fun')">Just 4 Fun</button>
+    <button class="fso-item" data-value="training"   onclick="applyModeFilter('training','Training')">Training</button>
+    <button class="fso-item" data-value="punktspiel" onclick="applyModeFilter('punktspiel','Punktspiel')">Punktspiel</button>
   </div>
 </div>
 
@@ -714,7 +744,7 @@
   </div>
   <div id="inbox-body" class="inbox-panel">
     <div class="inbox-empty inbox-empty-dim">
-      <div class="inbox-empty-icon">⏳</div><div>Lade Unterhaltungen…</div>
+      <div class="pt-loader pt-loader--sm"><div class="pt-loader-ball"></div><div class="pt-loader-shadow"></div><div class="pt-loader-line"></div><div class="pt-loader-text">Nachrichten werden geladen…</div></div>
     </div>
   </div>
 </div>
@@ -1117,7 +1147,7 @@
       <div class="section-label"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Kommentare</div>
     </div>
     <div class="chat-feed" id="psd-chat-feed">
-      <div class="chat-empty">Lade…</div>
+      <div class="pt-loader pt-loader--sm"><div class="pt-loader-ball"></div><div class="pt-loader-shadow"></div><div class="pt-loader-line"></div></div>
     </div>
     <div class="chat-input-row" id="psd-chat-input-row" style="display:none;">
       <input class="chat-input" id="psd-chat-input" placeholder="Kommentar schreiben…"
@@ -1178,7 +1208,7 @@
     <div class="eds-section">
       <div class="eds-section-title">Teilnehmer</div>
       <div class="participants-row" id="eds-participants">
-        <div class="participants-empty">Lade…</div>
+        <div class="pt-loader pt-loader--sm"><div class="pt-loader-ball"></div><div class="pt-loader-shadow"></div><div class="pt-loader-line"></div></div>
       </div>
     </div>
     <!-- Kommentare -->

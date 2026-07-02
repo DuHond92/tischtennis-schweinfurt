@@ -125,7 +125,7 @@ async function renderInboxChats() {
   const el = document.getElementById('inbox-body');
   if (!el) return;
   if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('💬', 'Bitte melde dich an.'); return; }
-  el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
+  el.innerHTML = ptLoader('Nachrichten werden geladen…');
 
   const uid = sb.getUserId();
 
@@ -179,7 +179,7 @@ async function inboxShowRequests() {
   _setInboxView('requests');
   const el = document.getElementById('inbox-body');
   if (!el) return;
-  el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
+  el.innerHTML = ptLoader('Anfragen werden geladen…');
 
   if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
     await loadMyConnections();
@@ -287,7 +287,7 @@ function _inboxSearch(val) {
     return;
   }
   const el = document.getElementById('inbox-body');
-  if (el) el.innerHTML = _inboxEmpty('⏳', 'Suche…', true);
+  if (el) el.innerHTML = ptLoader(false, true);
   _inboxSearchTimer = setTimeout(() => _runInboxSearch(_inboxSearchQ), 300);
 }
 
@@ -371,7 +371,7 @@ async function inboxFocusSearch() {
 async function _inboxShowSuggestions() {
   const el = document.getElementById('inbox-body');
   if (!el) return;
-  el.innerHTML = _inboxEmpty('⏳', 'Lade Spieler…', true);
+  el.innerHTML = ptLoader('Lade Spieler…');
 
   if (typeof loadMyConnections === 'function' && _myConnections === null) {
     await loadMyConnections();
@@ -571,7 +571,7 @@ async function openDmConversation(partnerId, partnerName, partnerEmoji, partnerU
     { avatar_url: _dmPartnerUrl || null, avatar_emoji: _dmPartnerEmoji, username: _dmPartnerName }, { size: 34 }
   );
 
-  document.getElementById('dm-feed').innerHTML = '<div class="chat-empty">Lade Nachrichten…</div>';
+  document.getElementById('dm-feed').innerHTML = ptLoader('Lade Nachrichten…', true);
   document.getElementById('dm-overlay').classList.add('open');
   document.getElementById('dm-sheet').classList.add('open');
 

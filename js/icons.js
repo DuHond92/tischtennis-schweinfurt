@@ -102,6 +102,19 @@ function formatEventDate(e) {
   return formatEventDateTime(e.dateStr || null, e.time || null);
 }
 
+// PlattenTreff Loader — springender Tischtennisball
+// text: optional label (false = kein Text), small: .pt-loader--sm
+function ptLoader(text, small) {
+  const cls = small ? 'pt-loader pt-loader--sm' : 'pt-loader';
+  const label = (text !== false && text) ? `<div class="pt-loader-text">${text}</div>` : '';
+  return `<div class="${cls}">
+    <div class="pt-loader-ball"></div>
+    <div class="pt-loader-shadow"></div>
+    <div class="pt-loader-line"></div>
+    ${label}
+  </div>`;
+}
+
 // Encode attribute values (prevents XSS / quote-breakout in data attrs)
 function escAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
