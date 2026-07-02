@@ -220,7 +220,7 @@
 /* ======= PAGE: MAP (full-screen Google-Maps style) ======= */
 #page-map { overflow: hidden; }
 
-.map-page-layout { position: relative; flex: 1; overflow: hidden; }
+.map-page-layout { position: relative; flex: 1; overflow: hidden; z-index: 0; }
 
 #map { position: absolute; inset: 0; }
 
