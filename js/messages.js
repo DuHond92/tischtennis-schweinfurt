@@ -70,6 +70,40 @@ async function checkDmNotifications() {
   } catch(e) {}
 }
 
+// ── Header-Zustand tauschen ────────────────────────────────────
+const _backSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>`;
+
+function _setInboxView(view) {
+  const backBtn    = document.getElementById('inbox-back-btn');
+  const titleEl    = document.getElementById('inbox-header-title');
+  const reqBtn     = document.getElementById('inbox-requests-btn');
+  const searchWrap = document.getElementById('inbox-search-wrap');
+
+  if (view === 'requests') {
+    if (backBtn) {
+      backBtn.onclick = inboxBackToChats;
+      backBtn.innerHTML = `${_backSvg}<span style="font-size:0.85rem;font-weight:700;color:var(--primary);margin-left:2px;">Zurück</span>`;
+      backBtn.style.display = 'flex';
+      backBtn.style.alignItems = 'center';
+      backBtn.style.gap = '2px';
+    }
+    if (titleEl)    titleEl.textContent = 'Spielpartner-Anfragen';
+    if (reqBtn)     reqBtn.style.display = 'none';
+    if (searchWrap) searchWrap.style.display = 'none';
+  } else {
+    if (backBtn) {
+      backBtn.onclick = closeAllSheets;
+      backBtn.innerHTML = _backSvg;
+      backBtn.style.removeProperty('display');
+      backBtn.style.removeProperty('align-items');
+      backBtn.style.removeProperty('gap');
+    }
+    if (titleEl)    titleEl.textContent = 'Nachrichten';
+    if (searchWrap) searchWrap.style.removeProperty('display');
+    // reqBtn-Sichtbarkeit wird durch _updateRequestsBadge gesetzt
+  }
+}
+
 // ── Inbox öffnen ───────────────────────────────────────────────
 async function openInbox() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
@@ -82,6 +116,7 @@ async function openInbox() {
 // ── Inbox rendern — nur Chatliste ─────────────────────────────
 async function renderInboxChats() {
   _inboxMode = 'chats';
+  _setInboxView('messages');
   const el = document.getElementById('inbox-body');
   if (!el) return;
   if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('💬', 'Bitte melde dich an.'); return; }
@@ -134,6 +169,7 @@ async function renderInboxChats() {
 async function inboxShowRequests() {
   _inboxMode = 'requests';
   _clearInboxSearch();
+  _setInboxView('requests');
   const el = document.getElementById('inbox-body');
   if (!el) return;
   el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
@@ -161,7 +197,6 @@ async function inboxShowRequests() {
   }
 
   const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
-  const backSvg  = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>`;
 
   const reqRow = (p, actionsHtml) => {
     const pid   = escAttr(p.id);
@@ -179,10 +214,7 @@ async function inboxShowRequests() {
     </div>`;
   };
 
-  let html = `<div class="inbox-subheader">
-    <button class="inbox-back-btn" onclick="inboxBackToChats()">${backSvg} Zurück</button>
-    <div class="inbox-subheader-title">Spielpartner-Anfragen</div>
-  </div>`;
+  let html = '';
 
   if (!incoming.length && !outgoing.length) {
     html += _inboxEmpty('🤝', 'Keine offenen Anfragen');
