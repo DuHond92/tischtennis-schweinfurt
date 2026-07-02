@@ -18,7 +18,7 @@
 
 /* ── Slide-right Sheet (von rechts rein, nach rechts raus) ──── */
 .bottom-sheet.slide-right-sheet {
-  transform: translateX(50%);   /* versteckt rechts außerhalb */
+  transform: translateX(100vw);   /* versteckt rechts außerhalb */
 }
 .bottom-sheet.slide-right-sheet.open {
   transform: translateX(-50%);  /* sichtbar, zentriert */

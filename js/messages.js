@@ -582,8 +582,11 @@ async function openDmConversation(partnerId, partnerName, partnerEmoji, partnerU
 
 function closeDmSheet() {
   stopDmPolling();
+  const sheet = document.getElementById('dm-sheet');
   document.getElementById('dm-overlay').classList.remove('open');
-  document.getElementById('dm-sheet').classList.remove('open');
+  sheet.classList.remove('open');
+  sheet.style.removeProperty('transform');
+  sheet.style.removeProperty('transition');
 }
 
 async function loadDmMessages() {

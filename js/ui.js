@@ -51,8 +51,12 @@ function toggleTheme() {
 let openSheetId = null;
 function openSheet(id) {
   if(openSheetId) closeAllSheets();
+  const el = document.getElementById(id);
+  // Swipe-Reste bereinigen, damit kein Inline-Transform die CSS-Klasse überschreibt
+  el.style.removeProperty('transform');
+  el.style.removeProperty('transition');
   document.getElementById('overlay').classList.add('open');
-  document.getElementById(id).classList.add('open');
+  el.classList.add('open');
   document.body.classList.add('has-open-sheet');
   openSheetId = id;
 }
@@ -63,6 +67,8 @@ function closeAllSheets() {
     s.classList.remove('open');
     s.style.removeProperty('height');
     s.style.removeProperty('max-height');
+    s.style.removeProperty('transform');
+    s.style.removeProperty('transition');
   });
   document.getElementById('overlay').classList.remove('open');
   const ppOv = document.getElementById('pp-overlay');
@@ -111,7 +117,7 @@ function initSwipeClose(sheetEl, closeFn) {
     if (dx > 90) {
       // Nach rechts rausfliegen, dann schließen
       sheetEl.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 1, 1)';
-      sheetEl.style.transform  = 'translateX(50%)';
+      sheetEl.style.transform  = 'translateX(100vw)';
       setTimeout(() => {
         sheetEl.style.removeProperty('transform');
         sheetEl.style.removeProperty('transition');
