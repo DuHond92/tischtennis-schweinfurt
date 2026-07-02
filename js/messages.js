@@ -112,7 +112,18 @@ async function renderInboxChats() {
   updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
 
   if (!dmConvs.length) {
-    el.innerHTML = _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Suche Spieler oben und sende eine Anfrage!');
+    const accepted = Array.isArray(_myConnections) ? _myConnections.filter(c => c.status === 'accepted') : [];
+    if (!accepted.length) {
+      el.innerHTML = `<div class="inbox-empty-full">
+        <div class="inbox-empty-full-icon">${ic('users', 48)}</div>
+        <div class="inbox-empty-full-title">Finde deine ersten Spielpartner</div>
+        <div class="inbox-empty-full-text">Suche nach Spielern und sende eine Anfrage, um gemeinsam Tischtennis zu spielen.</div>
+        <button class="btn btn-primary inbox-empty-cta" onclick="document.getElementById('inbox-search-input').focus()">Spieler suchen</button>
+        <div class="inbox-empty-hint">Nach angenommener Anfrage könnt ihr direkt chatten.</div>
+      </div>`;
+    } else {
+      el.innerHTML = _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Suche Spielpartner oben und schreib ihnen!');
+    }
     return;
   }
 
@@ -276,7 +287,11 @@ async function _runInboxSearch(q) {
   if (!el) return;
 
   if (!results.length) {
-    el.innerHTML = _inboxEmpty('🔍', `Keine Ergebnisse für „${escHtml(q)}"`);
+    el.innerHTML = `<div class="inbox-empty">
+      <div class="inbox-empty-icon">🔍</div>
+      <div style="font-weight:700;color:var(--text);">Keine Spieler gefunden</div>
+      <div style="color:var(--text-dim);font-size:0.82rem;margin-top:4px;">Versuche einen anderen Namen oder Spielernamen.</div>
+    </div>`;
     return;
   }
 

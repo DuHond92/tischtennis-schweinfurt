@@ -1209,6 +1209,20 @@
 .btn-danger { background: var(--red, #EF4444); color: #fff; border: none; }
 .btn-danger:active { filter: brightness(0.88); }
 
+/* ── Empty State (keine Spielpartner/Chats) ─────────────── */
+.inbox-empty-full {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 44px 32px 32px; gap: 10px; text-align: center;
+}
+.inbox-empty-full-icon { color: var(--text-dim); margin-bottom: 6px; }
+.inbox-empty-full-title { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+.inbox-empty-full-text {
+  font-size: 0.85rem; color: var(--text-dim); line-height: 1.55;
+  max-width: 280px;
+}
+.inbox-empty-cta { margin-top: 10px; padding: 11px 24px; }
+.inbox-empty-hint { font-size: 0.74rem; color: var(--text-xdim, var(--text-dim)); margin-top: 2px; }
+
 /* ── Anfragen-Button (Header rechts) ────────────────────── */
 .inbox-requests-btn {
   background: none; border: 1.5px solid var(--border);
