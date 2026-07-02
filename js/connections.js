@@ -87,10 +87,15 @@ function refreshConnectionButton(otherUserId) {
     const el = document.getElementById('pp-connection-btn');
     if (el) el.innerHTML = getConnectionButtonHtml(otherUserId);
   }
-  // Inbox aktualisieren falls offen (ersetzt die Profil-Spielpartner-Liste)
+  // Badge und Inbox aktualisieren
+  if (typeof _updateRequestsBadge === 'function') _updateRequestsBadge();
   const ib = document.getElementById('inbox-sheet');
-  if (ib && ib.classList.contains('open') && typeof renderInboxChats === 'function') {
-    renderInboxChats();
+  if (ib && ib.classList.contains('open')) {
+    if (typeof _inboxMode !== 'undefined' && _inboxMode === 'requests' && typeof inboxShowRequests === 'function') {
+      inboxShowRequests();
+    } else if (typeof renderInboxChats === 'function') {
+      renderInboxChats();
+    }
   }
 }
 

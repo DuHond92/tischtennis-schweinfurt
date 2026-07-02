@@ -9,8 +9,10 @@ let _dmPartnerUrl   = '';
 let _dmPollTimer    = null;
 let _dmUnreadCount  = 0;
 
-// Expand-Zustand pro Kategorie (bleibt innerhalb einer Session erhalten)
-let _inboxExpanded  = {};
+let _inboxExpanded    = {};
+let _inboxMode        = 'chats'; // 'chats' | 'requests'
+let _inboxSearchTimer = null;
+let _inboxSearchQ     = '';
 
 // ── localStorage: nutzerspezifisch gelöschte Chats ────────────
 function _getHiddenChats() {
@@ -27,15 +29,35 @@ function _isChatHidden(type, id) {
   return _getHiddenChats().some(h => h.type === type && h.id === String(id));
 }
 
-const INBOX_PREVIEW  = 3;      // sichtbare Chats pro Kategorie bevor "mehr"
+const INBOX_PREVIEW = 3;
 
 // ── Badge ──────────────────────────────────────────────────────
 function updateDmBadge(n) {
   _dmUnreadCount = n || 0;
   const el = document.getElementById('dm-badge');
   if (!el) return;
-  el.textContent  = _dmUnreadCount > 9 ? '9+' : String(_dmUnreadCount);
+  el.textContent   = _dmUnreadCount > 9 ? '9+' : String(_dmUnreadCount);
   el.style.display = _dmUnreadCount > 0 ? '' : 'none';
+}
+
+function _updateRequestsBadge() {
+  if (!sb.isLoggedIn() || !Array.isArray(_myConnections)) return;
+  const uid      = sb.getUserId();
+  const incoming = _myConnections.filter(c => c.status === 'pending' && c.receiver_id === uid);
+  const outgoing = _myConnections.filter(c => c.status === 'pending' && c.requester_id === uid);
+  const total    = incoming.length + outgoing.length;
+  const btn      = document.getElementById('inbox-requests-btn');
+  const badge    = document.getElementById('inbox-req-badge');
+  if (!btn) return;
+  btn.style.display = total > 0 ? '' : 'none';
+  if (badge) {
+    if (incoming.length > 0) {
+      badge.textContent  = incoming.length;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 }
 
 async function checkDmNotifications() {
@@ -51,51 +73,29 @@ async function checkDmNotifications() {
 // ── Inbox öffnen ───────────────────────────────────────────────
 async function openInbox() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  _inboxMode = 'chats';
+  _clearInboxSearch();
   openSheet('inbox-sheet');
   await renderInboxChats();
 }
 
-// ── Inbox rendern ─────────────────────────────────────────────
+// ── Inbox rendern — nur Chatliste ─────────────────────────────
 async function renderInboxChats() {
+  _inboxMode = 'chats';
   const el = document.getElementById('inbox-body');
   if (!el) return;
-
-  if (!sb.isLoggedIn()) {
-    el.innerHTML = _inboxEmpty('💬', 'Bitte melde dich an.');
-    return;
-  }
-
+  if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('💬', 'Bitte melde dich an.'); return; }
   el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
 
-  const uid      = sb.getUserId();
-  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
+  const uid = sb.getUserId();
 
-  // 1. Verbindungen laden
+  // Verbindungen für Badge laden
   if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
     await loadMyConnections();
   }
-  const myConns  = (typeof _myConnections !== 'undefined' && Array.isArray(_myConnections)) ? _myConnections : [];
-  const accepted = myConns.filter(c => c.status === 'accepted');
-  const incoming = myConns.filter(c => c.status === 'pending' && c.receiver_id === uid);
-  const outgoing = myConns.filter(c => c.status === 'pending' && c.requester_id === uid);
+  _updateRequestsBadge();
 
-  // 2. Profile für Verbindungen laden
-  const connIds = [...new Set([
-    ...accepted.map(c => c.requester_id === uid ? c.receiver_id : c.requester_id),
-    ...incoming.map(c => c.requester_id),
-    ...outgoing.map(c => c.receiver_id)
-  ].filter(Boolean))];
-
-  let cProfs = {};
-  if (connIds.length) {
-    try {
-      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${connIds.join(',')})`;
-      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      if (Array.isArray(data)) data.forEach(p => { cProfs[p.id] = p; });
-    } catch(e) {}
-  }
-
-  // 3. DM-Konversationen laden
+  // DM-Konversationen laden
   const dmMessages = await _loadDmMessages(uid);
   const dmConvs    = _groupDmsByPartner(dmMessages, uid);
 
@@ -111,77 +111,220 @@ async function renderInboxChats() {
 
   updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
 
-  // ── Render-Helfer ────────────────────────────────────────────────
-  const renderPartner = c => {
-    const oid = c.requester_id === uid ? c.receiver_id : c.requester_id;
-    const p   = cProfs[oid] || { id: oid, username: 'Spieler' };
-    const pid = escAttr(oid);
-    const pnm = escAttr(p.username || 'Spieler');
-    const pem = escAttr(p.avatar_emoji || '');
-    const pur = escAttr(p.avatar_url || '');
+  if (!dmConvs.length) {
+    el.innerHTML = _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Suche Spieler oben und sende eine Anfrage!');
+    return;
+  }
+
+  el.innerHTML = dmConvs.map(c => _renderDmRow(c, dmProfs, uid)).join('');
+}
+
+// ── Anfragen-Ansicht (inline im Panel) ─────────────────────────
+async function inboxShowRequests() {
+  _inboxMode = 'requests';
+  _clearInboxSearch();
+  const el = document.getElementById('inbox-body');
+  if (!el) return;
+  el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
+
+  if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
+    await loadMyConnections();
+  }
+  const uid      = sb.getUserId();
+  const myConns  = Array.isArray(_myConnections) ? _myConnections : [];
+  const incoming = myConns.filter(c => c.status === 'pending' && c.receiver_id === uid);
+  const outgoing = myConns.filter(c => c.status === 'pending' && c.requester_id === uid);
+
+  const allIds = [...new Set([
+    ...incoming.map(c => c.requester_id),
+    ...outgoing.map(c => c.receiver_id)
+  ].filter(Boolean))];
+
+  let profs = {};
+  if (allIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${allIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { profs[p.id] = p; });
+    } catch(e) {}
+  }
+
+  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
+  const backSvg  = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>`;
+
+  const reqRow = (p, actionsHtml) => {
+    const pid   = escAttr(p.id);
+    const pnm   = escAttr(p.username || '');
+    const pem   = escAttr(p.avatar_emoji || '');
+    const pur   = escAttr(p.avatar_url || '');
     const skill = p.skill_level ? skillMap[p.skill_level] || '' : '';
-    return `<div class="inbox-partner-row clickable" onclick="openDmConversation('${pid}','${pnm}','${pem}','${pur}')">
-      <div class="inbox-conv-av" onclick="event.stopPropagation();showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
+    return `<div class="inbox-partner-row">
+      <div class="inbox-conv-av" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')" style="cursor:pointer">${getAvatarHtml(p, { size: 46 })}</div>
       <div class="inbox-conv-body">
         <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
         ${skill ? `<div class="inbox-partner-skill">${skill}</div>` : ''}
-      </div>
-      <span class="inbox-partner-chevron">${ic('chat', 16)}</span>
-    </div>`;
-  };
-
-  const renderIncoming = c => {
-    const p   = cProfs[c.requester_id] || { id: c.requester_id, username: 'Spieler' };
-    const pid = escAttr(c.requester_id);
-    const pnm = escAttr(p.username || 'Spieler');
-    const pem = escAttr(p.avatar_emoji || '');
-    const pur = escAttr(p.avatar_url || '');
-    const cid = escAttr(c.id);
-    return `<div class="inbox-partner-row">
-      <div class="inbox-conv-av" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
-      <div class="inbox-conv-body">
-        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
-        <div class="inbox-req-actions">
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptConnectionRequest('${cid}','${pid}')">Annehmen</button>
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();rejectConnectionRequest('${cid}','${pid}')">Ablehnen</button>
-        </div>
+        ${actionsHtml}
       </div>
     </div>`;
   };
 
-  const renderOutgoing = c => {
-    const p   = cProfs[c.receiver_id] || { id: c.receiver_id, username: 'Spieler' };
-    const pid = escAttr(c.receiver_id);
-    const pnm = escAttr(p.username || 'Spieler');
-    const pem = escAttr(p.avatar_emoji || '');
-    const pur = escAttr(p.avatar_url || '');
-    const cid = escAttr(c.id);
-    return `<div class="inbox-partner-row">
-      <div class="inbox-conv-av" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
-      <div class="inbox-conv-body">
-        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
-        <div class="inbox-partner-skill">Anfrage gesendet</div>
-      </div>
-      <button class="btn-withdraw" onclick="event.stopPropagation();cancelConnectionRequest('${cid}','${pid}')">Zurückziehen</button>
-    </div>`;
-  };
+  let html = `<div class="inbox-subheader">
+    <button class="inbox-back-btn" onclick="inboxBackToChats()">${backSvg} Zurück</button>
+    <div class="inbox-subheader-title">Spielpartner-Anfragen</div>
+  </div>`;
 
-  // ── Sections zusammenbauen ──────────────────────────────────────
-  let html = '';
-  if (incoming.length) html += _renderSection('incoming',    `Anfragen (${incoming.length})`, incoming, renderIncoming);
-  if (accepted.length) html += _renderSection('partners',    'Meine Spielpartner',             accepted, renderPartner);
-  if (outgoing.length) html += _renderSection('outgoing',    'Gesendete Anfragen',             outgoing, renderOutgoing);
-  if (dmConvs.length)  html += _renderSection('nachrichten', 'Nachrichten',                   dmConvs,  c => _renderDmRow(c, dmProfs, uid));
-
-  if (!html) {
-    html = _inboxEmpty('💬', 'Noch keine Spielpartner oder Nachrichten.<br>Besuche Profile anderer Spieler um anzufragen!');
+  if (!incoming.length && !outgoing.length) {
+    html += _inboxEmpty('🤝', 'Keine offenen Anfragen');
+  } else {
+    if (incoming.length) {
+      html += `<div class="inbox-section-label">Eingegangene Anfragen</div>`;
+      html += incoming.map(c => {
+        const p   = profs[c.requester_id] || { id: c.requester_id, username: 'Spieler' };
+        const cid = escAttr(c.id);
+        const pid = escAttr(c.requester_id);
+        return reqRow(p, `<div class="inbox-req-actions" style="margin-top:6px;">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_reqAccept('${cid}','${pid}')">Annehmen</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_reqReject('${cid}','${pid}')">Ablehnen</button>
+        </div>`);
+      }).join('');
+    }
+    if (outgoing.length) {
+      html += `<div class="inbox-section-label">Gesendete Anfragen</div>`;
+      html += outgoing.map(c => {
+        const p   = profs[c.receiver_id] || { id: c.receiver_id, username: 'Spieler' };
+        const cid = escAttr(c.id);
+        const pid = escAttr(c.receiver_id);
+        return reqRow(p, `<button class="btn-withdraw" style="margin-top:6px;" onclick="event.stopPropagation();_reqCancel('${cid}','${pid}')">Zurückziehen</button>`);
+      }).join('');
+    }
   }
 
   el.innerHTML = html;
 }
 
-// ── Kollabierbare Sektions-Renderer ──────────────────────────
+async function inboxBackToChats() {
+  await renderInboxChats();
+}
 
+// ── Request-Action-Wrapper (aktualisieren nach Aktion) ─────────
+async function _reqAccept(cid, uid) {
+  await acceptConnectionRequest(cid, uid);
+  if (_inboxMode === 'requests') inboxShowRequests();
+  else renderInboxChats();
+}
+async function _reqReject(cid, uid) {
+  await rejectConnectionRequest(cid, uid);
+  if (_inboxMode === 'requests') inboxShowRequests();
+  else renderInboxChats();
+}
+async function _reqCancel(cid, uid) {
+  await cancelConnectionRequest(cid, uid);
+  if (_inboxMode === 'requests') inboxShowRequests();
+  else renderInboxChats();
+}
+
+// ── Suchfunktionen ─────────────────────────────────────────────
+function _inboxSearch(val) {
+  _inboxSearchQ = val.trim();
+  const clear = document.getElementById('inbox-search-clear');
+  if (clear) clear.style.display = val ? '' : 'none';
+  clearTimeout(_inboxSearchTimer);
+  if (!_inboxSearchQ) {
+    if (_inboxMode === 'requests') inboxShowRequests();
+    else renderInboxChats();
+    return;
+  }
+  const el = document.getElementById('inbox-body');
+  if (el) el.innerHTML = _inboxEmpty('⏳', 'Suche…', true);
+  _inboxSearchTimer = setTimeout(() => _runInboxSearch(_inboxSearchQ), 300);
+}
+
+function _clearInboxSearch() {
+  _inboxSearchQ = '';
+  clearTimeout(_inboxSearchTimer);
+  const inp   = document.getElementById('inbox-search-input');
+  const clear = document.getElementById('inbox-search-clear');
+  if (inp)   inp.value = '';
+  if (clear) clear.style.display = 'none';
+}
+
+async function _runInboxSearch(q) {
+  if (q !== _inboxSearchQ) return;
+
+  if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
+    await loadMyConnections();
+  }
+  const uid     = sb.getUserId();
+  const myConns = Array.isArray(_myConnections) ? _myConnections : [];
+
+  const connMap = {};
+  myConns.forEach(c => {
+    const other = c.requester_id === uid ? c.receiver_id : c.requester_id;
+    connMap[other] = c;
+  });
+
+  let results = [];
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&username=ilike.*${encodeURIComponent(q)}*&limit=12`;
+    const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (Array.isArray(data)) results = data.filter(p => p.id !== uid);
+  } catch(e) {}
+
+  if (q !== _inboxSearchQ) return;
+
+  const el = document.getElementById('inbox-body');
+  if (!el) return;
+
+  if (!results.length) {
+    el.innerHTML = _inboxEmpty('🔍', `Keine Ergebnisse für „${escHtml(q)}"`);
+    return;
+  }
+
+  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
+
+  const rows = results.map(p => {
+    const pid   = escAttr(p.id);
+    const pnm   = escAttr(p.username || '');
+    const pem   = escAttr(p.avatar_emoji || '');
+    const pur   = escAttr(p.avatar_url || '');
+    const skill = p.skill_level ? skillMap[p.skill_level] || '' : '';
+    const conn  = connMap[p.id];
+
+    let actionHtml = '';
+    if (!conn) {
+      actionHtml = `<button class="btn-sm-ghost" onclick="event.stopPropagation();_inboxSendRequest('${pid}',this)">Anfrage senden</button>`;
+    } else if (conn.status === 'accepted') {
+      actionHtml = `<button class="btn-sm-primary" onclick="event.stopPropagation();openDmConversation('${pid}','${pnm}','${pem}','${pur}')">${ic('chat',13)} Nachricht</button>`;
+    } else if (conn.status === 'pending' && conn.requester_id === uid) {
+      actionHtml = `<span class="inbox-search-status">Anfrage gesendet</span>`;
+    } else if (conn.status === 'pending' && conn.receiver_id === uid) {
+      const cid = escAttr(conn.id);
+      actionHtml = `<div class="inbox-req-actions">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_reqAccept('${cid}','${pid}')">Annehmen</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_reqReject('${cid}','${pid}')">Ablehnen</button>
+      </div>`;
+    }
+
+    return `<div class="inbox-partner-row" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')" style="cursor:pointer">
+      <div class="inbox-conv-av" onclick="event.stopPropagation();showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 46 })}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
+        ${skill ? `<div class="inbox-partner-skill">${skill}</div>` : ''}
+      </div>
+      <div class="inbox-search-action-wrap" onclick="event.stopPropagation()">${actionHtml}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="inbox-section-label">Suchergebnisse</div>${rows}`;
+}
+
+async function _inboxSendRequest(otherId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  await sendConnectionRequest(otherId);
+  if (btn) { btn.disabled = false; btn.textContent = 'Gesendet'; }
+}
+
+// ── Kollabierbare Sektions-Renderer ──────────────────────────
 function _renderSection(key, label, items, renderFn) {
   if (!items.length) return '';
 
@@ -198,9 +341,7 @@ function _renderSection(key, label, items, renderFn) {
     html += hidden.map(renderFn).join('');
     html += `</div>`;
 
-    const btnLabel = expanded
-      ? 'Weniger anzeigen ↑'
-      : `+ ${hidden.length} weitere`;
+    const btnLabel = expanded ? 'Weniger anzeigen ↑' : `+ ${hidden.length} weitere`;
     html += `<button class="inbox-expand-btn"
       data-key="${key}"
       data-hidden="${hidden.length}"
@@ -220,7 +361,6 @@ function toggleInboxSection(key, btn) {
 }
 
 // ── Datenlader ────────────────────────────────────────────────
-
 async function _loadDmMessages(uid) {
   try {
     const url = `${SUPABASE_URL}/rest/v1/direct_messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(sender_id.eq.${uid},receiver_id.eq.${uid})&order=created_at.desc&limit=200`;
@@ -230,7 +370,6 @@ async function _loadDmMessages(uid) {
 }
 
 // ── Render-Helfer ─────────────────────────────────────────────
-
 function _groupDmsByPartner(messages, uid) {
   const convMap = {};
   messages.forEach(m => {
@@ -255,7 +394,7 @@ function _renderDmRow(c, profiles, uid) {
     ? c.lastMsg.message.slice(0, 60) + '…' : c.lastMsg.message;
   const time   = _dmTime(c.lastMsg.created_at);
   const hasNew = c.unread > 0;
-  const pur = escAttr(p.avatar_url || '');
+  const pur    = escAttr(p.avatar_url || '');
   return `
     <div class="inbox-conv-row" onclick="openDmFromInbox('${pid}','${pnm}','${pem}','${pur}')">
       <div class="inbox-conv-av">${av}</div>
@@ -281,7 +420,6 @@ function _inboxEmpty(icon, text, dim) {
 }
 
 // ── DM Konversation ────────────────────────────────────────────
-
 async function openDmFromInbox(partnerId, partnerName, partnerEmoji, partnerUrl) {
   await openDmConversation(partnerId, partnerName, partnerEmoji, partnerUrl);
 }

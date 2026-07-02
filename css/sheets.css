@@ -1208,3 +1208,90 @@
 .btn-withdraw:active { color: var(--text); border-color: var(--text-dim); }
 .btn-danger { background: var(--red, #EF4444); color: #fff; border: none; }
 .btn-danger:active { filter: brightness(0.88); }
+
+/* ── Anfragen-Button (Header rechts) ────────────────────── */
+.inbox-requests-btn {
+  background: none; border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 5px 11px;
+  font-size: 0.78rem; font-weight: 700; color: var(--text);
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.inbox-requests-btn:active { background: var(--surface2); }
+.inbox-req-badge {
+  background: var(--primary); color: #fff;
+  font-size: 0.68rem; font-weight: 800;
+  min-width: 17px; height: 17px; border-radius: 99px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 4px; line-height: 1;
+}
+
+/* ── Suchleiste ─────────────────────────────────────────── */
+.inbox-search-wrap {
+  padding: 8px 16px 10px;
+  flex-shrink: 0;
+}
+.inbox-search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border-radius: 12px;
+  padding: 9px 12px;
+}
+.inbox-search-icon { color: var(--text-dim); flex-shrink: 0; }
+.inbox-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 0.9rem; color: var(--text);
+  font-family: var(--font-body);
+  min-width: 0;
+}
+.inbox-search-input::placeholder { color: var(--text-dim); }
+.inbox-search-clear {
+  background: none; border: none; padding: 0;
+  color: var(--text-dim); font-size: 1.1rem; line-height: 1;
+  cursor: pointer; flex-shrink: 0; width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Anfragen-Subview (inline im panel) ──────────────────── */
+.inbox-subheader {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.inbox-back-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: none; padding: 6px 4px;
+  color: var(--primary); font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; font-family: var(--font-body);
+  flex-shrink: 0;
+}
+.inbox-subheader-title {
+  font-weight: 800; font-size: 0.95rem; color: var(--text); flex: 1;
+}
+
+/* ── Suchergebnis-Aktionen ────────────────────────────────── */
+.inbox-search-action-wrap {
+  flex-shrink: 0; display: flex; align-items: center;
+}
+.inbox-search-status {
+  font-size: 0.73rem; color: var(--text-dim); font-weight: 500;
+  white-space: nowrap;
+}
+.btn-sm-primary {
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 20px;
+  font-size: 0.73rem; font-weight: 700; padding: 6px 12px;
+  cursor: pointer; font-family: var(--font-body);
+  display: flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+}
+.btn-sm-primary:active { filter: brightness(0.88); }
+.btn-sm-ghost {
+  background: none; border: 1.5px solid var(--border);
+  border-radius: 20px; color: var(--text);
+  font-size: 0.73rem; font-weight: 700; padding: 5px 12px;
+  cursor: pointer; font-family: var(--font-body);
+  white-space: nowrap;
+}
+.btn-sm-ghost:active { background: var(--surface2); }
