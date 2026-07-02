@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
     // UI mit echten Daten aktualisieren
     window._eventsLoaded = true;
     renderHome();
-    renderEvents(currentFilter);
+    renderEvents();
     // Select-Optionen befüllen
     const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
@@ -68,7 +68,7 @@ window.addEventListener('load', async () => {
   } catch(e) {
     console.warn('Supabase nicht erreichbar, zeige Fallback-Daten', e);
     window._eventsLoaded = true;
-    renderEvents(currentFilter);
+    renderEvents();
     showToast('Offline – Inhalte könnten veraltet sein', '⚠️');
   }
 

@@ -443,7 +443,7 @@ async function _confirmLeaveEvent() {
 
   // Listen aktualisieren
   renderHome();
-  renderEvents(currentFilter);
+  renderEvents();
 
   // Karten-Marker aktualisieren
   if (typeof mapInit !== 'undefined' && mapInit) {
@@ -488,7 +488,7 @@ async function joinEventFromDetail(eventId) {
   await loadEventParticipants(eventId);
   // Listen neu rendern (lesen allEvents, das jetzt aktuell ist)
   renderHome();
-  renderEvents(currentFilter);
+  renderEvents();
 }
 
 function startGame(eventId) {

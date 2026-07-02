@@ -231,7 +231,7 @@ function applyPsRadius() {
   }
 
   closeAllSheets();
-  renderEvents(currentFilter);
+  renderEvents();
   if (typeof renderHomePsSection === 'function') renderHomePsSection();
 }
 
@@ -273,7 +273,7 @@ async function joinEvent(eventId, btn) {
     showToast('🏓 Du nimmst am Event teil!');
     _patchEventParticipantJoin(eventId);
     renderHome();
-    renderEvents(currentFilter);
+    renderEvents();
   }
 }
 
@@ -294,14 +294,17 @@ function renderPlayerSearchCard(ps) {
   const srKm = ps.search_radius_km;
   if (srKm) metaParts.push(`${ic('navigate',12)} ${srKm} km Umkreis`);
   else if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('navigate',12)} ${escHtml(ps.umkreis)}`);
-  if(ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
+  if (ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${ps.wann}</b>`);
   return `
     <div class="player-search-card fade-up" onclick="${cardClick}">
       <div class="psc-profile">
         <div class="pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="psc-identity">
           <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
-          <div class="psc-type-row">${gameTypePill(ps.spielart)}</div>
+          <div class="psc-type-row">
+            <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+            ${gameTypePill(ps.spielart)}
+          </div>
         </div>
       </div>
       ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
@@ -330,7 +333,7 @@ function sortEvents(sort, btn) {
   currentSort = sort;
   document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderEvents(currentFilter);
+  renderEvents();
 }
 
 function renderEventCard(e, idx = 0) {
@@ -349,6 +352,7 @@ function renderEventCard(e, idx = 0) {
     <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
     <div class="ecb-info">
       <div class="ecb-title-row">
+        <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
         <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
         ${isDabei ? '<span class="ecb-dabei-badge">Dabei</span>' : ''}
       </div>
@@ -364,92 +368,125 @@ function renderEventCard(e, idx = 0) {
   </div>`;
 }
 
-function _applyEventFilter(games, filter) {
-  if (filter === 'all') return games;
+function _applyTimeFilter(games) {
+  if (currentTimeFilter === 'all') return games;
   const today = new Date().toISOString().slice(0, 10);
-  if (filter === 'today') return games.filter(e => e.dateStr === today);
-  if (filter === 'week') {
+  if (currentTimeFilter === 'today') return games.filter(e => e.dateStr === today);
+  if (currentTimeFilter === 'week') {
     const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     return games.filter(e => e.dateStr >= today && e.dateStr <= weekEnd);
   }
-  return games.filter(e => e.type === filter);
+  if (currentTimeFilter === 'weekend') {
+    return games.filter(e => {
+      if (!e.dateStr) return false;
+      const [y, mo, d] = e.dateStr.split('-').map(Number);
+      const dow = new Date(y, mo - 1, d).getDay();
+      return dow === 0 || dow === 6;
+    });
+  }
+  return games;
 }
 
-function renderEvents(filter = 'all') {
-  const gameSrc = allEvents;
+function _applyTimePsFilter(src) {
+  if (currentTimeFilter === 'all') return src;
+  if (currentTimeFilter === 'today') return src.filter(ps => ps.wann === 'Heute' || ps.wann === 'Egal');
+  if (currentTimeFilter === 'week')  return src.filter(ps => ['Heute','Diese Woche','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'weekend') return src.filter(ps => ['Wochenende','Egal'].includes(ps.wann));
+  return src;
+}
+
+function renderEvents() {
   const c = document.getElementById('events-list');
 
-  const isTimeFilter = filter === 'today' || filter === 'week';
-  const srcPs = (filter === 'all' || isTimeFilter)
+  // Apply time + type filter to events
+  const timeGames = _applyTimeFilter(allEvents);
+  const typeGames = currentTypeFilter === 'all'
+    ? timeGames
+    : timeGames.filter(e => e.type === currentTypeFilter);
+  const games = getSortedEvents(typeGames);
+
+  // Apply type + time + radius filter to player searches
+  let srcPs = currentTypeFilter === 'all'
     ? allPlayerSearches
-    : allPlayerSearches.filter(ps => ps.spielart === filter);
+    : allPlayerSearches.filter(ps => ps.spielart === currentTypeFilter);
+  srcPs = _applyTimePsFilter(srcPs);
+  const { list: psFiltered, filteredOut } = _psGetFiltered(srcPs);
 
-  const { list: psFiltered, filteredOut, noLocation } = _psGetFiltered(srcPs);
-  const hasLocation = !noLocation;
-
-  const games = getSortedEvents(_applyEventFilter(gameSrc, filter));
+  const hasItems = games.length > 0 || psFiltered.length > 0;
 
   const psBarLabel = _psChipLabel() + (filteredOut > 0 ? ` · ${filteredOut} außerhalb` : '');
-  const radiusBarHtml = `<div class="ps-radius-bar" onclick="openPsRadiusSheet()" role="button">
+  const radiusBar = `<div class="ps-radius-bar" onclick="openPsRadiusSheet()" role="button">
     <div class="ps-radius-info">${ic('pin', 12)} ${psBarLabel}</div>
     <div class="ps-radius-tag">${ic('settings', 12)}</div>
   </div>`;
 
-  const psChevron = `<span class="feed-section-chevron" id="feed-ps-chevron"${_psCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
-
-  let psHtml = '';
-  if (srcPs.length > 0) {
-    const cardsOrEmpty = psFiltered.length
-      ? psFiltered.map(renderPlayerSearchCard).join('')
-      : `<div class="empty-state-card">
-           <div class="esc-title">Keine Gesuche in ${_psRadius} km</div>
-           <div class="esc-body">Erweitere den Radius oder erstelle selbst ein Gesuch.</div>
-           <div class="esc-actions">
-             <button class="esc-btn" onclick="openPsRadiusSheet()">Umkreis erweitern</button>
-             <button class="esc-btn esc-btn-ghost" onclick="openMitspielerSheet()">Gesuch erstellen</button>
-           </div>
-         </div>`;
-    psHtml = `<div class="feed-section-title feed-section-toggle" onclick="_toggleFeedSection('ps')">${ic('users',13)} Mitspieler gesucht ${psFiltered.length > 0 ? `<span class="ps-count-chip">${psFiltered.length}</span>` : ''}${psChevron}</div>
-       <div id="feed-ps-wrap"${_psCollapsed ? ' style="display:none"' : ''}>${radiusBarHtml}${cardsOrEmpty}</div>`;
-  }
-
-  const psEmptyHtml = (srcPs.length === 0)
-    ? `<div class="feed-section-title">${ic('users',13)} Mitspieler gesucht</div>
-       <div class="empty-state-card">
-         <div class="esc-icon">👥</div>
-         <div class="esc-title">Noch keine Gesuche</div>
-         <div class="esc-body">Erstelle ein Gesuch und finde Mitspieler in deiner Umgebung.</div>
-         <button class="esc-btn" onclick="openMitspielerSheet()">Gesuch erstellen</button>
-       </div>`
-    : '';
-
-  const gamesChevron = `<span class="feed-section-chevron" id="feed-games-chevron"${_gamesCollapsed ? ' style="transform:rotate(0deg)"' : ''}>›</span>`;
-  const gamesStyle = (psHtml || psEmptyHtml) ? 'margin-top:4px;' : '';
-  const gamesHtml = games.length
-    ? `<div class="feed-section-title feed-section-toggle"${gamesStyle ? ` style="${gamesStyle}"` : ''} onclick="_toggleFeedSection('games')">${ic('calendar',13)} Geplante Spiele <span class="ps-count-chip">${games.length}</span>${gamesChevron}</div>
-       <div id="feed-games-wrap"${_gamesCollapsed ? ' style="display:none"' : ''}>${games.map((e, i) => renderEventCard(e, i)).join('')}</div>`
-    : '';
-
-  if (!psHtml && !psEmptyHtml && !gamesHtml) {
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">Keine Einträge gefunden.</div>';
+  if (!hasItems) {
+    const canReset = currentTimeFilter !== 'all' || currentTypeFilter !== 'all';
+    c.innerHTML = radiusBar + `<div class="empty-state-card">
+      <div class="esc-icon">📅</div>
+      <div class="esc-title">Kein Treffer</div>
+      <div class="esc-body">Für diesen Filter gibt es gerade keine Spiele oder Gesuche in deiner Nähe.</div>
+      <div class="esc-actions">
+        ${canReset ? `<button class="esc-btn esc-btn-ghost" onclick="resetEventFilters()">Filter zurücksetzen</button>` : ''}
+        <button class="esc-btn" onclick="openSheet('create-choice-sheet')">+ Spielen</button>
+      </div>
+    </div>`;
     return;
   }
 
-  c.innerHTML = (psHtml || psEmptyHtml) + gamesHtml;
+  let feedHtml = games.map((e, i) => renderEventCard(e, i)).join('');
+  feedHtml += psFiltered.map(renderPlayerSearchCard).join('');
+  if (psFiltered.length === 0 && filteredOut > 0) {
+    feedHtml += `<div class="ps-radius-note">
+      ${ic('users', 13)} ${filteredOut} Gesuch${filteredOut !== 1 ? 'e' : ''} außerhalb des Radius —
+      <span class="ps-expand-link" onclick="openPsRadiusSheet()">Umkreis erweitern</span>
+    </div>`;
+  }
+
+  c.innerHTML = radiusBar + `<div class="events-feed">${feedHtml}</div>`;
+}
+
+function filterTime(type, btn) {
+  currentTimeFilter = type;
+  document.querySelectorAll('#event-time-pills .filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents();
+}
+
+function filterType(type, btn) {
+  currentTypeFilter = type;
+  currentFilter = type;
+  document.querySelectorAll('#event-type-pills .filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents();
+}
+
+function resetEventFilters() {
+  currentTimeFilter = 'all';
+  currentTypeFilter = 'all';
+  currentFilter = 'all';
+  document.querySelectorAll('#event-time-pills .filter-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
+  document.querySelectorAll('#event-type-pills .filter-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
+  renderEvents();
 }
 
 function filterEvents(type, btn) {
-  currentFilter = type;
+  const isTime = type === 'all' || type === 'today' || type === 'week' || type === 'weekend';
+  if (isTime) {
+    currentTimeFilter = type;
+    currentTypeFilter = 'all';
+  } else {
+    currentTypeFilter = type;
+    currentFilter = type;
+  }
   document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderEvents(type);
+  if (btn) btn.classList.add('active');
+  renderEvents();
 }
 
 function activateMitspielerFilter() {
   showPage('events');
-  // Mitspieler-Gesuche erscheinen oben im "Alle"-Feed
-  const allPill = document.querySelector('#event-filter-pills .filter-pill');
-  if(allPill && currentFilter !== 'all') filterEvents('all', allPill);
+  resetEventFilters();
 }
 
 function openCreateEventSheet() {
@@ -517,7 +554,7 @@ async function submitCreateEvent() {
   await loadEvents();
 
   // 4. Alle Ansichten neu rendern
-  renderEvents(currentFilter);
+  renderEvents();
   renderHome();
 
   // 5. Karte aktualisieren: Marker-Badges, Liste, offene Preview
@@ -719,6 +756,6 @@ async function submitMitspieler() {
   closeAllSheets();
   showToast('👥 Gesuch veröffentlicht!', '✅');
   await loadEvents();
-  renderEvents(currentFilter);
+  renderEvents();
   renderHome();
 }

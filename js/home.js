@@ -265,8 +265,7 @@ function navStat(type) {
     showPage('map');
   } else if (type === 'events') {
     showPage('events');
-    const allPill = document.querySelector('#event-filter-pills .filter-pill');
-    if (allPill) filterEvents('all', allPill);
+    resetEventFilters();
   } else if (type === 'searches') {
     activateMitspielerFilter();
   }

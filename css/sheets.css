@@ -292,7 +292,9 @@
 
 /* FAB button */
 .fab {
-  position: fixed; bottom: 80px; right: 50%;
+  position: fixed;
+  bottom: calc(62px + 14px + env(safe-area-inset-bottom));
+  right: 50%;
   transform: translateX(calc(50% + 185px));
   width: 52px; height: 52px; border-radius: 16px;
   background: var(--primary); color: #fff; border: none;
@@ -304,11 +306,11 @@
 .fab:hover { transform: translateX(calc(50% + 185px)) translateY(-2px) scale(1.05); }
 
 @media (max-width: 599px) {
-  .fab { right: 20px; transform: none; }
+  .fab { right: max(16px, env(safe-area-inset-right)); transform: none; }
   .fab:hover { transform: translateY(-2px) scale(1.05); }
 }
 
-.fab-labeled { width: auto; padding: 0 18px 0 14px; gap: 7px; border-radius: 26px; font-size: inherit; }
+.fab-labeled { width: auto; padding: 0 20px 0 16px; gap: 0; border-radius: 26px; font-size: inherit; }
 .fab-label { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.2px; }
 
 /* ── Action-Cards im „Was möchtest du machen?"-Sheet ─────────── */

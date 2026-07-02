@@ -163,19 +163,20 @@
   <!-- EVENTS -->
   <div class="page" id="page-events">
     <div class="events-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <h1>Events</h1>
-        <button class="btn btn-primary btn-sm" onclick="openSheet('create-choice-sheet')">+ Spielen</button>
-      </div>
+      <h1>Events</h1>
       <p>Finde Mitspieler und verabrede dich zum Tischtennis.</p>
     </div>
-    <div class="filter-pills" id="event-filter-pills">
-      <button class="filter-pill active" onclick="filterEvents('all',this)">Alle</button>
-      <button class="filter-pill" onclick="filterEvents('today',this)">Heute</button>
-      <button class="filter-pill" onclick="filterEvents('week',this)">Diese Woche</button>
-      <button class="filter-pill" onclick="filterEvents('casual',this)">Just 4 Fun</button>
-      <button class="filter-pill" onclick="filterEvents('training',this)">Training</button>
-      <button class="filter-pill" onclick="filterEvents('punktspiel',this)">Punktspiel</button>
+    <div class="filter-pills" id="event-time-pills">
+      <button class="filter-pill active" onclick="filterTime('all',this)">Alle</button>
+      <button class="filter-pill" onclick="filterTime('today',this)">Heute</button>
+      <button class="filter-pill" onclick="filterTime('week',this)">Diese Woche</button>
+      <button class="filter-pill" onclick="filterTime('weekend',this)">Wochenende</button>
+    </div>
+    <div class="filter-pills filter-pills--sm" id="event-type-pills">
+      <button class="filter-pill active" data-type="all" onclick="filterType('all',this)">Alle</button>
+      <button class="filter-pill" data-type="casual" onclick="filterType('casual',this)">Just 4 Fun</button>
+      <button class="filter-pill" data-type="training" onclick="filterType('training',this)">Training</button>
+      <button class="filter-pill" data-type="punktspiel" onclick="filterType('punktspiel',this)">Punktspiel</button>
     </div>
     <div class="events-sort-bar">
       <span class="sort-bar-label">Sortierung:</span>
@@ -405,8 +406,7 @@
 
 <!-- FAB (only on events/home pages) -->
 <button class="fab fab-labeled" id="main-fab" style="display:none" onclick="openSheet('create-choice-sheet')">
-  <span style="font-size:1.4rem;line-height:1;">+</span>
-  <span class="fab-label">Spielen</span>
+  <span class="fab-label">+ Erstellen</span>
 </button>
 
 <!-- ======= BOTTOM SHEETS ======= -->
