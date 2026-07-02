@@ -3,8 +3,8 @@
   position: sticky; top: 0; z-index: 100;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  height: 60px;
+  padding: env(safe-area-inset-top) 20px 0;
+  min-height: calc(60px + env(safe-area-inset-top));
   display: flex; align-items: center; justify-content: space-between;
   transition: background 0.3s, border-color 0.3s;
 }
