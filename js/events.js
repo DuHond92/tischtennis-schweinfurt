@@ -474,8 +474,9 @@ function _applyTimePsFilter(src) {
 function renderEvents() {
   const c = document.getElementById('events-list');
 
-  // Apply time + type filter to events
-  const timeGames = _applyTimeFilter(allEvents);
+  // Apply time + type filter to events; always strip past entries
+  const todayStr  = new Date().toISOString().slice(0, 10);
+  const timeGames = _applyTimeFilter(allEvents).filter(e => !e.dateStr || e.dateStr >= todayStr);
   const typeGames = currentTypeFilter === 'all'
     ? timeGames
     : timeGames.filter(e => e.type === currentTypeFilter);
@@ -522,11 +523,19 @@ function renderEvents() {
       dist: _psDist(ps) ?? Infinity
     }))
   ];
-  const autoSortDist = _eventsRadiusActive && currentTimeFilter === 'all';
-  if (autoSortDist) {
-    combined.sort((a, b) => a.dist !== b.dist ? a.dist - b.dist : a.sortKey.localeCompare(b.sortKey));
+  if (currentSort === 'dist') {
+    // Nähe zuerst — Entfernung primär, Datum sekundär
+    combined.sort((a, b) => {
+      if (a.dist !== b.dist) return a.dist - b.dist;
+      return a.sortKey.localeCompare(b.sortKey);
+    });
   } else {
-    combined.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+    // Bald zuerst (default) — Datum primär, Entfernung als Tiebreaker
+    combined.sort((a, b) => {
+      const keyCmp = a.sortKey.localeCompare(b.sortKey);
+      if (keyCmp !== 0) return keyCmp;
+      return a.dist - b.dist;
+    });
   }
 
   let feedHtml = combined.map((item, idx) =>
