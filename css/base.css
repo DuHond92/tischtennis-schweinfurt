@@ -3,6 +3,12 @@
 
 html { scroll-behavior: smooth; }
 
+/* Form elements don't inherit font from body by default in all browsers */
+button, input, textarea, select, optgroup {
+  font-family: inherit;
+  font-size: inherit;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--bg);
