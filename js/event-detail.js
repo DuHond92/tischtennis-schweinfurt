@@ -57,17 +57,9 @@ function _buildLocationInfoHtml(ev) {
   const tbl       = tables.find(t => t.id === ev.tid) || {};
   const placeName = (ev.tname && ev.tname !== '?') ? ev.tname : (tbl.name || '');
   const addr      = tbl.addr || ev.colLocationLabel || '';
-  const lat       = ev.colLat ?? tbl.lat ?? null;
-  const lng       = ev.colLng ?? tbl.lng ?? null;
-
-  const mapsHref = (lat != null && lng != null)
-    ? `geo:${lat},${lng}?q=${lat},${lng}`
-    : (placeName ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName)}` : null);
-
   return `
     ${placeName ? `<div class="eds-loc-name">${escHtml(placeName)}</div>` : ''}
     ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>`      : ''}
-    ${mapsHref  ? `<a href="${escAttr(mapsHref)}" class="eds-maps-link" target="_blank" rel="noopener">${ic('map-pin',13)} In Karten öffnen</a>` : ''}
   `;
 }
 
@@ -191,6 +183,34 @@ function showEventDetail(eventId) {
   // Show/hide chat input for non-fallback events
   const isFallback = allEvents.length === 0;
   document.getElementById('eds-chat-input-row').style.display = isFallback ? 'none' : '';
+
+  // Map-Wrapper klickbar machen (ruft openMapsDirections() aus tables.js)
+  const mapWrap  = document.getElementById('eds-map-wrap');
+  if (mapWrap) {
+    const locName  = tbl.name || ev.tname || '';
+    const locAddr  = tbl.addr || ev.colLocationLabel || '';
+    const hasAction = (mapLat != null && mapLng != null) || !!locName || !!locAddr;
+    if (hasAction) {
+      mapWrap.classList.add('is-clickable');
+      mapWrap.setAttribute('role', 'button');
+      mapWrap.setAttribute('tabindex', '0');
+      mapWrap.setAttribute('aria-label', 'Standort in Karten öffnen');
+      mapWrap.onclick = () => openMapsDirections(
+        mapLat != null ? String(mapLat) : '',
+        mapLng != null ? String(mapLng) : '',
+        locName,
+        locAddr
+      );
+      mapWrap.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') mapWrap.onclick(); };
+    } else {
+      mapWrap.classList.remove('is-clickable');
+      mapWrap.removeAttribute('role');
+      mapWrap.removeAttribute('tabindex');
+      mapWrap.removeAttribute('aria-label');
+      mapWrap.onclick = null;
+      mapWrap.onkeydown = null;
+    }
+  }
 
   openSheet('event-detail-sheet');
 

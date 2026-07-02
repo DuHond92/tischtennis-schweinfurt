@@ -131,14 +131,45 @@
   gap: 8px;
 }
 
-/* Standort-Abschnitt: Map-Preview */
-.eds-map-preview {
-  height: 170px;
+/* Standort-Abschnitt: Map-Wrapper + Preview */
+.eds-map-wrap {
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: var(--surface2);
   margin-bottom: 12px;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+.eds-map-wrap.is-clickable { cursor: pointer; }
+.eds-map-wrap.is-clickable:active { opacity: 0.78; }
+.eds-map-preview {
+  height: 170px;
+  background: var(--surface2);
+  display: block;
+}
+/* Dezentes Overlay-Label bottom-right auf der Map */
+.eds-map-tap-label {
+  display: none;
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.84);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #222;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 450;
+  letter-spacing: 0.1px;
+}
+.eds-map-wrap.is-clickable .eds-map-tap-label { display: block; }
+[data-theme="dark"] .eds-map-tap-label {
+  background: rgba(20,20,24,0.78);
+  color: rgba(255,255,255,0.88);
 }
 .eds-location-info {
   display: flex;
@@ -147,20 +178,6 @@
 }
 .eds-loc-name { font-size: 0.9rem; font-weight: 700; color: var(--text); }
 .eds-loc-addr { font-size: 0.8rem; color: var(--text-dim); }
-.eds-maps-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 10px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--primary);
-  text-decoration: none;
-  padding: 7px 14px;
-  border-radius: 20px;
-  background: var(--primary-bg);
-  width: fit-content;
-}
 
 /* Kommentar-Input im Kommentarbereich (nicht sticky) */
 .chat-input-row.eds-comment-input {
