@@ -1181,3 +1181,30 @@
 }
 .pe-pw-btn:active { filter: brightness(0.93); }
 .pe-pw-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Spielpartner-Rows in Inbox ─────────────────────── */
+.inbox-partner-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 20px; min-height: 68px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.inbox-partner-row:hover  { background: var(--surface2); }
+.inbox-partner-row:active { background: var(--primary-bg, rgba(255,255,255,0.05)); }
+.inbox-partner-row.clickable { cursor: pointer; }
+.inbox-partner-skill { font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; }
+.inbox-partner-chevron {
+  color: var(--text-xdim, var(--text-dim)); flex-shrink: 0;
+  display: flex; align-items: center;
+}
+.inbox-req-actions { display: flex; gap: 6px; margin-top: 6px; }
+.btn-withdraw {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  font-size: 0.72rem; font-weight: 600; padding: 5px 10px;
+  border-radius: 20px; cursor: pointer; flex-shrink: 0;
+  font-family: var(--font-body);
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-withdraw:active { color: var(--text); border-color: var(--text-dim); }
+.btn-danger { background: var(--red, #EF4444); color: #fff; border: none; }
+.btn-danger:active { filter: brightness(0.88); }

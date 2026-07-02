@@ -72,8 +72,10 @@ function getConnectionButtonHtml(otherUserId) {
     const pnm = escAttr(_ppCurrentUserName || '');
     const pem = escAttr(_ppCurrentUserEmoji || '');
     const pur = escAttr(_ppCurrentUserUrl  || '');
-    return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',16)} Nachricht schreiben</button>
-<button class="btn btn-secondary btn-full conn-accepted" onclick="removeConnection('${cid}','${oid}')">🤝 Spielpartner ✓ <span class="pp-soon">(entfernen)</span></button>`;
+    return `<button class="btn btn-primary btn-full" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',16)} Nachricht schreiben</button>
+<div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);">
+  <button class="btn btn-full" style="background:none;border:1px solid var(--red,#EF4444);color:var(--red,#EF4444);" onclick="confirmRemoveConnection('${cid}','${oid}')">Freundschaft beenden</button>
+</div>`;
   }
 
   // rejected oder blocked → erneut anfragen erlaubt
@@ -85,7 +87,11 @@ function refreshConnectionButton(otherUserId) {
     const el = document.getElementById('pp-connection-btn');
     if (el) el.innerHTML = getConnectionButtonHtml(otherUserId);
   }
-  if (currentPage === 'profile') renderSpielpartnerSection();
+  // Inbox aktualisieren falls offen (ersetzt die Profil-Spielpartner-Liste)
+  const ib = document.getElementById('inbox-sheet');
+  if (ib && ib.classList.contains('open') && typeof renderInboxChats === 'function') {
+    renderInboxChats();
+  }
 }
 
 // ── Aktionen ──────────────────────────────────────────────────────
@@ -161,6 +167,21 @@ async function _deleteConnection(connectionId) {
     method:  'DELETE',
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal' }
   });
+}
+
+function confirmRemoveConnection(connectionId, otherUserId) {
+  const btn = document.getElementById('confirm-remove-conn-btn');
+  if (btn) btn.onclick = () => _executeRemoveConnection(connectionId, otherUserId);
+  openSheet('confirm-remove-conn-sheet');
+}
+
+async function _executeRemoveConnection(connectionId, otherUserId) {
+  closeAllSheets();
+  await _deleteConnection(connectionId);
+  _myConnections = null;
+  await loadMyConnections();
+  showToast('Spielpartner entfernt', '👋');
+  refreshConnectionButton(otherUserId);
 }
 
 // ── Benachrichtigungen: ausstehende Anfragen ──────────────────────

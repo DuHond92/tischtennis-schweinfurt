@@ -65,27 +65,117 @@ async function renderInboxChats() {
     return;
   }
 
-  el.innerHTML = _inboxEmpty('⏳', 'Lade Nachrichten…', true);
+  el.innerHTML = _inboxEmpty('⏳', 'Lade…', true);
 
-  const uid = sb.getUserId();
+  const uid      = sb.getUserId();
+  const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
+
+  // 1. Verbindungen laden
+  if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
+    await loadMyConnections();
+  }
+  const myConns  = (typeof _myConnections !== 'undefined' && Array.isArray(_myConnections)) ? _myConnections : [];
+  const accepted = myConns.filter(c => c.status === 'accepted');
+  const incoming = myConns.filter(c => c.status === 'pending' && c.receiver_id === uid);
+  const outgoing = myConns.filter(c => c.status === 'pending' && c.requester_id === uid);
+
+  // 2. Profile für Verbindungen laden
+  const connIds = [...new Set([
+    ...accepted.map(c => c.requester_id === uid ? c.receiver_id : c.requester_id),
+    ...incoming.map(c => c.requester_id),
+    ...outgoing.map(c => c.receiver_id)
+  ].filter(Boolean))];
+
+  let cProfs = {};
+  if (connIds.length) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${connIds.join(',')})`;
+      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(data)) data.forEach(p => { cProfs[p.id] = p; });
+    } catch(e) {}
+  }
+
+  // 3. DM-Konversationen laden
   const dmMessages = await _loadDmMessages(uid);
   const dmConvs    = _groupDmsByPartner(dmMessages, uid);
 
-  let dmProfiles = {};
-  const partnerIds = dmConvs.map(c => c.partnerId).filter(Boolean);
-  if (partnerIds.length) {
+  let dmProfs = {};
+  const dmIds = dmConvs.map(c => c.partnerId).filter(Boolean);
+  if (dmIds.length) {
     try {
-      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${partnerIds.join(',')})`;
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${dmIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      if (Array.isArray(data)) data.forEach(p => { dmProfiles[p.id] = p; });
+      if (Array.isArray(data)) data.forEach(p => { dmProfs[p.id] = p; });
     } catch(e) {}
   }
 
   updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
 
-  const renderDm = c => _renderDmRow(c, dmProfiles, uid);
-  const html = _renderSection('spielpartner', '👤 Spielpartner', dmConvs, renderDm)
-    || _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Schreib einem Mitspieler!');
+  // ── Render-Helfer ────────────────────────────────────────────────
+  const renderPartner = c => {
+    const oid = c.requester_id === uid ? c.receiver_id : c.requester_id;
+    const p   = cProfs[oid] || { id: oid, username: 'Spieler' };
+    const pid = escAttr(oid);
+    const pnm = escAttr(p.username || 'Spieler');
+    const pem = escAttr(p.avatar_emoji || '');
+    const pur = escAttr(p.avatar_url || '');
+    const skill = p.skill_level ? skillMap[p.skill_level] || '' : '';
+    return `<div class="inbox-partner-row clickable" onclick="openDmConversation('${pid}','${pnm}','${pem}','${pur}')">
+      <div class="inbox-conv-av" onclick="event.stopPropagation();showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
+        ${skill ? `<div class="inbox-partner-skill">${skill}</div>` : ''}
+      </div>
+      <span class="inbox-partner-chevron">${ic('chat', 16)}</span>
+    </div>`;
+  };
+
+  const renderIncoming = c => {
+    const p   = cProfs[c.requester_id] || { id: c.requester_id, username: 'Spieler' };
+    const pid = escAttr(c.requester_id);
+    const pnm = escAttr(p.username || 'Spieler');
+    const pem = escAttr(p.avatar_emoji || '');
+    const pur = escAttr(p.avatar_url || '');
+    const cid = escAttr(c.id);
+    return `<div class="inbox-partner-row">
+      <div class="inbox-conv-av" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
+        <div class="inbox-req-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptConnectionRequest('${cid}','${pid}')">Annehmen</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();rejectConnectionRequest('${cid}','${pid}')">Ablehnen</button>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const renderOutgoing = c => {
+    const p   = cProfs[c.receiver_id] || { id: c.receiver_id, username: 'Spieler' };
+    const pid = escAttr(c.receiver_id);
+    const pnm = escAttr(p.username || 'Spieler');
+    const pem = escAttr(p.avatar_emoji || '');
+    const pur = escAttr(p.avatar_url || '');
+    const cid = escAttr(c.id);
+    return `<div class="inbox-partner-row">
+      <div class="inbox-conv-av" onclick="showPlayerProfile('${pid}','${pnm}','${pem}',null,'${pur}')">${getAvatarHtml(p, { size: 48 })}</div>
+      <div class="inbox-conv-body">
+        <div class="inbox-conv-name">${escHtml(p.username || 'Spieler')}</div>
+        <div class="inbox-partner-skill">Anfrage gesendet</div>
+      </div>
+      <button class="btn-withdraw" onclick="event.stopPropagation();cancelConnectionRequest('${cid}','${pid}')">Zurückziehen</button>
+    </div>`;
+  };
+
+  // ── Sections zusammenbauen ──────────────────────────────────────
+  let html = '';
+  if (incoming.length) html += _renderSection('incoming',    `Anfragen (${incoming.length})`, incoming, renderIncoming);
+  if (accepted.length) html += _renderSection('partners',    'Meine Spielpartner',             accepted, renderPartner);
+  if (outgoing.length) html += _renderSection('outgoing',    'Gesendete Anfragen',             outgoing, renderOutgoing);
+  if (dmConvs.length)  html += _renderSection('nachrichten', 'Nachrichten',                   dmConvs,  c => _renderDmRow(c, dmProfs, uid));
+
+  if (!html) {
+    html = _inboxEmpty('💬', 'Noch keine Spielpartner oder Nachrichten.<br>Besuche Profile anderer Spieler um anzufragen!');
+  }
 
   el.innerHTML = html;
 }

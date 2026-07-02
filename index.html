@@ -257,10 +257,13 @@
       </div>
     </div>
 
-    <!-- Spielpartner -->
+    <!-- Spielpartner → Link zur Inbox -->
     <div class="profile-section">
-      <div class="ps-header"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Spielpartner</div>
-      <div id="profile-spielpartner" style="padding:4px 12px 8px;"></div>
+      <button class="settings-item" onclick="openInbox()" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;">
+        <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="si-text">Spielpartner &amp; Nachrichten<div class="si-sub">Verbindungen und Chats ansehen</div></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
 
     <!-- Meine Spiele -->
@@ -1195,6 +1198,19 @@
   <!-- Actions: Spielpartner -->
   <div class="pp-actions" id="pp-connection-btn"></div>
   <div class="pb-safe"></div>
+</div>
+
+<!-- CONFIRM REMOVE CONNECTION SHEET -->
+<div class="bottom-sheet" id="confirm-remove-conn-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body" style="padding:24px 20px max(28px,env(safe-area-inset-bottom));">
+    <div style="font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:12px;">Freundschaft beenden?</div>
+    <p style="color:var(--text-dim);font-size:0.88rem;line-height:1.6;margin:0 0 24px;">Du entfernst diese Person aus deinen Spielpartnern. Ihr könnt euch später erneut anfragen.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-danger btn-full" id="confirm-remove-conn-btn">Freundschaft beenden</button>
+      <button class="btn btn-secondary btn-full" onclick="closeAllSheets()">Abbrechen</button>
+    </div>
+  </div>
 </div>
 
 <!-- DM OVERLAY (stacks above player-profile-sheet) -->
