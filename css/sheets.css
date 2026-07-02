@@ -773,11 +773,6 @@
 
 #dm-sheet {
   z-index: 900;
-  max-height: 95vh;
-  height: 95vh;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  border-radius: var(--radius-lg, 20px) var(--radius-lg, 20px) 0 0;
 }
 
 .dm-sheet-header {
