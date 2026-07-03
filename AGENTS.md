@@ -56,6 +56,9 @@ Inspiration:
 * Airbnb
 * Apple Human Interface
 * iOS
+* Komoot
+* Playtomic
+* Meetup
 
 Die App soll schlicht wirken.
 

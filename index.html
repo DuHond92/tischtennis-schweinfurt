@@ -998,7 +998,7 @@
 <div class="bottom-sheet" id="rating-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title">Wie war die Platte?</div>
+    <div class="sheet-title" id="rating-sheet-title">Platte bewerten</div>
     <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body" style="padding:0 20px 0;">
@@ -1027,7 +1027,7 @@
     </div>
     <div id="rating-details-body" style="display:none;">
       <div class="rating-detail-row">
-        <div class="rating-detail-label">🏓 Tischoberfläche</div>
+        <div class="rating-detail-label">🏓 Zustand der Platte</div>
         <div class="star-rating" id="stars-surface">
           <span class="star star-sm" onclick="setRating('surface',1)">★</span>
           <span class="star star-sm" onclick="setRating('surface',2)">★</span>
@@ -1074,6 +1074,20 @@
         Bewertung abgeben
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ALLE BEWERTUNGEN SHEET -->
+<div class="bottom-sheet fullscreen-sheet slide-right-sheet" id="all-ratings-sheet">
+  <div class="sheet-header sheet-header--nav">
+    <button class="sheet-back" onclick="closeAllSheets()" aria-label="Zurück">‹</button>
+    <div class="sheet-title" id="ar-sheet-title">Bewertungen</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="sheet-body">
+    <div id="ar-summary"></div>
+    <div id="ar-list"></div>
+    <div class="pb-safe"></div>
   </div>
 </div>
 

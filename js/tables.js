@@ -55,9 +55,6 @@ function showTableDetail(id) {
       <div class="ds-address">${t.addr||'Schweinfurt'}</div>
       <div class="plt-badge-row" style="margin-top:8px;">${distHtml}${osmHtml}</div>
       <div class="tds-meta-line">${_tableMetaLine(t, { operator: true })}</div>
-      <div class="tds-rating-inline" id="tds-rating-${t.id}">
-        <span style="font-size:0.78rem;color:var(--text-dim);">Lade…</span>
-      </div>
     </div>
     ${accessHtml}
     <!-- Aktionen -->
@@ -67,6 +64,8 @@ function showTableDetail(id) {
         openSheet('create-event-sheet')">${ic('calendar-plus',15)} Spiel erstellen</button>
       <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}','${_escJs(t.name||'')}','${_escJs(t.addr||'')}')">${ic('navigate',15)} In Karten öffnen</button>
     </div>
+    <!-- Bewertungs-Card (wird von renderRatingSummary befüllt) -->
+    <div class="tds-rating-section" id="tds-rating-card-${t.id}"></div>
     <!-- Kommende Spiele -->
     <div class="tds-events-heading">${ic('calendar',13)} Kommende Spiele</div>
     ${evHtml}
@@ -77,10 +76,6 @@ function showTableDetail(id) {
         <div aria-hidden="true">${skeletonComment()}${skeletonComment()}</div>
       </div>
       <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" onclick="openComments(${t.id})">${ic('chat',13)} Kommentar schreiben</button>
-    </div>
-    <!-- Bewertung -->
-    <div class="rate-btn-row">
-      <button class="btn btn-secondary btn-full btn-sm" onclick="openRating(${t.id},'${escAttr(t.name)}')">Bewertung abgeben</button>
     </div>
     <div class="sheet-map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></div>
     <div class="pb-safe"></div>`;
@@ -613,34 +608,90 @@ let currentRatings = { overall: 0, surface: 0, ground: 0, windshield: 0 };
 let currentRatingTableId = null;
 let _currentTableHasRatings = false;
 let _ratingDetailsOpen = false;
+let _myTableRating = null;
 
 const _OVERALL_LABELS = ['', 'schlecht', 'nicht so gut', 'okay', 'gut', 'top!'];
+const _SCORE_LABELS   = ['', 'Schwach', 'Okay', 'Gut', 'Sehr gut', 'Top!'];
 
-function openRating(tableId, tableName) {
+async function _loadMyRating(tableId) {
+  if (!sb.isLoggedIn()) return null;
+  try {
+    const uid = sb.getUserId();
+    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&user_id=eq.${uid}&select=overall,surface,ground,windshield,comment&limit=1`;
+    const { ok, data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    return (ok && Array.isArray(data) && data[0]) ? data[0] : null;
+  } catch(e) { return null; }
+}
+
+function _renderRatingCardEmpty(tableId, tableName) {
+  return `
+    <div class="tds-section-label">${ic('star',13)} Bewertungen</div>
+    <div class="tds-rc-empty">
+      <div class="tds-rc-empty-icon">☆</div>
+      <div class="tds-rc-empty-msg">Noch keine Bewertungen</div>
+      <div class="tds-rc-empty-sub">Bewerte diese Platte und hilf anderen Spielern.</div>
+    </div>
+    <button class="btn btn-primary btn-sm btn-full" onclick="openRating(${tableId},'${escAttr(tableName)}')">Platte bewerten</button>`;
+}
+
+function _renderRatingCardFilled(tableId, r, myRating) {
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x => x.id === tableId);
+  const score = parseFloat(r.avg_overall);
+  const count = r.rating_count;
+  const full  = Math.round(score);
+  const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+  const label = _SCORE_LABELS[full] || '';
+  const isEdit = !!myRating;
+  const btnLabel = isEdit ? 'Bewertung bearbeiten' : 'Platte bewerten';
+  const btnCls   = isEdit ? 'btn btn-secondary btn-sm btn-full' : 'btn btn-primary btn-sm btn-full';
+  return `
+    <div class="tds-rc-head">
+      <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
+      <button class="tds-rc-all-btn" onclick="openAllRatings(${tableId})">Alle ansehen ›</button>
+    </div>
+    <div class="tds-rc-score-row">
+      <div class="tds-rc-big">${score.toFixed(1).replace('.',',')}</div>
+      <div class="tds-rc-score-detail">
+        <div class="tds-rc-stars">${stars}</div>
+        <div class="tds-rc-count">${count} Bewertung${count > 1 ? 'en' : ''}</div>
+        ${label ? `<div class="tds-rc-label">${label}</div>` : ''}
+      </div>
+    </div>
+    <button class="${btnCls}" onclick="openRating(${tableId},'${escAttr(t?.name||'')}')">
+      ${btnLabel}
+    </button>`;
+}
+
+async function openRating(tableId, tableName) {
   if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   currentRatingTableId = tableId;
 
-  // Reset
-  currentRatings = { overall:0, surface:0, ground:0, windshield:0 };
-  ['overall','surface','ground','windshield'].forEach(cat => updateStarDisplay(cat, 0));
-  document.getElementById('rating-comment').value = '';
+  const existing = await _loadMyRating(tableId);
+  _myTableRating = existing;
+  const vals = existing || { overall:0, surface:0, ground:0, windshield:0, comment:'' };
 
-  // Reset dynamic label + hint
+  currentRatings = { overall: vals.overall||0, surface: vals.surface||0, ground: vals.ground||0, windshield: vals.windshield||0 };
+  ['overall','surface','ground','windshield'].forEach(cat => updateStarDisplay(cat, currentRatings[cat]));
+  document.getElementById('rating-comment').value = vals.comment || '';
+
+  const isEdit = !!existing;
+  const titleEl = document.getElementById('rating-sheet-title');
+  if (titleEl) titleEl.textContent = isEdit ? 'Bewertung bearbeiten' : 'Platte bewerten';
+
   const labelEl = document.getElementById('rating-overall-label');
-  if (labelEl) labelEl.textContent = '';
+  if (labelEl) labelEl.textContent = _OVERALL_LABELS[currentRatings.overall] || '';
   const hint = document.getElementById('rating-req-hint');
   if (hint) hint.style.display = 'none';
 
-  // Collapse details
-  _ratingDetailsOpen = false;
+  _ratingDetailsOpen = !!(vals.surface || vals.ground || vals.windshield);
   const detailsBody = document.getElementById('rating-details-body');
   const chevron = document.getElementById('rating-details-chevron');
-  if (detailsBody) detailsBody.style.display = 'none';
-  if (chevron) chevron.style.transform = '';
+  if (detailsBody) detailsBody.style.display = _ratingDetailsOpen ? '' : 'none';
+  if (chevron) chevron.style.transform = _ratingDetailsOpen ? 'rotate(90deg)' : '';
 
-  // Reset submit btn
   const btn = document.getElementById('rating-submit-btn');
-  if (btn) { btn.disabled = false; btn.textContent = 'Bewertung abgeben'; }
+  if (btn) { btn.disabled = false; btn.textContent = isEdit ? 'Änderungen speichern' : 'Bewertung speichern'; }
 
   openSheet('rating-sheet');
 }
@@ -698,7 +749,8 @@ async function submitRating() {
   const qb = new QueryBuilder('ratings');
   const {error} = await qb.upsert(payload, 'table_id,user_id');
 
-  if (btn) { btn.disabled = false; btn.textContent = 'Bewertung abgeben'; }
+  const isUpdate = !!_myTableRating;
+  if (btn) { btn.disabled = false; btn.textContent = isUpdate ? 'Änderungen speichern' : 'Bewertung speichern'; }
 
   if(error) {
     console.error('Rating error:', JSON.stringify(error));
@@ -706,13 +758,8 @@ async function submitRating() {
     return;
   }
 
-  const wasFirst = !_currentTableHasRatings;
   closeAllSheets();
-  if (wasFirst) {
-    showToast('Du hast die erste Bewertung für diese Platte abgegeben!');
-  } else {
-    showToast('Danke! Deine Bewertung hilft der Community.');
-  }
+  showToast(isUpdate ? 'Bewertung aktualisiert.' : 'Bewertung gespeichert. Danke!');
   await loadRatingsForTable(currentRatingTableId);
 }
 
@@ -723,14 +770,17 @@ async function loadRatingsForTable(tableId) {
     const qb = new QueryBuilder('table_ratings_avg');
     qb.eq('table_id', tableId);
     const {data} = await qb.execute();
-    renderRatingSummary(tableId, (data && data[0]) ? data[0] : null, t?.name || '');
+    const avgData = (data && data[0]) ? data[0] : null;
+    const myRating = await _loadMyRating(tableId);
+    _myTableRating = myRating;
+    renderRatingSummary(tableId, avgData, t?.name || '', myRating);
   } catch(e) {
     console.warn('Rating load error', e);
-    renderRatingSummary(tableId, null, t?.name || '');
+    renderRatingSummary(tableId, null, t?.name || '', null);
   }
 }
 
-function renderRatingSummary(tableId, r, tableName) {
+function renderRatingSummary(tableId, r, tableName, myRating) {
   _currentTableHasRatings = !!(r && r.rating_count > 0);
 
   // Cache into table object so the floating preview card can use it
@@ -745,19 +795,128 @@ function renderRatingSummary(tableId, r, tableName) {
   }
   if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
 
-  const inlineEl  = document.getElementById(`tds-rating-${tableId}`);
-  const rateBtnRow = document.querySelector('.rate-btn-row');
-  if(inlineEl) {
-    if(!r || !r.rating_count) {
-      inlineEl.innerHTML = `<button class="tds-rating-cta" onclick="openRating(${tableId},'${escAttr(tableName)}')">☆ Erste Bewertung abgeben</button>`;
-      if(rateBtnRow) rateBtnRow.style.display = 'none';
+  const cardEl = document.getElementById(`tds-rating-card-${tableId}`);
+  if (!cardEl) return;
+
+  if (!r || !r.rating_count) {
+    cardEl.innerHTML = _renderRatingCardEmpty(tableId, tableName);
+  } else {
+    cardEl.innerHTML = _renderRatingCardFilled(tableId, r, myRating);
+  }
+}
+
+async function openAllRatings(tableId) {
+  const summEl = document.getElementById('ar-summary');
+  const listEl = document.getElementById('ar-list');
+  if (!listEl) return;
+
+  const src = tables.length ? tables : FALLBACK_TABLES;
+  const t = src.find(x => x.id === tableId);
+  const titleEl = document.getElementById('ar-sheet-title');
+  if (titleEl) titleEl.textContent = t?.name || 'Bewertungen';
+
+  const skRow = `<div style="padding:14px 20px;display:flex;flex-direction:column;gap:8px;" aria-hidden="true"><div class="skeleton skeleton-line" style="width:60%;"></div><div class="skeleton skeleton-line skeleton-line--sm" style="width:40%;"></div></div>`;
+  if (summEl) summEl.innerHTML = skRow;
+  if (listEl) listEl.innerHTML = skRow + skRow;
+
+  openSheet('all-ratings-sheet');
+
+  try {
+    const qb = new QueryBuilder('table_ratings_avg');
+    qb.eq('table_id', tableId);
+    const { data: avgData } = await qb.execute();
+    const avg = (avgData && avgData[0]) ? avgData[0] : null;
+
+    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&select=overall,surface,ground,windshield,comment,created_at,profiles(username,avatar_emoji,avatar_url)&order=created_at.desc`;
+    const { ok, data: rList } = await fetchWithRefresh(url, { headers: dbHeaders() });
+
+    _renderAllRatings(tableId, avg, ok ? (rList || []) : []);
+  } catch(e) {
+    if (listEl) listEl.innerHTML = `<div class="ar-empty">Bewertungen konnten nicht geladen werden.</div>`;
+  }
+}
+
+function _renderAllRatings(tableId, avg, rList) {
+  const summEl = document.getElementById('ar-summary');
+  const listEl = document.getElementById('ar-list');
+
+  if (summEl) {
+    if (avg && avg.rating_count > 0) {
+      const score = parseFloat(avg.avg_overall);
+      const full  = Math.round(score);
+      const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+      const label = _SCORE_LABELS[full] || '';
+      const criteria = [
+        { key: 'avg_surface',    label: 'Zustand der Platte' },
+        { key: 'avg_ground',     label: 'Untergrund' },
+        { key: 'avg_windshield', label: 'Windschutz' },
+      ];
+      const barsHtml = criteria
+        .filter(c => avg[c.key] && parseFloat(avg[c.key]) > 0)
+        .map(c => {
+          const val = parseFloat(avg[c.key]);
+          const pct = (val / 5 * 100).toFixed(0);
+          return `<div class="ar-bar-row">
+            <span class="ar-bar-label">${c.label}</span>
+            <div class="ar-bar"><div class="ar-bar-fill" style="width:${pct}%"></div></div>
+            <span class="ar-bar-val">${val.toFixed(1)}</span>
+          </div>`;
+        }).join('');
+      summEl.innerHTML = `
+        <div class="ar-summary">
+          <div class="ar-score-big">${score.toFixed(1).replace('.', ',')}</div>
+          <div class="ar-score-detail">
+            <div class="ar-stars">${stars}</div>
+            <div class="ar-count">${avg.rating_count} Bewertung${avg.rating_count > 1 ? 'en' : ''}</div>
+            ${label ? `<div class="ar-label">${label}</div>` : ''}
+          </div>
+        </div>
+        ${barsHtml ? `<div class="ar-criteria">${barsHtml}</div>` : ''}
+        <div style="padding:12px 20px 0;">
+          <button class="btn btn-primary btn-sm btn-full" onclick="openRating(${tableId},'')">Bewertung abgeben</button>
+        </div>`;
     } else {
-      const avg = parseFloat(r.avg_overall);
-      const count = r.rating_count;
-      inlineEl.innerHTML = `<span class="tds-rating-compact"><span class="tds-rating-star">★</span> ${avg.toFixed(1)} · ${count} Bewertung${count > 1 ? 'en' : ''}</span>`;
-      if(rateBtnRow) rateBtnRow.style.display = '';
+      summEl.innerHTML = '';
     }
   }
+
+  if (!listEl) return;
+  if (!rList.length) {
+    listEl.innerHTML = `<div class="ar-empty">Noch keine Bewertungen vorhanden.</div>`;
+    return;
+  }
+  const _CRIT = [
+    { key: 'surface',    label: '🏓 Zustand der Platte' },
+    { key: 'ground',     label: '🌿 Untergrund' },
+    { key: 'windshield', label: '💨 Windschutz' },
+  ];
+  listEl.innerHTML = rList.map(r => {
+    const prof  = r.profiles || {};
+    const name  = escHtml(prof.username || 'Anonym');
+    const emoji = prof.avatar_emoji || '';
+    const full  = Math.round(r.overall || 0);
+    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    const date  = r.created_at
+      ? new Date(r.created_at).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }) : '';
+    const criteriaRows = _CRIT.filter(c => r[c.key]).map(c =>
+      `<div class="ar-rev-crit-row">
+        <span class="ar-rev-crit-label">${c.label}</span>
+        <span class="ar-rev-crit-stars">${'★'.repeat(r[c.key])}${'☆'.repeat(5 - r[c.key])}</span>
+      </div>`).join('');
+    return `
+      <div class="ar-review">
+        <div class="ar-rev-head">
+          <div class="ar-rev-avatar">${emoji || '👤'}</div>
+          <div class="ar-rev-meta">
+            <div class="ar-rev-name">${name}</div>
+            ${date ? `<div class="ar-rev-date">${date}</div>` : ''}
+          </div>
+          <div class="ar-rev-score">${stars}</div>
+        </div>
+        ${r.comment ? `<div class="ar-rev-comment">${escHtml(r.comment)}</div>` : ''}
+        ${criteriaRows ? `<div class="ar-rev-criteria">${criteriaRows}</div>` : ''}
+      </div>`;
+  }).join('');
 }
 
 // ── KOMMENTARE ────────────────────────────────────────────────────
