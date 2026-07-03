@@ -381,12 +381,9 @@ function locateUser() {
     showSnackbar({ title: 'Standort nicht verfügbar', message: 'Dein Gerät unterstützt keine Standortfunktion.', type: 'warning' });
     return;
   }
-  if (!navigator.permissions) { _showLocPrompt(); return; }
-  navigator.permissions.query({ name: 'geolocation' }).then(status => {
-    if (status.state === 'granted')      _doLocate();
-    else if (status.state === 'denied')  _showLocCard('blocked');
-    else                                 _showLocPrompt();
-  }).catch(() => _showLocPrompt());
+  // Call directly — keeps us in the user-gesture context (required by Safari/iOS).
+  // The error handler in _doLocate catches PERMISSION_DENIED (code 1) and shows the blocked card.
+  _doLocate();
 }
 
 function _doLocate() {
