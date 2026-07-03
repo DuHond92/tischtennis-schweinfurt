@@ -807,16 +807,59 @@ function _resetActiveMarker() {
   });
 }
 
+function _tableRatingHtml(t) {
+  if (t.ratingAvg > 0) {
+    const full  = Math.round(t.ratingAvg);
+    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    const cnt   = t.ratingCount ? ` (${t.ratingCount})` : '';
+    return `<div class="mfp-rating-row" id="mfp-rating-${t.id}"><span class="mfp-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)}${cnt}</span></div>`;
+  }
+  if (t.ratingAvg === 0) return `<div class="mfp-rating-row" id="mfp-rating-${t.id}"></div>`;
+  // undefined = not yet loaded, placeholder → async fill
+  return `<div class="mfp-rating-row" id="mfp-rating-${t.id}" style="color:var(--text-xdim);font-size:0.69rem;">…</div>`;
+}
+
+async function _loadPreviewRating(tableId) {
+  try {
+    const qb = new QueryBuilder('table_ratings_avg');
+    qb.eq('table_id', tableId);
+    const { data } = await qb.execute();
+    const src = tables.length ? tables : FALLBACK_TABLES;
+    const t = src.find(x => x.id === tableId);
+    if (!t) return;
+    if (data && data[0] && data[0].rating_count > 0) {
+      t.ratingAvg   = parseFloat(data[0].avg_overall);
+      t.ratingCount = data[0].rating_count;
+    } else {
+      t.ratingAvg = 0;
+    }
+    if (_previewTableId !== tableId) return;
+    const el = document.getElementById(`mfp-rating-${tableId}`);
+    if (!el) return;
+    if (t.ratingAvg > 0) {
+      const full  = Math.round(t.ratingAvg);
+      const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+      el.innerHTML = `<span class="mfp-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)} (${t.ratingCount})</span>`;
+      el.removeAttribute('style');
+    } else {
+      el.textContent = '';
+    }
+  } catch (_) {}
+}
+
 function _dismissPreviewContent() {
   if (!_previewTableId) return;
   _previewTableId = null;
-  const prev  = document.getElementById('mbs-preview');
-  const pills = document.getElementById('mbs-pills');
-  const list  = document.getElementById('map-list-container');
-  if (prev)  prev.style.display  = 'none';
-  if (pills) pills.style.display = '';
-  document.querySelector('.map-bottom-sheet-title')?.style.setProperty('display', '');
-  if (list)  list.style.display  = '';
+
+  document.getElementById('map-floating-preview')?.classList.remove('is-visible');
+
+  const bs = document.getElementById('map-bottom-sheet');
+  if (bs) {
+    if (_bsSnapTo) _bsSnapTo(1, false);
+    bs.style.display = '';
+  }
+
+  document.querySelector('.map-page-layout')?.classList.remove('has-fp');
   document.querySelectorAll('.map-list-item').forEach(el => el.classList.remove('selected'));
   _resetActiveMarker();
 }
@@ -826,52 +869,63 @@ function showMapPreview(tableId) {
   const t = src.find(x => x.id === tableId);
   if (!t) return;
 
-  const wasPreview = !!_previewTableId;
+  const wasAlreadyShowing = !!_previewTableId;
   _previewTableId = tableId;
 
-  const _today = _localTodayISO();
-  const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
+  const _today   = _localTodayISO();
+  const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
   const thumbHtml = _mapThumbHtml(t, 'eager');
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
-  const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
+  const badgeRow  = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
 
-  document.getElementById('mbs-preview').innerHTML = `
-    <div class="mbsp-card" onclick="showTableDetail(${t.id})">
-      <div class="mbsp-thumb">${thumbHtml}</div>
-      <div class="mbsp-info">
-        <div class="mbsp-title-row">
-          <div class="mbsp-name">${escHtml(t.name)}</div>
-          <button class="mbsp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen">×</button>
+  const fp = document.getElementById('map-floating-preview');
+  if (!fp) return;
+
+  fp.innerHTML = `
+    <div class="mfp-card" onclick="showTableDetail(${t.id})">
+      <div class="mfp-inner">
+        <div class="mfp-thumb">${thumbHtml}</div>
+        <div class="mfp-body">
+          <div class="mfp-name-row">
+            <div class="mfp-name">${escHtml(t.name)}</div>
+            <button class="mfp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen" aria-label="Schließen">×</button>
+          </div>
+          <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
+          ${_tableRatingHtml(t)}
+          <div class="mfp-meta">${_tableMetaLine(t)}</div>
+          ${badgeRow}
+          <div class="mfp-go">›</div>
         </div>
-        <div class="mbsp-addr">${escHtml(shortAddr)}</div>
-        ${badgeRow}
-        <div class="mbsp-meta">${_tableMetaLine(t)}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  if (!wasPreview) {
-    document.getElementById('mbs-pills')?.style.setProperty('display', 'none');
-    document.querySelector('.map-bottom-sheet-title')?.style.setProperty('display', 'none');
-    document.getElementById('map-list-container').style.display = 'none';
-    document.getElementById('mbs-preview').style.display = '';
+  if (t.ratingAvg === undefined) _loadPreviewRating(tableId);
+
+  if (!wasAlreadyShowing) {
+    fp.classList.remove('is-visible');
+    void fp.offsetHeight;
+    fp.classList.add('is-visible');
 
     const bs = document.getElementById('map-bottom-sheet');
-    const ph = bs.parentElement.offsetHeight || window.innerHeight;
-    const previewH = Math.max(155, Math.round(ph * 0.22));
-    bs.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-    bs.style.height = previewH + 'px';
+    if (bs) bs.style.display = 'none';
+
+    document.querySelector('.map-page-layout')?.classList.add('has-fp');
   }
 
-  // Pan map to marker, center slightly below to give sheet room
-  if (leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate: true });
+  // Pan so the selected marker sits clearly above the floating card
+  if (leafletMap) {
+    leafletMap.setView([t.lat, t.lng], 16, { animate: true });
+    setTimeout(() => {
+      if (_previewTableId === tableId) leafletMap.panBy([0, 72], { animate: true });
+    }, 380);
+  }
+
   _setActiveMarker(tableId);
 }
 
 function hideMapPreview() {
   if (!_previewTableId) return;
   _dismissPreviewContent();
-  if (_bsSnapTo) _bsSnapTo(1); // animate back to standard position
 }
 
 function refreshActiveMapPreview() {

@@ -732,6 +732,19 @@ async function loadRatingsForTable(tableId) {
 
 function renderRatingSummary(tableId, r, tableName) {
   _currentTableHasRatings = !!(r && r.rating_count > 0);
+
+  // Cache into table object so the floating preview card can use it
+  const tObj = (tables.length ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
+  if (tObj) {
+    if (r && r.rating_count > 0) {
+      tObj.ratingAvg   = parseFloat(r.avg_overall);
+      tObj.ratingCount = r.rating_count;
+    } else {
+      tObj.ratingAvg = 0;
+    }
+  }
+  if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
+
   const inlineEl  = document.getElementById(`tds-rating-${tableId}`);
   const rateBtnRow = document.querySelector('.rate-btn-row');
   if(inlineEl) {
