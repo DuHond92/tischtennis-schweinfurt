@@ -1,0 +1,29 @@
+{
+  "name": "plattentreff",
+  "version": "1.0.0",
+  "description": "PlattenTreff – Tischtennisplatten, Mitspieler und Spielrunden in Schweinfurt.",
+  "scripts": {
+    "build:cap": "node scripts/build-cap.js",
+    "cap:sync": "npm run build:cap && npx cap sync",
+    "cap:open:ios": "npm run cap:sync && npx cap open ios",
+    "cap:open:android": "npm run cap:sync && npx cap open android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DuHond92/tischtennis-schweinfurt.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DuHond92/tischtennis-schweinfurt/issues"
+  },
+  "homepage": "https://github.com/DuHond92/tischtennis-schweinfurt#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1"
+  }
+}
