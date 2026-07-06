@@ -211,13 +211,12 @@ async function _submitSuggestion() {
       return;
     }
 
-    _clearSuggestPin();
-    closeAllSheets();
-    showToast('Platte sofort eingetragen!', '✅');
-    await loadTables();
-    if (typeof _applyMapFilters === 'function') _applyMapFilters();
-    if (typeof renderHome === 'function') renderHome();
-    return;
+    // Karte im Hintergrund aktualisieren, ohne auf das Ergebnis zu warten
+    loadTables().then(() => {
+      if (typeof _applyMapFilters === 'function') _applyMapFilters();
+      if (typeof renderHome      === 'function') renderHome();
+    });
+    // Weiter zu Schritt 3 (gleicher Flow wie reguläre Nutzer)
   }
 
   const qb = new QueryBuilder('table_suggestions');
