@@ -48,6 +48,36 @@ function toggleTheme() {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           BOTTOM SHEETS                                      ║
 // ╚══════════════════════════════════════════════════════════════╝
+
+// ── SCROLL LOCK ───────────────────────────────────────────────
+// Sperrt den Hintergrund-Scroll wenn ein Overlay offen ist.
+// Speichert scrollTop des aktiven .page, statt position:fixed auf
+// body zu setzen — kein Layout-Shift, kein Sticky-Regression.
+let _scrollLockDepth  = 0;
+let _savedPageScrollY = 0;
+
+function _lockPageScroll() {
+  _scrollLockDepth++;
+  if (_scrollLockDepth > 1) return;           // bereits gesperrt
+  const page = document.querySelector('.page.active');
+  if (!page) return;
+  _savedPageScrollY = page.scrollTop;
+  page.style.overflowY = 'hidden';
+}
+
+function _unlockPageScroll() {
+  if (_scrollLockDepth > 0) _scrollLockDepth--;
+  if (_scrollLockDepth > 0) return;           // noch andere Overlays offen
+  const page = document.querySelector('.page.active');
+  if (!page) return;
+  page.style.removeProperty('overflow-y');
+  // rAF: erst nach Reflow scrollen, damit iOS die Position nicht verwirft
+  requestAnimationFrame(() => {
+    const pg = document.querySelector('.page.active');
+    if (pg) pg.scrollTop = _savedPageScrollY;
+  });
+}
+
 let openSheetId = null;
 function openSheet(id) {
   if(openSheetId) closeAllSheets();
@@ -58,6 +88,7 @@ function openSheet(id) {
   document.getElementById('overlay').classList.add('open');
   el.classList.add('open');
   document.body.classList.add('has-open-sheet');
+  _lockPageScroll();
   openSheetId = id;
 }
 function closeAllSheets() {
@@ -77,18 +108,22 @@ function closeAllSheets() {
   const dmOv = document.getElementById('dm-overlay');
   if(dmOv) dmOv.classList.remove('open');
   document.body.classList.remove('has-open-sheet');
+  // Depth auf 0 zwingen (closeAllSheets schliesst alles auf einmal)
+  _scrollLockDepth = 1;
+  _unlockPageScroll();
   openSheetId = null;
 }
 
-// Swipe-right-to-close für slide-right-sheets (Inbox, DM-Chat)
-function initSwipeClose(sheetEl, closeFn) {
+// Swipe-right-to-close für slide-right-sheets
+// edgePx > 0: nur tracken wenn Touch innerhalb edgePx vom linken Rand (wie iOS-Kanten-Swipe)
+function initSwipeClose(sheetEl, closeFn, edgePx = 0) {
   let startX = 0, startY = 0, dx = 0, tracking = null;
 
   sheetEl.addEventListener('touchstart', e => {
     startX   = e.touches[0].clientX;
     startY   = e.touches[0].clientY;
     dx       = 0;
-    tracking = null;
+    tracking = (edgePx > 0 && startX > edgePx) ? false : null;
   }, { passive: true });
 
   sheetEl.addEventListener('touchmove', e => {
@@ -105,11 +140,15 @@ function initSwipeClose(sheetEl, closeFn) {
     sheetEl.style.transform  = `translateX(calc(-50% + ${dx}px))`;
   }, { passive: false });
 
+  const _resetStyles = () => {
+    sheetEl.style.removeProperty('transition');
+    sheetEl.style.removeProperty('transform');
+  };
+
   const _snapBack = () => {
     if (!tracking) return;
     tracking = null;
-    sheetEl.style.removeProperty('transition');
-    sheetEl.style.removeProperty('transform');
+    _resetStyles();
   };
 
   sheetEl.addEventListener('touchend', () => {
@@ -120,12 +159,12 @@ function initSwipeClose(sheetEl, closeFn) {
       sheetEl.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 1, 1)';
       sheetEl.style.transform  = 'translateX(100vw)';
       setTimeout(() => {
-        sheetEl.style.removeProperty('transform');
-        sheetEl.style.removeProperty('transition');
+        _resetStyles();
         closeFn();
       }, 270);
     } else {
-      _snapBack();
+      // Nicht weit genug — zurückschnappen (transition entfernen damit CSS-Klasse übernimmt)
+      _resetStyles();
     }
   });
   sheetEl.addEventListener('touchcancel', _snapBack);
@@ -429,4 +468,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const dm    = document.getElementById('dm-sheet');
   if (inbox) initSwipeClose(inbox, () => closeAllSheets());
   if (dm)    initSwipeClose(dm,    () => closeDmSheet());
+
+  // Fullscreen detail sheets — edge-only swipe (44px) um Konflikte mit Foto-Slidern zu vermeiden
+  const tds = document.getElementById('table-detail-sheet');
+  const eds = document.getElementById('event-detail-sheet');
+  const psd = document.getElementById('ps-detail-sheet');
+  const nst = document.getElementById('notif-sheet');
+  const pps = document.getElementById('player-profile-sheet');
+  const pes = document.getElementById('profile-edit-sheet');
+  if (tds) initSwipeClose(tds, () => closeAllSheets(),     44);
+  if (eds) initSwipeClose(eds, () => closeAllSheets(),     44);
+  if (psd) initSwipeClose(psd, () => closeAllSheets(),     44);
+  if (nst) initSwipeClose(nst, () => closeAllSheets(),     44);
+  if (pps) initSwipeClose(pps, () => closePlayerProfile(), 44);
+  if (pes) initSwipeClose(pes, () => closeAllSheets(),     44);
 });

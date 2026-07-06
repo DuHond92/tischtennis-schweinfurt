@@ -104,3 +104,11 @@
 /* ======= PAGES ======= */
 .page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
 .page.active { display: flex; flex-direction: column; }
+
+/* Hintergrund-Scroll sperren wenn ein Overlay/Sheet offen ist.
+   JS setzt zusätzlich inline overflow-y:hidden + stellt scrollTop wieder her. */
+body.has-open-sheet .page {
+  overflow-y: hidden;
+  /* touch-action verhindert iOS-Momentum-Scroll auch nach Overflow-Änderung */
+  touch-action: none;
+}

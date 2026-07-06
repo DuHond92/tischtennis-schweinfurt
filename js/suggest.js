@@ -246,5 +246,25 @@ async function _submitSuggestion() {
   }
 
   _clearSuggestPin();
+
+  // Vorschau-Card für Schritt 3 mit den gespeicherten Daten befüllen
+  const previewCard = document.getElementById('sug-preview-card');
+  if (previewCard) {
+    const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+    const typeLabel  = type === 'indoor' ? 'Indoor' : 'Outdoor';
+    const countLabel = count ? `${count} ${count === 1 ? 'Tisch' : 'Tische'} · ` : '';
+    previewCard.innerHTML = `
+      <div class="sug-preview-thumb"><img src="${plateFb}" alt=""></div>
+      <div class="sug-preview-info">
+        <div class="sug-preview-name">${escHtml(name)}</div>
+        ${address ? `<div class="sug-preview-addr">${escHtml(address)}</div>` : ''}
+        <div class="sug-preview-meta">${countLabel}${typeLabel}</div>
+      </div>`;
+  }
+
   _setSuggestStep(3);
+}
+
+function suggestRestartFlow() {
+  _resetSuggestForm();
 }

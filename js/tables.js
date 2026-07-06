@@ -23,7 +23,7 @@ function showTableDetail(id) {
   const _aClass = { limited:'tds-access-limited', private_or_unclear:'tds-access-unclear', temporarily_closed:'tds-access-closed' };
   const showAccess = (t.accessType && t.accessType !== 'public') || t.accessNote || t.openingHours;
   const accessHtml = showAccess ? `
-    <div class="tds-section tds-access-section">
+    <div class="tds-access-block tds-access-section">
       <div class="tds-section-label">${ic('lock',13)} Zugang</div>
       ${(t.accessType && t.accessType !== 'public') ? `<span class="tds-access-status ${_aClass[t.accessType]||''}">${_aLabel[t.accessType]||''}</span>` : ''}
       ${t.openingHours ? `<div class="tds-access-row">${ic('clock',13)} ${escHtml(t.openingHours)}</div>` : ''}
@@ -47,38 +47,58 @@ function showTableDetail(id) {
         <div class="tds-event-chevron">›</div>
       </div>`).join('')}</div>`;
 
+  // Basisinfos-Meta (sync, kein Rating hier — das kommt in die Rating-Card)
+  const metaLine = _tableMetaLine(t, { operator: true });
+
   document.getElementById('tds-body').innerHTML = `
     ${sliderHtml}
-    <!-- Info Block -->
-    <div class="ds-info">
+    <!-- Basisinfos -->
+    <div class="eds-section eds-section--info">
       <div class="ds-name">${t.name}</div>
       <div class="ds-address">${t.addr||'Schweinfurt'}</div>
       <div class="plt-badge-row" style="margin-top:8px;">${distHtml}${osmHtml}</div>
-      <div class="tds-meta-line">${_tableMetaLine(t, { operator: true })}</div>
+      ${metaLine ? `<div class="tds-meta-line">${metaLine}</div>` : ''}
     </div>
+    <!-- Zugang (optional) -->
     ${accessHtml}
-    <!-- Aktionen -->
-    <div class="tds-cta-row">
-      <button class="btn btn-primary btn-full" onclick="closeAllSheets();
-        document.getElementById('ev-table').value='${t.id}';
-        openSheet('create-event-sheet')">${ic('calendar-plus',15)} Spiel erstellen</button>
-      <button class="btn btn-secondary tds-route-btn" onclick="openMapsDirections('${t.lat??t.latitude??''}','${t.lng??t.lon??t.longitude??''}','${_escJs(t.name||'')}','${_escJs(t.addr||'')}')">${ic('navigate',15)} In Karten öffnen</button>
-    </div>
-    <!-- Bewertungs-Card (wird von renderRatingSummary befüllt) -->
+    <!-- Bewertungs-Card (async) -->
     <div class="tds-rating-section" id="tds-rating-card-${t.id}"></div>
     <!-- Kommende Spiele -->
-    <div class="tds-events-heading">${ic('calendar',13)} Kommende Spiele</div>
-    ${evHtml}
+    <div class="eds-section tds-events-section">
+      <div class="eds-section-title">Kommende Spiele</div>
+      ${evHtml}
+    </div>
     <!-- Kommentare -->
-    <div class="tds-section">
-      <div class="tds-section-label">${ic('chat',13)} Kommentare</div>
+    <div class="eds-section eds-section--comments">
+      <div class="eds-section-title">Kommentare</div>
       <div id="tds-comments-${t.id}">
         <div aria-hidden="true">${skeletonComment()}${skeletonComment()}</div>
       </div>
-      <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" onclick="openComments(${t.id})">${ic('chat',13)} Kommentar schreiben</button>
+      <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" style="margin-top:12px" onclick="openComments(${t.id})">Kommentar schreiben</button>
     </div>
-    <div class="sheet-map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></div>
-    <div class="pb-safe"></div>`;
+    <div class="sheet-map-attr" style="padding-bottom:8px;">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></div>`;
+
+  // Fixed Bottom Bar — CTA-Buttons mit korrekten Event-Handlern (kein inline-JS-Escaping nötig)
+  const actionsEl = document.getElementById('tds-actions');
+  if (actionsEl) {
+    const lat  = t.lat  ?? t.latitude  ?? '';
+    const lng  = t.lng  ?? t.lon ?? t.longitude ?? '';
+    const createBtn = document.createElement('button');
+    createBtn.className = 'btn btn-primary tds-float-create';
+    createBtn.innerHTML = `${ic('calendar-plus',15)} Spiel erstellen`;
+    createBtn.onclick = () => {
+      closeAllSheets();
+      const sel = document.getElementById('ev-table');
+      if (sel) sel.value = t.id;
+      openSheet('create-event-sheet');
+    };
+    const routeBtn = document.createElement('button');
+    routeBtn.className = 'btn btn-secondary tds-float-route';
+    routeBtn.innerHTML = `${ic('navigate',15)} In Karten öffnen`;
+    routeBtn.onclick = () => openMapsDirections(lat, lng, t.name||'', t.addr||'');
+    actionsEl.innerHTML = '';
+    actionsEl.append(createBtn, routeBtn);
+  }
 
   openSheet('table-detail-sheet');
   _initSliderTouch(document.querySelector('#tds-body .ds-main'));
@@ -635,13 +655,11 @@ async function _loadMyRating(tableId) {
 
 function _renderRatingCardEmpty(tableId, tableName) {
   return `
-    <div class="tds-section-label">${ic('star',13)} Bewertungen</div>
-    <div class="tds-rc-empty">
-      <div class="tds-rc-empty-icon">☆</div>
-      <div class="tds-rc-empty-msg">Noch keine Bewertungen</div>
-      <div class="tds-rc-empty-sub">Bewerte diese Platte und hilf anderen Spielern.</div>
+    <div class="tds-rc-head">
+      <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
     </div>
-    <button class="btn btn-primary btn-sm btn-full" onclick="openRating(${tableId},'${escAttr(tableName)}')">Platte bewerten</button>`;
+    <div class="tds-rc-empty-compact">Noch keine Bewertungen — bewerte als Erster!</div>
+    <button class="btn btn-secondary btn-sm tds-rate-btn" onclick="openRating(${tableId},'${escAttr(tableName)}')">★ Platte bewerten</button>`;
 }
 
 function _renderRatingCardFilled(tableId, r, myRating) {
@@ -652,23 +670,34 @@ function _renderRatingCardFilled(tableId, r, myRating) {
   const full  = Math.round(score);
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
   const label = _SCORE_LABELS[full] || '';
-  const isEdit = !!myRating;
+  const isEdit  = !!myRating;
   const btnLabel = isEdit ? 'Bewertung bearbeiten' : 'Platte bewerten';
-  const btnCls   = isEdit ? 'btn btn-secondary btn-sm btn-full' : 'btn btn-primary btn-sm btn-full';
+  // Kriterien-Tags (nur wenn mindestens eines bewertet)
+  const crit = [
+    { key: 'avg_surface',    label: 'Zustand' },
+    { key: 'avg_ground',     label: 'Untergrund' },
+    { key: 'avg_windshield', label: 'Windschutz' },
+  ].filter(c => r[c.key] && parseFloat(r[c.key]) > 0);
+  const critHtml = crit.length ? `<div class="tds-rc-crit-row">${
+    crit.map(c => {
+      const v = parseFloat(r[c.key]);
+      const s = '★'.repeat(Math.round(v)) + '☆'.repeat(5 - Math.round(v));
+      return `<span class="tds-rc-crit-tag">${c.label} ${s}</span>`;
+    }).join('')
+  }</div>` : '';
   return `
     <div class="tds-rc-head">
       <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
       <button class="tds-rc-all-btn" onclick="openAllRatings(${tableId})">Alle ansehen ›</button>
     </div>
-    <div class="tds-rc-score-row">
-      <div class="tds-rc-big">${score.toFixed(1).replace('.',',')}</div>
-      <div class="tds-rc-score-detail">
-        <div class="tds-rc-stars">${stars}</div>
-        <div class="tds-rc-count">${count} Bewertung${count > 1 ? 'en' : ''}</div>
-        ${label ? `<div class="tds-rc-label">${label}</div>` : ''}
-      </div>
+    <div class="tds-rc-score-compact">
+      <span class="tds-rc-star-num">★ ${score.toFixed(1).replace('.',',')}</span>
+      ${label ? `<span class="tds-rc-quality">${label}</span>` : ''}
+      <span class="tds-rc-sep">·</span>
+      <span class="tds-rc-count-sm">${count} Bewertung${count > 1 ? 'en' : ''}</span>
     </div>
-    <button class="${btnCls}" onclick="openRating(${tableId},'${escAttr(t?.name||'')}')">
+    ${critHtml}
+    <button class="btn btn-secondary btn-sm tds-rate-btn" onclick="openRating(${tableId},'${escAttr(t?.name||'')}')">
       ${btnLabel}
     </button>`;
 }
@@ -939,12 +968,12 @@ async function loadCommentsInline(tableId) {
     qb.eq('table_id', tableId).order('created_at', true).limit(3);
     const {data} = await qb.execute();
     if(!data || !data.length) {
-      el.innerHTML = `<div class="tds-no-comments">Noch keine Kommentare. Teile deine Erfahrung mit dieser Platte.</div>`;
+      el.innerHTML = `<div class="chat-empty">Noch keine Kommentare. Teile deine Erfahrung mit dieser Platte.</div>`;
       return;
     }
     el.innerHTML = data.map(c => _commentItemHtml(c, 'inline')).join('');
   } catch(e) {
-    el.innerHTML = `<div class="tds-no-comments">Kommentare nicht verfügbar.</div>`;
+    el.innerHTML = `<div class="chat-empty">Kommentare nicht verfügbar.</div>`;
   }
 }
 

@@ -5,11 +5,21 @@
 function openPlayerSheet() {
   document.getElementById('pp-overlay').classList.add('open');
   document.getElementById('player-profile-sheet').classList.add('open');
+  document.body.classList.add('has-open-sheet');
+  _lockPageScroll();
 }
 
 function closePlayerProfile() {
   document.getElementById('pp-overlay').classList.remove('open');
   document.getElementById('player-profile-sheet').classList.remove('open');
+  // Nur entsperren wenn kein anderes Sheet mehr offen ist
+  if (!document.querySelector('.bottom-sheet.open')) {
+    document.body.classList.remove('has-open-sheet');
+    _unlockPageScroll();
+  } else {
+    // Depth-Counter korrigieren (lock von openPlayerSheet rückgängig)
+    if (typeof _scrollLockDepth !== 'undefined') _scrollLockDepth = Math.max(0, _scrollLockDepth - 1);
+  }
 }
 
 async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, avatarUrl) {
