@@ -133,10 +133,11 @@ function buildPhotoSlider(t, photos) {
       </div>
       <div class="ds-thumbs">
         ${thumbs}
-        <div class="ds-thumb-add" title="Bild hinzufügen" onclick="document.getElementById('ds-file-input').click()">+</div>
+        <div class="ds-thumb-add" title="Bild hinzufügen" onclick="_openPhotoSourcePicker()">+</div>
       </div>
     </div>
-    <input type="file" id="ds-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleTableImageUpload(this)">`;
+    <input type="file" id="ds-file-camera"  accept="image/*" capture="environment" style="display:none" onchange="handleTableImageUpload(this)">
+    <input type="file" id="ds-file-gallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" style="display:none" onchange="handleTableImageUpload(this)">`;
 }
 
 function detailSliderGo(slider, idx, dir) {
@@ -244,6 +245,15 @@ async function handleDetailImageUpload(input) {
   }
 }
 
+// ── Foto-Quelle Action Sheet ──────────────────────────────────
+function _openPhotoSourcePicker() {
+  if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  document.getElementById('photo-source-sheet')?.classList.add('open');
+}
+function _closePhotoSourcePicker() {
+  document.getElementById('photo-source-sheet')?.classList.remove('open');
+}
+
 // ── Platten-Bild Upload ───────────────────────────────────────
 let _tableImgUploading = false;
 
@@ -301,7 +311,7 @@ async function _resizeTableImage(file) {
     reader.onerror = reject;
     reader.onload  = ev => {
       const img = new Image();
-      img.onerror = reject;
+      img.onerror = () => reject(new Error('Dieses Fotoformat konnte nicht verarbeitet werden. Bitte wähle ein anderes Bild.'));
       img.onload  = () => {
         const MAX = 1200;
         let w = img.width, h = img.height;

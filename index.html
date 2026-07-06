@@ -2,7 +2,7 @@
 <html lang="de" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>PlattenTreff</title>
 <meta name="description" content="Entdecke Tischtennisplatten, finde Mitspieler und organisiere Spielrunden – mit PlattenTreff.">
 <meta name="application-name" content="PlattenTreff">
@@ -50,7 +50,7 @@
       <img id="app-logo" src="images/logo/logo-bild-schrift.svg" alt="PlattenTreff" class="topbar-logo-img">
     </a>
     <div class="topbar-right">
-      <button class="icon-btn" onclick="openInbox()" title="Nachrichten" aria-label="Nachrichten" style="position:relative;">
+      <button class="icon-btn" onclick="openInbox()" title="Nachrichten" aria-label="Nachrichten">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span class="notif-badge" id="dm-badge" style="display:none;">0</span>
       </button>
@@ -1088,6 +1088,22 @@
     <div id="ar-summary"></div>
     <div id="ar-list"></div>
     <div class="pb-safe"></div>
+  </div>
+</div>
+
+<!-- FOTO QUELLE AUSWÄHLEN -->
+<div id="photo-source-sheet" class="photo-src-overlay" onclick="_closePhotoSourcePicker()">
+  <div class="photo-src-card" onclick="event.stopPropagation()">
+    <div class="photo-src-title">Foto hinzufügen</div>
+    <button class="photo-src-btn" onclick="document.getElementById('ds-file-camera').click();_closePhotoSourcePicker()">
+      📷 Foto aufnehmen
+    </button>
+    <button class="photo-src-btn" onclick="document.getElementById('ds-file-gallery').click();_closePhotoSourcePicker()">
+      🖼 Aus Mediathek auswählen
+    </button>
+    <button class="photo-src-btn photo-src-btn--cancel" onclick="_closePhotoSourcePicker()">
+      Abbrechen
+    </button>
   </div>
 </div>
 

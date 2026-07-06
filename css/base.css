@@ -1,12 +1,25 @@
 /* ======= RESET ======= */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden; /* prevent horizontal scroll at document level */
+}
+
+
+/* Prevent images from overflowing their containers */
+img, video { max-width: 100%; height: auto; }
 
 /* Form elements don't inherit font from body by default in all browsers */
 button, input, textarea, select, optgroup {
   font-family: inherit;
   font-size: inherit;
+}
+
+/* Prevent iOS WebView auto-zoom on input focus (triggers when font-size < 16px).
+   Specific component rules must not go below 1rem. */
+input, textarea, select {
+  font-size: 1rem;
 }
 
 body {
@@ -28,7 +41,6 @@ body {
   margin: 0 auto;
   position: relative;
   background: var(--bg);
-  /* On desktop: show phone frame */
 }
 
 @media (min-width: 600px) {

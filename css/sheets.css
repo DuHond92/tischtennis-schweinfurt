@@ -10,7 +10,7 @@
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
   width: 100%; max-width: 430px; z-index: 600;
   background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  max-height: 90vh; overflow-y: auto;
+  max-height: 90vh; overflow-y: auto; overflow-x: hidden;
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -18,10 +18,10 @@
 
 /* ── Slide-right Sheet (von rechts rein, nach rechts raus) ──── */
 .bottom-sheet.slide-right-sheet {
-  transform: translateX(100vw);   /* versteckt rechts außerhalb */
+  transform: translate3d(100%, 0, 0); /* relative zur eigenen Breite, kein vw-Overflow */
 }
 .bottom-sheet.slide-right-sheet.open {
-  transform: translateX(-50%);  /* sichtbar, zentriert */
+  transform: translate3d(-50%, 0, 0);
 }
 
 /* ── Fullscreen-Sheet (Nachrichten, Benachrichtigungen) ──────── */
@@ -100,7 +100,7 @@
   background: var(--surface);
 }
 
-.sheet-body { padding: 16px 20px; }
+.sheet-body { padding: 16px 20px; overflow-x: hidden; }
 
 /* ── EVENT DETAIL: Flex-Layout mit scrollbarem Body + Floating-Bar ── */
 .bottom-sheet.eds-flex-sheet {
@@ -244,7 +244,7 @@
 .msg-delete-btn:hover { color: #e53935; opacity: 1; }
 .chat-empty { text-align: center; padding: 28px 16px; color: var(--text-dim); font-size: 0.82rem; }
 .chat-input-row { padding: 10px 16px 16px; display: flex; gap: 8px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); z-index: 1; }
-.chat-input { flex: 1; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 0.875rem; color: var(--text); font-family: var(--font-body); }
+.chat-input { flex: 1; min-width: 0; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 22px; padding: 10px 16px; font-size: 1rem; color: var(--text); font-family: var(--font-body); }
 .chat-input:focus { outline: none; border-color: var(--primary); }
 .chat-send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: #fff; border: none; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
 .chat-send-btn:active { opacity: 0.7; }
@@ -256,7 +256,7 @@
   width: 100%; padding: 11px 14px;
   background: var(--surface2); border: 1.5px solid var(--border);
   border-radius: var(--radius-sm); color: var(--text);
-  font-family: var(--font-body); font-size: 0.9rem;
+  font-family: var(--font-body); font-size: 1rem; /* ≥16px prevents iOS auto-zoom */
   outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -293,7 +293,7 @@
 /* FAB button */
 .fab {
   position: fixed;
-  bottom: calc(62px + 14px + env(safe-area-inset-bottom));
+  bottom: calc(53px + 14px + env(safe-area-inset-bottom));
   right: 50%;
   transform: translateX(calc(50% + 185px));
   width: 52px; height: 52px; border-radius: 16px;
@@ -388,7 +388,7 @@
 /* Snackbar — wichtige Meldungen oberhalb der Bottom Nav */
 .snackbar {
   position: fixed;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(64px + env(safe-area-inset-bottom));
   left: 16px; right: 16px;
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; box-shadow: var(--shadow-lg);
@@ -806,12 +806,13 @@
 /* ── NOTIFICATION BELL BADGE ────────────────────────────────────── */
 .notif-btn { position: relative; }
 .notif-badge {
-  position: absolute; top: 2px; right: 2px;
-  min-width: 16px; height: 16px; border-radius: 10px;
+  position: absolute; top: 4px; right: 4px;
+  min-width: 17px; height: 17px; border-radius: 10px;
   background: var(--accent); color: #fff;
-  font-size: 0.58rem; font-weight: 800; line-height: 16px;
-  text-align: center; padding: 0 3px;
+  font-size: 0.6rem; font-weight: 800; line-height: 17px;
+  text-align: center; padding: 0 4px;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 /* ── NOTIFICATION SHEET ITEMS ───────────────────────────────────── */
@@ -1380,7 +1381,7 @@
 .inbox-search-icon { color: var(--text-dim); flex-shrink: 0; }
 .inbox-search-input {
   flex: 1; background: none; border: none; outline: none;
-  font-size: 0.9rem; color: var(--text);
+  font-size: 1rem; color: var(--text);
   font-family: var(--font-body);
   min-width: 0;
 }

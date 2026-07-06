@@ -29,15 +29,18 @@
   box-shadow: 0 2px 8px rgba(59,124,244,0.3);
 }
 
-.topbar-right { display: flex; align-items: center; gap: 6px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
 
 .icon-btn {
-  width: 36px; height: 36px; border-radius: 10px;
+  width: 44px; height: 44px; border-radius: 12px;
   background: var(--surface2); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 1rem;
+  cursor: pointer; font-size: 1.1rem;
+  position: relative; /* badge positioning */
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, border-color 0.2s;
   color: var(--text-dim);
+  flex-shrink: 0;
 }
 .icon-btn:hover { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
 
@@ -64,7 +67,7 @@
 .nav-item {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 10px 4px 8px; cursor: pointer;
+  padding: 8px 4px 4px; cursor: pointer;
   gap: 3px; transition: all 0.2s;
   border: none; background: none;
   -webkit-tap-highlight-color: transparent;
