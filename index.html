@@ -1108,6 +1108,24 @@
   </div>
 </div>
 
+<!-- FOTO QUELLE AUSWÄHLEN (Platte vorschlagen) -->
+<div id="sug-photo-source-sheet" class="photo-src-overlay" onclick="_closeSuggestPhotoPicker()">
+  <div class="photo-src-card" onclick="event.stopPropagation()">
+    <div class="photo-src-title">Foto hinzufügen</div>
+    <button class="photo-src-btn" onclick="document.getElementById('sug-file-gallery').click();_closeSuggestPhotoPicker()">
+      🖼 Aus Mediathek auswählen
+    </button>
+    <button class="photo-src-btn" onclick="document.getElementById('sug-file-camera').click();_closeSuggestPhotoPicker()">
+      📷 Foto aufnehmen
+    </button>
+    <button class="photo-src-btn photo-src-btn--cancel" onclick="_closeSuggestPhotoPicker()">
+      Abbrechen
+    </button>
+  </div>
+</div>
+<input type="file" id="sug-file-gallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" style="display:none" onchange="_handleSuggestImageSelect(this)">
+<input type="file" id="sug-file-camera"  accept="image/*" capture="environment" style="display:none" onchange="_handleSuggestImageSelect(this)">
+
 <!-- KOMMENTAR SHEET -->
 <div class="bottom-sheet" id="comment-sheet">
   <div class="sheet-handle"></div>
@@ -1458,6 +1476,17 @@
     <div class="form-group">
       <label class="form-label">Beschreibung (optional)</label>
       <textarea class="form-textarea" id="sug-desc" placeholder="Besonderheiten…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Foto (optional)</label>
+      <div id="sug-add-photo-btn" class="sug-photo-add" onclick="_openSuggestPhotoPicker()">
+        <span class="sug-photo-add-icon">📷</span>
+        <span>Foto hinzufügen</span>
+      </div>
+      <div id="sug-photo-preview" class="sug-photo-preview" style="display:none;">
+        <img id="sug-img-preview" class="sug-photo-img" src="" alt="">
+        <button class="sug-photo-remove" onclick="_removeSuggestImage()" type="button">✕</button>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Zugänglichkeit</label>

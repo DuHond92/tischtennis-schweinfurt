@@ -149,6 +149,7 @@ function _renderSuggestionCard(s, username) {
       ${s.table_count ? `<span class="admin-tag">🏓 ${s.table_count} Tisch${s.table_count > 1 ? 'e' : ''}</span>` : ''}
       ${s.condition ? `<span class="admin-tag">Zustand: ${condMap[s.condition] || s.condition}</span>` : ''}
     </div>
+    ${s.image_url ? `<div class="admin-card-img"><img src="${escHtml(s.image_url)}" alt="Foto" loading="lazy"></div>` : ''}
     ${s.description ? `<div class="admin-card-desc">${escHtml(s.description)}</div>` : ''}
     <div class="admin-card-meta">Eingereicht von <strong>${escHtml(username)}</strong></div>
     <div class="admin-card-actions" id="admin-actions-${s.id}">
@@ -241,6 +242,21 @@ async function adminApprove(id) {
     reviewed_by: sb.getUserId(),
     reviewed_at: new Date().toISOString()
   });
+
+  // Notification an den Einreicher
+  if (s.submitted_by) {
+    await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/notifications`, {
+      method:  'POST',
+      headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        user_id: s.submitted_by,
+        type:    'suggestion_approved',
+        title:   'Platte freigegeben!',
+        body:    `"${s.name}" ist jetzt auf der Karte sichtbar.`,
+        data:    { suggestion_id: id, name: s.name }
+      })
+    }).catch(() => {});
+  }
 
   card.classList.add('admin-card-done');
   setTimeout(() => { card.remove(); _checkEmpty(); }, 400);

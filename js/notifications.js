@@ -1,9 +1,10 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           NOTIFICATIONS (Spiel-Chat Badge & Sheet)           ║
 // ╚══════════════════════════════════════════════════════════════╝
-let notifPollTimer  = null;
-let pendingNotifs   = [];   // ungelesene message-Objekte
-let _reportNotifs   = [];   // ungelesene report_resolved Notifications
+let notifPollTimer       = null;
+let pendingNotifs        = [];   // ungelesene message-Objekte
+let _reportNotifs        = [];   // ungelesene report_resolved Notifications
+let _suggestionNotifs    = [];   // ungelesene suggestion_approved Notifications
 
 // ── Prüfung auf ungelesene Nachrichten ──────────────────────────
 async function checkNotifications() {
@@ -73,15 +74,19 @@ async function checkNotifications() {
   if (typeof checkConnectionNotifications === 'function') await checkConnectionNotifications();
   if (typeof _pollAdminCounts === 'function') await _pollAdminCounts();
 
-  // 5. Report-Notifications (report_resolved)
-  _reportNotifs = [];
+  // 5. System-Notifications (report_resolved + suggestion_approved)
+  _reportNotifs     = [];
+  _suggestionNotifs = [];
   try {
-    const rurl = `${SUPABASE_URL}/rest/v1/notifications?user_id=eq.${userId}&read_at=is.null&type=eq.report_resolved&order=created_at.desc&limit=20`;
+    const rurl = `${SUPABASE_URL}/rest/v1/notifications?user_id=eq.${userId}&read_at=is.null&type=in.(report_resolved,suggestion_approved)&order=created_at.desc&limit=20`;
     const { data: rn } = await fetchWithRefresh(rurl, { headers: dbHeaders() });
-    _reportNotifs = rn || [];
+    (rn || []).forEach(n => {
+      if (n.type === 'suggestion_approved') _suggestionNotifs.push(n);
+      else                                  _reportNotifs.push(n);
+    });
   } catch(e) {}
 
-  const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0) + _reportNotifs.length;
+  const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0) + _reportNotifs.length + _suggestionNotifs.length;
   totalBadge ? showNotifBadge(totalBadge) : hideNotifBadge();
 }
 
@@ -134,20 +139,22 @@ function openNotifSheet() {
   renderNotifSheet();
   openSheet('notif-sheet');
   setTimeout(markAllSeen, 1200);
-  setTimeout(_markReportNotifsRead, 1200);
+  setTimeout(_markSystemNotifsRead, 1200);
 }
 
-async function _markReportNotifsRead() {
-  if (!_reportNotifs.length) return;
-  const ids = _reportNotifs.map(n => encodeURIComponent(n.id)).join(',');
-  _reportNotifs = [];
+async function _markSystemNotifsRead() {
+  const all = [..._reportNotifs, ..._suggestionNotifs];
+  if (!all.length) return;
+  const ids = all.map(n => encodeURIComponent(n.id)).join(',');
+  _reportNotifs     = [];
+  _suggestionNotifs = [];
   try {
     await fetchWithRefresh(
       `${SUPABASE_URL}/rest/v1/notifications?id=in.(${ids})`,
       {
         method:  'PATCH',
         headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ read_at: new Date().toISOString() })
+        body:    JSON.stringify({ read_at: new Date().toISOString() })
       }
     );
   } catch(e) {}
@@ -169,7 +176,7 @@ function renderNotifSheet() {
     return;
   }
 
-  if(!pendingNotifs.length && !(pendingConnectionRequests?.length) && !_reportNotifs.length) {
+  if(!pendingNotifs.length && !(pendingConnectionRequests?.length) && !_reportNotifs.length && !_suggestionNotifs.length) {
     body.innerHTML = `
       <div class="notif-empty">
         <div class="notif-empty-icon">✅</div>
@@ -199,8 +206,21 @@ function renderNotifSheet() {
     </div>`;
   }).join('');
 
+  const suggestionHtml = _suggestionNotifs.map(n => {
+    const time = _notifTime(n.created_at);
+    return `<div class="notif-item notif-item--suggestion">
+      <div class="notif-report-icon">🏓</div>
+      <div class="notif-content">
+        <div class="notif-title"><b>${escHtml(n.title || 'Platte freigegeben!')}</b></div>
+        <div class="notif-preview">${escHtml(n.body || '')}</div>
+        <div class="notif-time">${time}</div>
+      </div>
+      <div class="notif-dot"></div>
+    </div>`;
+  }).join('');
+
   const connHtml = typeof renderConnectionRequestNotifs === 'function' ? renderConnectionRequestNotifs() : '';
-  body.innerHTML = reportHtml + connHtml + pendingNotifs.slice(0, 20).map(m => {
+  body.innerHTML = suggestionHtml + reportHtml + connHtml + pendingNotifs.slice(0, 20).map(m => {
     const ev      = evMap[m.event_id];
     const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
     const isPs    = allPlayerSearches.some(ps => ps.id === m.event_id);

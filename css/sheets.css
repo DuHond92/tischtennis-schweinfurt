@@ -857,9 +857,12 @@
   border-radius: 50%; background: var(--primary);
 }
 
-.notif-item--report { cursor: default; }
-.notif-item--report:hover  { background: transparent; }
-.notif-item--report:active { background: transparent; }
+.notif-item--report,
+.notif-item--suggestion { cursor: default; }
+.notif-item--report:hover,
+.notif-item--suggestion:hover  { background: transparent; }
+.notif-item--report:active,
+.notif-item--suggestion:active { background: transparent; }
 .notif-report-icon {
   flex-shrink: 0; width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;

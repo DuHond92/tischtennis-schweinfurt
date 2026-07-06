@@ -6,6 +6,7 @@ let suggestLat = null, suggestLng = null;
 let suggestPinMarker = null;
 let suggestStep = 1;
 let suggestMapClickActive = false;
+let _suggestImageFile = null;
 
 function openSuggestSheet() {
   if (!sb.isLoggedIn()) {
@@ -38,6 +39,11 @@ function _resetSuggestForm() {
   document.querySelectorAll('.sug-type-btn').forEach((b, i) =>
     b.classList.toggle('active', i === 0));
   _updateCoordDisplay();
+  _suggestImageFile = null;
+  const prev = document.getElementById('sug-photo-preview');
+  const add  = document.getElementById('sug-add-photo-btn');
+  if (prev) prev.style.display = 'none';
+  if (add)  add.style.display  = '';
 }
 
 function _setSuggestStep(step) {
@@ -131,6 +137,37 @@ function _updateCoordDisplay() {
   }
 }
 
+// ── FOTO PICKER ──────────────────────────────────────────────────────────────
+
+function _openSuggestPhotoPicker() {
+  document.getElementById('sug-photo-source-sheet')?.classList.add('open');
+}
+function _closeSuggestPhotoPicker() {
+  document.getElementById('sug-photo-source-sheet')?.classList.remove('open');
+}
+function _handleSuggestImageSelect(input) {
+  if (!input.files || !input.files[0]) return;
+  _suggestImageFile = input.files[0];
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img  = document.getElementById('sug-img-preview');
+    const prev = document.getElementById('sug-photo-preview');
+    const add  = document.getElementById('sug-add-photo-btn');
+    if (img)  img.src = ev.target.result;
+    if (prev) prev.style.display = '';
+    if (add)  add.style.display  = 'none';
+  };
+  reader.readAsDataURL(_suggestImageFile);
+}
+function _removeSuggestImage() {
+  _suggestImageFile = null;
+  const prev = document.getElementById('sug-photo-preview');
+  const add  = document.getElementById('sug-add-photo-btn');
+  if (prev) prev.style.display = 'none';
+  if (add)  add.style.display  = '';
+}
+
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 
 function suggestNextStep() {
@@ -187,7 +224,7 @@ async function _submitSuggestion() {
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Wird gespeichert…'; }
 
   if (isMod) {
-    const { error } = await (new QueryBuilder('tables')).insert({
+    const { data: tableData, error } = await (new QueryBuilder('tables')).insert({
       name,
       address:       address || '',
       lat:           suggestLat,
@@ -211,13 +248,43 @@ async function _submitSuggestion() {
       return;
     }
 
-    // Karte im Hintergrund aktualisieren, ohne auf das Ergebnis zu warten
+    // Bild hochladen und direkt freigeben
+    let uploadedImageUrl = null;
+    const newTableId = tableData?.[0]?.id;
+    if (_suggestImageFile && newTableId) {
+      try {
+        const blob = await _resizeTableImage(_suggestImageFile);
+        uploadedImageUrl = await _uploadTableImageToStorage(blob, newTableId);
+        await _saveTableImageRecord(newTableId, uploadedImageUrl);
+      } catch(e) {
+        console.error('Suggest image upload error:', e);
+      }
+    }
+    _suggestImageFile = null;
+
+    // Karte im Hintergrund aktualisieren
     loadTables().then(() => {
       if (typeof _applyMapFilters === 'function') _applyMapFilters();
       if (typeof renderHome      === 'function') renderHome();
     });
-    // Weiter zu Schritt 3 (gleicher Flow wie reguläre Nutzer)
+
+    // Preview-Card für Schritt 3
+    _buildSuggestPreviewCard(name, address, count, type, uploadedImageUrl);
+    _setSuggestStep(3);
+    return;
   }
+
+  // Bild vor dem Insert hochladen, damit die URL im Datensatz landet
+  let suggestionImageUrl = null;
+  if (_suggestImageFile) {
+    try {
+      const blob = await _resizeTableImage(_suggestImageFile);
+      suggestionImageUrl = await _uploadTableImageToStorage(blob, 'suggestions');
+    } catch(e) {
+      console.error('Suggest image upload error:', e);
+    }
+  }
+  _suggestImageFile = null;
 
   const qb = new QueryBuilder('table_suggestions');
   const { error } = await qb.insert({
@@ -232,6 +299,7 @@ async function _submitSuggestion() {
     access_type:   accessType,
     opening_hours: openingHours,
     access_note:   accessNote,
+    image_url:     suggestionImageUrl,
     submitted_by:  uid,
     status:        'pending'
   });
@@ -245,23 +313,24 @@ async function _submitSuggestion() {
   }
 
   _clearSuggestPin();
-
-  // Vorschau-Card für Schritt 3 mit den gespeicherten Daten befüllen
-  const previewCard = document.getElementById('sug-preview-card');
-  if (previewCard) {
-    const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
-    const typeLabel  = type === 'indoor' ? 'Indoor' : 'Outdoor';
-    const countLabel = count ? `${count} ${count === 1 ? 'Tisch' : 'Tische'} · ` : '';
-    previewCard.innerHTML = `
-      <div class="sug-preview-thumb"><img src="${plateFb}" alt=""></div>
-      <div class="sug-preview-info">
-        <div class="sug-preview-name">${escHtml(name)}</div>
-        ${address ? `<div class="sug-preview-addr">${escHtml(address)}</div>` : ''}
-        <div class="sug-preview-meta">${countLabel}${typeLabel}</div>
-      </div>`;
-  }
-
+  _buildSuggestPreviewCard(name, address, count, type, suggestionImageUrl);
   _setSuggestStep(3);
+}
+
+function _buildSuggestPreviewCard(name, address, count, type, imageUrl) {
+  const previewCard = document.getElementById('sug-preview-card');
+  if (!previewCard) return;
+  const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+  const thumbSrc   = imageUrl || plateFb;
+  const typeLabel  = type === 'indoor' ? 'Indoor' : 'Outdoor';
+  const countLabel = count ? `${count} ${count === 1 ? 'Tisch' : 'Tische'} · ` : '';
+  previewCard.innerHTML = `
+    <div class="sug-preview-thumb"><img src="${thumbSrc}" alt=""></div>
+    <div class="sug-preview-info">
+      <div class="sug-preview-name">${escHtml(name)}</div>
+      ${address ? `<div class="sug-preview-addr">${escHtml(address)}</div>` : ''}
+      <div class="sug-preview-meta">${countLabel}${typeLabel}</div>
+    </div>`;
 }
 
 function suggestRestartFlow() {
