@@ -11,12 +11,12 @@ let _psSearchLng   = parseFloat(localStorage.getItem('tt_ps_lng')  || '') || nul
 let _psSearchLabel = localStorage.getItem('tt_ps_label') || '';
 let _psSearchType  = localStorage.getItem('tt_ps_type')  || ''; // 'manual_place' | 'current_location' | ''
 
-let _psGeoTimer = null;
+let _psGeoTimer = null, _psGeoAbort = null;
 let _psGeoItems = [];
 
 // ── Standort-State für das Erstell-Formular (getrennt vom Filter) ─
 let _msFormLat = null, _msFormLng = null, _msFormLabel = '';
-let _msGeoTimer = null, _msGeoItems = [];
+let _msGeoTimer = null, _msGeoAbort = null, _msGeoItems = [];
 
 // Liefert das aktive Suchzentrum (manuell oder GPS)
 function _psCenter() {
@@ -163,12 +163,18 @@ function _psSearchKey(e) {
 
 async function _psRunSearch(q) {
   _psGeoItems = [];
+  if (_psGeoAbort) _psGeoAbort.abort();
+  _psGeoAbort = new AbortController();
   try {
     const url = `https://nominatim.openstreetmap.org/search?` +
       `q=${encodeURIComponent(q)}&format=json&limit=6` +
       `&addressdetails=1&countrycodes=de&accept-language=de` +
-      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
+      `&email=kontakt%40plattentreff.app`;
+    const res = await fetch(url, {
+      signal: _psGeoAbort.signal,
+      headers: { 'Accept-Language': 'de' }
+    });
     const geo = (await res.json()).slice(0, 5);
     _psGeoItems = geo.map(r => ({
       lat:   parseFloat(r.lat),
@@ -176,7 +182,7 @@ async function _psRunSearch(q) {
       label: r.name || r.display_name.split(',')[0],
       sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
     }));
-  } catch(_) {}
+  } catch(e) { if (e?.name === 'AbortError') return; }
   _psRenderDd(q);
 }
 
@@ -714,12 +720,18 @@ function _msSearchKey(e) {
 
 async function _msRunSearch(q) {
   _msGeoItems = [];
+  if (_msGeoAbort) _msGeoAbort.abort();
+  _msGeoAbort = new AbortController();
   try {
     const url = `https://nominatim.openstreetmap.org/search?` +
       `q=${encodeURIComponent(q)}&format=json&limit=6` +
       `&addressdetails=1&countrycodes=de&accept-language=de` +
-      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
+      `&email=kontakt%40plattentreff.app`;
+    const res = await fetch(url, {
+      signal: _msGeoAbort.signal,
+      headers: { 'Accept-Language': 'de' }
+    });
     const geo = (await res.json()).slice(0, 5);
     _msGeoItems = geo.map(r => ({
       lat:   parseFloat(r.lat),
@@ -727,7 +739,7 @@ async function _msRunSearch(q) {
       label: r.name || r.display_name.split(',')[0],
       sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
     }));
-  } catch(_) {}
+  } catch(e) { if (e?.name === 'AbortError') return; }
   _msRenderDd(q);
 }
 

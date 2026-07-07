@@ -48,10 +48,10 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>PlattenTreff nutzt deinen Standort, um Platten, Spielrunden und Mitspieler in deiner Nähe anzuzeigen.</string>
+	<string>PlattenTreff nutzt deinen Standort, um Tischtennisplatten, Mitspieler und Spielrunden in deiner Nähe anzuzeigen. Dein genauer Standort wird nicht dauerhaft gespeichert.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>PlattenTreff nutzt deine Kamera, damit du Fotos von Tischtennisplatten hinzufügen kannst.</string>
+	<string>PlattenTreff nutzt deine Kamera, damit du direkt Fotos von Tischtennisplatten aufnehmen kannst.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>PlattenTreff benötigt Zugriff auf deine Fotos, damit du Bilder zu Tischtennisplatten hochladen kannst.</string>
+	<string>PlattenTreff benötigt Zugriff auf deine Fotomediathek, damit du Fotos von Tischtennisplatten oder als Profilbild hochladen kannst.</string>
 </dict>
 </plist>

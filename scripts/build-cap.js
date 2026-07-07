@@ -22,6 +22,7 @@ const INCLUDE = [
   'impressum',
   'nutzungsbedingungen',
   'community-richtlinien',
+  'account-loeschen',
 ];
 
 function copyDir(src, dest) {

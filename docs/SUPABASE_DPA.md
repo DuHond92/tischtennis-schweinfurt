@@ -120,29 +120,39 @@ Datenschutzerklärung (Abschnitt 20) beschreibt dies korrekt.
 ## 8. Store-Compliance (Supabase-relevante Punkte)
 
 ### Apple App Store — App Privacy
-| Kategorie | Angabe |
-|---|---|
-| Contact Info (E-Mail) | Erfasst — App Functionality — mit Nutzer verknüpft |
-| User Content (Fotos, Kommentare) | Erfasst — App Functionality — mit Nutzer verknüpft |
-| Identifiers (User ID) | Erfasst — App Functionality — mit Nutzer verknüpft |
-| Location (Standort) | Erfasst — App Functionality — nicht verknüpft (nur lokal) |
-| Usage Data / Product Interaction | ✅ Ja — interne Nutzungsanalyse (analytics_events) |
-| Linked to User (Usage Data) | ✅ Ja (pseudonyme User-ID, sofern eingeloggt) |
-| Tracking | ❌ Nein (kein Advertising-SDK, kein Cross-App-Tracking) |
-| Weitergabe an Dritte (Werbung) | ❌ Nein |
+
+Vollständige Dokumentation: **`docs/APP_STORE_PRIVACY.md`**
+
+| Data Type | Linked to User | Tracking | Purposes |
+|---|---|---|---|
+| Contact Info → Email Address | Yes | **No** | App Functionality, Account Management |
+| Contact Info → Name | Yes | **No** | App Functionality, User Profile/Community |
+| User Content → Photos or Videos | Yes | **No** | App Functionality, User-generated Content |
+| User Content → Other User Content | Yes | **No** | App Functionality, Community, Moderation/Safety |
+| Location → Precise Location | Yes | **No** | App Functionality, Location-based Features |
+| Identifiers → User ID | Yes | **No** | App Functionality, Account Management, Analytics |
+| Usage Data → Product Interaction | Yes | **No** | Analytics, App Functionality, Product Improvement |
+| Diagnostics | — | — | Nicht zutreffend (kein Crash-SDK) |
+| Tracking (gesamt) | — | **No** | Kein IDFA, kein ATT-Prompt, kein Cross-App-Tracking |
 
 ### Google Play — Data Safety
-| Punkt | Status |
-|---|---|
-| Daten werden erhoben | ✅ Ja (Account, Profil, Inhalte, Nutzungsanalyse) |
-| App activity / App interactions (analytics) | ✅ Ja — interne Nutzungsanalyse |
-| Daten werden mit Drittanbietern geteilt | ✅ Ja (Supabase als Auftragsverarbeiter) |
-| Zweck: App-Funktionalität | ✅ |
-| Zweck: Analytics | ✅ (intern, kein externes SDK) |
-| Zweck: Werbung | ❌ Nein |
-| Verschlüsselung in Transit | ✅ HTTPS/TLS |
-| Datenlöschung möglich | ✅ Account-Lösch-Flow (user_id → NULL in analytics_events) |
-| Analytics optional / Required | Opt-out möglich (Profil → Einstellungen → Nutzungsanalyse) |
+
+Vollständige Dokumentation: **`docs/GOOGLE_PLAY_DATA_SAFETY.md`**
+
+| Data Type | Collected | Shared | Tracking | Purpose |
+|---|---|---|---|---|
+| Personal info → Email address | Yes | No | **No** | Account management, App functionality |
+| Personal info → Name | Yes | No | **No** | App functionality, User profile/Community |
+| Photos and videos → Photos | Yes | No | **No** | App functionality, User-generated content |
+| Location → Precise location | Yes | No | **No** | App functionality, Location-based features |
+| Messages → Other in-app messages | Yes | No | **No** | App functionality, Communications |
+| App activity → App interactions | Yes | No | **No** | Analytics, App functionality, Product improvement |
+| User content → Other user content | Yes | No | **No** | App functionality, Community, Moderation/Safety |
+| Diagnostics | No | — | — | Kein Crash-SDK |
+| Advertising ID / Werbedaten / Tracking | **No** | — | — | Nicht verwendet |
+
+**Account Deletion URL:** `https://plattentreff.app/account-loeschen/`  
+**Privacy Policy URL:** `https://plattentreff.app/datenschutz/`
 
 ---
 
@@ -150,8 +160,10 @@ Datenschutzerklärung (Abschnitt 20) beschreibt dies korrekt.
 
 - [ ] DPA-Unterzeichnungsdatum in Zeile „Datum der Unterzeichnung" oben eintragen
 - [ ] DPA-PDF als `docs/supabase-dpa.pdf` ablegen, falls exportierbar
-- [ ] Apple App Store App Privacy Formular ausfüllen (Kategorien aus Abschnitt 8)
-- [ ] Google Play Data Safety Formular ausfüllen
+- [x] Apple App Store App Privacy Angaben dokumentiert → `docs/APP_STORE_PRIVACY.md` (2026-07-07)
+- [ ] Apple App Store App Privacy Formular in App Store Connect ausfüllen (Anleitung in `docs/APP_STORE_PRIVACY.md` Abschnitt 12)
+- [x] Google Play Data Safety Angaben dokumentiert → `docs/GOOGLE_PLAY_DATA_SAFETY.md` (2026-07-07)
+- [ ] Google Play Data Safety Formular in Play Console ausfüllen (Anleitung in `docs/GOOGLE_PLAY_DATA_SAFETY.md` Abschnitt 13)
 - [ ] Datenschutzerklärung juristisch prüfen lassen vor Launch
 - [ ] **Analytics-Retention automatisieren**: Datenschutzerklärung nennt 180 Tage —
   technisch noch nicht automatisch. Umsetzungsoptionen:

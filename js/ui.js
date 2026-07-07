@@ -290,7 +290,7 @@ function _triggerSnackbarAction() {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           SEARCH AUTOCOMPLETE                                ║
 // ╚══════════════════════════════════════════════════════════════╝
-let searchTimer = null;
+let searchTimer = null, _searchAbort = null;
 let dropdownItems = [];
 let activeIdx = -1;
 
@@ -314,15 +314,21 @@ async function runSearch(q) {
   );
 
   // 2. Nominatim (OSM Geocoding) für Orte/Adressen
+  if (_searchAbort) _searchAbort.abort();
+  _searchAbort = new AbortController();
   let geoResults = [];
   try {
     const url = `https://nominatim.openstreetmap.org/search?` +
       `q=${encodeURIComponent(q + ' Schweinfurt')}&format=json&limit=4` +
-      `&addressdetails=1&countrycodes=de&accept-language=de`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      `&addressdetails=1&countrycodes=de&accept-language=de` +
+      `&email=kontakt%40plattentreff.app`;
+    const res = await fetch(url, {
+      signal: _searchAbort.signal,
+      headers: { 'Accept-Language': 'de' }
+    });
     const data = await res.json();
     geoResults = data.slice(0,4);
-  } catch(e) { /* Offline oder Rate-limit */ }
+  } catch(e) { if (e?.name === 'AbortError') return; }
 
   renderDropdown(q, localMatches, geoResults);
 }

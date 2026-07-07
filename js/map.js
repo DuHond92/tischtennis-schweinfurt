@@ -77,7 +77,7 @@ function _refreshMarkerIcons() {
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
 
-let _mapDdItems = [], _mapDdTimer = null, _mapDdActiveIdx = -1;
+let _mapDdItems = [], _mapDdTimer = null, _mapDdActiveIdx = -1, _mapDdAbort = null;
 
 function onMapSearch() {
   const input = document.getElementById('map-search');
@@ -105,15 +105,21 @@ async function _runMapDdSearch(q) {
     (t.addr || '').toLowerCase().includes(q.toLowerCase())
   );
   let geo = [];
+  if (_mapDdAbort) _mapDdAbort.abort();
+  _mapDdAbort = new AbortController();
   try {
     // viewbox biases results to the Schweinfurt region without restricting other areas
     const url = `https://nominatim.openstreetmap.org/search?` +
       `q=${encodeURIComponent(q)}&format=json&limit=5` +
       `&addressdetails=1&countrycodes=de&accept-language=de` +
-      `&viewbox=9.8,50.25,10.75,49.85&bounded=0`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
+      `&email=kontakt%40plattentreff.app`;
+    const res = await fetch(url, {
+      signal: _mapDdAbort.signal,
+      headers: { 'Accept-Language': 'de' }
+    });
     geo = (await res.json()).slice(0, 4);
-  } catch(_) {}
+  } catch(e) { if (e?.name === 'AbortError') return; }
   _renderMapDd(q, local, geo);
 }
 
