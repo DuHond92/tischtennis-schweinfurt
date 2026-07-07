@@ -159,27 +159,69 @@ kontakt@plattentreff.app
 
 ---
 
-## Supabase E-Mail-Templates
+## Supabase Auth — E-Mail-Versand via Resend
 
-Im Supabase Dashboard unter **Authentication → Email Templates** folgende Absender-Einstellungen setzen:
+### SMTP-Konfiguration (Authentication → Emails → SMTP Settings)
+
+| Feld | Wert |
+|---|---|
+| Enable custom SMTP | An |
+| Sender email address | `noreply@plattentreff.app` |
+| Sender name | `PlattenTreff` |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | Resend API Key ⚠️ nur im Dashboard, nie dokumentieren |
+
+**⚠️ Sicherheitshinweis:** Den Resend API Key niemals in Code, Docs oder Logs eintragen.
+Bei Verlust oder Leak sofort in Resend neuen Key erstellen und alten löschen.
+
+### Resend Domain-Status (Stand 2026-07-07)
+
+| Feld | Wert |
+|---|---|
+| Domain | `plattentreff.app` |
+| Status | verified ✅ |
+| Provider | Cloudflare |
+| Region | eu-west-1 (Irland) |
+| DKIM | verified ✅ |
+| SPF / Return-Path | verified ✅ (auf `send.plattentreff.app`) |
+| DMARC | vorhanden (`v=DMARC1; p=none`) |
+
+SPF/Return-Path liegt auf `send.plattentreff.app` — kollidiert nicht mit Cloudflare Email Routing auf der Hauptdomain.
+
+### E-Mail-Fluss
+
+```
+Supabase Auth → SMTP → smtp.resend.com → noreply@plattentreff.app (Absender)
+Antworten / Bounces → Cloudflare Email Routing → Gmail
+```
+
+Cloudflare Email Routing: nur eingehend (Weiterleitungen). Ausgehender Versand: Resend.
+
+### Supabase E-Mail-Templates (Authentication → Email Templates)
 
 **From Name:** PlattenTreff  
-**From Email:** noreply@plattentreff.app *(oder kontakt@plattentreff.app, je nach Cloudflare Email Routing)*
+**From Email:** noreply@plattentreff.app
 
-### Confirm Signup (Betreff-Vorschlag)
-```
-Bestätige deine PlattenTreff-Registrierung
-```
+| Template | Betreff |
+|---|---|
+| Confirm Signup | Bestätige deine PlattenTreff-Registrierung |
+| Reset Password | Dein PlattenTreff Passwort zurücksetzen |
+| Magic Link | Dein PlattenTreff Login-Link |
+| Change Email | Bestätige deine neue E-Mail-Adresse |
 
-### Reset Password (Betreff-Vorschlag)
-```
-Dein PlattenTreff Passwort zurücksetzen
-```
+Alle Templates verwenden Supabase-Variablen: `{{ .ConfirmationURL }}`, `{{ .Token }}`  
+Supportadresse in Templates: `support@plattentreff.app`  
+Datenschutzlink in Templates: `https://plattentreff.app/datenschutz/`
 
-### Magic Link (Betreff-Vorschlag)
-```
-Dein PlattenTreff Login-Link
-```
+### Tests nach SMTP-Konfiguration
+- [ ] Registrierung → Confirm-Signup-Mail kommt an
+- [ ] Absender ist `PlattenTreff <noreply@plattentreff.app>`
+- [ ] Passwort-Reset-Mail kommt an, Link führt zu `https://plattentreff.app`
+- [ ] Keine Mails von `onboarding@resend.dev`
+- [ ] Resend Dashboard → Logs zeigen erfolgreiche Zustellung
+- [ ] API Key ist nirgendwo im Code/Docs sichtbar
 
 ---
 

@@ -66,8 +66,9 @@ Nicht verwenden: Frankfurt, Deutschland, eu-central-1.
 
 ---
 
-## 5. Unterauftragsverarbeiter (Sub-processors)
+## 5. Auftragsverarbeiter & Sub-processors
 
+### Supabase Sub-processors
 Aktuelle Supabase-Subprocessor-Liste: https://supabase.com/privacy
 
 | Anbieter | Zweck | Standort |
@@ -77,6 +78,25 @@ Aktuelle Supabase-Subprocessor-Liste: https://supabase.com/privacy
 
 Drittlandübermittlungen durch Sub-processors (z. B. Cloudflare USA) sind durch
 SCCs im Supabase-DPA abgesichert.
+
+### Resend Inc. — E-Mail-Versand (eigener Auftragsverarbeiter)
+
+| Feld | Wert |
+|---|---|
+| Anbieter | Resend Inc. |
+| Zweck | Versand transaktionaler Auth-E-Mails (Registrierung, Passwort-Reset, Login-Links) |
+| Domain | `plattentreff.app` — verified ✅ (Stand 2026-07-07) |
+| Region | eu-west-1 (Irland) |
+| DKIM / SPF / DMARC | verified ✅ |
+| Absender | `PlattenTreff <noreply@plattentreff.app>` |
+| SMTP Host | `smtp.resend.com:465` |
+| Datenschutz | https://resend.com/legal/privacy-policy |
+| DPA | Resend DPA prüfen / abschließen: https://resend.com/legal/dpa |
+| Datenkategorien | E-Mail-Adresse, Versand-/Zustellmetadaten |
+| Rechtsgrundlage | Art. 6 Abs. 1 lit. b DSGVO |
+| Datenschutzerklärung | Abschnitt 5 + 19 (Drittanbieter-Tabelle) ✅ |
+
+⚠️ **TODO:** Resend DPA prüfen und ggf. abschließen (https://resend.com/legal/dpa)
 
 ---
 
@@ -91,7 +111,8 @@ SCCs im Supabase-DPA abgesichert.
 | SCCs für Sub-processor-Drittlandtransfer | ✅ Abschnitt 4 |
 | Sub-processors (AWS, Cloudflare) erwähnt | ✅ Abschnitt 4 und 18 |
 | Vercel als Web-Host erwähnt | ✅ Abschnitt 3 |
-| Account-Löschung beschrieben | ✅ Abschnitt 20 |
+| Resend als E-Mail-Dienstleister erwähnt | ✅ Abschnitte 5 + 19 |
+| Account-Löschung beschrieben | ✅ Abschnitt 21 |
 
 ---
 
@@ -164,6 +185,7 @@ Vollständige Dokumentation: **`docs/GOOGLE_PLAY_DATA_SAFETY.md`**
 - [ ] Apple App Store App Privacy Formular in App Store Connect ausfüllen (Anleitung in `docs/APP_STORE_PRIVACY.md` Abschnitt 12)
 - [x] Google Play Data Safety Angaben dokumentiert → `docs/GOOGLE_PLAY_DATA_SAFETY.md` (2026-07-07)
 - [ ] Google Play Data Safety Formular in Play Console ausfüllen (Anleitung in `docs/GOOGLE_PLAY_DATA_SAFETY.md` Abschnitt 13)
+- [ ] Resend DPA abschließen: https://resend.com/legal/dpa
 - [ ] Datenschutzerklärung juristisch prüfen lassen vor Launch
 - [ ] **Analytics-Retention automatisieren**: Datenschutzerklärung nennt 180 Tage —
   technisch noch nicht automatisch. Umsetzungsoptionen:
