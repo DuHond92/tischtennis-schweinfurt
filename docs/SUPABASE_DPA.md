@@ -1,9 +1,6 @@
 # Supabase AVV/DPA Compliance — PlattenTreff
 
-## Status: ⬜ PRÜFUNG AUSSTEHEND
-
-Dieses Dokument muss vor dem App-Launch ausgefüllt werden.
-Alle mit `[ ]` markierten Punkte sind offene Aufgaben.
+## Status: ✅ ABGESCHLOSSEN
 
 ---
 
@@ -11,63 +8,47 @@ Alle mit `[ ]` markierten Punkte sind offene Aufgaben.
 
 | Feld | Wert |
 |---|---|
-| Projektname | *(im Dashboard prüfen: Project Settings → General → Project Name)* |
-| Project Ref | `quelfdpqvzgnnvpuwljq` |
-| Supabase-URL | `https://quelfdpqvzgnnvpuwljq.supabase.co` |
-| Organisation | *(im Dashboard prüfen: Organization Settings → General)* |
+| Projektname | tischtennis-schweinfurt |
+| Project ID / Ref | `quelfdpqvzgnnvpulwljq` |
+| Supabase-URL | `https://quelfdpqvzgnnvpulwljq.supabase.co` |
+| Organisation | *(Org-Name aus Dashboard — intern bekannt)* |
 
 ---
 
 ## 2. Region / Hosting-Region
 
-**Zielregion: `eu-central-1` (Frankfurt, Deutschland)**
-
-**Prüfen im Dashboard:**
-> Supabase Dashboard → Project Settings → General → Infrastructure → Region
-
 | Feld | Wert |
 |---|---|
-| Bestätigte Region | *(hier eintragen, z. B. eu-central-1 oder us-east-1)* |
-| EU-Region bestätigt? | ⬜ Ja / ⬜ Nein |
-| Datum der Prüfung | *(Datum eintragen)* |
+| Region-Code | `eu-west-1` |
+| Region-Label | West EU (Ireland) |
+| Serverstandort | Irland, EU |
+| EU-Region | ✅ Ja |
+| Frankfurt / eu-central-1 | ❌ Nein |
+| Datum der Prüfung | 2026-07-07 |
 
-**Risiko bei Nicht-EU-Region:**
-- In der Datenschutzerklärung darf nicht behauptet werden, Daten liegen in der EU
-- Drittlandtransfer muss über SCCs abgesichert sein (bereits im DPA enthalten — Abschnitt 5)
-- Ggf. Datenschutzerklärung anpassen
+**Hinweis für Datenschutzerklärung:**
+Korrekte Formulierung laut Abschnitt 4:
+> „Die von uns genutzte Supabase-Projektregion befindet sich in der EU, derzeit in Irland (eu-west-1)."
+
+Nicht verwenden: Frankfurt, Deutschland, eu-central-1.
 
 ---
 
 ## 3. DPA / Auftragsverarbeitungsvertrag
 
-**Prüfen im Dashboard:**
-> Supabase Dashboard → Organization Settings → Legal → Data Processing Agreement
-
 | Feld | Wert |
 |---|---|
-| DPA verfügbar? | ✅ Ja (Supabase stellt DPA bereit) |
-| DPA akzeptiert? | ⬜ Ja / ⬜ Nein / ⬜ Ausstehend |
-| Datum der Annahme | *(Datum eintragen nach Akzeptanz)* |
-| Für Organisation | *(Org-Name aus Dashboard eintragen)* |
-| DPA-Dokument | https://supabase.com/privacy (Abschnitt DPA / legal) |
-| PDF heruntergeladen? | ⬜ Ja → Pfad: `docs/supabase-dpa.pdf` / ⬜ Nein |
-
-**⚠️ LAUNCH-BLOCKER: DPA muss akzeptiert sein, bevor die App mit echten Nutzerdaten live geht.**
-
-### DPA-Akzeptanz durchführen:
-1. Supabase Dashboard öffnen: https://supabase.com/dashboard
-2. Organization → Settings → Legal
-3. „Data Processing Agreement" anklicken
-4. DPA prüfen und akzeptieren
-5. Bestätigung/Datum hier dokumentieren
-6. PDF-Export speichern (falls verfügbar)
+| DPA verfügbar | ✅ Ja |
+| DPA abgeschlossen / akzeptiert | ✅ Ja |
+| Datum der Unterzeichnung | *(aus unterzeichneter PDF entnehmen)* |
+| Vertragspartner (Verantwortlicher) | Michael Tröster |
+| Nachweis | Unterschriebene Supabase-DPA-Datei liegt intern vor |
+| DPA-Referenz (öffentlich) | https://supabase.com/privacy |
+| PDF intern abgelegt | Als `docs/supabase-dpa.pdf` ablegen, falls PDF vorhanden |
 
 ---
 
-## 4. DPA-Inhalt (Supabase — öffentlich bekannt)
-
-Supabase veröffentlicht den DPA unter https://supabase.com/privacy.
-Der DPA enthält folgende relevante Punkte (Stand: 2025):
+## 4. DPA-Inhalt (Supabase)
 
 | Punkt | Status |
 |---|---|
@@ -76,7 +57,7 @@ Der DPA enthält folgende relevante Punkte (Stand: 2025):
 | Kategorien personenbezogener Daten | ✅ Account-, Nutzungs-, Inhaltsdaten |
 | Betroffene Personen | ✅ Endnutzer der App |
 | Technische und organisatorische Maßnahmen (TOMs) | ✅ enthalten |
-| EU-Standardvertragsklauseln (SCCs) | ✅ enthalten (für Drittlandübermittlungen) |
+| EU-Standardvertragsklauseln (SCCs) | ✅ enthalten (für ggf. Drittlandübermittlung durch Sub-processors) |
 | Liste der Unterauftragsverarbeiter | ✅ supabase.com/privacy → Sub-processors |
 | Löschung / Rückgabe der Daten | ✅ enthalten |
 | Unterstützung bei Betroffenenrechten | ✅ enthalten |
@@ -87,17 +68,15 @@ Der DPA enthält folgende relevante Punkte (Stand: 2025):
 
 ## 5. Unterauftragsverarbeiter (Sub-processors)
 
-Supabase-Subprocessor-Liste: https://supabase.com/privacy
-
-Relevante Unterauftragsverarbeiter (Stand: bekannt aus öffentlicher Liste):
+Aktuelle Supabase-Subprocessor-Liste: https://supabase.com/privacy
 
 | Anbieter | Zweck | Standort |
 |---|---|---|
-| Amazon Web Services (AWS) | Datenbankinfrastruktur, Storage | USA/EU (je nach Projektregion) |
-| Cloudflare | CDN, DDoS-Schutz, Netzwerk | USA/global |
+| Amazon Web Services (AWS) | Datenbankinfrastruktur, Storage | EU (eu-west-1 für unser Projekt) |
+| Cloudflare | CDN, DDoS-Schutz, Netzwerk | USA/global (SCCs enthalten) |
 
-**Hinweis:** Für Drittlandübermittlungen (z. B. AWS us-east-1) sind SCCs im Supabase-DPA enthalten.
-Aktuelle Liste immer unter https://supabase.com/privacy prüfen.
+Drittlandübermittlungen durch Sub-processors (z. B. Cloudflare USA) sind durch
+SCCs im Supabase-DPA abgesichert.
 
 ---
 
@@ -106,45 +85,75 @@ Aktuelle Liste immer unter https://supabase.com/privacy prüfen.
 | Punkt | Status |
 |---|---|
 | Supabase als Auftragsverarbeiter erwähnt | ✅ Abschnitt 4 |
-| DPA nach Art. 28 DSGVO erwähnt | ✅ Abschnitt 4 |
-| SCCs für Drittlandtransfer erwähnt | ✅ Abschnitt 4 |
+| DPA abgeschlossen, nach Art. 28 DSGVO | ✅ Abschnitt 4 |
+| Region: Irland / eu-west-1 | ✅ Abschnitt 4 |
+| Kein Frankfurt / kein eu-central-1 | ✅ geprüft, nicht vorhanden |
+| SCCs für Sub-processor-Drittlandtransfer | ✅ Abschnitt 4 |
 | Sub-processors (AWS, Cloudflare) erwähnt | ✅ Abschnitt 4 und 18 |
 | Vercel als Web-Host erwähnt | ✅ Abschnitt 3 |
-| Region-Aussage: neutral (kein Behaupten von EU) | ✅ korrekt formuliert |
-| Keine falsche Aussage „Daten liegen in Frankfurt" | ✅ solange Region nicht verifiziert |
-
-**Nach Region-Prüfung:** Falls `eu-central-1` bestätigt → Datenschutzerklärung optional um
-„Daten werden auf Servern in Frankfurt (Deutschland) verarbeitet." ergänzen.
+| Account-Löschung beschrieben | ✅ Abschnitt 20 |
 
 ---
 
-## 7. Store-Compliance (Supabase)
+## 7. Account-Lösch-Flow — Konsistenz mit DPA
 
-| Store | Angabe | Status |
-|---|---|---|
-| Apple App Store | Data Storage: Supabase | ⬜ in App Privacy eintragen |
-| Google Play | Data Safety: Daten werden geteilt (Supabase) | ⬜ in Data Safety eintragen |
-| Beide | Account-Löschung implementiert | ✅ implementiert (delete_my_account RPC) |
-| Beide | Privacy Policy URL | ✅ https://plattentreff.app/datenschutz/ |
+Der Account-Lösch-Flow (`delete_my_account()` RPC) ist konsistent mit den DPA-Anforderungen:
 
----
+| Datenkategorie | Aktion bei Löschung |
+|---|---|
+| Auth-User (E-Mail, Passwort-Hash) | ✅ dauerhaft gelöscht (auth.users) |
+| Profil, Avatar, persönliche Daten | ✅ dauerhaft gelöscht |
+| Direktnachrichten | ✅ dauerhaft gelöscht |
+| Spielpartner-Verbindungen | ✅ dauerhaft gelöscht |
+| Bewertungen, Kommentare | ✅ dauerhaft gelöscht |
+| Benachrichtigungen | ✅ dauerhaft gelöscht |
+| Teilnahmen an Spielrunden | ✅ dauerhaft gelöscht |
+| Zukünftige Spielrunden (eigene) | ✅ dauerhaft gelöscht |
+| Vergangene Spielrunden | anonymisiert (creator_id → NULL) |
+| Plattenvorschläge / Fotos (freigegeben) | anonymisiert (submitted_by → NULL) |
+| Meldungen/Reports | anonymisiert (reporter_id → NULL) |
 
-## 8. Offene TODOs / Launch-Blocker
-
-- [ ] **LAUNCH-BLOCKER:** Supabase DPA im Dashboard akzeptieren (Org Settings → Legal → DPA)
-- [ ] Supabase-Projektregion im Dashboard prüfen und hier dokumentieren
-- [ ] Falls Region = EU: Datenschutzerklärung Abschnitt 4 mit EU-Region ergänzen
-- [ ] Falls Region = US: SCC-Formulierung in Datenschutzerklärung belassen (bereits korrekt)
-- [ ] DPA-PDF herunterladen und als `docs/supabase-dpa.pdf` ablegen (falls exportierbar)
-- [ ] Apple App Store Data Safety Formular ausfüllen (Supabase-Daten)
-- [ ] Google Play Data Safety Formular ausfüllen (Supabase-Daten)
-- [ ] Datenschutzerklärung juristisch prüfen lassen
+Datenschutzerklärung (Abschnitt 20) beschreibt dies korrekt.
 
 ---
 
-## 9. Verantwortlicher
+## 8. Store-Compliance (Supabase-relevante Punkte)
+
+### Apple App Store — App Privacy
+| Kategorie | Angabe |
+|---|---|
+| Contact Info (E-Mail) | Erfasst — App Functionality — mit Nutzer verknüpft |
+| User Content (Fotos, Kommentare) | Erfasst — App Functionality — mit Nutzer verknüpft |
+| Identifiers (User ID) | Erfasst — App Functionality — mit Nutzer verknüpft |
+| Location (Standort) | Erfasst — App Functionality — nicht verknüpft (nur lokal) |
+| Tracking | ❌ Nein |
+| Weitergabe an Dritte (Werbung) | ❌ Nein |
+
+### Google Play — Data Safety
+| Punkt | Status |
+|---|---|
+| Daten werden erhoben | ✅ Ja (Account, Profil, Inhalte) |
+| Daten werden mit Drittanbietern geteilt | ✅ Ja (Supabase als Auftragsverarbeiter) |
+| Zweck: App-Funktionalität | ✅ |
+| Zweck: Werbung | ❌ Nein |
+| Verschlüsselung in Transit | ✅ HTTPS/TLS |
+| Datenlöschung möglich | ✅ Account-Lösch-Flow implementiert |
+
+---
+
+## 9. Offene TODOs
+
+- [ ] DPA-Unterzeichnungsdatum in Zeile „Datum der Unterzeichnung" oben eintragen
+- [ ] DPA-PDF als `docs/supabase-dpa.pdf` ablegen, falls exportierbar
+- [ ] Apple App Store App Privacy Formular ausfüllen (Kategorien aus Abschnitt 8)
+- [ ] Google Play Data Safety Formular ausfüllen
+- [ ] Datenschutzerklärung juristisch prüfen lassen vor Launch
+
+---
+
+## 10. Verantwortlicher
 
 Michael Tröster · Neutorstraße 31 · 97421 Schweinfurt
 E-Mail: troester.micha@gmail.com
 
-Letzte Prüfung: 2026-07-07
+Letzte Aktualisierung: 2026-07-07
