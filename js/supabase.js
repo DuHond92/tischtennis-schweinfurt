@@ -95,6 +95,11 @@ const sb = {
     localStorage.removeItem('sb_expires_at');
     localStorage.removeItem('sb_user_id');
     localStorage.removeItem('sb_email');
+    localStorage.removeItem('tt_ps_lat');
+    localStorage.removeItem('tt_ps_lng');
+    localStorage.removeItem('tt_ps_label');
+    localStorage.removeItem('tt_ps_type');
+    localStorage.removeItem('tt_ps_radius');
     currentUser = null;
   },
   getToken()  { return localStorage.getItem('sb_token'); },

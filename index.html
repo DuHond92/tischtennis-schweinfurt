@@ -316,6 +316,11 @@
         <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
         <span class="si-arrow">›</span>
       </div>
+      <div class="settings-item settings-item--danger" onclick="openDeleteAccountSheet()">
+        <div class="si-icon" style="background:#FEF2F2;color:#EF4444;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+        <div class="si-text" style="color:#EF4444;">Account löschen<div class="si-sub" style="color:#F87171;">Dauerhaft und unwiderruflich</div></div>
+        <span class="si-arrow" style="color:#EF4444;">›</span>
+      </div>
     </div>
     <div class="pb-safe"></div>
     </div><!-- /profile-logged-view -->
@@ -1126,6 +1131,78 @@
 <input type="file" id="sug-file-gallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" style="display:none" onchange="_handleSuggestImageSelect(this)">
 <input type="file" id="sug-file-camera"  accept="image/*" capture="environment" style="display:none" onchange="_handleSuggestImageSelect(this)">
 
+<!-- ACCOUNT LÖSCHEN SHEET -->
+<div class="bottom-sheet da-sheet" id="delete-account-sheet">
+  <div class="sheet-handle"></div>
+
+  <!-- Step 1: Warnung & Info -->
+  <div id="da-step-1">
+    <div class="da-header">
+      <div class="da-icon">🗑️</div>
+      <div class="da-title">Account löschen?</div>
+      <div class="da-desc">Das Löschen deines Accounts ist dauerhaft. Dein Profil und deine personenbezogenen Daten werden entfernt.</div>
+    </div>
+    <div class="da-lists">
+      <div class="da-list-block da-list-block--delete">
+        <div class="da-list-title">Was gelöscht wird</div>
+        <ul class="da-list">
+          <li>Profil, Avatar und persönliche Daten</li>
+          <li>E-Mail-Adresse und Login-Zugang</li>
+          <li>Direktnachrichten</li>
+          <li>Spielpartner-Verbindungen und Anfragen</li>
+          <li>Bewertungen und Kommentare</li>
+          <li>Teilnahmen an Spielrunden</li>
+          <li>Eigene zukünftige Spielrunden</li>
+          <li>Benachrichtigungen</li>
+        </ul>
+      </div>
+      <div class="da-list-block da-list-block--keep">
+        <div class="da-list-title">Was anonymisiert bleibt</div>
+        <ul class="da-list">
+          <li>Vergangene Spielrunden (ohne Namensbezug)</li>
+          <li>Freigegebene Plattenfotos und -vorschläge</li>
+          <li>Moderationsprotokoll (ohne Personenbezug)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="da-actions">
+      <button class="btn btn-secondary" onclick="closeAllSheets()">Abbrechen</button>
+      <button class="btn da-btn-danger" onclick="_daGoToConfirm()">Account löschen →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Finale Bestätigung -->
+  <div id="da-step-2" style="display:none;">
+    <div class="da-confirm-box">
+      <div class="da-confirm-icon">⚠️</div>
+      <div class="da-confirm-title">Endgültig löschen?</div>
+      <div class="da-confirm-text">Diese Aktion kann nicht rückgängig gemacht werden. Dein Account und alle persönlichen Daten werden dauerhaft entfernt.</div>
+    </div>
+    <div class="da-actions">
+      <button class="btn btn-secondary" onclick="_daBack()">Abbrechen</button>
+      <button class="btn da-btn-danger" onclick="_daExecuteDelete()">Endgültig löschen</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Ladevorgang -->
+  <div id="da-step-3" style="display:none;">
+    <div class="da-loading">
+      <div class="da-loading-spinner"></div>
+      <div class="da-loading-text">Account wird gelöscht…</div>
+      <div class="da-loading-sub">Bitte warte einen Moment.</div>
+    </div>
+  </div>
+
+  <!-- Step 4: Erfolg -->
+  <div id="da-step-4" style="display:none;">
+    <div class="da-success">
+      <div class="da-success-icon">✅</div>
+      <div class="da-success-title">Account gelöscht</div>
+      <div class="da-success-text">Dein Account und deine persönlichen Daten wurden dauerhaft entfernt. Du wirst jetzt abgemeldet.</div>
+    </div>
+  </div>
+</div>
+
 <!-- KOMMENTAR SHEET -->
 <div class="bottom-sheet" id="comment-sheet">
   <div class="sheet-handle"></div>
@@ -1404,6 +1481,7 @@
 <script src="js/notifications.js"></script>
 <script src="js/main.js"></script>
 <script src="js/suggest.js"></script>
+<script src="js/delete-account.js"></script>
 <script src="js/admin.js"></script>
 
 <!-- SUGGEST TABLE SHEET -->
