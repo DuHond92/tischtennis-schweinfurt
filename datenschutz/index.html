@@ -89,26 +89,65 @@
     keine Werbung und keine Weitergabe an Werbenetzwerke statt.
   </p>
 
-  <!-- ── 3. Hosting & Backend ─────────────────────────────── -->
-  <h2>3. Hosting & Backend (Supabase)</h2>
+  <!-- ── 3. Web-Hosting ───────────────────────────────────── -->
+  <h2>3. Web-Hosting (Vercel)</h2>
   <p>
-    PlattenTreff nutzt <strong>Supabase</strong> (Supabase Inc., 970 Trestle Glen Rd,
-    Oakland, CA 94610, USA) als Backend-Dienst für Authentifizierung,
-    Datenbank und Dateispeicher.
+    Die Website und die öffentlichen Seiten von PlattenTreff (plattentreff.app) werden
+    über <strong>Vercel Inc.</strong> (440 N Barranca Ave #4133, Covina, CA 91723, USA)
+    gehostet. Beim Abruf der Website überträgt dein Browser technisch bedingt die
+    IP-Adresse an Vercel-Server. Vercel verarbeitet diese Daten ausschließlich zum
+    Zweck der Auslieferung der Website.
   </p>
   <p>
-    Die Daten werden auf Servern gespeichert, die Supabase betreibt. Soweit Daten
-    außerhalb des Europäischen Wirtschaftsraums verarbeitet werden, erfolgt dies auf
-    Basis der EU-Standardvertragsklauseln gemäß Art. 46 Abs. 2 lit. c DSGVO.
+    Soweit dabei Daten in die USA übertragen werden, erfolgt dies auf Basis des
+    EU-US Data Privacy Frameworks (Vercel ist zertifiziert) sowie der
+    EU-Standardvertragsklauseln gemäß Art. 46 Abs. 2 lit. c DSGVO.
+    Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am
+    technisch sicheren Betrieb der Website).
   </p>
   <p>
-    Die Datenübertragung an Supabase ist für den Betrieb der App zwingend erforderlich
-    (Art. 6 Abs. 1 lit. b DSGVO – Vertragserfüllung / vorvertragliche Maßnahmen).
-    Mit Supabase besteht ein Auftragsverarbeitungsvertrag (DPA) gemäß Art. 28 DSGVO.
+    Datenschutz Vercel:
+    <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">vercel.com/legal/privacy-policy</a>
   </p>
 
-  <!-- ── 4. Registrierung & Account ───────────────────────── -->
-  <h2>4. Registrierung und Account</h2>
+  <!-- ── 4. Backend (Supabase) ─────────────────────────────── -->
+  <h2>4. Backend, Datenbank und Dateispeicher (Supabase)</h2>
+  <p>
+    PlattenTreff nutzt <strong>Supabase</strong> (Supabase Inc., 970 Trestle Glen Rd,
+    Oakland, CA 94610, USA) als Backend-Dienst für:
+  </p>
+  <ul>
+    <li>Authentifizierung (E-Mail, Passwort-Hash, Sitzungs-Tokens)</li>
+    <li>Nutzerdatenbank (Profile, Spielrunden, Nachrichten, Bewertungen, Verbindungen, Meldungen)</li>
+    <li>Dateispeicher (Profilfotos, Plattenfotos)</li>
+  </ul>
+  <p>
+    Supabase verarbeitet diese Daten ausschließlich im Auftrag von PlattenTreff.
+    Mit Supabase besteht ein Auftragsverarbeitungsvertrag (Data Processing Addendum, DPA)
+    gemäß Art. 28 DSGVO. Der DPA kann unter
+    <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a>
+    eingesehen werden.
+  </p>
+  <p>
+    Supabase setzt seinerseits Unterauftragsverarbeiter ein. Eine aktuelle Liste ist
+    unter <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a>
+    (Abschnitt „Sub-processors") einsehbar. Zu den wesentlichen Unterauftragsverarbeitern
+    zählen u. a. Amazon Web Services (Datenbankinfrastruktur) und
+    Cloudflare (CDN/DDoS-Schutz).
+  </p>
+  <p>
+    Soweit Daten außerhalb des Europäischen Wirtschaftsraums verarbeitet werden,
+    erfolgt dies auf Basis der EU-Standardvertragsklauseln (SCCs) gemäß
+    Art. 46 Abs. 2 lit. c DSGVO, die im Supabase DPA enthalten sind.
+  </p>
+  <p>
+    Rechtsgrundlage der Datenübertragung an Supabase: Art. 6 Abs. 1 lit. b DSGVO
+    (Vertragserfüllung / vorvertragliche Maßnahmen) sowie Art. 6 Abs. 1 lit. f DSGVO
+    (berechtigtes Interesse am technisch sicheren Betrieb der App).
+  </p>
+
+  <!-- ── 5. Registrierung & Account ───────────────────────── -->
+  <h2>5. Registrierung und Account</h2>
   <p>
     Zur Nutzung bestimmter Funktionen (Spielrunden erstellen, Mitspieler suchen,
     Platten vorschlagen) ist eine Registrierung erforderlich.
@@ -129,7 +168,7 @@
   </p>
 
   <!-- ── 5. Standort ──────────────────────────────────────── -->
-  <h2>5. Standort</h2>
+  <h2>6. Standort</h2>
   <p>
     PlattenTreff kann optional den Gerätestandort nutzen, um Tischtennisplatten,
     Spielrunden und Mitspieler in der Nähe anzuzeigen. Die Standortabfrage erfolgt
@@ -148,7 +187,7 @@
   </p>
 
   <!-- ── 6. Karte ─────────────────────────────────────────── -->
-  <h2>6. Kartendarstellung</h2>
+  <h2>7. Kartendarstellung</h2>
   <p>
     PlattenTreff verwendet für die Kartendarstellung <strong>Leaflet.js</strong>
     (Open Source, MIT-Lizenz) mit Kartenkacheln von <strong>CARTO</strong>
@@ -174,7 +213,7 @@
   </p>
 
   <!-- ── 7. Plattenvorschläge ─────────────────────────────── -->
-  <h2>7. Plattenvorschläge</h2>
+  <h2>8. Plattenvorschläge</h2>
   <p>
     Nutzer können neue Tischtennisplatten vorschlagen. Dabei werden folgende Daten
     gespeichert: Name, Adresse, Standortkoordinaten, Tischanzahl, Typ,
@@ -187,7 +226,7 @@
   </p>
 
   <!-- ── 8. Fotos & Uploads ───────────────────────────────── -->
-  <h2>8. Fotos und Uploads</h2>
+  <h2>9. Fotos und Uploads</h2>
   <p>
     Nutzer können Fotos zu Tischtennisplatten hochladen sowie ein Profilfoto festlegen.
     Hochgeladene Fotos werden in Supabase Storage gespeichert.
@@ -204,7 +243,7 @@
   <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</p>
 
   <!-- ── 9. Spielrunden & Events ──────────────────────────── -->
-  <h2>9. Spielrunden und Mitspieler-Gesuche</h2>
+  <h2>10. Spielrunden und Mitspieler-Gesuche</h2>
   <p>
     Nutzer können Spielrunden anlegen oder Mitspieler-Gesuche veröffentlichen.
     Gespeichert werden Datum, Uhrzeit, Ort, Beschreibung, Teilnehmerzahl und
@@ -218,7 +257,7 @@
   </p>
 
   <!-- ── 10. Direktnachrichten ────────────────────────────── -->
-  <h2>10. Direktnachrichten</h2>
+  <h2>11. Direktnachrichten</h2>
   <p>
     Verbundene Spielpartner können sich gegenseitig Direktnachrichten senden.
     Nachrichten werden in der Supabase-Datenbank gespeichert und sind nur für
@@ -227,7 +266,7 @@
   </p>
 
   <!-- ── 11. Spielpartner-Verbindungen ────────────────────── -->
-  <h2>11. Spielpartner-Verbindungen</h2>
+  <h2>12. Spielpartner-Verbindungen</h2>
   <p>
     Nutzer können anderen Nutzern eine Spielpartner-Anfrage senden.
     Bestätigte Verbindungen ermöglichen Direktnachrichten.
@@ -236,7 +275,7 @@
   </p>
 
   <!-- ── 12. Bewertungen & Kommentare ─────────────────────── -->
-  <h2>12. Bewertungen und Kommentare</h2>
+  <h2>13. Bewertungen und Kommentare</h2>
   <p>
     Nutzer können Tischtennisplatten bewerten und kommentieren sowie
     Spielrunden kommentieren. Bewertungen und Kommentare werden der Nutzer-ID
@@ -245,7 +284,7 @@
   </p>
 
   <!-- ── 13. Benachrichtigungen ───────────────────────────── -->
-  <h2>13. Benachrichtigungen</h2>
+  <h2>14. Benachrichtigungen</h2>
   <p>
     PlattenTreff zeigt In-App-Benachrichtigungen über neue Kommentare in
     Spielrunden, Spielpartner-Anfragen und den Status von Plattenvorschlägen.
@@ -258,7 +297,7 @@
   </p>
 
   <!-- ── 14. Meldungen & Moderation ───────────────────────── -->
-  <h2>14. Meldungen und Moderation</h2>
+  <h2>15. Meldungen und Moderation</h2>
   <p>
     Nutzer können unangemessene Inhalte melden. Meldungen werden mit der
     Nutzer-ID des Meldenden sowie Inhalt und Typ der Meldung gespeichert.
@@ -268,7 +307,7 @@
   </p>
 
   <!-- ── 15. Lokaler Speicher ─────────────────────────────── -->
-  <h2>15. Lokaler Speicher (localStorage)</h2>
+  <h2>16. Lokaler Speicher (localStorage)</h2>
   <p>
     PlattenTreff speichert folgende Daten lokal auf dem Gerät:
   </p>
@@ -287,7 +326,7 @@
   <p>Es werden keine Cookies zur Nachverfolgung oder Werbung eingesetzt.</p>
 
   <!-- ── 16. App-Berechtigungen ───────────────────────────── -->
-  <h2>16. App-Berechtigungen (iOS & Android)</h2>
+  <h2>17. App-Berechtigungen (iOS & Android)</h2>
   <h3>Standort</h3>
   <p>
     Wird genutzt, um Platten, Spielrunden und Mitspieler in der Nähe anzuzeigen.
@@ -306,15 +345,20 @@
   </p>
 
   <!-- ── 17. Drittanbieter ────────────────────────────────── -->
-  <h2>17. Drittanbieter</h2>
+  <h2>18. Drittanbieter</h2>
   <table>
     <thead>
       <tr><th>Anbieter</th><th>Zweck</th><th>Datenschutz</th></tr>
     </thead>
     <tbody>
       <tr>
+        <td>Vercel Inc.</td>
+        <td>Web-Hosting (plattentreff.app)</td>
+        <td><a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">vercel.com/legal/privacy-policy</a></td>
+      </tr>
+      <tr>
         <td>Supabase Inc.</td>
-        <td>Authentifizierung, Datenbank, Dateispeicher</td>
+        <td>Authentifizierung, Datenbank, Dateispeicher (inkl. Unterauftragsverarbeiter: AWS, Cloudflare)</td>
         <td><a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></td>
       </tr>
       <tr>
@@ -340,7 +384,7 @@
   </p>
 
   <!-- ── 18. Speicherdauer ─────────────────────────────────── -->
-  <h2>18. Speicherdauer</h2>
+  <h2>19. Speicherdauer</h2>
   <p>
     Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen
     Zweck notwendig ist oder gesetzliche Aufbewahrungspflichten bestehen.
@@ -349,7 +393,7 @@
   </p>
 
   <!-- ── 19. Account löschen ───────────────────────────────── -->
-  <h2>19. Account löschen und Recht auf Löschung</h2>
+  <h2>20. Account löschen und Recht auf Löschung</h2>
   <p>
     Jeder Nutzer kann seinen Account jederzeit in der App löschen
     (Profil → Einstellungen → Account löschen). Die Löschung ist dauerhaft.
@@ -373,7 +417,7 @@
   </ul>
 
   <!-- ── 20. Rechte der Nutzer ─────────────────────────────── -->
-  <h2>20. Rechte der betroffenen Personen</h2>
+  <h2>21. Rechte der betroffenen Personen</h2>
   <p>Du hast gegenüber dem Verantwortlichen folgende Rechte:</p>
   <ul>
     <li><strong>Auskunft</strong> (Art. 15 DSGVO) – welche Daten gespeichert sind</li>
@@ -389,7 +433,7 @@
   </p>
 
   <!-- ── 21. Beschwerderecht ───────────────────────────────── -->
-  <h2>21. Beschwerderecht bei einer Aufsichtsbehörde</h2>
+  <h2>22. Beschwerderecht bei einer Aufsichtsbehörde</h2>
   <p>
     Du hast das Recht, dich bei einer Datenschutzaufsichtsbehörde zu beschweren.
     Die zuständige Behörde für Bayern ist:
@@ -401,7 +445,7 @@
   </p>
 
   <!-- ── 22. Änderungen ────────────────────────────────────── -->
-  <h2>22. Änderungen dieser Datenschutzerklärung</h2>
+  <h2>23. Änderungen dieser Datenschutzerklärung</h2>
   <p>
     Wir behalten uns vor, diese Datenschutzerklärung bei Änderungen der App oder
     der rechtlichen Rahmenbedingungen anzupassen. Die aktuelle Version ist stets
