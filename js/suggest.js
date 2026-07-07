@@ -72,9 +72,13 @@ function suggestUseGPS() {
     _updateCoordDisplay();
     _placeSuggestPin(suggestLat, suggestLng);
     showToast('Standort übernommen', '📍');
-  }, () => {
+  }, err => {
     if (btn && orig) btn.innerHTML = orig;
-    showToast('Standort nicht verfügbar', '⚠️');
+    if (err.code === 1) {
+      showToast('Standortfreigabe verweigert. Bitte in den Einstellungen erlauben.', '⚠️');
+    } else {
+      showToast('Standort nicht verfügbar', '⚠️');
+    }
   }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
 

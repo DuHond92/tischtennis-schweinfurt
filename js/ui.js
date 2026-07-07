@@ -78,6 +78,12 @@ function _unlockPageScroll() {
   });
 }
 
+// Öffnet rechtliche Seiten im System-Browser (iOS/Android) oder neuem Tab (Web)
+function openLegalPage(url) {
+  const target = (typeof window.Capacitor !== 'undefined') ? '_system' : '_blank';
+  window.open(url, target, 'noopener,noreferrer');
+}
+
 let openSheetId = null;
 function openSheet(id) {
   if(openSheetId) closeAllSheets();

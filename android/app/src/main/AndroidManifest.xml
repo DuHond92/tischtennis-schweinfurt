@@ -38,4 +38,21 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Standort: Platten, Spielrunden und Mitspieler in der Nähe anzeigen.
+         FINE wird vom Android-WebView für den System-Berechtigungsdialog benötigt,
+         auch wenn die App enableHighAccuracy=false nutzt. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Kamera: Fotos von Tischtennisplatten aufnehmen -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Mediathek: Bilder zu Platten hochladen (Android 13+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Mediathek: Bilder zu Platten hochladen (Android 12 und älter) -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 </manifest>

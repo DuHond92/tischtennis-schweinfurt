@@ -18,6 +18,9 @@ const INCLUDE = [
   'css',
   'js',
   'images',
+  'datenschutz',
+  'impressum',
+  'nutzungsbedingungen',
 ];
 
 function copyDir(src, dest) {

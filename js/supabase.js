@@ -4,6 +4,11 @@
 const SUPABASE_URL  = 'https://quelfdpqvzgnnvpuwljq.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_pe9d7oJngP6p5vc5Y-ARgA_sd-zye12';
 
+const APP_BASE_URL  = 'https://plattentreff.app';
+const PRIVACY_URL   = APP_BASE_URL + '/datenschutz/';
+const IMPRINT_URL   = APP_BASE_URL + '/impressum/';
+const TOS_URL       = APP_BASE_URL + '/nutzungsbedingungen/';
+
 // Kleines Supabase-Client ohne npm – direkte fetch()-Wrapper
 const sb = {
   // --- AUTH ---
