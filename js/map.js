@@ -53,7 +53,7 @@ function _makeMarkerIcon(t) {
     html: `<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font-size:1rem;
       box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
-      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"9\" cy=\"10\" r=\"6\"/><path d=\"M13.5 14.5 19 20\"/><path d=\"M17.5 18.5a2 2 0 1 0 2.83-2.83\"/><circle cx=\"21\" cy=\"4\" r=\"2\"/></svg>${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+🏓${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
         color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
         display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>` : ''}
     </div>`,
@@ -900,7 +900,6 @@ function showMapPreview(tableId) {
           ${_tableRatingHtml(t)}
           <div class="mfp-meta">${_tableMetaLine(t)}</div>
           ${badgeRow}
-          <div class="mfp-go">›</div>
         </div>
       </div>
     </div>`;

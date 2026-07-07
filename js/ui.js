@@ -215,77 +215,74 @@ function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║           TOAST                                              ║
+// ║           UNIFIED TOP TOAST                                  ║
 // ╚══════════════════════════════════════════════════════════════╝
 const _TOAST_EMOJI_TYPE = { '❌': 'error', '⚠️': 'warning', 'ℹ️': 'info', '✅': 'success' };
 const _TOAST_ICON_NAME  = { success: 'check-circle', error: 'x-circle', warning: 'triangle-alert', info: 'info' };
-const _TOAST_DURATION   = { success: 3800, info: 4000, warning: 5500, error: 6500 };
-let _toastTimer = null;
+const _TOAST_DURATION   = { success: 4000, info: 4000, warning: 5000, error: 5000 };
+let _toastTimer  = null;
+let _toastAction = null;
 
 function showToast(text, iconOrOpts) {
-  let type = 'success', duration;
+  let type = 'success', duration, title = null, actionLabel = null, onAction = null, dismissible = true;
+
   if (iconOrOpts && typeof iconOrOpts === 'object') {
-    type     = iconOrOpts.type || 'success';
-    duration = iconOrOpts.duration;
+    type        = iconOrOpts.type || 'success';
+    duration    = iconOrOpts.duration;
+    title       = iconOrOpts.title       || null;
+    actionLabel = iconOrOpts.actionLabel || null;
+    onAction    = iconOrOpts.onAction    || null;
+    dismissible = iconOrOpts.dismissible !== false;
   } else if (typeof iconOrOpts === 'string') {
     type = _TOAST_EMOJI_TYPE[iconOrOpts] || iconOrOpts || 'success';
     if (!_TOAST_ICON_NAME[type]) type = 'success';
   }
-  duration = duration || _TOAST_DURATION[type] || 3800;
+  duration = duration ?? _TOAST_DURATION[type] ?? 4000;
 
-  const t = document.getElementById('toast');
-  document.getElementById('toast-icon').innerHTML = ic(_TOAST_ICON_NAME[type], 18);
+  const t        = document.getElementById('toast');
+  const titleEl  = document.getElementById('toast-title');
+  const actsEl   = document.getElementById('toast-acts');
+  const actBtn   = document.getElementById('toast-act-btn');
+  const closeBtn = document.getElementById('toast-close-btn');
+
+  document.getElementById('toast-icon').innerHTML = ic(_TOAST_ICON_NAME[type], 16);
   document.getElementById('toast-text').textContent = text;
+
+  if (titleEl) {
+    titleEl.textContent   = title || '';
+    titleEl.style.display = title ? '' : 'none';
+  }
+
+  _toastAction = onAction || null;
+  const hasAction = !!(actionLabel && onAction);
+  if (actBtn)   { actBtn.textContent = actionLabel || ''; actBtn.style.display = hasAction ? '' : 'none'; }
+  if (closeBtn) { closeBtn.style.display = (hasAction || !dismissible) ? '' : 'none'; }
+  if (actsEl)   { actsEl.style.display = (hasAction || !dismissible) ? '' : 'none'; }
+
   t.className = 'toast toast--' + type;
   void t.offsetHeight;
   t.classList.add('show');
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+  if (duration > 0) _toastTimer = setTimeout(clearToast, duration);
 }
 
-// ── SNACKBAR ────────────────────────────────────────────────────────
-const _SNACKBAR_DURATION = { success: 5000, info: 5000, warning: 7000, error: 8000 };
-let _snackbarTimer  = null;
-let _snackbarAction = null;
+function clearToast() {
+  clearTimeout(_toastTimer);
+  document.getElementById('toast')?.classList.remove('show');
+}
 
+function _triggerToastAction() {
+  if (_toastAction) _toastAction();
+  clearToast();
+}
+
+// ── SNACKBAR → delegiert an showToast ───────────────────────────────
 function showSnackbar({ title, message, type = 'info', actionLabel, onAction, dismissible = true, duration } = {}) {
-  const sb        = document.getElementById('snackbar');
-  const titleEl   = document.getElementById('snackbar-title');
-  const msgEl     = document.getElementById('snackbar-msg');
-  const actionBtn = document.getElementById('snackbar-action');
-  const dismissBtn= document.getElementById('snackbar-dismiss');
-
-  titleEl.textContent  = title   || '';
-  titleEl.style.display = title  ? '' : 'none';
-  msgEl.textContent    = message || '';
-  _snackbarAction      = onAction || null;
-
-  if (actionLabel && onAction) {
-    actionBtn.textContent    = actionLabel;
-    actionBtn.style.display  = '';
-  } else {
-    actionBtn.style.display = 'none';
-  }
-  dismissBtn.style.display = dismissible ? '' : 'none';
-
-  sb.className = 'snackbar snackbar--' + type;
-  void sb.offsetHeight;
-  sb.classList.add('show');
-
-  clearTimeout(_snackbarTimer);
-  const dur = duration ?? _SNACKBAR_DURATION[type] ?? 6000;
-  if (dur > 0) _snackbarTimer = setTimeout(dismissSnackbar, dur);
+  const text = message || title || '';
+  showToast(text, { type, title: message ? title : null, actionLabel, onAction, dismissible, duration });
 }
-
-function dismissSnackbar() {
-  clearTimeout(_snackbarTimer);
-  document.getElementById('snackbar')?.classList.remove('show');
-}
-
-function _triggerSnackbarAction() {
-  if (_snackbarAction) _snackbarAction();
-  dismissSnackbar();
-}
+function dismissSnackbar() { clearToast(); }
+function _triggerSnackbarAction() { _triggerToastAction(); }
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           SEARCH AUTOCOMPLETE                                ║

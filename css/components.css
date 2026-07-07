@@ -435,10 +435,6 @@
 }
 .mfp-stars { color: #F59E0B; letter-spacing: 0.5px; }
 .mfp-meta { font-size: 0.68rem; color: var(--text-dim); }
-.mfp-go {
-  text-align: right; color: var(--text-xdim);
-  font-size: 1.05rem; margin-top: 3px; line-height: 1;
-}
 /* Shift Leaflet attribution above the card when preview is open */
 .has-fp .leaflet-bottom.leaflet-right { bottom: 155px; }
 

@@ -1024,21 +1024,16 @@
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast">
-  <span id="toast-icon"></span>
-  <span id="toast-text"></span>
-</div>
-
-<!-- SNACKBAR -->
-<div class="snackbar" id="snackbar">
-  <div class="snackbar-body">
-    <div class="snackbar-title" id="snackbar-title"></div>
-    <div class="snackbar-msg" id="snackbar-msg"></div>
+<!-- UNIFIED TOP TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-icon" id="toast-icon"></span>
+  <div class="toast-body">
+    <div class="toast-title" id="toast-title" style="display:none"></div>
+    <div class="toast-text" id="toast-text"></div>
   </div>
-  <div class="snackbar-acts">
-    <button class="snackbar-action" id="snackbar-action" onclick="_triggerSnackbarAction()"></button>
-    <button class="snackbar-dismiss" id="snackbar-dismiss" onclick="dismissSnackbar()" aria-label="Schließen"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  <div class="toast-acts" id="toast-acts" style="display:none">
+    <button class="toast-act-btn" id="toast-act-btn" onclick="_triggerToastAction()"></button>
+    <button class="toast-close-btn" id="toast-close-btn" onclick="clearToast()" aria-label="Schließen"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
   </div>
 </div>
 
