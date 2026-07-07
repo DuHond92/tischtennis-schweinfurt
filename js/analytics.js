@@ -6,6 +6,8 @@
 
 const PTAnalytics = (() => {
   // ── Blockierte Property-Keys ─────────────────────────────────
+  // Exact-match (^ und $): "comment_count", "photo_count", "has_photo" etc. passieren durch.
+  // Geblockt werden nur die exakten Keys (z. B. "comment", "photo", "lat").
   const BLOCKED = /^(email|mail|name|phone|message|text|comment|description|bio|address|street|lat|lng|latitude|longitude|photo|image|avatar|birthday|birthdate|password|token)$/i;
 
   // ── Session-ID (pro Browser-Session, kein Fingerprinting) ────

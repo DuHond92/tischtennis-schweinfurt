@@ -153,6 +153,11 @@ Datenschutzerklärung (Abschnitt 20) beschreibt dies korrekt.
 - [ ] Apple App Store App Privacy Formular ausfüllen (Kategorien aus Abschnitt 8)
 - [ ] Google Play Data Safety Formular ausfüllen
 - [ ] Datenschutzerklärung juristisch prüfen lassen vor Launch
+- [ ] **Analytics-Retention automatisieren**: Datenschutzerklärung nennt 180 Tage —
+  technisch noch nicht automatisch. Umsetzungsoptionen:
+  - Supabase pg_cron Extension (falls aktiviert): `SELECT cron.schedule('analytics-cleanup', '0 3 * * *', 'DELETE FROM public.analytics_events WHERE created_at < now() - interval ''180 days''');`
+  - Oder: monatliche manuelle Ausführung der Abfrage in `docs/analytics_queries.sql` (Query 14)
+  - Solange keine Automatisierung aktiv ist: "automatisch" aus Datenschutzerklärung entfernt ✅
 
 ---
 

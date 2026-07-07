@@ -316,18 +316,20 @@
   <p>
     Inhalte wie Nachrichten, Kommentare, Fotos, E-Mail-Adressen, Namen, genaue Adressen
     oder genaue Standortdaten werden dabei <strong>nicht</strong> zu Analysezwecken
-    gespeichert. Erfasst werden ausschließlich ereignis-bezogene Metadaten
-    (z.&nbsp;B. Plattform, App-Session, Ereignistyp, Filterwerte ohne Personenbezug).
+    gespeichert. Erfasst werden technische Ereignis-Metadaten wie Plattform, Session-ID,
+    Ereignistyp sowie Kategorie- und Filterwerte (z.&nbsp;B. Radiuswert in km, Indoor/Outdoor).
+  </p>
+  <p>
+    Bei eingeloggten Nutzern werden Ereignisse <strong>pseudonym</strong> mit einer
+    zufälligen Nutzer-ID (UUID) verknüpft — kein Name, keine E-Mail, kein Klarbezug.
+    Nicht eingeloggte Nutzer werden <strong>anonym</strong> (ohne Nutzer-ID) erfasst.
+    Der Nutzerbezug (Nutzer-ID) wird bei Account-Löschung automatisch entfernt
+    (Nutzer-ID wird auf NULL gesetzt).
   </p>
   <p>
     Die Analyse erfolgt ausschließlich innerhalb unseres Supabase-Backends —
     ohne externe Werbe- oder Tracking-SDKs, ohne Google Analytics, ohne Firebase Analytics,
     ohne Advertising-ID und ohne Cross-App-Tracking.
-  </p>
-  <p>
-    Wenn du eingeloggt bist, wird deine pseudonyme Nutzer-ID (UUID) mit den Ereignissen
-    verknüpft. Diese Verknüpfung wird bei Account-Löschung automatisch entfernt
-    (Nutzer-ID wird auf NULL gesetzt).
   </p>
   <p>
     <strong>Opt-out:</strong> Du kannst die Nutzungsanalyse jederzeit in
@@ -340,7 +342,7 @@
   </p>
   <p>
     <strong>Speicherdauer:</strong> Nutzungsanalyse-Daten werden nach spätestens 180&nbsp;Tagen
-    automatisch gelöscht.
+    gelöscht.
   </p>
 
   <!-- ── 16. Lokaler Speicher ─────────────────────────────── -->

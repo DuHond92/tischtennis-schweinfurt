@@ -55,9 +55,10 @@ async function _daExecuteDelete() {
       throw new Error(errBody.message || errBody.hint || `HTTP ${res.status}`);
     }
 
-    // 3. Lokalen State vollständig leeren (Analytics sendet noch davor)
-    PTAnalytics.track('account_delete_completed');
+    // 3. Lokalen State vollständig leeren
     _daClearLocalState();
+    // Analytics nach State-Clear: user_id = null (anon), Token weg — anon-Policy erlaubt das
+    PTAnalytics.track('account_delete_completed');
 
     // 4. Erfolgs-Screen zeigen, danach zur Home/Login-Seite
     _daShowStep(4);
