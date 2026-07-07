@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build:cap",
+  "outputDirectory": "www",
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "www.plattentreff.app" }],
+      "destination": "https://plattentreff.app/$1",
+      "permanent": true
+    }
+  ]
+}
