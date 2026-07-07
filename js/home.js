@@ -33,7 +33,7 @@ function initWelcomeCard() {
   if (!el) return;
   el.innerHTML = `
     <div class="welcome-card">
-      <div class="welcome-card-title">👋 Willkommen bei PlattenTreff</div>
+      <div class="welcome-card-title">Willkommen bei PlattenTreff</div>
       <div class="welcome-card-body">Entdecke Tischtennisplatten, finde Mitspieler und verabrede dich spontan zum Spielen.</div>
       <button class="welcome-card-btn" onclick="dismissWelcomeCard()">Verstanden</button>
     </div>`;
@@ -153,8 +153,8 @@ function renderHome() {
   const greetEl = document.querySelector('.hero-greeting');
   if (greetEl) {
     greetEl.textContent = currentUser
-      ? `Hallo, ${currentUser.username}! 👋`
-      : 'Willkommen! 👋';
+      ? `Hallo, ${currentUser.username}!`
+      : 'Willkommen!';
   }
   updateHeroLocation();
 

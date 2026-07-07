@@ -10,7 +10,7 @@ let _suggestImageFile = null;
 
 function openSuggestSheet() {
   if (!sb.isLoggedIn()) {
-    showToast('Bitte zuerst anmelden', '🔒');
+    showToast('Bitte zuerst anmelden', 'info');
     openSheet('auth-sheet');
     return;
   }
@@ -62,7 +62,7 @@ function _setSuggestStep(step) {
 // ── STANDORT ─────────────────────────────────────────────────────────────────
 
 function suggestUseGPS() {
-  if (!navigator.geolocation) { showToast('GPS nicht verfügbar', '⚠️'); return; }
+  if (!navigator.geolocation) { showToast('GPS nicht verfügbar', 'warning'); return; }
   const btn = document.getElementById('sug-gps-btn');
   const orig = btn?.innerHTML;
   if (btn) btn.textContent = '⏳ Ermittle Standort…';
@@ -74,14 +74,14 @@ function suggestUseGPS() {
     PTAnalytics.track('location_permission_granted', { source: 'suggest' });
     _updateCoordDisplay();
     _placeSuggestPin(suggestLat, suggestLng);
-    showToast('Standort übernommen', '📍');
+    showToast('Standort übernommen');
   }, err => {
     if (btn && orig) btn.innerHTML = orig;
     if (err.code === 1) {
       PTAnalytics.track('location_permission_denied', { source: 'suggest' });
-      showToast('Standortfreigabe verweigert. Bitte in den Einstellungen erlauben.', '⚠️');
+      showToast('Standortfreigabe verweigert. Bitte in den Einstellungen erlauben.', 'warning');
     } else {
-      showToast('Standort nicht verfügbar', '⚠️');
+      showToast('Standort nicht verfügbar', 'warning');
     }
   }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
@@ -89,7 +89,7 @@ function suggestUseGPS() {
 function suggestActivateMapClick() {
   suggestMapClickActive = true;
   closeAllSheets();
-  showToast('Tippe auf die Karte, um den Standort zu setzen', '📍');
+  showToast('Tippe auf die Karte, um den Standort zu setzen', 'info');
   if (leafletMap) leafletMap.getContainer().style.cursor = 'crosshair';
 }
 
@@ -116,7 +116,7 @@ function _placeSuggestPin(lat, lng) {
       className: '',
       html: `<div style="background:#F59E0B;color:#fff;width:36px;height:36px;border-radius:50%;
         display:flex;align-items:center;justify-content:center;font-size:1.1rem;
-        box-shadow:0 3px 14px rgba(245,158,11,0.45);border:2.5px solid #fff;">📍</div>`,
+        box-shadow:0 3px 14px rgba(245,158,11,0.45);border:2.5px solid #fff;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></div>`,
       iconSize: [36, 36], iconAnchor: [18, 36]
     })
   }).addTo(leafletMap);
@@ -181,7 +181,7 @@ function _removeSuggestImage() {
 function suggestNextStep() {
   if (suggestStep === 1) {
     if (!suggestLat || !suggestLng) {
-      showToast('Bitte zuerst einen Standort wählen', '⚠️');
+      showToast('Bitte zuerst einen Standort wählen', 'warning');
       return;
     }
     // Duplikat-Check gegen geladene Platten (50m Radius)
@@ -190,7 +190,7 @@ function suggestNextStep() {
     for (const t of src) {
       const d = calcDistance(suggestLat, suggestLng, t.lat, t.lng);
       if (d < DUPE_M) {
-        showToast(`"${t.name}" ist nur ${d}m entfernt — bereits eingetragen?`, '⚠️');
+        showToast(`"${t.name}" ist nur ${d}m entfernt — bereits eingetragen?`, 'warning');
         return;
       }
     }
@@ -213,7 +213,7 @@ function suggestSetType(btn) {
 
 async function _submitSuggestion() {
   const name = document.getElementById('sug-name')?.value.trim();
-  if (!name) { showToast('Name ist ein Pflichtfeld', '⚠️'); return; }
+  if (!name) { showToast('Name ist ein Pflichtfeld', 'warning'); return; }
 
   const address      = document.getElementById('sug-address')?.value.trim() || null;
   const typeBtn      = document.querySelector('.sug-type-btn.active');
@@ -238,7 +238,7 @@ async function _submitSuggestion() {
       lat:           suggestLat,
       lng:           suggestLng,
       type,
-      icon:          '🏓',
+      
       description:   desc || '',
       tables_count:  count,
       access_type:   accessType,
@@ -252,7 +252,7 @@ async function _submitSuggestion() {
 
     if (error) {
       console.error('Table insert error:', error);
-      showToast('Fehler beim Speichern. Bitte erneut versuchen.', '❌');
+      showToast('Fehler beim Speichern. Bitte erneut versuchen.', 'error');
       return;
     }
 
@@ -316,7 +316,7 @@ async function _submitSuggestion() {
 
   if (error) {
     console.error('Suggest insert error:', error);
-    showToast('Fehler beim Speichern. Bitte erneut versuchen.', '❌');
+    showToast('Fehler beim Speichern. Bitte erneut versuchen.', 'error');
     return;
   }
 

@@ -76,7 +76,7 @@ function buildEventSlider(images) {
         </div>`;
       }).join('')
     : `<div class="ds-slide ds-slide-empty">
-        <div class="ds-no-img-hint"><span class="nimg-icon">🏓</span>Kein Bild vorhanden</div>
+        <div class="ds-no-img-hint"><span class="nimg-icon"><svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='10' r='6'/><path d='M13.5 14.5 19 20'/><path d='M17.5 18.5a2 2 0 1 0 2.83-2.83'/><circle cx='21' cy='4' r='2'/></svg></span>Kein Bild vorhanden</div>
       </div>`;
 
   const thumbs = hasImgs
@@ -165,11 +165,11 @@ function showEventDetail(eventId) {
   const isFull      = ev.p >= ev.max && !isHost && !isAlreadyIn;
   const isMod       = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const actEl       = document.getElementById('eds-actions');
-  const delBtn      = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen">🗑</button>` : '';
+  const delBtn      = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>` : '';
   if (isHost) {
-    actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">✏️ Bearbeiten</button>${delBtn}`;
+    actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">Bearbeiten</button>${delBtn}`;
   } else if (isAlreadyIn) {
-    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">✅ Dabei</button>${delBtn}`;
+    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">Dabei</button>${delBtn}`;
   } else if (isFull) {
     actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" disabled>Ausgebucht</button>${delBtn}`;
   } else {
@@ -262,16 +262,16 @@ function renderParticipantChips(participants, creatorId) {
     const emoji   = p.profiles?.avatar_emoji || '';
     const avUrl   = p.profiles?.avatar_url   || '';
     const uid     = p.user_id || '';
-    const ctx     = isHost ? '👑 Host dieser Spielrunde' : '';
+    const ctx     = isHost ? 'Host dieser Spielrunde' : '';
     const click   = `showPlayerProfile('${uid}','${escAttr(name)}','${escAttr(emoji)}','${ctx}','${escAttr(avUrl)}')`;
     const avatarHtml = `<div class="pc-avatar" style="position:relative;">
       ${getAvatarHtml(p.profiles, {size: 46})}
-      ${isHost ? '<span class="pc-crown">👑</span>' : ''}
+      ${isHost ? '' : ''}
     </div>`;
     return `<div class="participant-chip pp-clickable" onclick="${click}">
       ${avatarHtml}
       <div class="pc-name">${name}</div>
-      ${isHost ? '<div class="pc-host-label">👑 Host</div>' : ''}
+      ${isHost ? '<div class="pc-host-label">Host</div>' : ''}
     </div>`;
   }).join('');
 }
@@ -341,7 +341,7 @@ async function deleteEventMessage(messageId, context) {
     `${SUPABASE_URL}/rest/v1/event_messages?id=eq.${encodeURIComponent(messageId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
   _logModAction('delete_event_message', 'event_message', messageId);
   showToast('Nachricht gelöscht');
   if (context === 'ps') loadPsChat(currentPsEventId);
@@ -364,7 +364,7 @@ async function sendChatMessage() {
     user_id:  sb.getUserId(),
     message:  msg
   });
-  if(error) { showToast('Fehler beim Senden','❌'); input.value = msg; return; }
+  if(error) { showToast('Fehler beim Senden','error'); input.value = msg; return; }
   await loadEventChat(currentEventId);
   markEventSeen(currentEventId);
 }
@@ -430,7 +430,7 @@ async function _confirmLeaveEvent() {
   );
 
   if (!ok) {
-    showToast('Teilnahme konnte nicht zurückgezogen werden', '❌');
+    showToast('Teilnahme konnte nicht zurückgezogen werden', 'error');
     showEventDetail(eventId);
     return;
   }
@@ -461,8 +461,8 @@ async function joinEventFromDetail(eventId) {
   const isFallback = allEvents.length === 0;
   if(isFallback) {
     setTimeout(() => {
-      if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
-      showToast('🏓 Du nimmst am Event teil!');
+      if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+      showToast('Du nimmst am Event teil!');
     }, 400);
     return;
   }
@@ -471,18 +471,18 @@ async function joinEventFromDetail(eventId) {
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
 
   if(error && error.code === '23505') {
-    if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
-    showToast('Du nimmst bereits teil','ℹ️');
+    if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+    showToast('Du nimmst bereits teil','info');
     return;
   }
   if(error) {
     if(btn) { btn.disabled = false; btn.textContent = 'Teilnehmen'; }
-    showToast('Fehler beim Beitreten','❌');
+    showToast('Fehler beim Beitreten','error');
     return;
   }
 
-  if(btn) { btn.textContent = '✅ Dabei!'; btn.style.background = 'var(--green)'; }
-  showToast('🏓 Du nimmst am Event teil!');
+  if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+  showToast('Du nimmst am Event teil!');
   // Sofort in allEvents patchen — kein loadEvents() nötig
   _patchEventParticipantJoin(eventId);
   // Detail: Chips aus DB neu laden
@@ -493,7 +493,7 @@ async function joinEventFromDetail(eventId) {
 }
 
 function startGame(eventId) {
-  showToast('🏓 Spiel gestartet! Viel Spaß!','🏆');
+  showToast('Spiel gestartet! Viel Spaß!');
 }
 
 function openEditEvent(eventId) {
@@ -501,8 +501,8 @@ function openEditEvent(eventId) {
   const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;
   _editingEventId = eventId;
-  document.querySelector('#create-event-sheet .sheet-title').textContent = '✏️ Event bearbeiten';
-  document.querySelector('#create-event-sheet .btn-primary').textContent = '💾 Speichern';
+  document.querySelector('#create-event-sheet .sheet-title').textContent = 'Event bearbeiten';
+  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Speichern';
   document.getElementById('ev-name').value  = ev.name    || '';
   document.getElementById('ev-table').value = ev.tid     || '';
   document.getElementById('ev-date').value  = ev.dateStr || '';

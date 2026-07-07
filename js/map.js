@@ -53,7 +53,7 @@ function _makeMarkerIcon(t) {
     html: `<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font-size:1rem;
       box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
-      🏓${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"9\" cy=\"10\" r=\"6\"/><path d=\"M13.5 14.5 19 20\"/><path d=\"M17.5 18.5a2 2 0 1 0 2.83-2.83\"/><circle cx=\"21\" cy=\"4\" r=\"2\"/></svg>${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
         color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
         display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>` : ''}
     </div>`,
@@ -139,7 +139,7 @@ function _renderMapDd(q, localMatches, geoResults) {
   if (localMatches.length) {
     html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
       color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
-      🏓 Tischtennisplatten</div>`;
+      ${ic('table-tennis', 13)} Tischtennisplatten</div>`;
     localMatches.slice(0, 3).forEach(t => {
       const idx = _mapDdItems.length;
       _mapDdItems.push({ type: 'table', data: t });
@@ -147,7 +147,7 @@ function _renderMapDd(q, localMatches, geoResults) {
         onmousedown="_selectMapDdItem(${idx})"
         onkeydown="if(event.key==='Enter')_selectMapDdItem(${idx})"
         id="msdi-${idx}">
-        <div class="sdi-icon table">${t.icon || '🏓'}</div>
+        <div class="sdi-icon table">${ic('table-tennis',18)}</div>
         <div>
           <div class="sdi-main">${hl(t.name)}</div>
           <div class="sdi-sub">${ic('pin')} ${escHtml(t.addr || '')} · ${t.type === 'indoor' ? 'Indoor' : 'Outdoor'}</div>
@@ -412,11 +412,11 @@ function _doLocate() {
         L.circleMarker([userLat, userLng], {
           radius: 8, color: '#fff', weight: 3,
           fillColor: '#3B7CF4', fillOpacity: 1
-        }).addTo(leafletMap).bindPopup('📍 Du bist hier');
+        }).addTo(leafletMap).bindPopup('Du bist hier');
         leafletMap.setView([userLat, userLng], 15, { animate: true });
       }
       updateDistances();
-      showToast('📍 Standort gefunden!');
+      showToast('Standort gefunden!');
     },
     err => {
       btn?.classList.remove('locating');
@@ -453,7 +453,7 @@ function _showLocPrompt() {
   const el = _locPromptEl();
   el.innerHTML = `
     <div class="loc-prompt-card">
-      <div class="lpc-icon">📍</div>
+      <div class="lpc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></div>
       <div class="lpc-title">Standort verwenden?</div>
       <div class="lpc-body">Damit können wir dir Platten und Spiele in deiner Nähe anzeigen.</div>
       <button class="lpc-btn lpc-btn-primary" onclick="_doLocate()">Standort erlauben</button>
@@ -466,7 +466,7 @@ function _showLocCard(type) {
   const el = _locPromptEl();
   el.innerHTML = `
     <div class="loc-prompt-card">
-      <div class="lpc-icon">🔒</div>
+      <div class="lpc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
       <div class="lpc-title">Standort blockiert</div>
       <div class="lpc-body">Du kannst die Berechtigung in den Browser-Einstellungen ändern und die Seite neu laden.</div>
       <button class="lpc-btn lpc-btn-secondary" onclick="_dismissLocPrompt()">Schließen</button>
@@ -525,15 +525,15 @@ function _buildStatusLine(filtered) {
   let parts = [];
 
   if(hasSearch) {
-    parts.push(`🔍 <b>"${escHtml(mapSearchQuery)}"</b>`);
+    parts.push(`<b>"${escHtml(mapSearchQuery)}"</b>`);
   }
 
   if(hasSpiela) {
-    const labels = {casual:'🎉 Just 4 Fun', training:'🎯 Training', punktspiel:'🏓 Punktspiel'};
+    const labels = {casual:'Just 4 Fun', training:'Training', punktspiel:'Punktspiel'};
     parts.push(labels[mapSpielartFilter] || mapSpielartFilter);
   }
   if(hasPlace) {
-    parts.push(mapPlaceFilter === 'indoor' ? '🏠 Indoor' : '☀️ Outdoor');
+    parts.push(mapPlaceFilter === 'indoor' ? 'Indoor' : 'Outdoor');
   }
 
   const filterHint = parts.length ? `<span class="mbs-status-filter">${parts.join(' · ')}</span>` : '';

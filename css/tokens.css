@@ -61,3 +61,17 @@
   --sk-bg:       rgba(255,255,255,0.05);
   --sk-shine:    rgba(255,255,255,0.09);
 }
+
+/* ======= ICON UTILITIES ======= */
+.icon {
+  display: inline-block;
+  vertical-align: -0.125em;
+  stroke: currentColor;
+  fill: none;
+  flex-shrink: 0;
+}
+.icon-xs  { width: 14px; height: 14px; }
+.icon-sm  { width: 16px; height: 16px; }
+.icon-md  { width: 20px; height: 20px; }
+.icon-lg  { width: 32px; height: 32px; }
+.icon-xl  { width: 40px; height: 40px; }

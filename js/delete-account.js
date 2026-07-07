@@ -75,7 +75,7 @@ async function _daExecuteDelete() {
     const msg = e.message?.includes('not_authenticated')
       ? 'Bitte melde dich erneut an und versuche es nochmal.'
       : (e.message || 'Unbekannter Fehler. Bitte erneut versuchen.');
-    showToast('Fehler: ' + msg, '❌');
+    showToast('Fehler: ' + msg, 'error');
   }
 }
 

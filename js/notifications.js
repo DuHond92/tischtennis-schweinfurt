@@ -168,7 +168,7 @@ function renderNotifSheet() {
   if(!sb.isLoggedIn()) {
     body.innerHTML = `
       <div class="notif-empty">
-        <div class="notif-empty-icon">🔔</div>
+        <div class="notif-empty-icon">${ic('bell', 36)}</div>
         <div>Melde dich an, um Benachrichtigungen zu sehen.</div>
         <button class="btn btn-primary btn-sm" style="margin-top:12px;"
           onclick="closeAllSheets();openSheet('auth-sheet')">Anmelden</button>
@@ -179,7 +179,7 @@ function renderNotifSheet() {
   if(!pendingNotifs.length && !(pendingConnectionRequests?.length) && !_reportNotifs.length && !_suggestionNotifs.length) {
     body.innerHTML = `
       <div class="notif-empty">
-        <div class="notif-empty-icon">✅</div>
+        <div class="notif-empty-icon">${ic('check-circle', 36)}</div>
         <div>Keine neuen Benachrichtigungen</div>
       </div>`;
     return;
@@ -209,7 +209,7 @@ function renderNotifSheet() {
   const suggestionHtml = _suggestionNotifs.map(n => {
     const time = _notifTime(n.created_at);
     return `<div class="notif-item notif-item--suggestion">
-      <div class="notif-report-icon">🏓</div>
+      <div class="notif-report-icon">${ic('table-tennis', 20)}</div>
       <div class="notif-content">
         <div class="notif-title"><b>${escHtml(n.title || 'Platte freigegeben!')}</b></div>
         <div class="notif-preview">${escHtml(n.body || '')}</div>

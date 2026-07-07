@@ -259,10 +259,10 @@ async function handleDetailImageUpload(input) {
       body: JSON.stringify(record)
     });
     if (!ok) throw new Error('Datenbank-Eintrag fehlgeschlagen');
-    showToast(isMod ? 'Bild hochgeladen und sofort freigegeben.' : 'Bild hochgeladen! Wird nach Freigabe sichtbar.', '✅');
+    showToast(isMod ? 'Bild hochgeladen und sofort freigegeben.' : 'Bild hochgeladen! Wird nach Freigabe sichtbar.');
     if (isMod && typeof loadEventImages === 'function') await loadEventImages(currentEventId);
   } catch(e) {
-    showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
+    showToast('Fehler beim Hochladen: ' + (e.message || ''), 'error');
   }
 }
 
@@ -297,7 +297,7 @@ async function handleTableImageUpload(input) {
     await _saveTableImageRecord(currentDetailTableId, imageUrl);
     const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
     if (isMod) {
-      showToast('Bild hochgeladen und sofort freigegeben.', '✅');
+      showToast('Bild hochgeladen und sofort freigegeben.');
       // Reload fresh from Supabase so we never double-append local state
       const slider = document.querySelector('#tds-body .detail-slider');
       if (slider) {
@@ -316,11 +316,11 @@ async function handleTableImageUpload(input) {
       if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
       if (typeof renderHome === 'function') renderHome();
     } else {
-      showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.', '✅');
+      showToast('Bild hochgeladen! Es wird nach Freigabe durch einen Moderator sichtbar.');
     }
   } catch(e) {
     console.error('Table image upload error:', e);
-    showToast('Fehler beim Hochladen: ' + (e.message || ''), '❌');
+    showToast('Fehler beim Hochladen: ' + (e.message || ''), 'error');
   } finally {
     _tableImgUploading = false;
   }
@@ -443,8 +443,8 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
     const su = escAttr(img.image_url);
     slide.innerHTML = `<img class="ds-slide-bg" src="${su}" onerror="this.style.display='none'" aria-hidden="true" alt="" loading="lazy">
       <img class="ds-slide-img" src="${su}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`
-      + (isMod ? `<button class="ds-delete-btn" onclick="event.stopPropagation();deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen">🗑</button>` : '')
-      + (isMod ? `<div class="ds-mod-info">👤 ${escHtml(uploader)} · 📅 ${date}</div>` : '');
+      + (isMod ? `<button class="ds-delete-btn" onclick="event.stopPropagation();deleteTableImage(this.closest('.ds-slide'))" title="Bild löschen" aria-label="Bild löschen"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>` : '')
+      + (isMod ? `<div class="ds-mod-info">${ic('user',12)} ${escHtml(uploader)} · ${ic('calendar',12)} ${date}</div>` : '');
     slidesWrap.appendChild(slide);
 
     // Neuer Thumb, vor dem + Button
@@ -507,10 +507,10 @@ async function deleteTableImage(slideEl) {
     `${SUPABASE_URL}/rest/v1/table_images?id=eq.${encodeURIComponent(imageId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
 
   _logModAction('delete_image', 'table_image', imageId);
-  showToast('Bild gelöscht', '🗑');
+  showToast('Bild gelöscht');
 
   // Alle DB-Slides + Thumbs entfernen und neu laden
   const slider = document.querySelector('#tds-body .detail-slider');
@@ -582,13 +582,13 @@ function _showMapsPicker(lat, lng, hasCoords, name, addr) {
   const apps = [];
   if (isIOS) {
     apps.push({
-      label: 'Apple Karten', emoji: '🗺️',
+      label: 'Apple Karten', emoji: '',
       appUrl: hasCoords ? `maps://?daddr=${lat},${lng}&dirflg=d` : `maps://?q=${q}`,
       webUrl: hasCoords ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` : `https://maps.apple.com/?q=${q}`,
     });
   }
   apps.push({
-    label: 'Google Maps', emoji: '📍',
+    label: 'Google Maps', emoji: '',
     appUrl: hasCoords
       ? (isIOS ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `geo:${lat},${lng}?q=${lat},${lng}`)
       : (isIOS ? null : `geo:0,0?q=${q}`),
@@ -794,7 +794,7 @@ async function submitRating() {
 
   if(error) {
     console.error('Rating error:', JSON.stringify(error));
-    showToast('Fehler: ' + (error.message || error.hint || JSON.stringify(error)), '❌');
+    showToast('Fehler: ' + (error.message || error.hint || JSON.stringify(error)), 'error');
     return;
   }
 
@@ -927,9 +927,9 @@ function _renderAllRatings(tableId, avg, rList) {
     return;
   }
   const _CRIT = [
-    { key: 'surface',    label: '🏓 Zustand der Platte' },
-    { key: 'ground',     label: '🌿 Untergrund' },
-    { key: 'windshield', label: '💨 Windschutz' },
+    { key: 'surface',    label: 'Zustand der Platte' },
+    { key: 'ground',     label: 'Untergrund' },
+    { key: 'windshield', label: 'Windschutz' },
   ];
   listEl.innerHTML = rList.map(r => {
     const prof  = r.profiles || {};
@@ -947,7 +947,7 @@ function _renderAllRatings(tableId, avg, rList) {
     return `
       <div class="ar-review">
         <div class="ar-rev-head">
-          <div class="ar-rev-avatar">${emoji || '👤'}</div>
+          <div class="ar-rev-avatar">${emoji || ic('user', 20)}</div>
           <div class="ar-rev-meta">
             <div class="ar-rev-name">${name}</div>
             ${date ? `<div class="ar-rev-date">${date}</div>` : ''}
@@ -981,7 +981,7 @@ async function loadCommentsInline(tableId) {
 
 async function openComments(tableId) {
   currentDetailTableId = tableId;
-  document.getElementById('comment-sheet-title').textContent = '💬 Kommentare';
+  document.getElementById('comment-sheet-title').textContent = 'Kommentare';
   const listEl = document.getElementById('comment-list');
   listEl.innerHTML = `<div class="osm-loading"><div class="search-spinner"></div>Lade Kommentare…</div>`;
   openSheet('comment-sheet');
@@ -1001,7 +1001,7 @@ function renderComments(comments) {
   const el = document.getElementById('comment-list');
   if(!comments.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
-      Noch keine Kommentare.<br>Sei der Erste! 💬</div>`;
+      Noch keine Kommentare.<br>Sei der Erste!</div>`;
     return;
   }
   el.innerHTML = comments.map(c => _commentItemHtml(c, 'sheet')).join('');
@@ -1081,7 +1081,7 @@ async function deleteComment(commentId, context) {
     `${SUPABASE_URL}/rest/v1/comments?id=eq.${encodeURIComponent(commentId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
   _logModAction('delete_comment', 'comment', commentId);
   showToast('Kommentar gelöscht');
   if (context === 'sheet') openComments(currentDetailTableId);
@@ -1091,17 +1091,17 @@ async function deleteComment(commentId, context) {
 async function submitComment() {
   if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   const text = document.getElementById('new-comment').value.trim();
-  if(!text) { showToast('Bitte Text eingeben','⚠️'); return; }
+  if(!text) { showToast('Bitte Text eingeben','warning'); return; }
   const qb = new QueryBuilder('comments');
   const {error} = await qb.insert({
     table_id: currentDetailTableId,
     user_id: sb.getUserId(),
     text
   });
-  if(error) { showToast('Fehler beim Senden','❌'); return; }
+  if(error) { showToast('Fehler beim Senden','error'); return; }
   document.getElementById('new-comment').value = '';
   PTAnalytics.track('plate_comment_created');
-  showToast('💬 Kommentar gesendet!');
+  showToast('Kommentar gesendet!');
   openComments(currentDetailTableId);
 }
 

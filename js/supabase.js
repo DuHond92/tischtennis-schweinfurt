@@ -203,7 +203,7 @@ async function fetchWithRefresh(url, options) {
       r = await fetch(url, options);
       data = await _parseResponse(r);
     } else {
-      showToast('Sitzung abgelaufen – bitte neu einloggen', '🔑');
+      showToast('Sitzung abgelaufen – bitte neu einloggen', 'warning');
       await sb.signOut();
       updateTopBarForUser();
       openSheet('auth-sheet');

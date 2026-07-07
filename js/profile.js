@@ -121,7 +121,7 @@ async function selectSkill(el) {
     await qb.eq('id', sb.getUserId()).update({ skill_level: skill });
     if(currentUser) currentUser.skill_level = skill;
   }
-  showToast('✅ Spielniveau gespeichert!');
+  showToast('Spielniveau gespeichert!');
 }
 
 function openProfileEditSheet() {
@@ -152,7 +152,7 @@ async function saveProfile() {
   const club      = document.getElementById('edit-club')?.value.trim() || '';
   const bio       = (document.getElementById('edit-bio')?.value || '').trim().slice(0, 160);
 
-  if (!name) { showToast('Spielername darf nicht leer sein', '⚠️'); return; }
+  if (!name) { showToast('Spielername darf nicht leer sein', 'warning'); return; }
 
   const btn = document.getElementById('profile-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Speichern…'; }
@@ -168,7 +168,7 @@ async function saveProfile() {
   });
 
   if (btn) { btn.disabled = false; btn.textContent = 'Speichern'; }
-  if (error) { showToast('Profil konnte nicht gespeichert werden', '❌'); return; }
+  if (error) { showToast('Profil konnte nicht gespeichert werden', 'error'); return; }
 
   if (currentUser) {
     currentUser.username  = name;
@@ -186,9 +186,9 @@ async function saveProfile() {
 async function changePassword() {
   const pw1 = document.getElementById('edit-pw-new')?.value  || '';
   const pw2 = document.getElementById('edit-pw-confirm')?.value || '';
-  if (!pw1) { showToast('Bitte neues Passwort eingeben', '⚠️'); return; }
-  if (pw1.length < 6) { showToast('Passwort mindestens 6 Zeichen', '⚠️'); return; }
-  if (pw1 !== pw2)   { showToast('Passwörter stimmen nicht überein', '⚠️'); return; }
+  if (!pw1) { showToast('Bitte neues Passwort eingeben', 'warning'); return; }
+  if (pw1.length < 6) { showToast('Passwort mindestens 6 Zeichen', 'warning'); return; }
+  if (pw1 !== pw2)   { showToast('Passwörter stimmen nicht überein', 'warning'); return; }
 
   const btn = document.getElementById('edit-pw-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Wird gespeichert…'; }
@@ -201,12 +201,12 @@ async function changePassword() {
     });
     const data = await res.json();
     if (btn) { btn.disabled = false; btn.textContent = 'Passwort ändern'; }
-    if (!res.ok || data.error) { showToast(data.error?.message || 'Fehler beim Ändern', '❌'); return; }
+    if (!res.ok || data.error) { showToast(data.error?.message || 'Fehler beim Ändern', 'error'); return; }
     document.getElementById('edit-pw-new').value     = '';
     document.getElementById('edit-pw-confirm').value = '';
     showToast('Passwort geändert');
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Passwort ändern'; }
-    showToast('Fehler beim Passwort ändern', '❌');
+    showToast('Fehler beim Passwort ändern', 'error');
   }
 }

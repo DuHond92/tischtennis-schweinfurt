@@ -63,7 +63,7 @@ function setAuthMode(mode) {
 
   // Titel
   const titles = { login: 'Anmelden', register: 'Registrieren',
-                   reset: '🔑 Passwort zurücksetzen', 'new-password': '🔑 Neues Passwort' };
+                   reset: 'Passwort zurücksetzen', 'new-password': 'Neues Passwort' };
   document.getElementById('auth-sheet-title').innerHTML = titles[mode] || titles.login;
 
   // Submit-Button Label
@@ -76,7 +76,7 @@ function setAuthMode(mode) {
 
 async function sendPasswordReset() {
   const email = document.getElementById('auth-reset-email').value.trim();
-  if (!email) { showToast('Bitte E-Mail eingeben', '⚠️'); return; }
+  if (!email) { showToast('Bitte E-Mail eingeben', 'warning'); return; }
 
   const btn = document.getElementById('auth-reset-btn');
   btn.disabled = true; btn.textContent = '…';
@@ -87,7 +87,7 @@ async function sendPasswordReset() {
   if (ok) {
     document.getElementById('auth-reset-fields').innerHTML = `
       <div style="text-align:center;padding:20px 0 8px;">
-        <div style="font-size:2.5rem;margin-bottom:12px;">📧</div>
+        <div style="margin-bottom:12px;color:var(--primary);">${ic('mail', 40)}</div>
         <div style="font-weight:700;font-size:1rem;margin-bottom:8px;">E-Mail gesendet!</div>
         <div style="font-size:0.85rem;color:var(--text-dim);line-height:1.5;">
           Prüfe dein Postfach und klicke auf den Link, um ein neues Passwort festzulegen.
@@ -95,15 +95,15 @@ async function sendPasswordReset() {
         <button class="btn btn-secondary btn-full" style="margin-top:20px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
       </div>`;
   } else {
-    showToast('Fehler beim Senden — E-Mail prüfen', '❌');
+    showToast('Fehler beim Senden — E-Mail prüfen', 'error');
   }
 }
 
 async function submitNewPassword() {
   const pw  = document.getElementById('auth-newpw').value;
   const pw2 = document.getElementById('auth-newpw2').value;
-  if (!pw || pw.length < 6) { showToast('Mindestens 6 Zeichen', '⚠️'); return; }
-  if (pw !== pw2)            { showToast('Passwörter stimmen nicht überein', '⚠️'); return; }
+  if (!pw || pw.length < 6) { showToast('Mindestens 6 Zeichen', 'warning'); return; }
+  if (pw !== pw2)            { showToast('Passwörter stimmen nicht überein', 'warning'); return; }
 
   const btn = document.getElementById('auth-newpw-btn');
   btn.disabled = true; btn.textContent = '…';
@@ -113,11 +113,11 @@ async function submitNewPassword() {
 
   if (ok) {
     closeAllSheets();
-    showToast('✅ Passwort geändert! Bitte neu anmelden.');
+    showToast('Passwort geändert! Bitte neu anmelden.');
     await sb.signOut();
     setTimeout(() => { openSheet('auth-sheet'); setAuthMode('login'); }, 800);
   } else {
-    showToast('Fehler beim Speichern', '❌');
+    showToast('Fehler beim Speichern', 'error');
   }
 }
 
@@ -144,11 +144,11 @@ async function submitAuth() {
     if(authMode === 'login') {
       const email    = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-pw').value;
-      if(!email || !password) { showToast('Bitte E-Mail und Passwort eingeben','⚠️'); return; }
+      if(!email || !password) { showToast('Bitte E-Mail und Passwort eingeben','warning'); return; }
 
       const res = await sb.signIn(email, password);
       if(res.error || !res.access_token) {
-        showToast(res.error?.message || 'Anmeldung fehlgeschlagen','❌');
+        showToast(res.error?.message || 'Anmeldung fehlgeschlagen','error');
         return;
       }
       _myConnections = null;
@@ -165,11 +165,11 @@ async function submitAuth() {
       const username = document.getElementById('auth-username').value.trim();
       const email    = document.getElementById('auth-reg-email').value.trim();
       const password = document.getElementById('auth-reg-pw').value;
-      if(!username || !email || !password) { showToast('Alle Felder ausfüllen','⚠️'); return; }
-      if(password.length < 6) { showToast('Passwort mindestens 6 Zeichen','⚠️'); return; }
+      if(!username || !email || !password) { showToast('Alle Felder ausfüllen','warning'); return; }
+      if(password.length < 6) { showToast('Passwort mindestens 6 Zeichen','warning'); return; }
 
       const res = await sb.signUp(email, password, username);
-      if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','❌'); return; }
+      if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','error'); return; }
       _myConnections = null;
       await loadCurrentUser();
       await loadMyConnections();
@@ -211,7 +211,7 @@ function showWelcomeSuccess() {
   const name = currentUser?.username || 'Spieler';
   el.innerHTML = `
     <div class="auth-prompt-card">
-      <div style="font-size:2rem;margin-bottom:10px;">🎉</div>
+      <div style="margin-bottom:10px;color:var(--primary);">${ic('check-circle', 40)}</div>
       <div class="apc-title">Willkommen, ${escHtml(name)}!</div>
       <div class="apc-body">Du kannst jetzt Spielen beitreten, Mitspieler kontaktieren und dein Profil einrichten.</div>
       <button class="apc-btn apc-btn-primary" onclick="_dismissWelcomeSuccess();showPage('profile');setTimeout(()=>openSheet('profile-edit-sheet'),150)">Profil vervollständigen</button>
@@ -236,7 +236,7 @@ function showAuthPrompt() {
   }
   el.innerHTML = `
     <div class="auth-prompt-card">
-      <div class="apc-title">👋 Kostenlos anmelden</div>
+      <div class="apc-title">Kostenlos anmelden</div>
       <div class="apc-body">Erstelle ein Profil, um mitzuspielen, Nachrichten zu schreiben und Mitspieler zu finden.</div>
       <button class="apc-btn apc-btn-primary" onclick="dismissAuthPrompt();openSheet('auth-sheet');setAuthMode('register')">Kostenlos registrieren</button>
       <button class="apc-btn apc-btn-secondary" onclick="dismissAuthPrompt();openSheet('auth-sheet');setAuthMode('login')">Anmelden</button>
@@ -255,6 +255,6 @@ async function doSignOut() {
   PTAnalytics.track('logout_completed');
   await sb.signOut();
   closeAllSheets();
-  showToast('👋 Bis bald!');
+  showToast('Bis bald!');
   showPage('home');
 }

@@ -54,7 +54,7 @@ function getConnectionButtonHtml(otherUserId) {
   const oid  = escAttr(otherUserId);
 
   if (!conn) {
-    return `<button class="btn btn-primary btn-full" onclick="sendConnectionRequest('${oid}')">🤝 Spielpartner anfragen</button>`;
+    return `<button class="btn btn-primary btn-full" onclick="sendConnectionRequest('${oid}')">${ic('user-plus',16)} Spielpartner anfragen</button>`;
   }
 
   const cid = escAttr(conn.id);
@@ -63,8 +63,8 @@ function getConnectionButtonHtml(otherUserId) {
     if (conn.requester_id === myId) {
       return `<button class="btn btn-secondary btn-full" onclick="cancelConnectionRequest('${cid}','${oid}')">⏳ Anfrage ausstehend <span class="pp-soon">(zurückziehen)</span></button>`;
     } else {
-      return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="acceptConnectionRequest('${cid}','${oid}')">✅ Anfrage annehmen</button>
-<button class="btn btn-secondary btn-full" onclick="rejectConnectionRequest('${cid}','${oid}')">❌ Ablehnen</button>`;
+      return `<button class="btn btn-primary btn-full" style="margin-bottom:8px;" onclick="acceptConnectionRequest('${cid}','${oid}')">${ic('check',16)} Anfrage annehmen</button>
+<button class="btn btn-secondary btn-full" onclick="rejectConnectionRequest('${cid}','${oid}')">Ablehnen</button>`;
     }
   }
 
@@ -79,7 +79,7 @@ function getConnectionButtonHtml(otherUserId) {
   }
 
   // rejected oder blocked → erneut anfragen erlaubt
-  return `<button class="btn btn-primary btn-full" onclick="sendConnectionRequest('${oid}')">🤝 Spielpartner anfragen</button>`;
+  return `<button class="btn btn-primary btn-full" onclick="sendConnectionRequest('${oid}')">${ic('user-plus',16)} Spielpartner anfragen</button>`;
 }
 
 function refreshConnectionButton(otherUserId) {
@@ -108,11 +108,11 @@ async function sendConnectionRequest(otherUserId) {
     receiver_id:  otherUserId,
     status:       'pending'
   });
-  if (error) { showToast('Fehler beim Senden der Anfrage', '❌'); return; }
+  if (error) { showToast('Fehler beim Senden der Anfrage', 'error'); return; }
   _myConnections = null;
   await loadMyConnections();
   PTAnalytics.track('friend_request_sent');
-  showToast('Spielpartner-Anfrage gesendet!', '🤝');
+  showToast('Spielpartner-Anfrage gesendet!');
   refreshConnectionButton(otherUserId);
 }
 
@@ -120,7 +120,7 @@ async function cancelConnectionRequest(connectionId, otherUserId) {
   await _deleteConnection(connectionId);
   _myConnections = null;
   await loadMyConnections();
-  showToast('Anfrage zurückgezogen', '↩️');
+  showToast('Anfrage zurückgezogen');
   refreshConnectionButton(otherUserId);
 }
 
@@ -128,10 +128,10 @@ async function acceptConnectionRequest(connectionId, otherUserId) {
   const qb = new QueryBuilder('player_connections');
   qb.eq('id', connectionId);
   const { error } = await qb.update({ status: 'accepted', updated_at: new Date().toISOString() });
-  if (error) { showToast('Fehler beim Annehmen', '❌'); return; }
+  if (error) { showToast('Fehler beim Annehmen', 'error'); return; }
   _myConnections = null;
   await loadMyConnections();
-  showToast('Spielpartner hinzugefügt! 🎉', '✅');
+  showToast('Spielpartner hinzugefügt!');
   refreshConnectionButton(otherUserId);
   checkConnectionNotifications();
 }
@@ -140,7 +140,7 @@ async function rejectConnectionRequest(connectionId, otherUserId) {
   const qb = new QueryBuilder('player_connections');
   qb.eq('id', connectionId);
   const { error } = await qb.update({ status: 'rejected', updated_at: new Date().toISOString() });
-  if (error) { showToast('Fehler beim Ablehnen', '❌'); return; }
+  if (error) { showToast('Fehler beim Ablehnen', 'error'); return; }
   _myConnections = null;
   await loadMyConnections();
   refreshConnectionButton(otherUserId);
@@ -151,7 +151,7 @@ async function removeConnection(connectionId, otherUserId) {
   await _deleteConnection(connectionId);
   _myConnections = null;
   await loadMyConnections();
-  showToast('Spielpartner entfernt', '👋');
+  showToast('Spielpartner entfernt');
   refreshConnectionButton(otherUserId);
 }
 
@@ -159,7 +159,7 @@ async function removeConnectionFromProfile(connectionId, partnerId) {
   await _deleteConnection(connectionId);
   _myConnections = null;
   await loadMyConnections();
-  showToast('Spielpartner entfernt', '👋');
+  showToast('Spielpartner entfernt');
   renderSpielpartnerSection();
   if (_ppCurrentUserId === partnerId) {
     const el = document.getElementById('pp-connection-btn');
@@ -186,7 +186,7 @@ async function _executeRemoveConnection(connectionId, otherUserId) {
   await _deleteConnection(connectionId);
   _myConnections = null;
   await loadMyConnections();
-  showToast('Spielpartner entfernt', '👋');
+  showToast('Spielpartner entfernt');
   refreshConnectionButton(otherUserId);
 }
 
@@ -240,7 +240,7 @@ function renderConnectionRequestNotifs() {
           </div>
         </div>
         <div class="notif-conn-actions">
-          <button class="btn btn-primary btn-sm" onclick="acceptConnectionRequest('${cid}','${uid}');closeAllSheets()">✅ Annehmen</button>
+          <button class="btn btn-primary btn-sm" onclick="acceptConnectionRequest('${cid}','${uid}');closeAllSheets()">${ic('check',14)} Annehmen</button>
           <button class="btn btn-secondary btn-sm" onclick="rejectConnectionRequest('${cid}','${uid}');closeAllSheets()">Ablehnen</button>
         </div>
       </div>`;
@@ -320,8 +320,8 @@ async function renderSpielpartnerSection() {
     html += `<div class="sp-section-title">Eingegangene Anfragen</div>`;
     html += incoming.map(c => profileRow(c, c.requester_id,
       `<div class="sp-req-actions">
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')">✅</button>
-        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();rejectConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')">❌</button>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')" aria-label="Annehmen">${ic('check',14)}</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();rejectConnectionRequest('${escAttr(c.id)}','${escAttr(c.requester_id)}')" aria-label="Ablehnen">${ic('x',14)}</button>
       </div>`
     )).join('');
   }

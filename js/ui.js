@@ -217,27 +217,27 @@ function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           TOAST                                              ║
 // ╚══════════════════════════════════════════════════════════════╝
-const _TOAST_ICON_TYPE = { '❌': 'error', '⚠️': 'warning', 'ℹ️': 'info' };
-const _TOAST_DURATION  = { success: 3800, info: 4000, warning: 5500, error: 6500 };
+const _TOAST_EMOJI_TYPE = { '❌': 'error', '⚠️': 'warning', 'ℹ️': 'info', '✅': 'success' };
+const _TOAST_ICON_NAME  = { success: 'check-circle', error: 'x-circle', warning: 'triangle-alert', info: 'info' };
+const _TOAST_DURATION   = { success: 3800, info: 4000, warning: 5500, error: 6500 };
 let _toastTimer = null;
 
 function showToast(text, iconOrOpts) {
-  let icon = '✅', type = 'success', duration;
+  let type = 'success', duration;
   if (iconOrOpts && typeof iconOrOpts === 'object') {
     type     = iconOrOpts.type || 'success';
-    icon     = iconOrOpts.icon || { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' }[type] || '✅';
     duration = iconOrOpts.duration;
-  } else if (iconOrOpts) {
-    icon = iconOrOpts;
-    type = _TOAST_ICON_TYPE[icon] || 'success';
+  } else if (typeof iconOrOpts === 'string') {
+    type = _TOAST_EMOJI_TYPE[iconOrOpts] || iconOrOpts || 'success';
+    if (!_TOAST_ICON_NAME[type]) type = 'success';
   }
   duration = duration || _TOAST_DURATION[type] || 3800;
 
   const t = document.getElementById('toast');
-  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-icon').innerHTML = ic(_TOAST_ICON_NAME[type], 18);
   document.getElementById('toast-text').textContent = text;
   t.className = 'toast toast--' + type;
-  void t.offsetHeight; // reflow to restart transition
+  void t.offsetHeight;
   t.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => t.classList.remove('show'), duration);
@@ -348,7 +348,7 @@ function renderDropdown(q, localMatches, geoResults) {
   if(localMatches.length) {
     html += `<div style="padding:6px 14px 4px;font-size:0.68rem;font-weight:800;
       color:var(--text-xdim);text-transform:uppercase;letter-spacing:0.8px;">
-      🏓 Tischtennisplatten</div>`;
+      ${ic('table-tennis', 13)} Tischtennisplatten</div>`;
     localMatches.slice(0,3).forEach(t => {
       const idx = dropdownItems.length;
       dropdownItems.push({ type:'table', data:t });

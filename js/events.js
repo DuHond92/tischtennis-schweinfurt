@@ -312,23 +312,23 @@ async function joinEvent(eventId, btn) {
   const isFallback = allEvents.length === 0;
   if (isFallback) {
     setTimeout(()=>{
-      btn.textContent='✅'; btn.style.background='var(--green)';
-      showToast('🏓 Du nimmst am Event teil!');
+      btn.textContent='Dabei'; btn.style.background='var(--green)';
+      showToast('Du nimmst am Event teil!');
     }, 400);
     return;
   }
   const qb = new QueryBuilder('event_participants');
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
   if(error && error.code === '23505') {
-    showToast('Du nimmst bereits teil','ℹ️');
-    btn.textContent='✅'; btn.style.background='var(--green)';
+    showToast('Du nimmst bereits teil','info');
+    btn.textContent='Dabei'; btn.style.background='var(--green)';
   } else if(error) {
-    showToast('Fehler beim Beitreten','❌');
+    showToast('Fehler beim Beitreten','error');
     btn.disabled=false; btn.textContent='Dabei';
   } else {
-    btn.textContent='✅'; btn.style.background='var(--green)';
+    btn.textContent='Dabei'; btn.style.background='var(--green)';
     PTAnalytics.track('game_joined');
-    showToast('🏓 Du nimmst am Event teil!');
+    showToast('Du nimmst am Event teil!');
     _patchEventParticipantJoin(eventId);
     renderHome();
     renderEvents();
@@ -507,7 +507,7 @@ function renderEvents() {
   if (!hasItems) {
     const canReset = currentTimeFilter !== 'all' || currentTypeFilter !== 'all';
     c.innerHTML = `<div class="empty-state-card">
-      <div class="esc-icon">📅</div>
+      <div class="esc-icon">${ic('calendar', 36)}</div>
       <div class="esc-title">Keine passenden Einträge gefunden</div>
       <div class="esc-body">Passe deine Filter an oder erstelle ein neues Spiel/Gesuch.</div>
       <div class="esc-actions">
@@ -612,7 +612,7 @@ function openCreateEventSheet() {
   _editingEventId = null;
   PTAnalytics.track('game_create_started');
   document.querySelector('#create-event-sheet .sheet-title').textContent = 'Spiel organisieren';
-  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren 🏓';
+  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren';
   document.getElementById('ev-name').value  = '';
   document.getElementById('ev-date').value  = new Date().toISOString().slice(0, 10);
   document.getElementById('ev-time').value  = '15:00';
@@ -632,17 +632,17 @@ async function submitCreateEvent() {
   const mode    = document.getElementById('ev-mode').value;
   const maxP    = parseInt(document.getElementById('ev-max')?.value || '4', 10) || 4;
   const desc    = (document.getElementById('ev-desc')?.value || '').trim();
-  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','⚠️'); return; }
+  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','warning'); return; }
 
   if(_editingEventId) {
     const { error } = await new QueryBuilder('events').eq('id', _editingEventId).update({
       title, table_id: parseInt(tableId), event_date: date, event_time: time, mode,
       max_participants: maxP, description: desc || null
     });
-    if(error) { showToast('Fehler beim Speichern','❌'); console.error(error); return; }
+    if(error) { showToast('Fehler beim Speichern','error'); console.error(error); return; }
     _editingEventId = null;
     closeAllSheets();
-    showToast('✅ Event gespeichert!');
+    showToast('Event gespeichert!');
   } else {
     // 1. Event anlegen (insert gibt die neue Zeile zurück)
     const { data: inserted, error } = await new QueryBuilder('events').insert({
@@ -651,7 +651,7 @@ async function submitCreateEvent() {
       event_date: date, event_time: time, mode,
       max_participants: maxP, description: desc || null
     });
-    if(error) { showToast('Fehler beim Erstellen','❌'); console.error(error); return; }
+    if(error) { showToast('Fehler beim Erstellen','error'); console.error(error); return; }
 
     // 2. Ersteller sofort als Teilnehmer eintragen
     const newId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
@@ -668,7 +668,7 @@ async function submitCreateEvent() {
 
     PTAnalytics.track('game_created', { mode });
     closeAllSheets();
-    showToast('🎉 Spiel organisiert!');
+    showToast('Spiel organisiert!');
   }
 
   // 3. Globalen State neu laden (holt Event + Participants)
@@ -839,7 +839,7 @@ async function submitMitspieler() {
   }
 
   if (!lat || !lng) {
-    showToast('Bitte wähle einen Ort aus, damit andere dein Gesuch in der Nähe finden können.', '⚠️');
+    showToast('Bitte wähle einen Ort aus, damit andere dein Gesuch in der Nähe finden können.', 'warning');
     if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
     return;
   }
@@ -878,11 +878,11 @@ async function submitMitspieler() {
   });
 
   if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
-  if(error) { showToast('Fehler beim Veröffentlichen', '❌'); console.error(error); return; }
+  if(error) { showToast('Fehler beim Veröffentlichen', 'error'); console.error(error); return; }
 
   PTAnalytics.track('player_search_created', { radius_km: searchRadiusKm, mode: spielart });
   closeAllSheets();
-  showToast('👥 Gesuch veröffentlicht!', '✅');
+  showToast('Gesuch veröffentlicht!');
   await loadEvents();
   renderEvents();
   renderHome();

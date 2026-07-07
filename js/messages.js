@@ -124,7 +124,7 @@ async function renderInboxChats() {
   _setInboxView('messages');
   const el = document.getElementById('inbox-body');
   if (!el) return;
-  if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('💬', 'Bitte melde dich an.'); return; }
+  if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg>', 'Bitte melde dich an.'); return; }
   el.innerHTML = skeletonList('message', 4);
 
   const uid = sb.getUserId();
@@ -162,7 +162,7 @@ async function renderInboxChats() {
         <div class="inbox-empty-hint">Nach angenommener Anfrage könnt ihr direkt chatten.</div>
       </div>`;
     } else {
-      el.innerHTML = _inboxEmpty('💬', 'Noch keine Nachrichten.<br>Suche Spielpartner oben und schreib ihnen!');
+      el.innerHTML = _inboxEmpty('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg>', 'Noch keine Nachrichten.<br>Suche Spielpartner oben und schreib ihnen!');
     }
     return;
   }
@@ -224,7 +224,7 @@ async function inboxShowRequests() {
   let html = '';
 
   if (!incoming.length && !outgoing.length) {
-    html += _inboxEmpty('🤝', 'Keine offenen Anfragen');
+    html += _inboxEmpty('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m11 17 2 2a1 1 0 1 0 3-3\"/><path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\"/><path d=\"m21 3 1 11h-1\"/><path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\"/><path d=\"M3 4h8\"/></svg>', 'Keine offenen Anfragen');
   } else {
     if (incoming.length) {
       html += `<div class="inbox-section-label">Eingegangene Anfragen</div>`;
@@ -395,7 +395,7 @@ async function _inboxShowSuggestions() {
 
   if (!results.length) {
     el.innerHTML = `<div class="inbox-empty">
-      <div class="inbox-empty-icon">🔍</div>
+      <div class="inbox-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
       <div style="font-weight:700;color:var(--text);">Keine Spieler gefunden</div>
       <div style="color:var(--text-dim);font-size:0.82rem;margin-top:4px;">Suche nach einem Namen oder aktiviere deinen Standort.</div>
     </div>`;
@@ -434,7 +434,7 @@ async function _runInboxSearch(q) {
 
   if (!results.length) {
     el.innerHTML = `<div class="inbox-empty">
-      <div class="inbox-empty-icon">🔍</div>
+      <div class="inbox-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
       <div style="font-weight:700;color:var(--text);">Keine Spieler gefunden</div>
       <div style="color:var(--text-dim);font-size:0.82rem;margin-top:4px;">Versuche einen anderen Namen oder Spielernamen.</div>
     </div>`;
@@ -609,7 +609,7 @@ function _renderDmMessages(messages) {
   const uid   = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if (!messages.length) {
-    el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster! 💬</div>';
+    el.innerHTML = '<div class="chat-empty">Noch keine Nachrichten – schreib als Erster!</div>';
     return;
   }
   let lastDate = '';
@@ -617,10 +617,10 @@ function _renderDmMessages(messages) {
     const isMine  = m.sender_id === uid;
     const msgDate = new Date(m.created_at).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
     const time    = new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteDm('${escAttr(m.id)}')">🗑</button>` : '';
+    const del     = isMod ? ` <button class="msg-delete-btn" onclick="deleteDm('${escAttr(m.id)}')" aria-label="Löschen">${ic('trash-2',14)}</button>` : '';
     const preview = escAttr((m.message || '').slice(0, 80));
     const report  = (!isMod && sb.isLoggedIn() && !isMine)
-      ? ` <button class="report-btn" data-type="direct_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden">🚩</button>`
+      ? ` <button class="report-btn" data-type="direct_message" data-id="${escAttr(m.id)}" data-preview="${preview}" onclick="openReportFromBtn(this)" title="Melden" aria-label="Melden">${ic('flag',14)}</button>`
       : '';
     let sep = '';
     if (msgDate !== lastDate) {
@@ -641,14 +641,14 @@ async function deleteDm(messageId) {
     `${SUPABASE_URL}/rest/v1/direct_messages?id=eq.${encodeURIComponent(messageId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
   _logModAction('delete_dm', 'direct_message', messageId);
   showToast('Nachricht gelöscht');
   await loadDmMessages();
 }
 
 async function sendDm() {
-  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', '⚠️'); return; }
+  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', 'info'); return; }
   const input = document.getElementById('dm-input');
   const msg   = input.value.trim();
   if (!msg || !_dmPartnerId) return;
@@ -659,7 +659,7 @@ async function sendDm() {
     headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
     body:    JSON.stringify({ sender_id: uid, receiver_id: _dmPartnerId, message: msg })
   });
-  if (!ok) { showToast('Fehler beim Senden', '❌'); input.value = msg; return; }
+  if (!ok) { showToast('Fehler beim Senden', 'error'); input.value = msg; return; }
   PTAnalytics.track('message_sent');
   await loadDmMessages();
 }

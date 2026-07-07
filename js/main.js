@@ -64,15 +64,15 @@ window.addEventListener('load', async () => {
       if (_dlTable) {
         const id = parseInt(_dlTable);
         if (tables.find(t => t.id === id)) { showPage('map'); showTableDetail(id); }
-        else showToast('Platte nicht gefunden', '❌');
+        else showToast('Platte nicht gefunden', 'error');
       } else if (_dlEvent) {
         const id = parseInt(_dlEvent);
         if (allEvents.find(e => e.id === id)) { showPage('events'); showEventDetail(id); }
-        else showToast('Spiel nicht gefunden', '❌');
+        else showToast('Spiel nicht gefunden', 'error');
       } else if (_dlSearch) {
         const id = parseInt(_dlSearch);
         if (allPlayerSearches.find(p => p.id === id)) { showPage('events'); showPlayerSearchDetail(id); }
-        else showToast('Gesuch nicht gefunden', '❌');
+        else showToast('Gesuch nicht gefunden', 'error');
       }
     }
   } catch(e) {
@@ -80,7 +80,7 @@ window.addEventListener('load', async () => {
     window._eventsLoaded = true;
     renderEvents();
     hideSplash();
-    showToast('Offline – Inhalte könnten veraltet sein', '⚠️');
+    showToast('Offline – Inhalte könnten veraltet sein', 'warning');
   }
 
   // 3. OSM-Platten im Hintergrund laden — blockiert weder Events noch Home

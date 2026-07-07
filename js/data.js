@@ -10,7 +10,7 @@ async function loadTables() {
       tables = data.map(t => ({
         id: t.id, name: t.name, addr: t.address,
         lat: t.lat, lng: t.lng,
-        type: t.type, icon: t.icon || '🏓',
+        type: t.type,
         description: t.description || '',
         tablesCount: t.tables_count || null,
         accessType: t.access_type || 'public',
@@ -89,7 +89,7 @@ async function loadOSMTables() {
         osmId: el.id,
         name, addr, lat, lng,
         type: isIndoor ? 'indoor' : 'outdoor',
-        icon: isIndoor ? '🏢' : '🏓',
+        
         photos: tags.image ? [tags.image] : [],
         surface: tags.surface || null,
         access: tags.access || 'public',
@@ -106,7 +106,7 @@ async function loadOSMTables() {
       console.log(`OSM: ${osmTables.length} Platten geladen`);
       const statusEl = document.getElementById('osm-status');
       if(statusEl) {
-        statusEl.innerHTML = `<div style="background:rgba(34,197,94,0.9);color:#fff;border-radius:8px;padding:5px 10px;font-size:0.72rem;font-weight:700;">✅ ${osmTables.length} Platten von OpenStreetMap</div>`;
+        statusEl.innerHTML = `<div style="background:rgba(34,197,94,0.9);color:#fff;border-radius:8px;padding:5px 10px;font-size:0.72rem;font-weight:700;">${osmTables.length} Platten von OpenStreetMap</div>`;
         setTimeout(() => statusEl.innerHTML = '', 4000);
       }
     }
@@ -192,7 +192,7 @@ async function loadEvents() {
       time:      e.event_time?.slice(0,5) || '??:??',
       type:      e.mode,
       tname:     tbl.name  || '?',
-      ticon:     tbl.icon  || '🏓',
+      
       tid:       e.table_id,
       creator:      prof.username    || 'Anonym',
       creatorId:    e.creator_id,

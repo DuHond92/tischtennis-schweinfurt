@@ -18,10 +18,21 @@
 
 /* ── Slide-right Sheet (von rechts rein, nach rechts raus) ──── */
 .bottom-sheet.slide-right-sheet {
-  transform: translate3d(100%, 0, 0); /* relative zur eigenen Breite, kein vw-Overflow */
+  /* translate3d(100%) wäre nur 430px — auf breiten Screens noch im Viewport sichtbar.
+     visibility:hidden + pointer-events:none stellen sicher, dass das Sheet nie
+     als "rechte Desktop-Spalte" auftaucht, unabhängig vom Viewport. */
+  transform: translate3d(100%, 0, 0);
+  visibility: hidden;
+  pointer-events: none;
+  /* Visibility mit Delay: erst nach der Schließ-Animation ausblenden */
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 0.3s;
 }
 .bottom-sheet.slide-right-sheet.open {
   transform: translate3d(-50%, 0, 0);
+  visibility: visible;
+  pointer-events: auto;
+  /* Beim Öffnen sofort sichtbar, dann Transform-Animation */
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 0s;
 }
 
 /* ── Fullscreen-Sheet (Nachrichten, Benachrichtigungen) ──────── */
@@ -1435,6 +1446,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .bottom-sheet { transition: none; }
+  /* Kein Delay für visibility bei reduced-motion */
+  .bottom-sheet.slide-right-sheet,
+  .bottom-sheet.slide-right-sheet.open { transition: none; }
 }
 
 /* ── Account Löschen Sheet ─────────────────────────────────── */

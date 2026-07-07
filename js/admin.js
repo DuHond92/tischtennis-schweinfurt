@@ -34,7 +34,7 @@ function _notifyIfNew(key, count) {
   if (prev >= 0 && count > prev) {
     const diff = count - prev;
     const l = _NOTIFY_LABELS[key];
-    showToast(l ? `${diff} ${diff === 1 ? l.one : l.many}` : `${diff} neue Einträge`, '🔔');
+    showToast(l ? `${diff} ${diff === 1 ? l.one : l.many}` : `${diff} neue Einträge`);
   }
   _adminCounts[key] = count;
 }
@@ -72,7 +72,7 @@ async function _pollAdminCounts() {
 
 function showAdminPage() {
   if (!currentUser || !['moderator', 'admin'].includes(currentUser.role)) {
-    showToast('Kein Zugriff', '🔒');
+    showToast('Kein Zugriff', 'error');
     return;
   }
   showPage('admin');
@@ -109,7 +109,7 @@ async function _loadSuggestions() {
   }
   if (!data.length) {
     _notifyIfNew('suggestions', 0); _updateAdminBadge('suggestions', 0);
-    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Vorschläge</div>';
+    list.innerHTML = '<div class="admin-empty">Keine offenen Vorschläge</div>';
     return;
   }
 
@@ -132,7 +132,7 @@ async function _loadSuggestions() {
 
 function _renderSuggestionCard(s, username) {
   const date     = new Date(s.created_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
-  const typeTag  = s.type === 'indoor' ? '🏠 Indoor' : '☀️ Outdoor';
+  const typeTag  = s.type === 'indoor' ? 'Indoor' : 'Outdoor';
   const condMap  = { sehr_gut: 'Sehr gut', gut: 'Gut', ok: 'Ok', schlecht: 'Schlecht' };
   username = username || 'Unbekannt';
 
@@ -143,18 +143,18 @@ function _renderSuggestionCard(s, username) {
       <div class="admin-card-date">${date}</div>
     </div>
     ${s.address ? `<div class="admin-card-row">${ic('pin',13)} ${escHtml(s.address)}</div>` : ''}
-    <div class="admin-card-coords">📍 ${Number(s.lat).toFixed(6)}, ${Number(s.lng).toFixed(6)}</div>
+    <div class="admin-card-coords">${ic('pin',12)} ${Number(s.lat).toFixed(6)}, ${Number(s.lng).toFixed(6)}</div>
     <div class="admin-card-tags">
       <span class="admin-tag">${typeTag}</span>
-      ${s.table_count ? `<span class="admin-tag">🏓 ${s.table_count} Tisch${s.table_count > 1 ? 'e' : ''}</span>` : ''}
+      ${s.table_count ? `<span class="admin-tag">${s.table_count} Tisch${s.table_count > 1 ? 'e' : ''}</span>` : ''}
       ${s.condition ? `<span class="admin-tag">Zustand: ${condMap[s.condition] || s.condition}</span>` : ''}
     </div>
     ${s.image_url ? `<div class="admin-card-img"><img src="${escHtml(s.image_url)}" alt="Foto" loading="lazy"></div>` : ''}
     ${s.description ? `<div class="admin-card-desc">${escHtml(s.description)}</div>` : ''}
     <div class="admin-card-meta">Eingereicht von <strong>${escHtml(username)}</strong></div>
     <div class="admin-card-actions" id="admin-actions-${s.id}">
-      <button class="btn btn-secondary btn-sm admin-reject-btn" onclick="adminReject(${s.id})">✕ Ablehnen</button>
-      <button class="btn btn-sm admin-approve-btn" onclick="adminApprove(${s.id})" style="flex:1;">✓ Übernehmen</button>
+      <button class="btn btn-secondary btn-sm admin-reject-btn" onclick="adminReject(${s.id})">Ablehnen</button>
+      <button class="btn btn-sm admin-approve-btn" onclick="adminApprove(${s.id})" style="flex:1;">Übernehmen</button>
     </div>
     <div class="admin-reject-reason-box" id="reject-box-${s.id}" style="display:none;">
       <textarea id="reject-reason-${s.id}" class="admin-reject-textarea" placeholder="Ablehnungsgrund (optional)" maxlength="200" rows="2"></textarea>
@@ -202,7 +202,7 @@ async function adminRejectConfirm(id) {
 
   if (error) {
     _setCardLoading(card, false);
-    showToast('Fehler beim Ablehnen', '❌');
+    showToast('Fehler beim Ablehnen', 'error');
     return;
   }
 
@@ -225,14 +225,14 @@ async function adminApprove(id) {
     lat:         s.lat,
     lng:         s.lng,
     type:        s.type || 'outdoor',
-    icon:        '🏓',
+    
     description: s.description || ''
   });
 
   if (insertErr) {
     _setCardLoading(card, false);
     console.error('Approve insert error:', insertErr);
-    showToast('Fehler beim Übernehmen — RLS prüfen', '❌');
+    showToast('Fehler beim Übernehmen — RLS prüfen', 'error');
     return;
   }
 
@@ -260,7 +260,7 @@ async function adminApprove(id) {
 
   card.classList.add('admin-card-done');
   setTimeout(() => { card.remove(); _checkEmpty(); }, 400);
-  showToast('Platte übernommen!', '✅');
+  showToast('Platte übernommen!');
   delete _adminData[id];
 }
 
@@ -291,7 +291,7 @@ async function _loadImageModerations() {
 
   if (!images.length) {
     _notifyIfNew('images', 0); _updateAdminBadge('images', 0);
-    list.innerHTML = '<div class="admin-empty">🎉 Keine Bilder zur Freigabe</div>';
+    list.innerHTML = '<div class="admin-empty">Keine Bilder zur Freigabe</div>';
     return;
   }
 
@@ -335,13 +335,13 @@ function _renderImageCard(img, tableName, uploaderName) {
         onerror="this.src='images/placeholders/plate_outdoor.png'" loading="lazy">
     </div>
     <div class="admin-card-header" style="margin-top:8px;">
-      <div class="admin-card-name">📍 ${escHtml(tableName)}</div>
+      <div class="admin-card-name">${ic('pin',12)} ${escHtml(tableName)}</div>
       <div class="admin-card-date">${date}</div>
     </div>
     <div class="admin-card-row">von <strong>${escHtml(uploaderName)}</strong></div>
     <div class="admin-card-actions" id="admin-img-actions-${imgId}">
-      <button class="btn btn-secondary btn-sm admin-reject-btn" onclick="rejectTableImage('${imgId}')">✕ Ablehnen</button>
-      <button class="btn btn-sm admin-approve-btn" onclick="approveTableImage('${imgId}')" style="flex:1;">✓ Freigeben</button>
+      <button class="btn btn-secondary btn-sm admin-reject-btn" onclick="rejectTableImage('${imgId}')">Ablehnen</button>
+      <button class="btn btn-sm admin-approve-btn" onclick="approveTableImage('${imgId}')" style="flex:1;">Freigeben</button>
     </div>
   </div>`;
 }
@@ -358,12 +358,12 @@ async function approveTableImage(id) {
   });
   if (error) {
     _setCardLoading(card, false);
-    showToast('Fehler beim Freigeben', '❌');
+    showToast('Fehler beim Freigeben', 'error');
     return;
   }
   card.classList.add('admin-card-done');
   setTimeout(() => { card.remove(); _checkImagesEmpty(); }, 400);
-  showToast('Bild freigegeben ✅');
+  showToast('Bild freigegeben');
   delete _imageData[id];
 }
 
@@ -379,7 +379,7 @@ async function rejectTableImage(id) {
   });
   if (error) {
     _setCardLoading(card, false);
-    showToast('Fehler beim Ablehnen', '❌');
+    showToast('Fehler beim Ablehnen', 'error');
     return;
   }
   card.classList.add('admin-card-done');
@@ -391,7 +391,7 @@ async function rejectTableImage(id) {
 function _checkImagesEmpty() {
   const list = document.getElementById('admin-images-list');
   if (list && !list.querySelector('.admin-img-card')) {
-    list.innerHTML = '<div class="admin-empty">🎉 Keine Bilder zur Freigabe</div>';
+    list.innerHTML = '<div class="admin-empty">Keine Bilder zur Freigabe</div>';
   }
 }
 
@@ -456,12 +456,12 @@ async function setUserRole(uid, newRole) {
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
     console.error('setUserRole error:', err);
-    showToast('Fehler beim Ändern der Rolle', '❌');
+    showToast('Fehler beim Ändern der Rolle', 'error');
     return;
   }
 
   const label = { user: 'Spieler', moderator: 'Moderator', admin: 'Admin' };
-  showToast(`Rolle auf ${label[newRole] || newRole} gesetzt`, '✅');
+  showToast(`Rolle auf ${label[newRole] || newRole} gesetzt`);
   _loadUserManagement();
 }
 
@@ -483,7 +483,7 @@ function _setCardLoading(card, loading) {
 function _checkEmpty() {
   const list = document.getElementById('admin-suggestions-list');
   if (list && !list.querySelector('.admin-card')) {
-    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Vorschläge</div>';
+    list.innerHTML = '<div class="admin-empty">Keine offenen Vorschläge</div>';
   }
 }
 
@@ -506,12 +506,12 @@ async function _logModAction(action, contentType, contentId, details) {
 }
 
 const _ACTION_LABELS = {
-  delete_image:          '🗑 Bild gelöscht',
-  delete_comment:        '🗑 Kommentar gelöscht',
-  delete_event_message:  '🗑 Event-Nachricht gelöscht',
-  delete_dm:             '🗑 DM gelöscht',
-  delete_event:          '🗑 Event gelöscht',
-  delete_player_search:  '🗑 Mitspieler-Gesuch gelöscht',
+  delete_image:          'Bild gelöscht',
+  delete_comment:        'Kommentar gelöscht',
+  delete_event_message:  'Event-Nachricht gelöscht',
+  delete_dm:             'DM gelöscht',
+  delete_event:          'Event gelöscht',
+  delete_player_search:  'Mitspieler-Gesuch gelöscht',
 };
 
 const _CONTENT_LABELS = {
@@ -589,7 +589,7 @@ async function _loadReports() {
 
   if (!reports.length) {
     _notifyIfNew('reports', 0); _updateAdminBadge('reports', 0);
-    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
+    list.innerHTML = '<div class="admin-empty">Keine offenen Meldungen</div>';
     return;
   }
 
@@ -646,7 +646,7 @@ async function resolveReport(reportId, status) {
       body: JSON.stringify({ status, reviewed_by: sb.getUserId(), reviewed_at: new Date().toISOString() })
     }
   );
-  if (!ok) { if (card) _setCardLoading(card, false); showToast('Fehler', '❌'); return; }
+  if (!ok) { if (card) _setCardLoading(card, false); showToast('Fehler', 'error'); return; }
   if (card) { card.classList.add('admin-card-done'); setTimeout(() => { card.remove(); _checkReportsEmpty(); }, 400); }
   showToast(status === 'dismissed' ? 'Meldung ignoriert' : 'Erledigt');
 }
@@ -654,7 +654,7 @@ async function resolveReport(reportId, status) {
 function _checkReportsEmpty() {
   const list = document.getElementById('admin-reports-list');
   if (list && !list.querySelector('.admin-report-card')) {
-    list.innerHTML = '<div class="admin-empty">🎉 Keine offenen Meldungen</div>';
+    list.innerHTML = '<div class="admin-empty">Keine offenen Meldungen</div>';
   }
 }
 
@@ -669,10 +669,10 @@ async function openReportedTarget(cardEl) {
         { headers: dbHeaders() }
       );
       const tableId = data?.[0]?.table_id;
-      if (!tableId) { showToast('Kommentar nicht gefunden', '⚠️'); return; }
+      if (!tableId) { showToast('Kommentar nicht gefunden', 'warning'); return; }
       closeAllSheets();
       showTableDetail(tableId);
-    } catch(e) { showToast('Fehler beim Laden', '❌'); }
+    } catch(e) { showToast('Fehler beim Laden', 'error'); }
     return;
   }
 
@@ -683,16 +683,16 @@ async function openReportedTarget(cardEl) {
         { headers: dbHeaders() }
       );
       const eventId = data?.[0]?.event_id;
-      if (!eventId) { showToast('Nachricht nicht gefunden', '⚠️'); return; }
+      if (!eventId) { showToast('Nachricht nicht gefunden', 'warning'); return; }
       const ev = typeof allEvents !== 'undefined' && allEvents.find(e => e.id === eventId);
       closeAllSheets();
       if (ev && ev.type === 'player_search') showPlayerSearchDetail(eventId);
       else showEventDetail(eventId);
-    } catch(e) { showToast('Fehler beim Laden', '❌'); }
+    } catch(e) { showToast('Fehler beim Laden', 'error'); }
     return;
   }
 
-  showToast('Kein direkter Kontext verfügbar', 'ℹ️');
+  showToast('Kein direkter Kontext verfügbar', 'info');
 }
 
 function deleteReportedContent(reportId) {
@@ -733,7 +733,7 @@ async function _confirmDeleteContent(reportId) {
 
   if (!table) {
     _setCardLoading(card, false);
-    showToast(`Löschen für "${contentType}" nicht unterstützt`, '⚠️');
+    showToast(`Löschen für "${contentType}" nicht unterstützt`, 'warning');
     return;
   }
 
@@ -742,7 +742,7 @@ async function _confirmDeleteContent(reportId) {
     `${SUPABASE_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(contentId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!delOk) { _setCardLoading(card, false); showToast('Fehler beim Löschen', '❌'); return; }
+  if (!delOk) { _setCardLoading(card, false); showToast('Fehler beim Löschen', 'error'); return; }
 
   _logModAction(logMap[contentType], contentType, contentId);
 
@@ -805,7 +805,7 @@ async function deleteEvent(eventId) {
     `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
   _logModAction('delete_event', 'event', eventId);
   showToast('Event gelöscht');
   closeAllSheets();
@@ -820,7 +820,7 @@ async function deletePlayerSearch(psId) {
     `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(psId)}`,
     { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
   );
-  if (!ok) { showToast('Fehler beim Löschen', '❌'); return; }
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
   _logModAction('delete_player_search', 'player_search', psId);
   showToast('Gesuch gelöscht');
   closeAllSheets();
@@ -838,7 +838,7 @@ function openReportFromBtn(btn) {
 }
 
 function openReport(contentType, contentId, preview) {
-  if (!sb.isLoggedIn()) { showToast('Bitte melde dich an, um Inhalte zu melden.', '⚠️'); return; }
+  if (!sb.isLoggedIn()) { showToast('Bitte melde dich an, um Inhalte zu melden.', 'info'); return; }
   _reportData = { contentType, contentId, reason: null };
   const prev = document.getElementById('report-preview');
   if (prev) prev.textContent = preview ? `"${preview}"` : '';
@@ -864,7 +864,7 @@ function selectReportReason(key, btn) {
 }
 
 async function submitReport() {
-  if (!_reportData.reason) { showToast('Bitte wähle einen Grund aus.', '⚠️'); return; }
+  if (!_reportData.reason) { showToast('Bitte wähle einen Grund aus.', 'warning'); return; }
   const note    = (document.getElementById('report-note')?.value || '').trim();
   const preview = document.getElementById('report-preview')?.textContent?.replace(/^"|"$/g, '').slice(0, 200) || null;
   const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/reports`, {
@@ -883,7 +883,7 @@ async function submitReport() {
   if (ok) {
     PTAnalytics.track('report_submitted', { content_type: _reportData.contentType });
     showToast('Danke, wir prüfen den Inhalt.');
-  } else showToast('Fehler beim Melden', '❌');
+  } else showToast('Fehler beim Melden', 'error');
 }
 
 function closeReportSheet() {
