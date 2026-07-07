@@ -91,7 +91,7 @@ SCCs im Supabase-DPA abgesichert.
 | Absender | `PlattenTreff <noreply@plattentreff.app>` |
 | SMTP Host | `smtp.resend.com:465` |
 | Datenschutz | https://resend.com/legal/privacy-policy |
-| DPA | Resend DPA prüfen / abschließen: https://resend.com/legal/dpa |
+| DPA | ✅ Resend DPA geprüft (https://resend.com/legal/dpa), PDF intern abgelegt; Self-Service-DPA, keine separate Signatur erforderlich — gilt durch Nutzung des API Keys |
 | Datenkategorien | E-Mail-Adresse, Versand-/Zustellmetadaten |
 | Rechtsgrundlage | Art. 6 Abs. 1 lit. b DSGVO |
 | Datenschutzerklärung | Abschnitt 5 + 19 (Drittanbieter-Tabelle) ✅ |
@@ -185,7 +185,7 @@ Vollständige Dokumentation: **`docs/GOOGLE_PLAY_DATA_SAFETY.md`**
 - [ ] Apple App Store App Privacy Formular in App Store Connect ausfüllen (Anleitung in `docs/APP_STORE_PRIVACY.md` Abschnitt 12)
 - [x] Google Play Data Safety Angaben dokumentiert → `docs/GOOGLE_PLAY_DATA_SAFETY.md` (2026-07-07)
 - [ ] Google Play Data Safety Formular in Play Console ausfüllen (Anleitung in `docs/GOOGLE_PLAY_DATA_SAFETY.md` Abschnitt 13)
-- [ ] Resend DPA abschließen: https://resend.com/legal/dpa
+- [x] Resend DPA geprüft und PDF intern abgelegt (2026-07-07) — Self-Service, gilt durch API-Key-Nutzung
 - [ ] Datenschutzerklärung juristisch prüfen lassen vor Launch
 - [ ] **Analytics-Retention automatisieren**: Datenschutzerklärung nennt 180 Tage —
   technisch noch nicht automatisch. Umsetzungsoptionen:
