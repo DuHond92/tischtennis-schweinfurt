@@ -5,6 +5,19 @@
 Die Anwendung verwendet Supabase als einzige Backend-Quelle.
 Alle Datenbankzugriffe erfolgen über das REST-API und sind im Frontend via `js/supabase.js` implementiert.
 
+## Auth — URL-Konfiguration (Supabase Dashboard)
+
+**Site URL:** `https://plattentreff.app`
+
+**Redirect URL Allowlist:**
+```
+https://plattentreff.app/**
+https://www.plattentreff.app/**
+https://plattentreff.vercel.app/**
+http://localhost:3000/**
+http://localhost:5173/**
+```
+
 ## Authentifizierung
 
 * `js/supabase.js` stellt Auth-Funktionen bereit:

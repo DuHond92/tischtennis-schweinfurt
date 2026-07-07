@@ -1,35 +1,137 @@
-# Deployment
+# Deployment — PlattenTreff
 
-## Aktueller Zustand
+## Kanonische Domain
 
-Das Projekt ist eine statische Webanwendung mit HTML, CSS und JavaScript.
-Es gibt keinen sichtbaren Build-Prozess oder Framework im Repository.
+```
+https://plattentreff.app
+```
 
-## Voraussetzungen
+`www.plattentreff.app` leitet per 308-Redirect auf `plattentreff.app` weiter.
+`plattentreff.vercel.app` ist die technische Vercel-Fallback-URL — nicht öffentlich kommunizieren.
 
-* Webserver oder statischer Hosting-Dienst
-* Zugriff auf die Supabase-Instanz
-* Index-Datei: `index.html`
-* Verzeichnisstruktur: `css/`, `js/`, `images/`, `docs/`
+---
 
-## Lokales Testen
+## Vercel-Konfiguration
 
-* Die Dateien können lokal über einen statischen Server gehostet werden
-* Beispiele: `python3 -m http.server`, `npx serve`, oder vergleichbare Tools
-* Die App benötigt `index.html` mit eingebundenen CSS- und JS-Dateien
+**Datei:** `vercel.json`
 
-## Supabase-Konfiguration
+```json
+{
+  "buildCommand": "npm run build:cap",
+  "outputDirectory": "www",
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "www.plattentreff.app" }],
+      "destination": "https://plattentreff.app/$1",
+      "permanent": true
+    }
+  ]
+}
+```
 
-* Die Supabase-URL ist in `js/supabase.js` fest hinterlegt
-* Der anonymisierte API-Schlüssel ist dort ebenfalls definiert
+**Vercel Dashboard → Domains (Stand 2026-07-07):**
 
-## Veröffentlichung
+| Domain | Status |
+|---|---|
+| `plattentreff.app` | Production (primär) |
+| `www.plattentreff.app` | 308 Redirect → `plattentreff.app` |
+| `plattentreff.vercel.app` | Production (technisch, nicht öffentlich) |
 
-* Keine spezielle Deployment-Pipeline gefunden
-* Mögliche Ziele: Netlify, Vercel, GitHub Pages oder eigener Webserver
-* Wichtig: `index.html` muss erreichbar sein und alle Assets aus dem Repository laden können
+**Deployment:** Automatisch bei jedem Push auf `main` via GitHub-Integration.
 
-## Unklar / prüfen
+---
 
-* Keine vorhandene `package.json`, kein Build-Tool, kein CI-Setup
-* Der konkrete Deployment-Prozess ist nicht im Repository dokumentiert.
+## Build-Prozess
+
+```bash
+npm run build:cap   # Kopiert www/ aus index.html, css/, js/, images/, legal pages
+npm run cap:sync    # Sync in iOS- und Android-Projekte
+```
+
+**Was in `www/` landet** (definiert in `scripts/build-cap.js`):
+- `index.html`, `favicon.*`, `apple-touch-icon.png`, `manifest.webmanifest`
+- `css/` (inkl. `fonts/` WOFF2-Dateien)
+- `js/`
+- `images/`
+- `datenschutz/`, `impressum/`, `nutzungsbedingungen/`
+
+---
+
+## Supabase Auth — URL-Konfiguration
+
+Im Supabase Dashboard unter **Authentication → URL Configuration** eintragen:
+
+**Site URL:**
+```
+https://plattentreff.app
+```
+
+**Redirect URLs (Allowlist):**
+```
+https://plattentreff.app/**
+https://www.plattentreff.app/**
+https://plattentreff.vercel.app/**
+http://localhost:3000/**
+http://localhost:5173/**
+```
+
+(`www` bleibt in der Allowlist, damit Nutzer über alte Links korrekt landen und Auth-Redirects funktionieren.)
+
+---
+
+## URL-Konstanten im Code
+
+**`js/supabase.js`:**
+```js
+const APP_BASE_URL  = 'https://plattentreff.app';
+const PRIVACY_URL   = APP_BASE_URL + '/datenschutz/';
+const IMPRINT_URL   = APP_BASE_URL + '/impressum/';
+const TOS_URL       = APP_BASE_URL + '/nutzungsbedingungen/';
+```
+
+---
+
+## Öffentliche URLs
+
+| Zweck | URL |
+|---|---|
+| App | https://plattentreff.app |
+| Datenschutzerklärung | https://plattentreff.app/datenschutz/ |
+| Impressum | https://plattentreff.app/impressum/ |
+| Nutzungsbedingungen | https://plattentreff.app/nutzungsbedingungen/ |
+
+---
+
+## Store-Angaben
+
+| Feld | Wert |
+|---|---|
+| App Website | https://plattentreff.app |
+| Privacy Policy URL | https://plattentreff.app/datenschutz/ |
+| Support URL | https://plattentreff.app/impressum/ |
+| Support-Mail | support@plattentreff.app |
+| Kontakt | kontakt@plattentreff.app |
+
+---
+
+## Lokale Entwicklung
+
+```bash
+# Statischer Dev-Server
+npx serve .
+
+# iOS Simulator
+npm run cap:sync && npx cap open ios
+
+# Android Emulator
+npm run cap:sync && npx cap open android
+```
+
+---
+
+## Schriftarten
+
+Nunito wird **lokal** ausgeliefert (`css/fonts/`, `css/fonts.css`).
+Keine externen Requests zu `fonts.googleapis.com` oder `fonts.gstatic.com`.

@@ -21,6 +21,7 @@ const INCLUDE = [
   'datenschutz',
   'impressum',
   'nutzungsbedingungen',
+  'community-richtlinien',
 ];
 
 function copyDir(src, dest) {
