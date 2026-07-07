@@ -40,7 +40,7 @@ Nicht verwenden: Frankfurt, Deutschland, eu-central-1.
 |---|---|
 | DPA verfügbar | ✅ Ja |
 | DPA abgeschlossen / akzeptiert | ✅ Ja |
-| Datum der Unterzeichnung | *(aus unterzeichneter PDF entnehmen)* |
+| Datum der Unterzeichnung | 2026-07-07 (siehe `docs/Supabase_DPA_signed_Plattentreff_2026-07-07.pdf`) |
 | Vertragspartner (Verantwortlicher) | Michael Tröster |
 | Nachweis | Unterschriebene Supabase-DPA-Datei liegt intern vor |
 | DPA-Referenz (öffentlich) | https://supabase.com/privacy |
@@ -158,8 +158,8 @@ Vollständige Dokumentation: **`docs/GOOGLE_PLAY_DATA_SAFETY.md`**
 
 ## 9. Offene TODOs
 
-- [ ] DPA-Unterzeichnungsdatum in Zeile „Datum der Unterzeichnung" oben eintragen
-- [ ] DPA-PDF als `docs/supabase-dpa.pdf` ablegen, falls exportierbar
+- [x] DPA-Unterzeichnungsdatum eingetragen: 2026-07-07
+- [x] DPA-PDF abgelegt: `docs/Supabase_DPA_signed_Plattentreff_2026-07-07.pdf`
 - [x] Apple App Store App Privacy Angaben dokumentiert → `docs/APP_STORE_PRIVACY.md` (2026-07-07)
 - [ ] Apple App Store App Privacy Formular in App Store Connect ausfüllen (Anleitung in `docs/APP_STORE_PRIVACY.md` Abschnitt 12)
 - [x] Google Play Data Safety Angaben dokumentiert → `docs/GOOGLE_PLAY_DATA_SAFETY.md` (2026-07-07)
