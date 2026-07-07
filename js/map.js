@@ -388,11 +388,13 @@ function locateUser() {
 
 function _doLocate() {
   _dismissLocPrompt();
+  PTAnalytics.track('location_permission_requested', { source: 'map' });
   const btn = document.getElementById('locate-btn');
   btn?.classList.add('locating');
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn?.classList.remove('locating');
+      PTAnalytics.track('location_permission_granted', { source: 'map' });
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       if (leafletMap) {
@@ -413,6 +415,7 @@ function _doLocate() {
     err => {
       btn?.classList.remove('locating');
       if (err.code === 1) {                    // PERMISSION_DENIED
+        PTAnalytics.track('location_permission_denied', { source: 'map' });
         _showLocCard('blocked');
       } else {                                 // POSITION_UNAVAILABLE oder TIMEOUT
         showSnackbar({

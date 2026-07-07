@@ -574,6 +574,7 @@ async function openDmConversation(partnerId, partnerName, partnerEmoji, partnerU
   document.getElementById('dm-feed').innerHTML = skeletonList('comment', 3);
   document.getElementById('dm-overlay').classList.add('open');
   document.getElementById('dm-sheet').classList.add('open');
+  PTAnalytics.track('chat_opened');
 
   await loadDmMessages();
   startDmPolling();
@@ -659,6 +660,7 @@ async function sendDm() {
     body:    JSON.stringify({ sender_id: uid, receiver_id: _dmPartnerId, message: msg })
   });
   if (!ok) { showToast('Fehler beim Senden', '❌'); input.value = msg; return; }
+  PTAnalytics.track('message_sent');
   await loadDmMessages();
 }
 

@@ -16,6 +16,7 @@ function _daShowStep(step) {
 }
 
 function _daGoToConfirm() {
+  PTAnalytics.track('account_delete_started');
   _daShowStep(2);
 }
 
@@ -54,7 +55,8 @@ async function _daExecuteDelete() {
       throw new Error(errBody.message || errBody.hint || `HTTP ${res.status}`);
     }
 
-    // 3. Lokalen State vollständig leeren
+    // 3. Lokalen State vollständig leeren (Analytics sendet noch davor)
+    PTAnalytics.track('account_delete_completed');
     _daClearLocalState();
 
     // 4. Erfolgs-Screen zeigen, danach zur Home/Login-Seite

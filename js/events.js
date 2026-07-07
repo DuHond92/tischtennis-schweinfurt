@@ -280,6 +280,7 @@ function applyPsRadius() {
   }
 
   _eventsRadiusActive = true;
+  PTAnalytics.track('radius_filter_changed', { radius_km: _psRadius });
   closeAllSheets();
   renderEvents();
   if (typeof renderHomePsSection === 'function') renderHomePsSection();
@@ -320,6 +321,7 @@ async function joinEvent(eventId, btn) {
     btn.disabled=false; btn.textContent='Dabei';
   } else {
     btn.textContent='✅'; btn.style.background='var(--green)';
+    PTAnalytics.track('game_joined');
     showToast('🏓 Du nimmst am Event teil!');
     _patchEventParticipantJoin(eventId);
     renderHome();
@@ -602,6 +604,7 @@ function activateMitspielerFilter() {
 
 function openCreateEventSheet() {
   _editingEventId = null;
+  PTAnalytics.track('game_create_started');
   document.querySelector('#create-event-sheet .sheet-title').textContent = 'Spiel organisieren';
   document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren 🏓';
   document.getElementById('ev-name').value  = '';
@@ -657,6 +660,7 @@ async function submitCreateEvent() {
       }
     }
 
+    PTAnalytics.track('game_created', { mode });
     closeAllSheets();
     showToast('🎉 Spiel organisiert!');
   }
@@ -864,6 +868,7 @@ async function submitMitspieler() {
   if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
   if(error) { showToast('Fehler beim Veröffentlichen', '❌'); console.error(error); return; }
 
+  PTAnalytics.track('player_search_created', { radius_km: searchRadiusKm, mode: spielart });
   closeAllSheets();
   showToast('👥 Gesuch veröffentlicht!', '✅');
   await loadEvents();

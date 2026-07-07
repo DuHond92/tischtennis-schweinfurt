@@ -436,6 +436,7 @@ async function _confirmLeaveEvent() {
   }
 
   _patchEventParticipantLeave(eventId);
+  PTAnalytics.track('game_left');
   showToast('Du nimmst nicht mehr teil');
 
   // Detail sofort mit aktuellem Stand neu öffnen

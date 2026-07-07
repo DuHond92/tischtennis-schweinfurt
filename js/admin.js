@@ -880,8 +880,10 @@ async function submitReport() {
     })
   });
   closeAllSheets();
-  if (ok) showToast('Danke, wir prüfen den Inhalt.');
-  else showToast('Fehler beim Melden', '❌');
+  if (ok) {
+    PTAnalytics.track('report_submitted', { content_type: _reportData.contentType });
+    showToast('Danke, wir prüfen den Inhalt.');
+  } else showToast('Fehler beim Melden', '❌');
 }
 
 function closeReportSheet() {

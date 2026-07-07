@@ -126,18 +126,23 @@ Datenschutzerklärung (Abschnitt 20) beschreibt dies korrekt.
 | User Content (Fotos, Kommentare) | Erfasst — App Functionality — mit Nutzer verknüpft |
 | Identifiers (User ID) | Erfasst — App Functionality — mit Nutzer verknüpft |
 | Location (Standort) | Erfasst — App Functionality — nicht verknüpft (nur lokal) |
-| Tracking | ❌ Nein |
+| Usage Data / Product Interaction | ✅ Ja — interne Nutzungsanalyse (analytics_events) |
+| Linked to User (Usage Data) | ✅ Ja (pseudonyme User-ID, sofern eingeloggt) |
+| Tracking | ❌ Nein (kein Advertising-SDK, kein Cross-App-Tracking) |
 | Weitergabe an Dritte (Werbung) | ❌ Nein |
 
 ### Google Play — Data Safety
 | Punkt | Status |
 |---|---|
-| Daten werden erhoben | ✅ Ja (Account, Profil, Inhalte) |
+| Daten werden erhoben | ✅ Ja (Account, Profil, Inhalte, Nutzungsanalyse) |
+| App activity / App interactions (analytics) | ✅ Ja — interne Nutzungsanalyse |
 | Daten werden mit Drittanbietern geteilt | ✅ Ja (Supabase als Auftragsverarbeiter) |
 | Zweck: App-Funktionalität | ✅ |
+| Zweck: Analytics | ✅ (intern, kein externes SDK) |
 | Zweck: Werbung | ❌ Nein |
 | Verschlüsselung in Transit | ✅ HTTPS/TLS |
-| Datenlöschung möglich | ✅ Account-Lösch-Flow implementiert |
+| Datenlöschung möglich | ✅ Account-Lösch-Flow (user_id → NULL in analytics_events) |
+| Analytics optional / Required | Opt-out möglich (Profil → Einstellungen → Nutzungsanalyse) |
 
 ---
 

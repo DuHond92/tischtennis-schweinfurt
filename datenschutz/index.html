@@ -305,8 +305,46 @@
     der Inhalt der Meldung bleibt zur Moderation erhalten.
   </p>
 
-  <!-- ── 15. Lokaler Speicher ─────────────────────────────── -->
-  <h2>16. Lokaler Speicher (localStorage)</h2>
+  <!-- ── 15b. Interne Nutzungsanalyse ────────────────────── -->
+  <h2>16. Interne Nutzungsanalyse</h2>
+  <p>
+    Wir erfassen in PlattenTreff bestimmte technische Nutzungsereignisse, um die App zu
+    verbessern und Nutzungsprobleme zu erkennen. Dazu zählen z.&nbsp;B. das Öffnen
+    bestimmter Funktionen, das Erstellen einer Spielrunde oder das Absenden eines
+    Plattenvorschlags.
+  </p>
+  <p>
+    Inhalte wie Nachrichten, Kommentare, Fotos, E-Mail-Adressen, Namen, genaue Adressen
+    oder genaue Standortdaten werden dabei <strong>nicht</strong> zu Analysezwecken
+    gespeichert. Erfasst werden ausschließlich ereignis-bezogene Metadaten
+    (z.&nbsp;B. Plattform, App-Session, Ereignistyp, Filterwerte ohne Personenbezug).
+  </p>
+  <p>
+    Die Analyse erfolgt ausschließlich innerhalb unseres Supabase-Backends —
+    ohne externe Werbe- oder Tracking-SDKs, ohne Google Analytics, ohne Firebase Analytics,
+    ohne Advertising-ID und ohne Cross-App-Tracking.
+  </p>
+  <p>
+    Wenn du eingeloggt bist, wird deine pseudonyme Nutzer-ID (UUID) mit den Ereignissen
+    verknüpft. Diese Verknüpfung wird bei Account-Löschung automatisch entfernt
+    (Nutzer-ID wird auf NULL gesetzt).
+  </p>
+  <p>
+    <strong>Opt-out:</strong> Du kannst die Nutzungsanalyse jederzeit in
+    Profil&nbsp;→&nbsp;Einstellungen&nbsp;→&nbsp;„Nutzungsanalyse" deaktivieren.
+    Das Deaktivieren wirkt sofort; es werden dann keine weiteren Ereignisse übertragen.
+  </p>
+  <p>
+    <strong>Rechtsgrundlage:</strong> Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO
+    (berechtigtes Interesse an der Verbesserung und dem sicheren Betrieb der App).
+  </p>
+  <p>
+    <strong>Speicherdauer:</strong> Nutzungsanalyse-Daten werden nach spätestens 180&nbsp;Tagen
+    automatisch gelöscht.
+  </p>
+
+  <!-- ── 16. Lokaler Speicher ─────────────────────────────── -->
+  <h2>17. Lokaler Speicher (localStorage)</h2>
   <p>
     PlattenTreff speichert folgende Daten lokal auf dem Gerät:
   </p>
@@ -325,7 +363,7 @@
   <p>Es werden keine Cookies zur Nachverfolgung oder Werbung eingesetzt.</p>
 
   <!-- ── 16. App-Berechtigungen ───────────────────────────── -->
-  <h2>17. App-Berechtigungen (iOS & Android)</h2>
+  <h2>18. App-Berechtigungen (iOS & Android)</h2>
   <h3>Standort</h3>
   <p>
     Wird genutzt, um Platten, Spielrunden und Mitspieler in der Nähe anzuzeigen.
@@ -344,7 +382,7 @@
   </p>
 
   <!-- ── 17. Drittanbieter ────────────────────────────────── -->
-  <h2>18. Drittanbieter</h2>
+  <h2>19. Drittanbieter</h2>
   <table>
     <thead>
       <tr><th>Anbieter</th><th>Zweck</th><th>Datenschutz</th></tr>
@@ -383,16 +421,16 @@
   </p>
 
   <!-- ── 18. Speicherdauer ─────────────────────────────────── -->
-  <h2>19. Speicherdauer</h2>
+  <h2>20. Speicherdauer</h2>
   <p>
     Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen
     Zweck notwendig ist oder gesetzliche Aufbewahrungspflichten bestehen.
     Durch Löschen des Accounts werden alle persönlichen Daten dauerhaft entfernt
-    (siehe Abschnitt 19).
+    (siehe Abschnitt 21).
   </p>
 
   <!-- ── 19. Account löschen ───────────────────────────────── -->
-  <h2>20. Account löschen und Recht auf Löschung</h2>
+  <h2>21. Account löschen und Recht auf Löschung</h2>
   <p>
     Jeder Nutzer kann seinen Account jederzeit in der App löschen
     (Profil → Einstellungen → Account löschen). Die Löschung ist dauerhaft.
@@ -416,7 +454,7 @@
   </ul>
 
   <!-- ── 20. Rechte der Nutzer ─────────────────────────────── -->
-  <h2>21. Rechte der betroffenen Personen</h2>
+  <h2>22. Rechte der betroffenen Personen</h2>
   <p>Du hast gegenüber dem Verantwortlichen folgende Rechte:</p>
   <ul>
     <li><strong>Auskunft</strong> (Art. 15 DSGVO) – welche Daten gespeichert sind</li>
@@ -432,7 +470,7 @@
   </p>
 
   <!-- ── 21. Beschwerderecht ───────────────────────────────── -->
-  <h2>22. Beschwerderecht bei einer Aufsichtsbehörde</h2>
+  <h2>23. Beschwerderecht bei einer Aufsichtsbehörde</h2>
   <p>
     Du hast das Recht, dich bei einer Datenschutzaufsichtsbehörde zu beschweren.
     Die zuständige Behörde für Bayern ist:
@@ -444,7 +482,7 @@
   </p>
 
   <!-- ── 22. Änderungen ────────────────────────────────────── -->
-  <h2>23. Änderungen dieser Datenschutzerklärung</h2>
+  <h2>24. Änderungen dieser Datenschutzerklärung</h2>
   <p>
     Wir behalten uns vor, diese Datenschutzerklärung bei Änderungen der App oder
     der rechtlichen Rahmenbedingungen anzupassen. Die aktuelle Version ist stets

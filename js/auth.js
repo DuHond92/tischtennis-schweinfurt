@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setAuthMode(mode) {
+  if (mode === 'register' && authMode !== 'register') PTAnalytics.track('signup_started');
   authMode = mode;
   const isStandard = mode === 'login' || mode === 'register';
 
@@ -157,6 +158,7 @@ async function submitAuth() {
       updateTopBarForUser();
       checkNotifications();
       startNotifPolling();
+      PTAnalytics.track('login_completed');
       showWelcomeSuccess();
 
     } else {
@@ -172,6 +174,7 @@ async function submitAuth() {
       await loadCurrentUser();
       await loadMyConnections();
       closeAllSheets();
+      PTAnalytics.track('signup_completed');
       showWelcomeSuccess();
       setAuthMode('login');
     }
@@ -249,6 +252,7 @@ function dismissAuthPrompt() {
 
 async function doSignOut() {
   _myConnections = null;
+  PTAnalytics.track('logout_completed');
   await sb.signOut();
   closeAllSheets();
   showToast('👋 Bis bald!');

@@ -111,6 +111,7 @@ async function sendConnectionRequest(otherUserId) {
   if (error) { showToast('Fehler beim Senden der Anfrage', '❌'); return; }
   _myConnections = null;
   await loadMyConnections();
+  PTAnalytics.track('friend_request_sent');
   showToast('Spielpartner-Anfrage gesendet!', '🤝');
   refreshConnectionButton(otherUserId);
 }

@@ -14,6 +14,7 @@ function openSuggestSheet() {
     openSheet('auth-sheet');
     return;
   }
+  PTAnalytics.track('plate_suggest_started');
   _resetSuggestForm();
   openSheet('suggest-table-sheet');
 }
@@ -65,16 +66,19 @@ function suggestUseGPS() {
   const btn = document.getElementById('sug-gps-btn');
   const orig = btn?.innerHTML;
   if (btn) btn.textContent = '⏳ Ermittle Standort…';
+  PTAnalytics.track('location_permission_requested', { source: 'suggest' });
   navigator.geolocation.getCurrentPosition(pos => {
     suggestLat = pos.coords.latitude;
     suggestLng = pos.coords.longitude;
     if (btn && orig) btn.innerHTML = orig;
+    PTAnalytics.track('location_permission_granted', { source: 'suggest' });
     _updateCoordDisplay();
     _placeSuggestPin(suggestLat, suggestLng);
     showToast('Standort übernommen', '📍');
   }, err => {
     if (btn && orig) btn.innerHTML = orig;
     if (err.code === 1) {
+      PTAnalytics.track('location_permission_denied', { source: 'suggest' });
       showToast('Standortfreigabe verweigert. Bitte in den Einstellungen erlauben.', '⚠️');
     } else {
       showToast('Standort nicht verfügbar', '⚠️');
@@ -316,6 +320,7 @@ async function _submitSuggestion() {
     return;
   }
 
+  PTAnalytics.track('plate_suggest_submitted', { type });
   _clearSuggestPin();
   _buildSuggestPreviewCard(name, address, count, type, suggestionImageUrl);
   _setSuggestStep(3);

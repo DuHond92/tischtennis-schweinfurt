@@ -28,6 +28,8 @@ window.addEventListener('load', async () => {
   }, 50 * 60 * 1000);
 
   applyTheme();
+  _initAnalyticsToggle();
+  PTAnalytics.track('app_open');
 
   // 1. Platten-Fallback zeigen (keine Demo-Events — events-list bleibt leer bis echte Daten da sind)
   tables = FALLBACK_TABLES;
@@ -89,3 +91,9 @@ window.addEventListener('load', async () => {
     _applyMapFilters();
   }).catch(() => {});
 });
+
+function _initAnalyticsToggle() {
+  const toggle = document.getElementById('analytics-toggle');
+  if (!toggle) return;
+  toggle.checked = !PTAnalytics.isOptedOut();
+}

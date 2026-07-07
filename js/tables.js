@@ -8,6 +8,7 @@ function showTableDetail(id) {
   const t = src.find(x=>x.id===id);
   if(!t) return;
   currentDetailTableId = id;
+  PTAnalytics.track('plate_detail_opened', { type: t.type || null });
 
   // Fotos (OSM-Foto oder Test-Fallback)
   const photos = t.photos && t.photos.length ? t.photos : [];
@@ -797,6 +798,7 @@ async function submitRating() {
     return;
   }
 
+  PTAnalytics.track('plate_rating_submitted', { overall: payload.overall, is_update: isUpdate });
   closeAllSheets();
   showToast(isUpdate ? 'Bewertung aktualisiert.' : 'Bewertung gespeichert. Danke!');
   await loadRatingsForTable(currentRatingTableId);
@@ -1098,6 +1100,7 @@ async function submitComment() {
   });
   if(error) { showToast('Fehler beim Senden','❌'); return; }
   document.getElementById('new-comment').value = '';
+  PTAnalytics.track('plate_comment_created');
   showToast('💬 Kommentar gesendet!');
   openComments(currentDetailTableId);
 }

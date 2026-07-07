@@ -23,6 +23,8 @@ function showPage(name) {
   if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
   else if(name==='map' && leafletMap) { setTimeout(()=>leafletMap.invalidateSize(),50); }
   if(name==='profile') renderProfile();
+  if(name==='map')    PTAnalytics.track('map_opened');
+  if(name==='events') PTAnalytics.track('play_tab_opened');
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -80,6 +82,7 @@ function _unlockPageScroll() {
 
 // Öffnet rechtliche Seiten im System-Browser (iOS/Android) oder neuem Tab (Web)
 function openLegalPage(url) {
+  PTAnalytics.track('legal_page_opened');
   const target = (typeof window.Capacitor !== 'undefined') ? '_system' : '_blank';
   window.open(url, target, 'noopener,noreferrer');
 }
