@@ -252,6 +252,16 @@ function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           UNIFIED TOP TOAST                                  ║
 // ╚══════════════════════════════════════════════════════════════╝
+// Im Capacitor-App ist window.location.href 'capacitor://localhost/...' — kein gültiger Share-URL.
+// Diese Funktion liefert immer eine https://-Basis für Share-Links.
+function _getShareBase() {
+  if (window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:')
+    return APP_BASE_URL + '/';
+  const u = new URL(window.location.href);
+  u.search = '';
+  return u.toString();
+}
+
 const _TOAST_EMOJI_TYPE = { '❌': 'error', '⚠️': 'warning', 'ℹ️': 'info', '✅': 'success' };
 const _TOAST_ICON_NAME  = { success: 'check-circle', error: 'x-circle', warning: 'triangle-alert', info: 'info' };
 const _TOAST_DURATION   = { success: 4000, info: 4000, warning: 5000, error: 5000 };

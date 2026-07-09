@@ -154,10 +154,8 @@ function stopPsChatPolling() {
 
 // ── SHARE ─────────────────────────────────────────────────────────
 function buildPsShareUrl(ps) {
-  const url = new URL(window.location.href);
+  const url = new URL(_getShareBase());
   url.searchParams.set('search', ps.id);
-  url.searchParams.delete('table');
-  url.searchParams.delete('event');
   return url.toString();
 }
 

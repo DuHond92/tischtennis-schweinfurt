@@ -575,10 +575,8 @@ function _appendDbImagesToEventSlider(dbImages) {
 
 // ── SHARE ─────────────────────────────────────────────────────────
 function buildEventShareUrl(ev) {
-  const url = new URL(window.location.href);
+  const url = new URL(_getShareBase());
   url.searchParams.set('event', ev.id);
-  url.searchParams.delete('table');
-  url.searchParams.delete('search');
   return url.toString();
 }
 

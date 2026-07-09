@@ -1148,10 +1148,8 @@ function _lbxGo(idx) {
 
 // ── SHARE ─────────────────────────────────────────────────────────
 function buildTableShareUrl(t) {
-  const url = new URL(window.location.href);
+  const url = new URL(_getShareBase());
   url.searchParams.set('table', t.id);
-  // Strip other search params to keep the URL clean
-  ['event'].forEach(k => url.searchParams.delete(k));
   return url.toString();
 }
 
