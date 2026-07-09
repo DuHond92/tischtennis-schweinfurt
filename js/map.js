@@ -42,6 +42,7 @@ function initMap() {
     if (_previewTableId) hideMapPreview();
     if (typeof _handleSuggestMapClick === 'function') _handleSuggestMapClick(e);
   });
+  _initLocChip();
 }
 
 function _makeMarkerIcon(t) {
@@ -401,6 +402,7 @@ function _doLocate() {
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn?.classList.remove('locating');
+      _hideLocChip();
       PTAnalytics.track('location_permission_granted', { source: 'map' });
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
@@ -423,7 +425,8 @@ function _doLocate() {
       btn?.classList.remove('locating');
       if (err.code === 1) {                    // PERMISSION_DENIED
         PTAnalytics.track('location_permission_denied', { source: 'map' });
-        _showLocCard('blocked');
+        _dismissLocChip();
+        showSnackbar({ title: 'Standort gesperrt', message: 'Du kannst den Standort später über den Button rechts aktivieren.', type: 'info' });
       } else {                                 // POSITION_UNAVAILABLE oder TIMEOUT
         showSnackbar({
           title: 'Standort nicht verfügbar',
@@ -478,6 +481,19 @@ function _showLocCard(type) {
 function _dismissLocPrompt() {
   const el = document.getElementById('loc-prompt-overlay');
   if (el) el.style.display = 'none';
+}
+
+// ── STANDORT-CHIP (dezent, unter Suchleiste) ───────────────────────────────────
+function _initLocChip() {
+  if (userLat || sessionStorage.getItem('pt_location_chip_dismissed')) return;
+  document.getElementById('map-loc-chip')?.classList.remove('hidden');
+}
+function _hideLocChip() {
+  document.getElementById('map-loc-chip')?.classList.add('hidden');
+}
+function _dismissLocChip() {
+  _hideLocChip();
+  sessionStorage.setItem('pt_location_chip_dismissed', '1');
 }
 
 function calcDistance(lat1, lng1, lat2, lng2) {
@@ -601,18 +617,8 @@ function renderMapList(list) {
     return;
   }
 
-  const locCta = (!userLat || !userLng) ? `
-    <div class="mli-loc-cta">
-      <div class="mli-loc-cta-icon">${ic('map-pinned', 22)}</div>
-      <div class="mli-loc-cta-body">
-        <div class="mli-loc-cta-title">Platten in deiner Nähe anzeigen</div>
-        <div class="mli-loc-cta-text">Aktiviere deinen Standort, um Entfernungen zu sehen und schneller eine passende Platte zu finden.</div>
-        <button class="mli-loc-cta-btn" data-action="locate">Standort verwenden</button>
-      </div>
-    </div>` : '';
-
   const _today = _localTodayISO();
-  c.innerHTML = locCta + list.map((t, i) => {
+  c.innerHTML = list.map((t, i) => {
     const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
     const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
     const _load = i < 3 ? 'eager' : 'lazy';
@@ -631,7 +637,6 @@ function renderMapList(list) {
     </div>`;
   }).join('');
 
-  c.querySelector('[data-action="locate"]')?.addEventListener('click', locateUser);
 }
 
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
