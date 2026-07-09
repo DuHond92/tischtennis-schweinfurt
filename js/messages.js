@@ -68,7 +68,11 @@ async function checkDmNotifications() {
     const url = `${SUPABASE_URL}/rest/v1/direct_messages?select=id&receiver_id=eq.${uid}&read_at=is.null&limit=50`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     updateDmBadge(Array.isArray(data) ? data.length : 0);
-  } catch(e) {}
+  } catch (e) {
+    if (window.PT_DEBUG || location.hostname === 'localhost') {
+      console.warn('[messages] checkDmNotifications fehlgeschlagen:', e?.message || e);
+    }
+  }
 }
 
 // ── Header-Zustand tauschen ────────────────────────────────────

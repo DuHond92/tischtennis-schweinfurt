@@ -169,7 +169,9 @@ function renderHome() {
 
   // Platten-Karten
   const scroll = document.getElementById('home-tables-scroll');
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  // tablesLoaded=false → Supabase lädt noch → FALLBACK_TABLES als Platzhalter
+  // tablesLoaded=true  → echtes Ergebnis verwenden (auch [] ist gültig → leerer State)
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   scroll.innerHTML = src.slice(0,6).map((t, i)=>{
     const evCount = t.events?.length || 0;
     const _plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';

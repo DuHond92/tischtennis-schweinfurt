@@ -55,24 +55,43 @@ window.addEventListener('load', async () => {
     renderEvents();
     hideSplash();
     // Select-Optionen befüllen
-    const opts = (tables.length?tables:FALLBACK_TABLES).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    const opts = tables.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
 
     // 2b. Deep-Link auflösen — nach allen Daten, URL danach säubern
     if (_dlTable || _dlEvent || _dlSearch) {
       history.replaceState(null, '', window.location.pathname);
+
+      // IDs sind numerisch — NaN/negative/float abweisen bevor find() läuft
+      const _dlParseId = (raw, label) => {
+        const n = Number(raw);
+        if (!Number.isInteger(n) || n <= 0) {
+          if (window.PT_DEBUG || location.hostname === 'localhost') {
+            console.warn(`[main] Ungültige ${label}-Deep-Link-ID:`, raw);
+          }
+          return null;
+        }
+        return n;
+      };
+
       if (_dlTable) {
-        const id = parseInt(_dlTable);
-        if (tables.find(t => t.id === id)) { showPage('map'); showTableDetail(id); }
-        else showToast('Platte nicht gefunden', 'error');
+        const id = _dlParseId(_dlTable, 'table');
+        if (id !== null) {
+          if (tables.find(t => t.id === id)) { showPage('map'); showTableDetail(id); }
+          else showToast('Platte nicht gefunden', 'error');
+        }
       } else if (_dlEvent) {
-        const id = parseInt(_dlEvent);
-        if (allEvents.find(e => e.id === id)) { showPage('events'); showEventDetail(id); }
-        else showToast('Spiel nicht gefunden', 'error');
+        const id = _dlParseId(_dlEvent, 'event');
+        if (id !== null) {
+          if (allEvents.find(e => e.id === id)) { showPage('events'); showEventDetail(id); }
+          else showToast('Spiel nicht gefunden', 'error');
+        }
       } else if (_dlSearch) {
-        const id = parseInt(_dlSearch);
-        if (allPlayerSearches.find(p => p.id === id)) { showPage('events'); showPlayerSearchDetail(id); }
-        else showToast('Gesuch nicht gefunden', 'error');
+        const id = _dlParseId(_dlSearch, 'search');
+        if (id !== null) {
+          if (allPlayerSearches.find(p => p.id === id)) { showPage('events'); showPlayerSearchDetail(id); }
+          else showToast('Gesuch nicht gefunden', 'error');
+        }
       }
     }
   } catch(e) {

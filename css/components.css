@@ -609,6 +609,12 @@
   font-size: 0.75rem; color: var(--text-dim);
 }
 .ps-expand-link { color: var(--primary); font-weight: 600; cursor: pointer; }
+.ps-no-coords-group { display: flex; flex-direction: column; gap: 6px; }
+.psc-no-location {
+  font-size: 0.7rem; color: var(--text-xdim);
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 4px;
+}
 
 .event-card-big {
   display: flex; align-items: center; gap: 12px;

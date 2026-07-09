@@ -5,11 +5,15 @@ let _psCollapsed       = false;
 let _gamesCollapsed    = false;
 let _eventsRadiusActive = false;
 // ── Radius / Suchzentrum – State ──────────────────────────────────
-let _psRadius      = parseInt(localStorage.getItem('tt_ps_radius') || '5');
-let _psSearchLat   = parseFloat(localStorage.getItem('tt_ps_lat')  || '') || null;
-let _psSearchLng   = parseFloat(localStorage.getItem('tt_ps_lng')  || '') || null;
-let _psSearchLabel = localStorage.getItem('tt_ps_label') || '';
-let _psSearchType  = localStorage.getItem('tt_ps_type')  || ''; // 'manual_place' | 'current_location' | ''
+// localStorage kann bei vollem Quota eine Exception werfen — sicher einlesen
+function _lsGet(key, fallback = '') {
+  try { return localStorage.getItem(key) ?? fallback; } catch(_) { return fallback; }
+}
+let _psRadius      = parseInt(_lsGet('tt_ps_radius', '5'));
+let _psSearchLat   = parseFloat(_lsGet('tt_ps_lat'))  || null;
+let _psSearchLng   = parseFloat(_lsGet('tt_ps_lng'))  || null;
+let _psSearchLabel = _lsGet('tt_ps_label');
+let _psSearchType  = _lsGet('tt_ps_type'); // 'manual_place' | 'current_location' | ''
 
 let _psGeoTimer = null, _psGeoAbort = null;
 let _psGeoItems = [];
@@ -34,7 +38,7 @@ function _psDist(ps) {
 
 function _psGetFiltered(src) {
   const c = _psCenter();
-  if (!c) return { list: src, filteredOut: 0, noLocation: true };
+  if (!c) return { list: src, filteredOut: 0, withoutCoords: [], noLocation: true };
 
   const withCoords    = src.filter(ps => ps.lat != null && ps.lng != null);
   const withoutCoords = src.filter(ps => ps.lat == null || ps.lng == null);
@@ -42,11 +46,10 @@ function _psGetFiltered(src) {
 
   inRadius.sort((a, b) => (_psDist(a) || 0) - (_psDist(b) || 0));
 
-  // Wenn Zentrum aktiv: NUR Gesuche im Radius zeigen — ortslose Gesuche ausschließen
   return {
     list: inRadius,
     filteredOut: withCoords.length - inRadius.length,
-    noCoords: withoutCoords.length,
+    withoutCoords,   // koordinatenlose Gesuche — werden im Render nach Ownership aufgeteilt
     noLocation: false
   };
 }
@@ -272,18 +275,20 @@ function applyPsRadius() {
   const v = document.getElementById('psr-validation');
   if (v) v.style.display = 'none';
 
-  localStorage.setItem('tt_ps_radius', String(_psRadius));
-  if (_psSearchType === 'manual_place' && _psSearchLat && _psSearchLng) {
-    localStorage.setItem('tt_ps_lat',   String(_psSearchLat));
-    localStorage.setItem('tt_ps_lng',   String(_psSearchLng));
-    localStorage.setItem('tt_ps_label', _psSearchLabel);
-    localStorage.setItem('tt_ps_type',  'manual_place');
-  } else {
-    localStorage.removeItem('tt_ps_lat');
-    localStorage.removeItem('tt_ps_lng');
-    localStorage.removeItem('tt_ps_label');
-    localStorage.setItem('tt_ps_type', 'current_location');
-  }
+  try {
+    localStorage.setItem('tt_ps_radius', String(_psRadius));
+    if (_psSearchType === 'manual_place' && _psSearchLat && _psSearchLng) {
+      localStorage.setItem('tt_ps_lat',   String(_psSearchLat));
+      localStorage.setItem('tt_ps_lng',   String(_psSearchLng));
+      localStorage.setItem('tt_ps_label', _psSearchLabel);
+      localStorage.setItem('tt_ps_type',  'manual_place');
+    } else {
+      localStorage.removeItem('tt_ps_lat');
+      localStorage.removeItem('tt_ps_lng');
+      localStorage.removeItem('tt_ps_label');
+      localStorage.setItem('tt_ps_type', 'current_location');
+    }
+  } catch(_) { /* Quota überschritten — Filter-State nicht persistent, funktioniert trotzdem */ }
 
   _eventsRadiusActive = true;
   PTAnalytics.track('radius_filter_changed', { radius_km: _psRadius });
@@ -335,7 +340,7 @@ async function joinEvent(eventId, btn) {
   }
 }
 
-function renderPlayerSearchCard(ps) {
+function renderPlayerSearchCard(ps, opts = {}) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
@@ -369,6 +374,7 @@ function renderPlayerSearchCard(ps) {
       </div>
       ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
       ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
+      ${opts.noCoords ? `<div class="psc-no-location">${ic('pin', 11)} Kein Standort gesetzt</div>` : ''}
     </div>`;
 }
 
@@ -495,14 +501,19 @@ function renderEvents() {
     ? allPlayerSearches
     : allPlayerSearches.filter(ps => ps.spielart === currentTypeFilter);
   srcPs = _applyTimePsFilter(srcPs);
-  const { list: psFiltered, filteredOut } = _eventsRadiusActive
+  const { list: psFiltered, filteredOut, withoutCoords = [] } = _eventsRadiusActive
     ? _psGetFiltered(srcPs)
-    : { list: srcPs, filteredOut: 0, noLocation: false };
+    : { list: srcPs, filteredOut: 0, withoutCoords: [], noLocation: false };
+
+  // Eigene Gesuche ohne Koordinaten immer im Feed zeigen; fremde separat gruppieren
+  const uid = sb.isLoggedIn() ? sb.getUserId() : null;
+  const ownNoCoords   = uid ? withoutCoords.filter(ps => ps.userId === uid) : [];
+  const otherNoCoords = withoutCoords.filter(ps => ps.userId !== uid);
 
   _updateEfcRadius();
   _updateEfcReset();
 
-  const hasItems = games.length > 0 || psFiltered.length > 0;
+  const hasItems = games.length > 0 || psFiltered.length > 0 || ownNoCoords.length > 0 || otherNoCoords.length > 0;
 
   if (!hasItems) {
     const canReset = currentTimeFilter !== 'all' || currentTypeFilter !== 'all';
@@ -519,16 +530,22 @@ function renderEvents() {
   }
 
   // Merge + sort events and player searches into one chronological list
+  // Eigene Gesuche ohne Koordinaten werden ans Ende des Feeds gehängt (nach Datum sortiert)
   const combined = [
     ...games.map(e => ({
-      kind: 'event', data: e,
+      kind: 'event', data: e, noCoords: false,
       sortKey: (e.dateStr || '9999-12-31') + 'T' + (e.time || '00:00'),
       dist: (() => { const t = tables.find(t => t.id === e.tid); return (typeof userLat !== 'undefined' && userLat && t?.lat) ? calcDistance(userLat, userLng, t.lat, t.lng) : Infinity; })()
     })),
     ...psFiltered.map(ps => ({
-      kind: 'ps', data: ps,
+      kind: 'ps', data: ps, noCoords: false,
       sortKey: _psDateSortKey(ps),
       dist: _psDist(ps) ?? Infinity
+    })),
+    ...ownNoCoords.map(ps => ({
+      kind: 'ps', data: ps, noCoords: true,
+      sortKey: _psDateSortKey(ps),
+      dist: Infinity   // kein Standort → immer am Ende bei Distanzsortierung
     }))
   ];
   if (currentSort === 'dist') {
@@ -547,8 +564,20 @@ function renderEvents() {
   }
 
   let feedHtml = combined.map((item, idx) =>
-    item.kind === 'event' ? renderEventCard(item.data, idx) : renderPlayerSearchCard(item.data)
+    item.kind === 'event'
+      ? renderEventCard(item.data, idx)
+      : renderPlayerSearchCard(item.data, { noCoords: item.noCoords })
   ).join('');
+
+  // Fremde Gesuche ohne Koordinaten — als eigene Gruppe am Ende
+  if (otherNoCoords.length > 0) {
+    feedHtml += `<div class="ps-no-coords-group">
+      <div class="ps-radius-note" style="margin-bottom:6px;">
+        ${ic('pin', 13)} ${otherNoCoords.length} Gesuch${otherNoCoords.length !== 1 ? 'e' : ''} ohne Standort
+      </div>
+      ${otherNoCoords.map(ps => renderPlayerSearchCard(ps, { noCoords: true })).join('')}
+    </div>`;
+  }
 
   if (psFiltered.length === 0 && filteredOut > 0) {
     feedHtml += `<div class="ps-radius-note">

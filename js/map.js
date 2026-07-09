@@ -68,9 +68,10 @@ function addMarker(t) {
 }
 
 function _refreshMarkerIcons() {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
+  const byId = new Map(src.map(t => [t.id, t]));
   markers.forEach(({ id, m }) => {
-    const t = src.find(x => x.id === id);
+    const t = byId.get(id);
     if (t) m.setIcon(_makeMarkerIcon(t));
   });
 }

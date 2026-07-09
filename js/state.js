@@ -3,6 +3,7 @@
 // ╚══════════════════════════════════════════════════════════════╝
 let currentUser   = null;  // eingeloggtes Profil aus profiles-Tabelle
 let tables        = [];    // aus Supabase + OSM geladen
+let tablesLoaded  = false; // true sobald loadTables() abgeschlossen (auch bei leerem Ergebnis oder Fehler)
 let allEvents     = [];    // aus Supabase geladen (mit table-Join)
 let currentFilter     = 'all';
 let currentTimeFilter = 'all'; // 'all' | 'today' | 'week' | 'weekend'

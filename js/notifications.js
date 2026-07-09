@@ -2,6 +2,7 @@
 // ║           NOTIFICATIONS (Spiel-Chat Badge & Sheet)           ║
 // ╚══════════════════════════════════════════════════════════════╝
 let notifPollTimer       = null;
+let _notifSeenTimer      = null; // Timer für markAllSeen — wird beim Sheet-Schließen gecleart
 let pendingNotifs        = [];   // ungelesene message-Objekte
 let _reportNotifs        = [];   // ungelesene report_resolved Notifications
 let _suggestionNotifs    = [];   // ungelesene suggestion_approved Notifications
@@ -53,14 +54,27 @@ async function checkNotifications() {
 
   const myEventIds = [...new Set([...creatorIds, ...participantIds, ...psCreatorIds, ...psParticipantIds])];
 
-  // 4. Nachrichten aus meinen Events — server-seitig gefiltert, kein globales Limit-Problem
+  // 4. Nachrichten aus meinen Events — server-seitig auf ungesehene eingrenzen
   if (myEventIds.length) {
     try {
-      const url = `${SUPABASE_URL}/rest/v1/event_messages?select=id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)&event_id=in.(${myEventIds.join(',')})&order=created_at.desc&limit=200`;
+      // Ältester seen_chat_*-Timestamp als konservative untere Schranke
+      // → server-seitig werden nur Nachrichten ab diesem Zeitpunkt geladen
+      const minSeenTs = myEventIds.reduce((min, id) => {
+        const ts = localStorage.getItem('seen_chat_' + id) || '1970-01-01T00:00:00Z';
+        return ts < min ? ts : min;
+      }, new Date().toISOString());
+
+      const url = `${SUPABASE_URL}/rest/v1/event_messages`
+        + `?select=id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)`
+        + `&event_id=in.(${myEventIds.join(',')})`
+        + `&user_id=neq.${userId}`          // eigene Nachrichten serverseitig ausschließen
+        + `&created_at=gt.${minSeenTs}`     // nur ab ältestem gesehenen Zeitpunkt
+        + `&order=created_at.desc&limit=50`;
+
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       const messages = Array.isArray(data) ? data : [];
+      // Client-seitig per-Event verfeinern (jedes Event hat eigenen seen-Timestamp)
       pendingNotifs = messages.filter(m => {
-        if (m.user_id === userId) return false;
         const seenTs = localStorage.getItem('seen_chat_' + m.event_id) || '1970-01-01T00:00:00Z';
         return m.created_at > seenTs;
       });
@@ -136,10 +150,25 @@ function _updateBadgeCount() {
 
 // ── Notification-Sheet öffnen und rendern ────────────────────────
 function openNotifSheet() {
+  _cancelNotifSeenTimers();         // alten Timer clearen (falls Sheet erneut geöffnet wird)
   renderNotifSheet();
   openSheet('notif-sheet');
-  setTimeout(markAllSeen, 1200);
-  setTimeout(_markSystemNotifsRead, 1200);
+  _notifSeenTimer = setTimeout(() => {
+    _notifSeenTimer = null;
+    // Nur markieren wenn Sheet noch offen und App im Vordergrund ist
+    const sheet = document.getElementById('notif-sheet');
+    if (!sheet?.classList.contains('open')) return;
+    if (document.visibilityState !== 'visible') return;
+    markAllSeen();
+    _markSystemNotifsRead();
+  }, 1200);
+}
+
+function _cancelNotifSeenTimers() {
+  if (_notifSeenTimer) {
+    clearTimeout(_notifSeenTimer);
+    _notifSeenTimer = null;
+  }
 }
 
 async function _markSystemNotifsRead() {

@@ -6,7 +6,8 @@ async function loadTables() {
     const qb = new QueryBuilder('tables');
     qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours';
     const {data} = await qb.order('name').execute();
-    if(data && data.length) {
+    // Auch leeres Array [] ist ein gültiges Supabase-Ergebnis — nicht mit "nicht geladen" gleichsetzen
+    if(data) {
       tables = data.map(t => ({
         id: t.id, name: t.name, addr: t.address,
         lat: t.lat, lng: t.lng,
@@ -20,6 +21,8 @@ async function loadTables() {
       }));
     }
   } catch(e) { console.warn('Supabase tables error', e); }
+  // Immer setzen — auch bei Fehler oder leerem Ergebnis; runSearch() wartet auf dieses Flag
+  tablesLoaded = true;
 
   await _loadApprovedTableImagesForTables(tables);
 

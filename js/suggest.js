@@ -184,8 +184,8 @@ function suggestNextStep() {
       showToast('Bitte zuerst einen Standort wählen', 'warning');
       return;
     }
-    // Duplikat-Check gegen geladene Platten (50m Radius)
-    const src = tables.length ? tables : FALLBACK_TABLES;
+    // Duplikat-Check nur gegen echte Supabase-Daten — FALLBACK_TABLES niemals prüfen
+    const src = tablesLoaded ? tables : [];
     const DUPE_M = 50;
     for (const t of src) {
       const d = calcDistance(suggestLat, suggestLng, t.lat, t.lng);

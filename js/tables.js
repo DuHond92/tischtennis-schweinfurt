@@ -45,7 +45,7 @@ function showTableDetail(id) {
           <div class="tds-event-tag-row">${gameTypePill(e.type)}</div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Teilnehmer</div>
         </div>
-        <div class="tds-event-chevron">›</div>
+        <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
       </div>`).join('')}</div>`;
 
   // Basisinfos-Meta (sync, kein Rating hier — das kommt in die Rating-Card)

@@ -5,6 +5,17 @@ const pages = ['home','map','events','profile','admin'];
 let currentPage = 'home';
 let mapInit = false;
 
+// Wartet per rAF bis der Map-Container echte Dimensionen hat, dann initMap()
+// Verhindert Leaflet 0×0px-Mount auf langsamen iOS-Geräten
+function _initMapWhenReady() {
+  const el = document.getElementById('map');
+  if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
+    initMap();
+  } else {
+    requestAnimationFrame(_initMapWhenReady);
+  }
+}
+
 function showPage(name) {
   // Auth-Gate: Profil, Events erstellen nur wenn eingeloggt
   if((name==='profile') && !sb.isLoggedIn()) {
@@ -20,7 +31,7 @@ function showPage(name) {
     name==='events' ? 'flex' : 'none';
   document.querySelector('.bottom-nav').style.display =
     name === 'admin' ? 'none' : '';
-  if(name==='map' && !mapInit) { mapInit=true; setTimeout(initMap,50); }
+  if(name==='map' && !mapInit) { mapInit=true; _initMapWhenReady(); }
   else if(name==='map' && leafletMap) { setTimeout(()=>leafletMap.invalidateSize(),50); }
   if(name==='profile') renderProfile();
   if(name==='map')    PTAnalytics.track('map_opened');
@@ -89,9 +100,32 @@ function openLegalPage(url) {
 
 let openSheetId = null;
 function openSheet(id) {
-  if(openSheetId) closeAllSheets();
+  if (openSheetId === id) return;
   const el = document.getElementById(id);
-  // Swipe-Reste bereinigen, damit kein Inline-Transform die CSS-Klasse überschreibt
+  if (!el) return;
+
+  if (openSheetId) {
+    // Sheet-Wechsel: Overlay bleibt open — kein opacity-Flicker durch Fade-out/Fade-in
+    stopChatPolling();
+    if (typeof stopDmPolling          === 'function') stopDmPolling();
+    if (typeof _cancelNotifSeenTimers === 'function') _cancelNotifSeenTimers();
+    if (typeof _destroyEdsMap         === 'function') _destroyEdsMap();
+    document.querySelectorAll('.bottom-sheet.open').forEach(s => {
+      s.classList.remove('open');
+      s.style.removeProperty('height');
+      s.style.removeProperty('max-height');
+      s.style.removeProperty('transform');
+      s.style.removeProperty('transition');
+    });
+    // Overlay + Body-Klasse + Scroll-Lock bleiben — direkt neues Sheet öffnen
+    el.style.removeProperty('transform');
+    el.style.removeProperty('transition');
+    el.classList.add('open');
+    openSheetId = id;
+    return;
+  }
+
+  // Kein Sheet offen — normaler Öffnungsweg mit Overlay
   el.style.removeProperty('transform');
   el.style.removeProperty('transition');
   document.getElementById('overlay').classList.add('open');
@@ -102,8 +136,9 @@ function openSheet(id) {
 }
 function closeAllSheets() {
   stopChatPolling();
-  if (typeof stopDmPolling     === 'function') stopDmPolling();
-  if (typeof _destroyEdsMap    === 'function') _destroyEdsMap();
+  if (typeof stopDmPolling            === 'function') stopDmPolling();
+  if (typeof _cancelNotifSeenTimers   === 'function') _cancelNotifSeenTimers();
+  if (typeof _destroyEdsMap           === 'function') _destroyEdsMap();
   document.querySelectorAll('.bottom-sheet.open').forEach(s => {
     s.classList.remove('open');
     s.style.removeProperty('height');
@@ -302,10 +337,13 @@ function onSearchInput() {
 }
 
 async function runSearch(q) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  // tablesLoaded = false solange Supabase noch antwortet.
+  // FALLBACK_TABLES darf hier nicht erscheinen — Ladezustand halten, kein Demo-Content.
+  if (!tablesLoaded) return;
 
+  // tables ist jetzt der echte Supabase-Stand: [] = leer (gültig), [...] = Daten
   // 1. Lokale Platten sofort matchen
-  const localMatches = src.filter(t =>
+  const localMatches = tables.filter(t =>
     t.name.toLowerCase().includes(q.toLowerCase()) ||
     (t.addr||'').toLowerCase().includes(q.toLowerCase())
   );
