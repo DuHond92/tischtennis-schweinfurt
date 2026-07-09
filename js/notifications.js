@@ -48,7 +48,7 @@ async function checkNotifications() {
         const url = `${SUPABASE_URL}/rest/v1/event_messages?select=event_id&user_id=eq.${userId}&event_id=in.(${allPsIds.join(',')})`;
         const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
         if (Array.isArray(data)) psParticipantIds = [...new Set(data.map(m => m.event_id))];
-      } catch(e) {}
+      } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] psParticipant query:', e); }
     })() : Promise.resolve()
   ]);
 
@@ -98,7 +98,7 @@ async function checkNotifications() {
       if (n.type === 'suggestion_approved') _suggestionNotifs.push(n);
       else                                  _reportNotifs.push(n);
     });
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] systemNotifs fetch:', e); }
 
   const totalBadge = pendingNotifs.length + (pendingConnectionRequests?.length || 0) + _reportNotifs.length + _suggestionNotifs.length;
   totalBadge ? showNotifBadge(totalBadge) : hideNotifBadge();
@@ -186,7 +186,7 @@ async function _markSystemNotifsRead() {
         body:    JSON.stringify({ read_at: new Date().toISOString() })
       }
     );
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] markSystemRead:', e); }
   checkNotifications();
 }
 

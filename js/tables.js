@@ -4,7 +4,7 @@
 let currentDetailTableId = null;
 
 function showTableDetail(id) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x=>x.id===id);
   if(!t) return;
   currentDetailTableId = id;
@@ -139,7 +139,7 @@ function buildPhotoSlider(t, photos) {
 
   const navHtml = hasPhotos && photos.length > 1 ? `
     <button class="ds-nav ds-prev" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
-    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">${ic('chevron-right', 16)}</button>` : '';
 
   const mainAttrs = hasPhotos
     ? ` onclick="openLightbox(this.closest('.detail-slider'))" style="cursor:pointer;"`
@@ -478,7 +478,7 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
       prev.onclick = () => detailSliderStep(slider, -1);
       const next = document.createElement('button');
       next.className = 'ds-nav ds-next';
-      next.textContent = '›';
+      next.innerHTML = ic('chevron-right', 16);
       next.onclick = () => detailSliderStep(slider, 1);
       main.appendChild(prev);
       main.appendChild(next);
@@ -611,7 +611,7 @@ function _showMapsPicker(lat, lng, hasCoords, name, addr) {
         <button class="maps-picker-btn" onclick="_pickMapsApp(${i})">
           <span class="maps-picker-emoji">${app.emoji}</span>
           <span class="maps-picker-label">${app.label}</span>
-          <span class="maps-picker-arrow">›</span>
+          <span class="maps-picker-arrow">${ic('chevron-right', 16)}</span>
         </button>`).join('')}
       <button class="maps-picker-cancel" onclick="document.getElementById('maps-picker-overlay')?.remove()">Abbrechen</button>
     </div>`;
@@ -664,7 +664,7 @@ function _renderRatingCardEmpty(tableId, tableName) {
 }
 
 function _renderRatingCardFilled(tableId, r, myRating) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === tableId);
   const score = parseFloat(r.avg_overall);
   const count = r.rating_count;
@@ -689,7 +689,7 @@ function _renderRatingCardFilled(tableId, r, myRating) {
   return `
     <div class="tds-rc-head">
       <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
-      <button class="tds-rc-all-btn" onclick="openAllRatings(${tableId})">Alle ansehen ›</button>
+      <button class="tds-rc-all-btn" onclick="openAllRatings(${tableId})">Alle ansehen ${ic('chevron-right', 16)}</button>
     </div>
     <div class="tds-rc-score-compact">
       <span class="tds-rc-star-num">★ ${score.toFixed(1).replace('.',',')}</span>
@@ -805,7 +805,7 @@ async function submitRating() {
 }
 
 async function loadRatingsForTable(tableId) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t   = src.find(x => x.id === tableId);
   try {
     const qb = new QueryBuilder('table_ratings_avg');
@@ -825,7 +825,7 @@ function renderRatingSummary(tableId, r, tableName, myRating) {
   _currentTableHasRatings = !!(r && r.rating_count > 0);
 
   // Cache into table object so the floating preview card can use it
-  const tObj = (tables.length ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
+  const tObj = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
   if (tObj) {
     if (r && r.rating_count > 0) {
       tObj.ratingAvg   = parseFloat(r.avg_overall);
@@ -851,7 +851,7 @@ async function openAllRatings(tableId) {
   const listEl = document.getElementById('ar-list');
   if (!listEl) return;
 
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === tableId);
   const titleEl = document.getElementById('ar-sheet-title');
   if (titleEl) titleEl.textContent = t?.name || 'Bewertungen';

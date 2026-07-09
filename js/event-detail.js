@@ -89,7 +89,7 @@ function buildEventSlider(images) {
 
   const navHtml = hasImgs && images.length > 1 ? `
     <button class="ds-nav ds-prev" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),-1)">‹</button>
-    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">›</button>` : '';
+    <button class="ds-nav ds-next" onclick="event.stopPropagation();detailSliderStep(this.closest('.detail-slider'),1)">${ic('chevron-right', 16)}</button>` : '';
 
   return `
     <div class="detail-slider" data-idx="0" data-count="${hasImgs ? images.length : 1}">
@@ -567,7 +567,7 @@ function _appendDbImagesToEventSlider(dbImages) {
     prev.className = 'ds-nav ds-prev'; prev.textContent = '‹';
     prev.onclick = () => detailSliderStep(slider, -1);
     const next = document.createElement('button');
-    next.className = 'ds-nav ds-next'; next.textContent = '›';
+    next.className = 'ds-nav ds-next'; next.innerHTML = ic('chevron-right', 16);
     next.onclick = () => detailSliderStep(slider, 1);
     main.appendChild(prev); main.appendChild(next);
   }

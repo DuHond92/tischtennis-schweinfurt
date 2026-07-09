@@ -49,7 +49,7 @@ async function _pollAdminCounts() {
     const c = Array.isArray(data) ? data.length : 0;
     _notifyIfNew('suggestions', c);
     _updateAdminBadge('suggestions', c);
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] suggestions count:', e); }
   try {
     const { data } = await fetchWithRefresh(
       `${SUPABASE_URL}/rest/v1/table_images?select=id&status=eq.pending`,
@@ -58,7 +58,7 @@ async function _pollAdminCounts() {
     const c = Array.isArray(data) ? data.length : 0;
     _notifyIfNew('images', c);
     _updateAdminBadge('images', c);
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] images count:', e); }
   try {
     const { data } = await fetchWithRefresh(
       `${SUPABASE_URL}/rest/v1/reports?select=id&status=eq.pending`,
@@ -67,7 +67,7 @@ async function _pollAdminCounts() {
     const c = Array.isArray(data) ? data.length : 0;
     _notifyIfNew('reports', c);
     _updateAdminBadge('reports', c);
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] reports count:', e); }
 }
 
 function showAdminPage() {
@@ -303,7 +303,7 @@ async function _loadImageModerations() {
       const url = `${SUPABASE_URL}/rest/v1/tables?select=id,name&id=in.(${tableIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(t => { tableMap[t.id] = t.name; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] tableNames fetch:', e); }
   }
 
   // Uploader-Namen batch-laden
@@ -314,7 +314,7 @@ async function _loadImageModerations() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${uploaderIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { uploaderMap[p.id] = p.username; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] uploaderNames fetch:', e); }
   }
 
   _imageData = {};
@@ -549,7 +549,7 @@ async function _loadModLog() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${modIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { modMap[p.id] = p.username; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] modNames fetch:', e); }
   }
 
   list.innerHTML = entries.map(e => {
@@ -600,7 +600,7 @@ async function _loadReports() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${repIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { repMap[p.id] = p.username; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[admin] reporterNames fetch:', e); }
   }
 
   _notifyIfNew('reports', reports.length); _updateAdminBadge('reports', reports.length);

@@ -494,6 +494,29 @@
   .toast { transition: opacity 0.15s; transform: translateX(-50%) translateY(0); }
 }
 
+/* Dark Mode */
+[data-theme="dark"] .toast {
+  background: #1E293B;
+  color: #F1F5F9;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5),
+              0 2px 8px  rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .toast--info    { border-color: rgba(63,  124, 244, 0.4); }
+[data-theme="dark"] .toast--success { border-color: rgba(34,  197,  94, 0.4); }
+[data-theme="dark"] .toast--warning { border-color: rgba(245, 158,  11, 0.4); }
+[data-theme="dark"] .toast--error   { border-color: rgba(239,  68,  68, 0.4); }
+
+[data-theme="dark"] .toast--info    .toast-icon { color: #60A5FA; background: rgba(63,  124, 244, 0.18); }
+[data-theme="dark"] .toast--success .toast-icon { color: #4ADE80; background: rgba(34,  197,  94, 0.18); }
+[data-theme="dark"] .toast--warning .toast-icon { color: #FBBF24; background: rgba(245, 158,  11, 0.18); }
+[data-theme="dark"] .toast--error   .toast-icon { color: #F87171; background: rgba(239,  68,  68, 0.18); }
+
+[data-theme="dark"] .toast-title { color: #F1F5F9; }
+[data-theme="dark"] .toast-text  { color: #CBD5E1; }
+[data-theme="dark"] .toast-close-btn { color: #94A3B8; }
+[data-theme="dark"] .toast-close-btn:active { background: rgba(255,255,255,0.08); }
+
 /* Spacer for bottom nav */
 .pb-safe { padding-bottom: 88px; }
 

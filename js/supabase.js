@@ -53,7 +53,7 @@ const sb = {
       const data = await r.json();
       if(data.access_token) {
         this._saveSession(data);
-        console.log('✅ Token automatisch erneuert');
+        if (window.PT_DEBUG || location.hostname === 'localhost') console.log('✅ Token automatisch erneuert');
         return true;
       }
     } catch(e) { console.warn('Token refresh fehlgeschlagen', e); }
@@ -196,7 +196,7 @@ async function fetchWithRefresh(url, options) {
   // JWT expired → Token erneuern und nochmal versuchen
   if(data.message === 'JWT expired' || data.code === 'PGRST301' ||
      (data.error === 'invalid_jwt') || JSON.stringify(data).includes('JWT expired')) {
-    console.log('JWT expired – erneuere Token…');
+    if (window.PT_DEBUG || location.hostname === 'localhost') console.log('JWT expired – erneuere Token…');
     const refreshed = await sb.refreshToken();
     if(refreshed) {
       options.headers = { ...options.headers, ...dbHeaders() };

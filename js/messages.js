@@ -150,7 +150,7 @@ async function renderInboxChats() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${dmIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { dmProfs[p.id] = p; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[messages] dmProfs fetch:', e); }
   }
 
   updateDmBadge(dmConvs.reduce((s, c) => s + c.unread, 0));
@@ -204,7 +204,7 @@ async function inboxShowRequests() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${allIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { profs[p.id] = p; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[messages] reqProfs fetch:', e); }
   }
 
   const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };
@@ -395,7 +395,7 @@ async function _inboxShowSuggestions() {
     const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level,city&order=username.asc&limit=30`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     if (Array.isArray(data)) results = data.filter(p => p.id !== uid);
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[messages] suggestions fetch:', e); }
 
   if (!results.length) {
     el.innerHTML = `<div class="inbox-empty">
@@ -429,7 +429,7 @@ async function _runInboxSearch(q) {
     const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level,city&username=ilike.*${encodeURIComponent(q)}*&limit=20`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     if (Array.isArray(data)) results = data.filter(p => p.id !== uid);
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[messages] search fetch:', e); }
 
   if (q !== _inboxSearchQ) return;
 
@@ -681,7 +681,7 @@ async function markDmRead() {
       }
     );
     checkDmNotifications();
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[messages] markDmRead:', e); }
 }
 
 function startDmPolling() {

@@ -24,7 +24,7 @@ let _msGeoTimer = null, _msGeoAbort = null, _msGeoItems = [];
 
 // Liefert das aktive Suchzentrum (manuell oder GPS)
 function _psCenter() {
-  if (_psSearchLat && _psSearchLng) return { lat: _psSearchLat, lng: _psSearchLng };
+  if (_psSearchLat != null && _psSearchLng != null) return { lat: _psSearchLat, lng: _psSearchLng };
   if (typeof userLat !== 'undefined' && userLat && userLng) return { lat: userLat, lng: userLng };
   return null;
 }

@@ -20,7 +20,7 @@ async function loadMyConnections() {
     qb.eq('requester_id', uid);
     const { data } = await qb.execute();
     asRequester = data || [];
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[connections] asRequester fetch:', e); }
 
   let asReceiver = [];
   try {
@@ -29,7 +29,7 @@ async function loadMyConnections() {
     qb.eq('receiver_id', uid);
     const { data } = await qb.execute();
     asReceiver = data || [];
-  } catch(e) {}
+  } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[connections] asReceiver fetch:', e); }
 
   _myConnections = [...asRequester, ...asReceiver];
 }
@@ -213,7 +213,7 @@ async function checkConnectionNotifications() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${ids})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { profiles[p.id] = p; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[connections] pendingProfiles fetch:', e); }
     pendingConnectionRequests = pending.map(r => ({ ...r, profile: profiles[r.requester_id] || null }));
   } else {
     pendingConnectionRequests = [];
@@ -278,7 +278,7 @@ async function renderSpielpartnerSection() {
       const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url,skill_level&id=in.(${profileIds.join(',')})`;
       const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
       if (Array.isArray(data)) data.forEach(p => { profiles[p.id] = p; });
-    } catch(e) {}
+    } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[connections] connProfiles fetch:', e); }
   }
 
   const skillMap = { anfaenger: 'Anfänger', fortgeschritten: 'Fortgeschritten', profi: 'Profi' };

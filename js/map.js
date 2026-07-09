@@ -34,7 +34,7 @@ function initMap() {
   // Leaflet-Prefix entfernen — BSD 2-Clause erfordert keine UI-Attribution
   leafletMap.attributionControl.setPrefix(false);
 
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   src.forEach(t => addMarker(t));
   renderMapList(src);
   initBottomSheet();
@@ -53,7 +53,7 @@ function _makeMarkerIcon(t) {
     html: `<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;font-size:1rem;
       box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
-🏓${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+${ic('table-tennis', 16)}${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
         color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
         display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>` : ''}
     </div>`,
@@ -100,7 +100,7 @@ function onMapSearchInput() {
 }
 
 async function _runMapDdSearch(q) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const local = src.filter(t =>
     t.name.toLowerCase().includes(q.toLowerCase()) ||
     (t.addr || '').toLowerCase().includes(q.toLowerCase())
@@ -361,7 +361,7 @@ function getFilteredTables(src) {
 }
 
 function _applyMapFilters() {
-  const src      = tables.length ? tables : FALLBACK_TABLES;
+  const src      = tablesLoaded ? tables : FALLBACK_TABLES;
   const filtered = getFilteredTables(src);
   renderMapList(filtered);
   _updateMarkerVisibility(filtered);
@@ -496,7 +496,7 @@ function formatDistance(m) {
 
 function updateDistances() {
   if(!userLat || !userLng) return;
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   src.forEach(t => { t.distance = calcDistance(userLat, userLng, t.lat, t.lng); });
   src.sort((a,b) => (a.distance||99999) - (b.distance||99999));
   _applyMapFilters();
@@ -508,7 +508,7 @@ function updateDistances() {
 function selectMapItem(id) {
   document.querySelectorAll('.map-list-item').forEach(el =>
     el.classList.toggle('selected', el.dataset.id == id));
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === id);
   if(t && leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate:true });
   const selected = document.querySelector('.map-list-item.selected');
@@ -516,7 +516,7 @@ function selectMapItem(id) {
 }
 
 function _buildStatusLine(filtered) {
-  const total     = (tables.length ? tables : FALLBACK_TABLES).length;
+  const total     = (tablesLoaded ? tables : FALLBACK_TABLES).length;
   const count     = filtered.length;
   const hasSearch = !!mapSearchQuery;
   const hasSpiela = mapSpielartFilter !== 'all';
@@ -831,7 +831,7 @@ async function _loadPreviewRating(tableId) {
     const qb = new QueryBuilder('table_ratings_avg');
     qb.eq('table_id', tableId);
     const { data } = await qb.execute();
-    const src = tables.length ? tables : FALLBACK_TABLES;
+    const src = tablesLoaded ? tables : FALLBACK_TABLES;
     const t = src.find(x => x.id === tableId);
     if (!t) return;
     if (data && data[0] && data[0].rating_count > 0) {
@@ -872,7 +872,7 @@ function _dismissPreviewContent() {
 }
 
 function showMapPreview(tableId) {
-  const src = tables.length ? tables : FALLBACK_TABLES;
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === tableId);
   if (!t) return;
 

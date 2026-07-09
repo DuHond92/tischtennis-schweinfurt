@@ -295,6 +295,8 @@ function showToast(text, iconOrOpts) {
   if (actsEl)   { actsEl.style.display = (hasAction || !dismissible) ? '' : 'none'; }
 
   t.className = 'toast toast--' + type;
+  t.setAttribute('role', (type === 'error' || type === 'warning') ? 'alert' : 'status');
+  t.setAttribute('aria-live', (type === 'error' || type === 'warning') ? 'assertive' : 'polite');
   void t.offsetHeight;
   t.classList.add('show');
   clearTimeout(_toastTimer);
@@ -325,6 +327,7 @@ function _triggerSnackbarAction() { _triggerToastAction(); }
 let searchTimer = null, _searchAbort = null;
 let dropdownItems = [];
 let activeIdx = -1;
+let _ddOutsideAbort = null;
 
 function onSearchInput() {
   const q = document.getElementById('home-search').value.trim();
@@ -441,11 +444,20 @@ function showDropdownLoading() {
 
 function openDropdown() {
   document.getElementById('search-dropdown')?.classList.add('open');
+  _ddOutsideAbort?.abort();
+  _ddOutsideAbort = new AbortController();
+  document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('search-wrapper');
+    const dd = document.getElementById('search-dropdown');
+    if (!wrapper?.contains(e.target) && !dd?.contains(e.target)) closeDropdown();
+  }, { signal: _ddOutsideAbort.signal });
 }
 
 function closeDropdown() {
   document.getElementById('search-dropdown')?.classList.remove('open');
   activeIdx = -1;
+  _ddOutsideAbort?.abort();
+  _ddOutsideAbort = null;
 }
 
 function selectDropdownItem(idx) {
@@ -495,22 +507,19 @@ function onSearchKey(e) {
   }
 }
 
-// Dropdown schließen wenn man woanders klickt
-document.addEventListener('click', (e) => {
-  const wrapper = document.getElementById('search-wrapper');
-  const dd = document.getElementById('search-dropdown');
-  if (!wrapper && !dd) return;
-  if(!wrapper?.contains(e.target) && !dd?.contains(e.target)) {
-    closeDropdown();
-  }
-});
 
 
 
 function animateCount(el, target) {
   if(!el) return;
-  let n=0; const step=Math.max(1,Math.ceil(target/30));
-  const t=setInterval(()=>{ n=Math.min(n+step,target); el.textContent=n; if(n>=target)clearInterval(t); },40);
+  const duration = 1200;
+  const start = performance.now();
+  const tick = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(progress * target);
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

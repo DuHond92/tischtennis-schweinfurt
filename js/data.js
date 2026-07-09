@@ -26,8 +26,7 @@ async function loadTables() {
 
   await _loadApprovedTableImagesForTables(tables);
 
-  const src = tables.length ? tables : FALLBACK_TABLES;
-  const opts = src.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const opts = tables.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
 }
 
@@ -106,7 +105,7 @@ async function loadOSMTables() {
       const supabaseIds = new Set(tables.map(t => t.osmId).filter(Boolean));
       const newOSM = osmTables.filter(t => !supabaseIds.has(t.osmId));
       tables = [...tables, ...newOSM];
-      console.log(`OSM: ${osmTables.length} Platten geladen`);
+      if (window.PT_DEBUG || location.hostname === 'localhost') console.log(`OSM: ${osmTables.length} Platten geladen`);
       const statusEl = document.getElementById('osm-status');
       if(statusEl) {
         statusEl.innerHTML = `<div style="background:rgba(34,197,94,0.9);color:#fff;border-radius:8px;padding:5px 10px;font-size:0.72rem;font-weight:700;">${osmTables.length} Platten von OpenStreetMap</div>`;
@@ -115,7 +114,7 @@ async function loadOSMTables() {
     }
   } catch(e) {
     clearTimeout(timeout);
-    console.log('OSM nicht erreichbar, nutze Supabase/Fallback');
+    if (window.PT_DEBUG || location.hostname === 'localhost') console.log('OSM nicht erreichbar, nutze Supabase/Fallback');
   }
 }
 
@@ -182,7 +181,7 @@ async function loadEvents() {
 
   // 5. Daten im JS zusammensetzen
   const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
-  allEvents = evData.map(e => {
+  const _evRaw = evData.map(e => {
     const d   = new Date(e.event_date);
     const tbl = tableMap[e.table_id]   || {};
     const prof = profileMap[e.creator_id] || {};
@@ -214,9 +213,9 @@ async function loadEvents() {
     };
   });
 
-  // Mitspieler-Gesuche aus allEvents herauslösen — erst trennen, dann verarbeiten
-  const playerSearchRaw = allEvents.filter(e => e.type === 'player_search');
-  allEvents = allEvents.filter(e => e.type !== 'player_search');
+  // Mitspieler-Gesuche herauslösen — erst trennen, dann atomar zuweisen
+  const playerSearchRaw = _evRaw.filter(e => e.type === 'player_search');
+  allEvents = _evRaw.filter(e => e.type !== 'player_search');
   allPlayerSearches = playerSearchRaw
     .map(e => {
       let extra = {};
