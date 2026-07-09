@@ -54,7 +54,7 @@ function _makeMarkerIcon(t) {
     html: `<div style="background:${color};width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
       box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
-<img src="images/icons/play-map-white.svg" width="16" height="16" style="display:block;pointer-events:none;object-fit:contain;" alt="">${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
+<img src="images/icons/play-map-white.svg" width="24" height="24" style="display:block;width:24px;height:24px;flex-shrink:0;pointer-events:none;object-fit:contain;" alt="">${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
         color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
         display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>` : ''}
     </div>`,
