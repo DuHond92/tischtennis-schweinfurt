@@ -21,7 +21,7 @@
 }
 
 .topbar-logo-img {
-  height: 28px;
+  height: 21px;
   width: auto;
   display: block;
 }
@@ -83,7 +83,7 @@
   gap: 3px; transition: color 0.2s;
   border: none; background: none;
   -webkit-tap-highlight-color: transparent;
-  color: var(--text-dim);
+  color: var(--text-xdim);
 }
 
 .nav-icon {
