@@ -1,81 +1,84 @@
 /* ======= DESIGN TOKENS ======= */
 :root {
   /* Light Mode — PlattenTreff Styleguide */
-  --bg:          #F2F5F2;
-  --bg2:         #E6EBE6;
+  --bg:          #F4F6EF;
+  --bg2:         #E8EDE2;
   --surface:     #FFFFFF;
-  --surface2:    #EEF3EE;
-  --border:      #D5E2D5;
-  --text:        #0F1F14;
-  --text-dim:    #677569;
-  --text-xdim:   #96A89A;
+  --surface2:    #ECF1E7;
+  --border:      #DFE7DB;
+  --text:        #182420;
+  --text-dim:    #5C6B61;
+  --text-xdim:   #98A79D;
 
   /* Plattengrün als Primärfarbe */
-  --primary:     #16A35B;
-  --primary-d:   #0E7A43;
-  --primary-bg:  #E4F7EE;
-  --primary-mid: rgba(22,163,91,0.12);
+  --primary:     #0F8A55;
+  --primary-d:   #0B6B42;
+  --primary-bg:  #DEF0E5;
+  --primary-mid: rgba(15,138,85,0.12);
 
   /* Ball-Orange als Akzent */
-  --accent:      #F55836;
-  --accent-bg:   #FEEEE8;
+  --accent:      #FF5A36;
+  --accent-d:    #E5431F;
+  --accent-bg:   #FFE7DF;
 
   /* Sekundäre Farben */
   --green:       #22C55E;
-  --green-bg:    #F0FDF4;
-  --gold:        #F59E0B;
-  --gold-bg:     #FFFBEB;
+  --green-bg:    #E8F9EE;
+  --gold:        #F7B723;
+  --gold-bg:     #FDF1D7;
   --silver:      #64748B;
   --bronze:      #D97706;
 
   /* Schatten */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:   0 4px 16px rgba(8,28,16,0.10), 0 2px 6px rgba(8,28,16,0.06);
-  --shadow-lg:   0 12px 40px rgba(8,28,16,0.13), 0 4px 12px rgba(8,28,16,0.07);
+  --shadow-sm:   0 1px 3px rgba(24,36,32,0.07), 0 1px 2px rgba(24,36,32,0.05);
+  --shadow-md:   0 6px 20px rgba(24,36,32,0.10), 0 2px 6px rgba(24,36,32,0.06);
+  --shadow-lg:   0 24px 60px rgba(24,36,32,0.16), 0 6px 16px rgba(24,36,32,0.08);
 
   /* Radius */
-  --radius-sm:   10px;
-  --radius:      16px;
-  --radius-lg:   22px;
-  --radius-xl:   28px;
+  --radius-sm:   12px;
+  --radius:      18px;
+  --radius-lg:   24px;
+  --radius-xl:   32px;
+  --radius-pill: 999px;
 
   /* Fonts */
-  --font-head:   'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-body:   'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-head:   'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
+  --font-body:   'Figtree', 'Nunito', system-ui, sans-serif;
 
   /* Skeleton */
-  --sk-bg:       #e4ebe4;
-  --sk-shine:    #f2f5f2;
+  --sk-bg:       #e2e9dc;
+  --sk-shine:    #f0f3ec;
 }
 
 [data-theme="dark"] {
-  --bg:          #0C1910;
-  --bg2:         #101E14;
-  --surface:     #172A1D;
-  --surface2:    #1E3426;
-  --border:      #2C4237;
-  --text:        #EAF3EC;
-  --text-dim:    #7A9C85;
-  --text-xdim:   #4A6454;
+  --bg:          #0D1512;
+  --bg2:         #131C17;
+  --surface:     #17231C;
+  --surface2:    #1F2E25;
+  --border:      #2A3A30;
+  --text:        #EDF4EE;
+  --text-dim:    #9AAC9F;
+  --text-xdim:   #5E7266;
 
-  --primary:     #22C55E;
-  --primary-d:   #16A35B;
-  --primary-bg:  rgba(22,163,91,0.18);
-  --primary-mid: rgba(22,163,91,0.10);
+  --primary:     #41C489;
+  --primary-d:   #2DA870;
+  --primary-bg:  rgba(65,196,137,0.16);
+  --primary-mid: rgba(65,196,137,0.10);
 
-  --accent:      #FF6B4E;
-  --accent-bg:   rgba(245,88,54,0.15);
+  --accent:      #FF7B57;
+  --accent-d:    #FF9375;
+  --accent-bg:   rgba(255,90,54,0.16);
 
   --green:       #4ADE80;
-  --green-bg:    rgba(34,197,94,0.10);
-  --gold:        #FCD34D;
-  --gold-bg:     rgba(245,158,11,0.10);
+  --green-bg:    rgba(34,197,94,0.12);
+  --gold:        #FFCB4D;
+  --gold-bg:     rgba(255,203,77,0.14);
   --silver:      #94A3B8;
   --bronze:      #FBA94C;
 
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.20);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.22);
-  --shadow-lg:   0 12px 40px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.32);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.40);
+  --shadow-md:   0 6px 20px rgba(0,0,0,0.50);
+  --shadow-lg:   0 24px 60px rgba(0,0,0,0.60);
 
   --sk-bg:       rgba(255,255,255,0.05);
   --sk-shine:    rgba(255,255,255,0.09);

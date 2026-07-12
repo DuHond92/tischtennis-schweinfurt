@@ -26,5 +26,9 @@
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
     "@fontsource/nunito": "^5.2.7"
+  },
+  "devDependencies": {
+    "@fontsource/bricolage-grotesque": "^5.2.10",
+    "@fontsource/figtree": "^5.2.10"
   }
 }

@@ -1,12 +1,17 @@
 /* ======= TOP BAR ======= */
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  background: var(--surface);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: env(safe-area-inset-top) 16px 0;
   min-height: calc(56px + env(safe-area-inset-top));
   display: flex; align-items: center; justify-content: space-between;
   transition: background 0.3s, box-shadow 0.3s;
   box-shadow: 0 1px 0 var(--border);
+}
+[data-theme="dark"] .topbar {
+  background: rgba(23,35,28,0.92);
 }
 
 .topbar-logo {
@@ -26,28 +31,30 @@
   background: linear-gradient(135deg, var(--primary), var(--primary-d));
   display: flex; align-items: center; justify-content: center;
   font-size: 1rem; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(22,163,91,0.3);
+  box-shadow: 0 2px 8px rgba(15,138,85,0.3);
 }
 
 .topbar-right { display: flex; align-items: center; gap: 8px; }
 
 .icon-btn {
-  width: 44px; height: 44px; border-radius: 12px;
-  background: var(--surface2); border: 1px solid var(--border);
+  width: 40px; height: 40px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 1.1rem;
-  position: relative; /* badge positioning */
+  cursor: pointer; font-size: 1.05rem;
+  position: relative;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, border-color 0.2s;
-  color: var(--text-dim);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  color: var(--text);
   flex-shrink: 0;
 }
 .icon-btn:hover { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
 
 /* Dark mode toggle */
 .theme-toggle {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: var(--surface2); border: 1px solid var(--border);
+  width: 36px; height: 36px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 1rem;
   transition: all 0.3s;
@@ -57,58 +64,56 @@
 /* ======= BOTTOM NAV ======= */
 .bottom-nav {
   position: sticky; bottom: 0; z-index: 100;
-  background: var(--surface);
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
   display: flex;
   padding-bottom: env(safe-area-inset-bottom);
   transition: background 0.3s, border-color 0.3s;
 }
+[data-theme="dark"] .bottom-nav {
+  background: rgba(18,28,22,0.96);
+}
 
 .nav-item {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 8px 4px 4px; cursor: pointer;
-  gap: 3px; transition: all 0.2s;
+  padding: 7px 4px 3px; cursor: pointer;
+  gap: 3px; transition: color 0.2s;
   border: none; background: none;
   -webkit-tap-highlight-color: transparent;
   color: var(--text-dim);
 }
 
 .nav-icon {
-  width: 24px; height: 24px; display: flex;
-  align-items: center; justify-content: center;
-  font-size: 1.2rem; transition: transform 0.2s;
+  width: 52px; height: 30px;
+  border-radius: var(--radius-pill);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; transition: background 0.2s, transform 0.2s;
 }
 .nav-icon svg { display: block; }
 
 .nav-label {
-  font-size: 0.62rem; font-weight: 700;
+  font-size: 0.6rem; font-weight: 700;
   letter-spacing: 0.3px; color: currentColor;
   text-transform: uppercase; transition: color 0.2s;
   font-family: var(--font-body);
 }
 
-.nav-item.active { position: relative; color: var(--primary); }
-.nav-item.active .nav-icon { transform: scale(1.1); }
-.nav-item.active .nav-label { color: var(--primary); }
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 32px; height: 3px;
-  background: var(--primary);
-  border-radius: 0 0 4px 4px;
+.nav-item.active { color: var(--primary-d); }
+[data-theme="dark"] .nav-item.active { color: var(--primary); }
+.nav-item.active .nav-icon {
+  background: var(--primary-bg);
+  transform: none;
 }
+.nav-item.active .nav-label { color: currentColor; }
 
 /* ======= PAGES ======= */
 .page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
 .page.active { display: flex; flex-direction: column; }
 
-/* Hintergrund-Scroll sperren wenn ein Overlay/Sheet offen ist.
-   JS setzt zusätzlich inline overflow-y:hidden + stellt scrollTop wieder her. */
 body.has-open-sheet .page {
   overflow-y: hidden;
-  /* touch-action verhindert iOS-Momentum-Scroll auch nach Overflow-Änderung */
   touch-action: none;
 }
