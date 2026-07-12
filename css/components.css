@@ -60,61 +60,46 @@
   color: var(--text-dim); font-size: 1rem; pointer-events: none;
 }
 
-/* Stats row — overlaps hero bottom, grid with primary card full-width */
+/* Stats row — overlaps hero bottom, drei Karten nebeneinander */
 .stats-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
   padding: 0 16px 8px;
-  margin-top: -32px; position: relative; z-index: 2;
+  margin-top: -36px; position: relative; z-index: 2;
 }
 
 .stat-card {
   background: var(--surface);
-  border-radius: var(--radius); padding: 14px 10px 12px;
+  border-radius: var(--radius); padding: 13px 8px 12px;
   text-align: center; box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer; user-select: none;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
   -webkit-tap-highlight-color: transparent;
 }
 .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .stat-card:active { transform: scale(0.97); box-shadow: none; }
 .sac-icon-wrap {
-  width: 42px; height: 42px; border-radius: 50%;
+  width: 40px; height: 40px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 .sac-title {
-  font-size: 0.76rem; font-weight: 700;
+  font-size: 0.72rem; font-weight: 700;
   color: var(--text); line-height: 1.25;
 }
 .sac-sub {
-  font-size: 0.66rem; color: var(--text-dim);
-  line-height: 1.35; margin-top: -2px;
+  font-size: 0.62rem; color: var(--text-dim);
+  line-height: 1.35; margin-top: -1px;
 }
 
-/* Primärkarte „Platten entdecken" — volle Breite, horizontal, grüner Akzent */
+/* Subtile Hervorhebung der primären Karte „Platten entdecken" */
 .stats-row .stat-card:first-child {
-  grid-column: 1 / -1;
-  flex-direction: row; text-align: left; gap: 14px;
-  padding: 15px 18px;
-  background: linear-gradient(130deg, rgba(22,163,91,0.09) 0%, rgba(22,163,91,0.04) 100%);
-  border-color: rgba(22,163,91,0.24);
-  position: relative; overflow: hidden;
-}
-.stats-row .stat-card:first-child .sac-icon-wrap {
-  width: 48px; height: 48px; flex-shrink: 0;
+  border-color: rgba(22,163,91,0.28);
+  background: linear-gradient(160deg, rgba(22,163,91,0.07) 0%, rgba(22,163,91,0.02) 100%);
 }
 .stats-row .stat-card:first-child .sac-title {
-  font-size: 0.92rem; font-weight: 800; color: var(--primary);
-}
-.stats-row .stat-card:first-child .sac-sub {
-  font-size: 0.76rem; color: var(--text-dim); margin-top: 2px;
-}
-.stats-row .stat-card:first-child::after {
-  content: '›';
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-  font-size: 1.4rem; color: var(--primary); opacity: 0.5; line-height: 1;
+  color: var(--primary);
 }
 
 /* Section header */
