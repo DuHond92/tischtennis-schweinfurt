@@ -3,10 +3,11 @@
   position: sticky; top: 0; z-index: 100;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: env(safe-area-inset-top) 20px 0;
-  min-height: calc(60px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 16px 0;
+  min-height: calc(56px + env(safe-area-inset-top));
   display: flex; align-items: center; justify-content: space-between;
   transition: background 0.3s, border-color 0.3s;
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .topbar-logo {
