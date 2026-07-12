@@ -130,12 +130,12 @@
 .thumb-empty {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  background: #eef4fb;
+  background: #eef7f2;
 }
 .thumb-placeholder-img {
   width: 100%; height: 100%;
   object-fit: contain; object-position: center;
-  background: #eef4fb;
+  background: #eef7f2;
   display: block;
 }
 
@@ -169,7 +169,7 @@
 }
 .ev-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ev-thumb-casual      { background: linear-gradient(135deg,#4caf50,#1b5e20); }
-.ev-thumb-training    { background: linear-gradient(135deg,#1e88e5,#0d47a1); }
+.ev-thumb-training    { background: linear-gradient(135deg,#F59E0B,#D97706); }
 .ev-thumb-punktspiel  { background: linear-gradient(135deg,#e05252,#8b1a1a); }
 .ev-date-overlay {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -348,7 +348,7 @@
   display: inline-flex; align-items: center; gap: 5px;
   background: var(--primary-bg); color: var(--primary);
   border-radius: 20px; font-size: 0.72rem; font-weight: 700;
-  padding: 3px 10px; border: 1px solid rgba(59,124,244,0.2);
+  padding: 3px 10px; border: 1px solid rgba(22,163,91,0.2);
 }
 .mbs-status-count {
   font-size: 0.78rem; font-weight: 700; color: var(--text-dim);
@@ -614,9 +614,9 @@
   padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
   text-transform: uppercase; line-height: 1.6;
 }
-.fc-type-badge--spiel { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(63,124,244,0.3); }
+.fc-type-badge--spiel { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(22,163,91,0.25); }
 .fc-type-badge--gesuch { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(245,158,11,0.25); }
-[data-theme="dark"] .fc-type-badge--spiel  { border-color: rgba(59,124,244,0.25); }
+[data-theme="dark"] .fc-type-badge--spiel  { border-color: rgba(22,163,91,0.30); }
 [data-theme="dark"] .fc-type-badge--gesuch { border-color: rgba(252,211,77,0.2); }
 
 /* ── EVENTS COMBINED FEED ────────────────────────────────────────── */
@@ -752,7 +752,7 @@
 .auth-tab.auth-tab-active {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(59,124,244,0.25);
+  box-shadow: 0 2px 8px rgba(22,163,91,0.25);
 }
 
 /* ======= SEARCH AUTOCOMPLETE ======= */
@@ -816,7 +816,7 @@
 
 /* Highlight matched text */
 .sdi-main mark {
-  background: rgba(59,124,244,0.18);
+  background: rgba(22,163,91,0.18);
   color: var(--primary); border-radius: 3px;
   padding: 0 2px; font-weight: 800;
 }
@@ -939,8 +939,8 @@
 
 /* Locate me button pulse */
 @keyframes locatePulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(59,124,244,0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(59,124,244,0); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(22,163,91,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(22,163,91,0); }
 }
 .locating { animation: locatePulse 1s infinite; }
 
@@ -1371,14 +1371,14 @@
   display: flex; align-items: center; gap: 10px;
   margin: 0 20px 16px;
   background: var(--primary-bg);
-  border: 1px solid rgba(59,124,244,0.15);
+  border: 1px solid rgba(22,163,91,0.15);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   cursor: pointer;
   transition: background 0.15s;
   font-size: 0.85rem; font-weight: 600; color: var(--primary);
 }
-.home-ps-hint:hover { background: rgba(59,124,244,0.12); }
+.home-ps-hint:hover { background: rgba(22,163,91,0.12); }
 .home-ps-hint b { font-weight: 800; }
 .hps-arrow { margin-left: auto; font-size: 1rem; opacity: 0.7; }
 
@@ -1969,7 +1969,7 @@
 .pg-btn-primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(59,124,244,0.3);
+  box-shadow: 0 4px 12px rgba(22,163,91,0.3);
 }
 .pg-btn-primary:active { filter: brightness(0.88); }
 .pg-btn-secondary {

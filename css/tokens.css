@@ -1,63 +1,82 @@
 /* ======= DESIGN TOKENS ======= */
 :root {
-  /* Light Mode – from Figma */
-  --bg:          #F4F6FB;
-  --bg2:         #EAECF5;
+  /* Light Mode — PlattenTreff Styleguide */
+  --bg:          #F2F5F2;
+  --bg2:         #E6EBE6;
   --surface:     #FFFFFF;
-  --surface2:    #F0F2FA;
-  --border:      #DDE1F0;
-  --text:        #1A1D2E;
-  --text-dim:    #6B7280;
-  --text-xdim:   #9CA3AF;
-  --primary:     #3B7CF4;
-  --primary-d:   #2563EB;
-  --primary-bg:  #EBF2FF;
-  --primary-mid: rgba(59,124,244,0.12);
-  --accent:      #EF4444;
-  --accent-bg:   #FEF2F2;
+  --surface2:    #EEF3EE;
+  --border:      #D5E2D5;
+  --text:        #0F1F14;
+  --text-dim:    #677569;
+  --text-xdim:   #96A89A;
+
+  /* Plattengrün als Primärfarbe */
+  --primary:     #16A35B;
+  --primary-d:   #0E7A43;
+  --primary-bg:  #E4F7EE;
+  --primary-mid: rgba(22,163,91,0.12);
+
+  /* Ball-Orange als Akzent */
+  --accent:      #F55836;
+  --accent-bg:   #FEEEE8;
+
+  /* Sekundäre Farben */
   --green:       #22C55E;
   --green-bg:    #F0FDF4;
   --gold:        #F59E0B;
   --gold-bg:     #FFFBEB;
   --silver:      #64748B;
   --bronze:      #D97706;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-lg:   0 12px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.08);
+
+  /* Schatten */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(8,28,16,0.10), 0 2px 6px rgba(8,28,16,0.06);
+  --shadow-lg:   0 12px 40px rgba(8,28,16,0.13), 0 4px 12px rgba(8,28,16,0.07);
+
+  /* Radius */
   --radius-sm:   8px;
   --radius:      14px;
   --radius-lg:   20px;
   --radius-xl:   28px;
+
+  /* Fonts */
   --font-head:   'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-body:   'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --sk-bg:       #eaeef6;
-  --sk-shine:    #f4f6fb;
+
+  /* Skeleton */
+  --sk-bg:       #e4ebe4;
+  --sk-shine:    #f2f5f2;
 }
 
 [data-theme="dark"] {
-  --bg:          #0F1117;
-  --bg2:         #171B26;
-  --surface:     #1C2133;
-  --surface2:    #242B40;
-  --border:      #2E3650;
-  --text:        #EDF0FA;
-  --text-dim:    #8892B0;
-  --text-xdim:   #4E5A78;
-  --primary:     #4D8EF8;
-  --primary-d:   #3B7CF4;
-  --primary-bg:  rgba(59,124,244,0.15);
-  --primary-mid: rgba(59,124,244,0.1);
-  --accent:      #F87171;
-  --accent-bg:   rgba(239,68,68,0.12);
+  --bg:          #0C1910;
+  --bg2:         #101E14;
+  --surface:     #172A1D;
+  --surface2:    #1E3426;
+  --border:      #2C4237;
+  --text:        #EAF3EC;
+  --text-dim:    #7A9C85;
+  --text-xdim:   #4A6454;
+
+  --primary:     #22C55E;
+  --primary-d:   #16A35B;
+  --primary-bg:  rgba(22,163,91,0.18);
+  --primary-mid: rgba(22,163,91,0.10);
+
+  --accent:      #FF6B4E;
+  --accent-bg:   rgba(245,88,54,0.15);
+
   --green:       #4ADE80;
-  --green-bg:    rgba(34,197,94,0.1);
+  --green-bg:    rgba(34,197,94,0.10);
   --gold:        #FCD34D;
-  --gold-bg:     rgba(245,158,11,0.1);
+  --gold-bg:     rgba(245,158,11,0.10);
   --silver:      #94A3B8;
   --bronze:      #FBA94C;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
-  --shadow-lg:   0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.20);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.22);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.32);
+
   --sk-bg:       rgba(255,255,255,0.05);
   --sk-shine:    rgba(255,255,255,0.09);
 }

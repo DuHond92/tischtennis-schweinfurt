@@ -46,7 +46,7 @@ function initMap() {
 }
 
 function _makeMarkerIcon(t) {
-  const color = t.type === 'indoor' ? '#3B7CF4' : '#22C55E';
+  const color = t.type === 'indoor' ? '#16A35B' : '#22C55E';
   const today = _localTodayISO();
   const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
   return L.divIcon({
