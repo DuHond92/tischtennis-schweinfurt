@@ -42,8 +42,8 @@
   --radius-pill: 999px;
 
   /* Fonts */
-  --font-head:   'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
-  --font-body:   'Figtree', 'Nunito', system-ui, sans-serif;
+  --font-head:   'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body:   'Figtree', system-ui, sans-serif;
 
   /* Skeleton */
   --sk-bg:       #e2e9dc;
