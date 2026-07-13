@@ -93,6 +93,9 @@
   font-size: 1.15rem; transition: background 0.2s, transform 0.2s;
 }
 .nav-icon svg { display: block; }
+.nav-icon .icon-f { display: none; }
+.nav-item.active .nav-icon .icon-o { display: none; }
+.nav-item.active .nav-icon .icon-f { display: block; }
 
 .nav-label {
   font-size: 0.6rem; font-weight: 700;

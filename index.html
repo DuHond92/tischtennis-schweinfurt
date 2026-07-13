@@ -50,7 +50,7 @@
   <!-- TOP BAR -->
   <header class="topbar">
     <a class="topbar-logo" onclick="showPage('home')">
-      <img id="app-logo" src="images/logo/logo_plattentreff_1.svg" alt="PlattenTreff" class="topbar-logo-img">
+      <img id="app-logo" src="images/logo/logo-plattentreff.svg" alt="PlattenTreff" class="topbar-logo-img">
     </a>
     <div class="topbar-right">
       <button class="icon-btn" onclick="openInbox()" title="Nachrichten" aria-label="Nachrichten">
@@ -82,8 +82,8 @@
         <div class="sac-sub">Finde Tische in deiner Umgebung</div>
       </div>
       <div class="stat-card" onclick="navStat('searches')">
-        <div class="sac-icon-wrap" style="background:var(--green-bg);color:var(--green);"></div>
-        <div class="sac-title">Mitspieler finden</div>
+        <div class="sac-icon-wrap" style="background:var(--accent-bg);color:var(--accent);"></div>
+        <div class="sac-title">Mitspieler<br>finden</div>
         <div class="sac-sub">Verabrede dich zum Spielen</div>
       </div>
       <div class="stat-card" onclick="openCreateEventSheet()">
@@ -442,19 +442,31 @@
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-item active" id="nav-home" onclick="showPage('home')">
-      <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60.3 57.6" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M37.7,39.9v-2.3l-15,.3v19.7c-.1,0-12.1.1-12.1.1-1.8,0-3.7-1.7-3.7-3.5v-20.5c0-4.4-5.7-2.5-6.7-5.5-.4-1.2,0-3.1.9-3.9L26.7,1.7c1.5-1.3,3.8-2.6,5.7-.9l26.5,23.1c1.2,1.1,1.7,2.7,1.2,4.2-1.2,3.2-7.3,1.1-7.3,5.2v20.5c0,1.6-1.3,3.7-3.1,3.7h-12s0-17.6,0-17.6h0Z"/></svg></div>
+      <div class="nav-icon">
+        <svg class="icon-o" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2L12 2.6l9 7.6V21a1 1 0 0 1-1 1h-5.5v-6.4h-5V22H4a1 1 0 0 1-1-1V10.2z"/></svg>
+        <svg class="icon-f" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6 3 10.2V21a1 1 0 0 0 1 1h5.5v-6.4h5V22H20a1 1 0 0 0 1-1V10.2z"/></svg>
+      </div>
       <div class="nav-label">Home</div>
     </button>
     <button class="nav-item" id="nav-map" onclick="showPage('map')">
-      <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 53.8 60.5" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M53.8,51.1c0,4.4-11,9.3-26.9,9.3S0,55.5,0,51.1s7.4-7.8,19.9-9c3,5.1,5.6,8.9,5.8,9.3l1.1,1.7,1.1-1.7c.3-.4,2.8-4.2,5.9-9.3,12.9,1.3,19.9,5.6,19.9,9Z"/><path fill="currentColor" d="M26.9,0c-8.7,0-15.7,7-15.7,15.7s11.9,26.6,15.7,32.4c3.8-5.9,15.7-24.9,15.7-32.4S35.6,0,26.9,0ZM26.9,25.2c-5.6,0-10.1-4.5-10.1-10.1s4.5-10.1,10.1-10.1,10.1,4.5,10.1,10.1-4.5,10.1-10.1,10.1Z"/><circle fill="currentColor" cx="26.9" cy="15.1" r="7.3"/></svg></div>
+      <div class="nav-icon">
+        <svg class="icon-o" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg class="icon-f" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+      </div>
       <div class="nav-label">Karte</div>
     </button>
     <button class="nav-item" id="nav-events" onclick="showPage('events')">
-      <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.1 61.7" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M14.1,28.1c.2,1.9.7,3.8,1.4,5.5h0s0,0,0,0c0,.2.2.4.3.6.5,1.3,1.1,4.7-3.1,8.6L.8,54.6c-1.1,1.1-1.1,2.8-.1,3.9l2,2.2c1.1,1.2,3,1.3,4.1.1l13.6-13.5s3-2.6,7.5-1.3c0,0,0,0,0,0,1.5.6,3.1,1,4.7,1.3L14.1,28.1h0Z"/><path fill="currentColor" d="M56.8,7.9C48.5-1.9,33.3-2.7,22.9,6.1c-5.6,4.8-8.7,11.4-9,18l22.8,23.6c5.7,0,11.5-2,16.3-6.1,10.4-8.8,12.1-23.9,3.8-33.7h0Z"/></svg></div>
+      <div class="nav-icon">
+        <svg class="icon-o" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <svg class="icon-f" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11 2a9 9 0 1 0 4.9 16.5l3.8 3.8a1.5 1.5 0 0 0 2.1-2.1l-3.8-3.8A9 9 0 0 0 11 2zm-6 9a6 6 0 1 1 12 0 6 6 0 0 1-12 0z"/></svg>
+      </div>
       <div class="nav-label">Spielen</div>
     </button>
     <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
-      <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 58.8" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M29.5,33.8c9.3,0,16.9-7.6,16.9-16.9S38.9,0,29.5,0,12.6,7.6,12.6,16.9s7.6,16.9,16.9,16.9Z"/><path fill="currentColor" d="M58.9,53.9c-3.1-9.6-15-16.8-29.3-16.8S3.2,44.3.2,53.9c-.8,2.4,1.1,4.9,3.6,4.9h51.5c2.5,0,4.4-2.5,3.6-4.9Z"/></svg></div>
+      <div class="nav-icon">
+        <svg class="icon-o" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4.4"/><path d="M4.5 20.5c1.3-3.6 4.1-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>
+        <svg class="icon-f" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.4"/><path d="M4.5 20.5c1.3-3.6 4.1-5.5 7.5-5.5s6.2 1.9 7.5 5.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
       <div class="nav-label">Profil</div>
     </button>
   </nav>

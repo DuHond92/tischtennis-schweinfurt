@@ -41,8 +41,8 @@ function showPage(name) {
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           DARK MODE                                          ║
 // ╚══════════════════════════════════════════════════════════════╝
-const LOGO_LIGHT = 'images/logo/logo_plattentreff_1.svg';
-const LOGO_DARK  = 'images/logo/logo-bild-schrift-negative_2.svg';
+const LOGO_LIGHT = 'images/logo/logo-plattentreff.svg';
+const LOGO_DARK  = 'images/logo/logo-plattentreff-negative.svg';
 
 let isDark = localStorage.getItem('tt_dark')==='1';
 function applyTheme() {
