@@ -106,10 +106,19 @@ function buildEventSlider(images) {
     <input type="file" id="ev-file-input" accept="image/*" style="display:none" onchange="handleDetailImageUpload(this)">`;
 }
 
+function isEventCompleted(ev) {
+  if (!ev || !ev.dateStr) return false;
+  const timeStr = ev.time || '00:00';
+  const start   = new Date(`${ev.dateStr}T${timeStr}`);
+  if (isNaN(start.getTime())) return false;
+  return Date.now() > start.getTime() + 3 * 60 * 60 * 1000;
+}
+
 function showEventDetail(eventId) {
   const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;
   currentEventId = eventId;
+  const isCompleted = isEventCompleted(ev);
 
   // Bild-Slider – Punktspiel-Placeholder wenn kein Foto hochgeladen
   const sliderPhotos = (ev.photos && ev.photos.length)
@@ -124,7 +133,8 @@ function showEventDetail(eventId) {
   document.getElementById('eds-title').textContent = ev.name;
 
   // Type pill
-  document.getElementById('eds-type-pill').innerHTML = gameTypePill(ev.type);
+  document.getElementById('eds-type-pill').innerHTML = gameTypePill(ev.type)
+    + (isCompleted ? '<span class="ev-type-pill" style="background:var(--bg-card);color:var(--text-dim);border:1.5px solid var(--border);">Abgeschlossen</span>' : '');
 
   // Meta
   document.getElementById('eds-meta').innerHTML = _eventMetaHtml(ev);
@@ -165,8 +175,10 @@ function showEventDetail(eventId) {
   const isFull      = ev.p >= ev.max && !isHost && !isAlreadyIn;
   const isMod       = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const actEl       = document.getElementById('eds-actions');
-  const delBtn      = isMod ? `<button class="btn btn-secondary" style="flex:0 0 auto;padding:10px 14px;color:#e53935;" onclick="deleteEvent(${ev.id})" title="Event löschen"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>` : '';
-  if (isHost) {
+  const delBtn      = isMod ? `<button class="btn btn-error" style="flex:0 0 auto;padding:10px 14px;" onclick="deleteEvent(${ev.id})" title="Event löschen"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>` : '';
+  if (isCompleted && !isHost) {
+    actEl.innerHTML = `<div style="flex:1;padding:12px 0;text-align:center;font-size:var(--text-ui);color:var(--text-dim);">Diese Spielrunde ist bereits beendet.</div>${delBtn}`;
+  } else if (isHost) {
     actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">Bearbeiten</button>${delBtn}`;
   } else if (isAlreadyIn) {
     actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">Dabei</button>${delBtn}`;
@@ -422,6 +434,13 @@ async function _confirmLeaveEvent() {
   const eventId = currentEventId;
   if (!eventId || !sb.isLoggedIn()) return;
 
+  const _leavingEv = allEvents.find(e => e.id === eventId);
+  if (isEventCompleted(_leavingEv)) {
+    showToast('Diese Spielrunde ist bereits beendet.', 'info');
+    closeAllSheets();
+    return;
+  }
+
   closeAllSheets();
 
   const { ok } = await fetchWithRefresh(
@@ -455,6 +474,8 @@ async function _confirmLeaveEvent() {
 
 async function joinEventFromDetail(eventId) {
   if(!sb.isLoggedIn()) { showAuthPrompt(); return; }
+  const ev = allEvents.find(e => e.id === eventId);
+  if (isEventCompleted(ev)) { showToast('Diese Spielrunde ist bereits beendet.', 'info'); return; }
   const btn = document.getElementById('eds-join-btn');
   if(btn) { btn.disabled = true; btn.textContent = '…'; }
 

@@ -25,8 +25,11 @@ function showPlayerSearchDetail(psId) {
     <div style="display:flex;align-items:center;gap:14px;padding:16px 20px 12px;">
       ${avHtml}
       <div style="flex:1;min-width:0;">
-        <div class="${pClick?'pp-clickable':''}" style="font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:5px;cursor:${pClick?'pointer':'default'};width:fit-content;" ${pClick?`onclick="${pClick}"`:''}>${escHtml(ps.username || 'Spieler')}</div>
-        ${gameTypePill(ps.spielart)}
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+          <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+          ${gameTypePill(ps.spielart)}
+        </div>
+        <div class="${pClick?'pp-clickable':''}" style="font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--text);cursor:${pClick?'pointer':'default'};width:fit-content;" ${pClick?`onclick="${pClick}"`:''}>${escHtml(ps.username || 'Spieler')}</div>
         ${metaParts.length ? `<div style="font-size:0.78rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">${metaParts.join('<span style="margin:0 2px;opacity:.4;">·</span>')}</div>` : ''}
       </div>
     </div>
@@ -46,7 +49,7 @@ function showPlayerSearchDetail(psId) {
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const modDelEl = document.getElementById('psd-mod-actions');
   if (modDelEl) modDelEl.innerHTML = isMod
-    ? `<button class="btn btn-secondary btn-full btn-sm" style="color:#e53935;margin:0 20px 12px;" onclick="deletePlayerSearch(${psId})"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Gesuch löschen</button>`
+    ? `<div class="sheet-action-bar"><button class="btn btn-error btn-full btn-sm" onclick="deletePlayerSearch(${psId})"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Gesuch löschen</button></div>`
     : '';
 
   // Chat state

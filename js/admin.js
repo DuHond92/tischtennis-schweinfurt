@@ -481,6 +481,9 @@ function _setCardLoading(card, loading) {
 }
 
 function _checkEmpty() {
+  const remaining = Object.keys(_adminData).length;
+  _notifyIfNew('suggestions', remaining);
+  _updateAdminBadge('suggestions', remaining);
   const list = document.getElementById('admin-suggestions-list');
   if (list && !list.querySelector('.admin-card')) {
     list.innerHTML = '<div class="admin-empty">Keine offenen Vorschläge</div>';

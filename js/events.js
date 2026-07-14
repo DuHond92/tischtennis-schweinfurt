@@ -9,7 +9,7 @@ let _eventsRadiusActive = false;
 function _lsGet(key, fallback = '') {
   try { return localStorage.getItem(key) ?? fallback; } catch(_) { return fallback; }
 }
-let _psRadius      = parseInt(_lsGet('tt_ps_radius', '5'));
+let _psRadius      = Math.max(1, Math.min(25, parseInt(_lsGet('tt_ps_radius', '5')) || 5));
 let _psSearchLat   = parseFloat(_lsGet('tt_ps_lat'))  || null;
 let _psSearchLng   = parseFloat(_lsGet('tt_ps_lng'))  || null;
 let _psSearchLabel = _lsGet('tt_ps_label');
@@ -21,6 +21,115 @@ let _psGeoItems = [];
 // ── Standort-State für das Erstell-Formular (getrennt vom Filter) ─
 let _msFormLat = null, _msFormLng = null, _msFormLabel = '';
 let _msGeoTimer = null, _msGeoAbort = null, _msGeoItems = [];
+
+// ── Shared Radius-Slider Helpers ─────────────────────────────────────
+const _RADIUS_MIN = 1, _RADIUS_MAX = 25;
+
+function _radiusClamp(val) {
+  const n = Number(val);
+  return Number.isFinite(n) ? Math.max(_RADIUS_MIN, Math.min(_RADIUS_MAX, Math.round(n))) : 5;
+}
+
+function _radiusProgress(val) {
+  return ((val - _RADIUS_MIN) / (_RADIUS_MAX - _RADIUS_MIN) * 100).toFixed(2) + '%';
+}
+
+// Setzt Slider-Value, CSS-Variable für Track-Füllung und sichtbares Label in einem Schritt.
+// Thumb-Position kommt vom nativen Browser (value/min/max); nur --range-progress wird per JS gesetzt.
+function _radiusSliderUpdate(sliderId, displayId, val) {
+  const v = _radiusClamp(val);
+  const slider  = document.getElementById(sliderId);
+  const display = document.getElementById(displayId);
+  if (slider) {
+    slider.value = v;
+    slider.setAttribute('aria-valuenow', v);
+    slider.setAttribute('aria-valuetext', v + ' Kilometer');
+    slider.style.setProperty('--range-progress', _radiusProgress(v));
+    slider.parentElement && slider.parentElement.querySelectorAll('.radius-snap-btn[data-snap-km]').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.snapKm) === v);
+    });
+  }
+  if (display) display.textContent = v + ' km';
+  return v;
+}
+
+// ── Geocoding: shared helpers ────────────────────────────────────────
+
+// Normalize for comparison only (not for display or query)
+function _geoNorm(s) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ')
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+}
+
+function _geoLevenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = [];
+  for (let i = 0; i <= m; i++) { dp[i] = [i]; for (let j = 1; j <= n; j++) dp[i][j] = i ? 0 : j; }
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+// Regional seed list for fuzzy correction fallback (transpositions/substitutions)
+const _GEO_KNOWN_PLACES = [
+  'Schweinfurt','Dittelbrunn','Würzburg','Bamberg','Erlangen','Nürnberg',
+  'München','Frankfurt am Main','Hamburg','Berlin','Köln','Stuttgart',
+  'Dortmund','Essen','Leipzig','Dresden','Hannover','Bremen','Düsseldorf',
+  'Bad Kissingen','Haßfurt','Hambach','Gochsheim','Sennfeld','Bergrheinfeld',
+  'Schonungen','Grafenrheinfeld','Niederwerrn','Oberwerrn','Werneck',
+  'Waigolshausen','Kolitzheim','Volkach','Gerolzhofen','Stadtlauringen',
+  'Geldersheim','Röthlein','Üchtelhausen','Poppenhausen','Oerlenbach',
+  'Burkardroth','Münnerstadt','Karlstadt','Lohr am Main','Gemünden am Main',
+  'Marktheidenfeld','Arnstein','Ebern','Hofheim in Unterfranken',
+  'Zeil am Main','Eltmann','Baunach','Kitzingen','Ochsenfurt',
+  'Bad Brückenau','Aschaffenburg','Miltenberg','Coburg','Lichtenfels',
+  'Forchheim','Fürth','Ingolstadt','Augsburg','Regensburg','Bayreuth',
+  'Ansbach','Hof','Knetzgau','Euerbach','Theres','Grettstadt','Sulzheim',
+  'Donnersdorf','Großbardorf','Heidenfeld','Wipfeld','Obbach','Röthlein'
+];
+
+function _geoFuzzyCorrect(q) {
+  const qn = _geoNorm(q);
+  const maxD = qn.length <= 5 ? 1 : qn.length <= 10 ? 2 : Math.ceil(qn.length * 0.2);
+  let best = null, bestDist = Infinity;
+  for (const place of _GEO_KNOWN_PLACES) {
+    const pn = _geoNorm(place);
+    if (Math.abs(pn.length - qn.length) > maxD + 1) continue;
+    const d = _geoLevenshtein(qn, pn);
+    if (d < bestDist) { bestDist = d; best = place; }
+  }
+  return (best && bestDist > 0 && bestDist <= maxD) ? best : null;
+}
+
+function _geoDedupeItems(items) {
+  const seen = new Set();
+  return items.filter(item => { if (seen.has(item.key)) return false; seen.add(item.key); return true; });
+}
+
+// Append * to last word for Nominatim prefix matching (handles truncated queries)
+function _geoWildcard(q) {
+  const parts = q.trim().split(/\s+/);
+  const last  = parts[parts.length - 1];
+  if (last.length >= 3 && !last.endsWith('*')) parts[parts.length - 1] = last + '*';
+  return parts.join(' ');
+}
+
+async function _geoFetch(q, abort) {
+  const url = `https://nominatim.openstreetmap.org/search?` +
+    `q=${encodeURIComponent(q)}&format=json&limit=8` +
+    `&addressdetails=1&countrycodes=de&accept-language=de` +
+    `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
+    `&email=kontakt%40plattentreff.app`;
+  const res = await fetch(url, { signal: abort.signal, headers: { 'Accept-Language': 'de' } });
+  return (await res.json()).map(r => ({
+    lat:   parseFloat(r.lat),
+    lng:   parseFloat(r.lon),
+    label: r.name || r.display_name.split(',')[0],
+    sub:   r.display_name.split(',').slice(1, 3).join(',').trim(),
+    key:   r.place_id ? `p${r.place_id}` : `${r.osm_type || ''}${r.osm_id || ''}`
+  }));
+}
 
 // Liefert das aktive Suchzentrum (manuell oder GPS)
 function _psCenter() {
@@ -122,16 +231,38 @@ function openPsRadiusSheet() {
   }
   if (dd) { dd.innerHTML = ''; dd.classList.remove('open'); }
   _psGeoItems = [];
-
   _psUpdateLocationStatus();
+  _radiusSliderUpdate('psr-radius-slider', 'psr-radius-display', _psRadius);
+  _psrClearError();
+  openSheet('ps-radius-sheet');
+}
 
-  document.querySelectorAll('.radius-chip').forEach(el => {
-    el.classList.toggle('active', parseInt(el.dataset.km) === _psRadius);
-  });
+const _PSR_ERRORS = {
+  required:      { title: 'Ort oder Standort erforderlich',   desc: 'Gib einen Ort ein oder verwende deinen aktuellen Standort.' },
+  location_fail: { title: 'Standort nicht verfügbar',         desc: 'Gib stattdessen einen Ort ein oder erlaube den Standortzugriff in den Einstellungen.' }
+};
+
+function _psrShowError(type) {
+  const v = document.getElementById('psr-validation');
+  if (!v) return;
+  const e = _PSR_ERRORS[type] || _PSR_ERRORS.required;
+  v.innerHTML =
+    `<span class="form-error-icon" aria-hidden="true">${ic('triangle-alert', 16)}</span>` +
+    `<div class="form-error-content">` +
+      `<div class="form-error-title">${e.title}</div>` +
+      `<div class="form-error-desc">${e.desc}</div>` +
+    `</div>`;
+  v.style.display = '';
+}
+
+function _psrClearError() {
   const v = document.getElementById('psr-validation');
   if (v) v.style.display = 'none';
-
-  openSheet('ps-radius-sheet');
+  const input = document.getElementById('psr-search-input');
+  if (input) {
+    input.classList.remove('input-error');
+    input.removeAttribute('aria-invalid');
+  }
 }
 
 function _psUpdateLocationStatus() {
@@ -168,28 +299,22 @@ async function _psRunSearch(q) {
   _psGeoItems = [];
   if (_psGeoAbort) _psGeoAbort.abort();
   _psGeoAbort = new AbortController();
+  let corrected = null;
   try {
-    const url = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(q)}&format=json&limit=6` +
-      `&addressdetails=1&countrycodes=de&accept-language=de` +
-      `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
-      `&email=kontakt%40plattentreff.app`;
-    const res = await fetch(url, {
-      signal: _psGeoAbort.signal,
-      headers: { 'Accept-Language': 'de' }
-    });
-    const geo = (await res.json()).slice(0, 5);
-    _psGeoItems = geo.map(r => ({
-      lat:   parseFloat(r.lat),
-      lng:   parseFloat(r.lon),
-      label: r.name || r.display_name.split(',')[0],
-      sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
-    }));
+    let items = _geoDedupeItems(await _geoFetch(_geoWildcard(q), _psGeoAbort)).slice(0, 5);
+    if (!items.length) {
+      corrected = _geoFuzzyCorrect(q);
+      if (corrected)
+        items = _geoDedupeItems(await _geoFetch(_geoWildcard(corrected), _psGeoAbort)).slice(0, 5);
+    }
+    _psGeoItems = items;
+    if (window.PT_DEBUG || location.hostname === 'localhost')
+      console.log('[geo/ps] q=%s wildcard=%s fuzzy=%s results=%d', q, _geoWildcard(q), corrected || '-', items.length);
   } catch(e) { if (e?.name === 'AbortError') return; }
-  _psRenderDd(q);
+  _psRenderDd(q, corrected);
 }
 
-function _psRenderDd(q) {
+function _psRenderDd(q, corrected) {
   const dd = document.getElementById('psr-dropdown');
   if (!dd) return;
   if (!_psGeoItems.length) {
@@ -197,14 +322,18 @@ function _psRenderDd(q) {
     dd.classList.add('open');
     return;
   }
+  const dispQ = corrected || q;
   const hl = s => {
-    if (!q) return escHtml(s);
-    return escHtml(s).replace(
-      new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
-      '<mark>$1</mark>'
-    );
+    try {
+      return escHtml(s).replace(
+        new RegExp(`(${escHtml(dispQ).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+        '<mark>$1</mark>'
+      );
+    } catch(_) { return escHtml(s); }
   };
-  dd.innerHTML = _psGeoItems.map((item, i) => `
+  const hint = corrected
+    ? `<div class="geo-hint">Ergebnisse für „${escHtml(corrected)}"</div>` : '';
+  dd.innerHTML = hint + _psGeoItems.map((item, i) => `
     <div class="search-dropdown-item" tabindex="0"
          onmousedown="_psSelectPlace(${i})"
          ontouchend="event.preventDefault();_psSelectPlace(${i})"
@@ -232,8 +361,7 @@ function _psSelectPlace(idx) {
   _psSearchType  = 'manual_place';
 
   _psUpdateLocationStatus();
-  const v = document.getElementById('psr-validation');
-  if (v) v.style.display = 'none';
+  _psrClearError();
 }
 
 function _psClearSearch() {
@@ -250,30 +378,71 @@ function _psUseCurrentLocation() {
   _psSearchLat   = null;
   _psSearchLng   = null;
   _psSearchLabel = '';
-  _psSearchType  = 'current_location';
+  _psrClearError();
+
+  // Already have GPS coords — use them immediately
+  if (typeof userLat !== 'undefined' && userLat && userLng) {
+    _psSearchType = 'current_location';
+    _psUpdateLocationStatus();
+    return;
+  }
+
+  _psSearchType = 'current_location';
   _psUpdateLocationStatus();
-  const v = document.getElementById('psr-validation');
-  if (v) v.style.display = 'none';
-  if (typeof userLat === 'undefined' || !userLat) locateUser();
+
+  if (!navigator.geolocation) {
+    _psSearchType = null;
+    _psrShowError('location_fail');
+    _psUpdateLocationStatus();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      if (typeof updateDistances === 'function') updateDistances();
+      _psUpdateLocationStatus();
+      _psrClearError();
+    },
+    () => {
+      _psSearchType = null;
+      _psrShowError('location_fail');
+      _psUpdateLocationStatus();
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  );
 }
 
-// ── Chip-Auswahl & Anwenden ───────────────────────────────────────
-function setPsRadius(km) {
-  _psRadius = km;
-  document.querySelectorAll('.radius-chip').forEach(el => {
-    el.classList.toggle('active', parseInt(el.dataset.km) === km);
-  });
+// ── Slider-Eingabe & Schnellwerte für ps-radius-sheet ────────────
+function _psrSliderInput(val) {
+  _radiusSliderUpdate('psr-radius-slider', 'psr-radius-display', parseInt(val));
+}
+
+function _psrSnapRadius(val) {
+  _radiusSliderUpdate('psr-radius-slider', 'psr-radius-display', val);
 }
 
 function applyPsRadius() {
   const c = _psCenter();
   if (!c) {
-    const v = document.getElementById('psr-validation');
-    if (v) { v.textContent = 'Bitte gib einen Ort ein oder verwende deinen aktuellen Standort.'; v.style.display = ''; }
+    const isLocationIntent = _psSearchType === 'current_location';
+    _psrShowError(isLocationIntent ? 'location_fail' : 'required');
+    if (!isLocationIntent) {
+      const input = document.getElementById('psr-search-input');
+      if (input) {
+        input.classList.add('input-error');
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+        input.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
     return;
   }
-  const v = document.getElementById('psr-validation');
-  if (v) v.style.display = 'none';
+  _psrClearError();
+
+  const slider = document.getElementById('psr-radius-slider');
+  if (slider) _psRadius = _radiusClamp(parseInt(slider.value));
 
   try {
     localStorage.setItem('tt_ps_radius', String(_psRadius));
@@ -364,11 +533,11 @@ function renderPlayerSearchCard(ps, opts = {}) {
       <div class="psc-profile">
         <div class="pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="psc-identity">
-          <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
           <div class="psc-type-row">
             <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
             ${gameTypePill(ps.spielart)}
           </div>
+          <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
         </div>
         <div class="ecb-chevron">›</div>
       </div>
@@ -387,9 +556,12 @@ function _psDateSortKey(ps) {
   const pad  = n => String(n).padStart(2, '0');
   const str  = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T00:00`;
   switch (ps.wann) {
-    case 'Heute': return str(now);
+    case 'Jetzt':       return str(now);
+    case 'Heute':       return str(now);
+    case 'Heute Abend': { const d = new Date(now); d.setHours(18,0,0,0); return str(d); }
+    case 'Morgen':      { const d = new Date(now); d.setDate(d.getDate() + 1); return str(d); }
     case 'Diese Woche': { const d = new Date(now); d.setDate(d.getDate() + 3); return str(d); }
-    case 'Wochenende': { const d = new Date(now); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return str(d); }
+    case 'Wochenende':  { const d = new Date(now); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return str(d); }
     default: return '9999-12-31T00:00'; // Egal / unbekannt → ans Ende
   }
 }
@@ -477,10 +649,10 @@ function _applyTimeFilter(games) {
 
 function _applyTimePsFilter(src) {
   if (currentTimeFilter === 'all')      return src;
-  if (currentTimeFilter === 'today')    return src.filter(ps => ps.wann === 'Heute' || ps.wann === 'Egal');
-  if (currentTimeFilter === 'tomorrow') return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
-  if (currentTimeFilter === 'week')     return src.filter(ps => ['Heute','Diese Woche','Egal'].includes(ps.wann));
-  if (currentTimeFilter === 'weekend')  return src.filter(ps => ps.wann === 'Diese Woche' || ps.wann === 'Egal');
+  if (currentTimeFilter === 'today')    return src.filter(ps => ['Jetzt','Heute','Heute Abend','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'tomorrow') return src.filter(ps => ['Morgen','Diese Woche','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'week')     return src.filter(ps => ['Jetzt','Heute','Heute Abend','Morgen','Diese Woche','Egal'].includes(ps.wann));
+  if (currentTimeFilter === 'weekend')  return src.filter(ps => ['Diese Woche','Egal'].includes(ps.wann));
   if (currentTimeFilter === 'later')    return src.filter(ps => ps.wann === 'Egal');
   return src;
 }
@@ -727,7 +899,36 @@ function openMitspielerSheet() {
   if (locClear) locClear.style.display = 'none';
   if (locDd)   { locDd.innerHTML = ''; locDd.classList.remove('open'); }
   if (locStat) locStat.innerHTML = '';
+  _msSetSpielart('casual');
+  _msSetWann('Heute');
+  _radiusSliderUpdate('ms-umkreis', 'ms-radius-display', 5);
   openSheet('mitspieler-sheet');
+}
+
+function _msSetSpielart(val) {
+  const hidden = document.getElementById('ms-spielart');
+  if (hidden) hidden.value = val;
+  document.querySelectorAll('#ms-spielart-chips .ms-spielart-chip').forEach(btn => {
+    const on = btn.dataset.spielart === val;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+}
+
+function _msSetWann(val) {
+  const hidden = document.getElementById('ms-wann');
+  if (hidden) hidden.value = val;
+  document.querySelectorAll('#ms-wann-chips .ms-wann-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.wann === val);
+  });
+}
+
+function _msSliderInput(val) {
+  _radiusSliderUpdate('ms-umkreis', 'ms-radius-display', parseInt(val));
+}
+
+function _msSnapRadius(val) {
+  _radiusSliderUpdate('ms-umkreis', 'ms-radius-display', val);
 }
 
 // ── Geocoding für Erstell-Formular ────────────────────────────────
@@ -751,28 +952,22 @@ async function _msRunSearch(q) {
   _msGeoItems = [];
   if (_msGeoAbort) _msGeoAbort.abort();
   _msGeoAbort = new AbortController();
+  let corrected = null;
   try {
-    const url = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(q)}&format=json&limit=6` +
-      `&addressdetails=1&countrycodes=de&accept-language=de` +
-      `&viewbox=9.8,50.25,10.75,49.85&bounded=0` +
-      `&email=kontakt%40plattentreff.app`;
-    const res = await fetch(url, {
-      signal: _msGeoAbort.signal,
-      headers: { 'Accept-Language': 'de' }
-    });
-    const geo = (await res.json()).slice(0, 5);
-    _msGeoItems = geo.map(r => ({
-      lat:   parseFloat(r.lat),
-      lng:   parseFloat(r.lon),
-      label: r.name || r.display_name.split(',')[0],
-      sub:   r.display_name.split(',').slice(1, 3).join(',').trim()
-    }));
+    let items = _geoDedupeItems(await _geoFetch(_geoWildcard(q), _msGeoAbort)).slice(0, 5);
+    if (!items.length) {
+      corrected = _geoFuzzyCorrect(q);
+      if (corrected)
+        items = _geoDedupeItems(await _geoFetch(_geoWildcard(corrected), _msGeoAbort)).slice(0, 5);
+    }
+    _msGeoItems = items;
+    if (window.PT_DEBUG || location.hostname === 'localhost')
+      console.log('[geo/ms] q=%s wildcard=%s fuzzy=%s results=%d', q, _geoWildcard(q), corrected || '-', items.length);
   } catch(e) { if (e?.name === 'AbortError') return; }
-  _msRenderDd(q);
+  _msRenderDd(q, corrected);
 }
 
-function _msRenderDd(q) {
+function _msRenderDd(q, corrected) {
   const dd = document.getElementById('ms-loc-dropdown');
   if (!dd) return;
   if (!_msGeoItems.length) {
@@ -780,14 +975,18 @@ function _msRenderDd(q) {
     dd.classList.add('open');
     return;
   }
+  const dispQ = corrected || q;
   const hl = s => {
-    if (!q) return escHtml(s);
-    return escHtml(s).replace(
-      new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
-      '<mark>$1</mark>'
-    );
+    try {
+      return escHtml(s).replace(
+        new RegExp(`(${escHtml(dispQ).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+        '<mark>$1</mark>'
+      );
+    } catch(_) { return escHtml(s); }
   };
-  dd.innerHTML = _msGeoItems.map((item, i) => `
+  const hint = corrected
+    ? `<div class="geo-hint">Ergebnisse für „${escHtml(corrected)}"</div>` : '';
+  dd.innerHTML = hint + _msGeoItems.map((item, i) => `
     <div class="search-dropdown-item" tabindex="0"
          onmousedown="_msSelectPlace(${i})"
          ontouchend="event.preventDefault();_msSelectPlace(${i})"

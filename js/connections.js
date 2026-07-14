@@ -74,7 +74,7 @@ function getConnectionButtonHtml(otherUserId) {
     const pur = escAttr(_ppCurrentUserUrl  || '');
     return `<button class="btn btn-primary btn-full" onclick="openDmConversation('${oid}','${pnm}','${pem}','${pur}')">${ic('chat',16)} Nachricht schreiben</button>
 <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);">
-  <button class="btn btn-full" style="background:none;border:1px solid var(--red,#EF4444);color:var(--red,#EF4444);" onclick="confirmRemoveConnection('${cid}','${oid}')">Freundschaft beenden</button>
+  <button class="btn btn-error btn-full" onclick="confirmRemoveConnection('${cid}','${oid}')">Freundschaft beenden</button>
 </div>`;
   }
 

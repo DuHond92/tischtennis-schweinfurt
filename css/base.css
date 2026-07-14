@@ -73,7 +73,7 @@ body {
   padding: 8px 20px;
   box-shadow: var(--shadow-md);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: var(--text-meta);
   font-weight: 600;
   color: var(--text-dim);
   white-space: nowrap;
@@ -197,10 +197,10 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
 .pt-loader--sm .pt-loader-line { width: 34px; }
 
 .pt-loader-text {
-  margin-top: 18px; font-size: 0.8rem; font-weight: 500;
+  margin-top: 18px; font-size: var(--text-meta); font-weight: 500;
   color: var(--text-xdim); letter-spacing: 0.01em;
 }
-.pt-loader--sm .pt-loader-text { margin-top: 10px; font-size: 0.76rem; }
+.pt-loader--sm .pt-loader-text { margin-top: 10px; font-size: var(--text-meta); }
 
 [data-theme="dark"] .pt-loader-ball {
   background: radial-gradient(circle at 38% 33%, #ddd8cf 25%, #c2bdb4 100%);
@@ -223,7 +223,7 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
 }
 #app-splash.hidden { opacity: 0; pointer-events: none; }
 #app-splash .pt-loader-text {
-  font-size: 1.05rem; font-weight: 800; color: var(--primary); margin-top: 14px; letter-spacing: -0.01em;
+  font-size: var(--text-title); font-weight: 800; color: var(--primary); margin-top: 14px; letter-spacing: -0.01em;
 }
 
 /* ── SKELETON LOADER ─────────────────────────────────────────── */

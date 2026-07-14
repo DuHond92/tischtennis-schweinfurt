@@ -103,8 +103,11 @@ function renderHomeActivities() {
         <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
           <div class="home-act-body">
+            <div class="home-act-badges">
+              <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
+              ${gameTypePill(e.type)}
+            </div>
             <div class="home-act-title">${escHtml(e.name)}</div>
-            <div style="margin:2px 0 3px;">${gameTypePill(e.type)}</div>
             <div class="home-act-meta">${ic('calendar',10)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin',10)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users',10)} ${e.p}/${e.max}</div>
           </div>
           <span class="home-act-chevron">›</span>
@@ -118,9 +121,11 @@ function renderHomeActivities() {
         <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
           <div class="home-act-body">
-            <div class="home-act-label">${ic('users', 10)} Aktives Gesuch</div>
+            <div class="home-act-badges">
+              <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+              ${gameTypePill(ps.spielart)}
+            </div>
             <div class="home-act-title">Mitspieler gesucht</div>
-            <div style="margin:2px 0 3px;">${gameTypePill(ps.spielart)}</div>
             ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
           </div>
           <span class="home-act-chevron">›</span>
@@ -248,12 +253,17 @@ function renderHomePsSection() {
 
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(first.userId||'')}','${escAttr(first.username||'')}','${escAttr(first.avatarEmoji||'')}',null,'${escAttr(first.avatarUrl||'')}')`;
   container.innerHTML = `${headerHtml}${radiusChip}
-    <div class="home-ps-card" onclick="showPlayerSearchDetail(${first.id})">
+    <div class="home-ps-card" role="button" tabindex="0"
+         onclick="showPlayerSearchDetail(${first.id})"
+         onkeydown="if(event.key==='Enter'||event.key===' ')showPlayerSearchDetail(${first.id})">
       <div class="hpsc-left">
         <div class="hpsc-av pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="hpsc-info">
+          <div class="hpsc-type">
+            <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+            ${gameTypePill(first.spielart)}
+          </div>
           <div class="hpsc-name pp-clickable" onclick="${profileClick}">${escHtml(first.username || 'Spieler')}</div>
-          <div class="hpsc-type">${gameTypePill(first.spielart)}</div>
           ${metaParts.length ? `<div class="hpsc-meta">${escHtml(metaParts.join(' · '))}</div>` : ''}
           ${first.message ? `<div class="hpsc-msg">${escHtml(first.message.length > 55 ? first.message.slice(0,55)+'…' : first.message)}</div>` : ''}
         </div>

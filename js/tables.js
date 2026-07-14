@@ -41,8 +41,11 @@ function showTableDetail(id) {
       <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
+          <div class="tds-event-tag-row">
+            <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
+            ${gameTypePill(e.type)}
+          </div>
           <div class="tds-event-name">${escHtml(e.name)}</div>
-          <div class="tds-event-tag-row">${gameTypePill(e.type)}</div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Teilnehmer</div>
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>

@@ -102,12 +102,17 @@ function renderMyEventsSection() {
       </div>`;
     return;
   }
-  el.innerHTML = myEvents.slice(0, 3).map(e => `
+  el.innerHTML = myEvents.slice(0, 3).map(e => {
+    const completedPill = isEventCompleted(e)
+      ? '<span class="ev-type-pill" style="background:var(--bg-card);color:var(--text-dim);border:1.5px solid var(--border);font-size:var(--text-micro);">Abgeschlossen</span>'
+      : '';
+    return `
     <div class="profile-event-row" onclick="showEventDetail(${e.id})">
-      ${gameTypePill(e.type)}
+      ${gameTypePill(e.type)}${completedPill}
       <span class="per-name">${escHtml(e.name)}</span>
       <span class="per-date">${formatEventDateTime(e.dateStr, null)}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function selectSkill(el) {

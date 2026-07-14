@@ -693,30 +693,49 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Spielart</label>
-      <select class="form-select" id="ms-spielart">
-        <option value="casual">Just 4 Fun – Einfach spielen</option>
-        <option value="training">Training – Technik verbessern</option>
-        <option value="punktspiel">Punktspiel – Etwas kompetitiver</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Wann?</label>
-        <select class="form-select" id="ms-wann">
-          <option>Heute</option>
-          <option>Diese Woche</option>
-          <option>Egal</option>
-        </select>
+      <label class="form-label" id="ms-spielart-label">Spielart</label>
+      <input type="hidden" id="ms-spielart" value="casual">
+      <div class="ms-spielart-chips" id="ms-spielart-chips"
+           role="radiogroup" aria-labelledby="ms-spielart-label">
+        <button class="ms-spielart-chip ms-spielart-casual active" type="button"
+                data-spielart="casual" role="radio" aria-checked="true"
+                onclick="_msSetSpielart('casual')">Just 4 Fun</button>
+        <button class="ms-spielart-chip ms-spielart-training" type="button"
+                data-spielart="training" role="radio" aria-checked="false"
+                onclick="_msSetSpielart('training')">Training</button>
+        <button class="ms-spielart-chip ms-spielart-punktspiel" type="button"
+                data-spielart="punktspiel" role="radio" aria-checked="false"
+                onclick="_msSetSpielart('punktspiel')">Punktspiel</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Umkreis</label>
-        <select class="form-select" id="ms-umkreis">
-          <option value="2">2 km</option>
-          <option value="5" selected>5 km</option>
-          <option value="10">10 km</option>
-          <option value="25">25 km</option>
-        </select>
+    </div>
+    <!-- Wann? chip picker -->
+    <div class="form-group">
+      <label class="form-label">Wann?</label>
+      <input type="hidden" id="ms-wann" value="Heute">
+      <div class="ms-wann-chips" id="ms-wann-chips">
+        <button class="ms-wann-chip" type="button" data-wann="Jetzt" onclick="_msSetWann('Jetzt')">Jetzt</button>
+        <button class="ms-wann-chip active" type="button" data-wann="Heute" onclick="_msSetWann('Heute')">Heute</button>
+        <button class="ms-wann-chip" type="button" data-wann="Heute Abend" onclick="_msSetWann('Heute Abend')">Heute Abend</button>
+        <button class="ms-wann-chip" type="button" data-wann="Morgen" onclick="_msSetWann('Morgen')">Morgen</button>
+        <button class="ms-wann-chip" type="button" data-wann="Diese Woche" onclick="_msSetWann('Diese Woche')">Diese Woche</button>
+        <button class="ms-wann-chip" type="button" data-wann="Egal" onclick="_msSetWann('Egal')">Egal</button>
+      </div>
+    </div>
+
+    <!-- Umkreis Slider -->
+    <div class="form-group">
+      <label class="form-label" for="ms-umkreis">Umkreis <span class="radius-val-display" id="ms-radius-display">5 km</span></label>
+      <input type="range" class="radius-slider-input" id="ms-umkreis"
+             min="1" max="25" step="1" value="5"
+             aria-label="Umkreis in Kilometern" aria-valuemin="1" aria-valuemax="25" aria-valuenow="5" aria-valuetext="5 Kilometer"
+             oninput="_msSliderInput(this.value)"
+             onchange="PTAnalytics.track('radius_filter_changed',{radius_km:parseInt(this.value)})">
+      <div class="radius-snap-btns">
+        <button class="radius-snap-btn" type="button" data-snap-km="1" style="left:0%;transform:translateX(0)" onclick="_msSnapRadius(1)">1 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="5" style="left:16.67%" onclick="_msSnapRadius(5)">5 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="10" style="left:37.5%" onclick="_msSnapRadius(10)">10 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="15" style="left:58.33%" onclick="_msSnapRadius(15)">15 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="25" style="left:100%;transform:translateX(-100%)" onclick="_msSnapRadius(25)">25 km</button>
       </div>
     </div>
     <div class="form-group">
@@ -744,6 +763,7 @@
       <div class="psr-input-wrap">
         <input class="psr-input" id="psr-search-input" type="search" autocomplete="off" inputmode="search"
                placeholder="z. B. Würzburg, Sanderau oder 97421 Schweinfurt"
+               aria-describedby="psr-validation"
                oninput="_psSearchInput(this.value)"
                onkeydown="_psSearchKey(event)">
         <button class="psr-input-clear" id="psr-clear" onclick="_psClearSearch()" style="display:none" aria-label="Eingabe löschen">×</button>
@@ -765,20 +785,25 @@
     <!-- Aktiver Suchort-Status -->
     <div id="psr-location-status" class="psr-location-status"></div>
 
-    <!-- Umkreis-Chips -->
+    <!-- Inline-Fehler (Ort erforderlich / Standort nicht verfügbar) -->
+    <div id="psr-validation" class="form-error" role="alert" aria-live="polite" style="display:none"></div>
+
+    <!-- Umkreis Slider -->
     <div class="psr-section" style="margin-top:20px;">
-      <div class="psr-label">Umkreis</div>
-      <div class="radius-chips">
-        <button class="radius-chip" data-km="1" onclick="setPsRadius(1)">1 km</button>
-        <button class="radius-chip" data-km="3" onclick="setPsRadius(3)">3 km</button>
-        <button class="radius-chip active" data-km="5" onclick="setPsRadius(5)">5 km</button>
-        <button class="radius-chip" data-km="10" onclick="setPsRadius(10)">10 km</button>
-        <button class="radius-chip" data-km="25" onclick="setPsRadius(25)">25 km</button>
-        <button class="radius-chip" data-km="50" onclick="setPsRadius(50)">50 km</button>
+      <label class="psr-label" for="psr-radius-slider">Umkreis <span class="radius-val-display" id="psr-radius-display">5 km</span></label>
+      <input type="range" class="radius-slider-input" id="psr-radius-slider"
+             min="1" max="25" step="1" value="5"
+             aria-label="Umkreis in Kilometern" aria-valuemin="1" aria-valuemax="25" aria-valuenow="5" aria-valuetext="5 Kilometer"
+             oninput="_psrSliderInput(this.value)">
+      <div class="radius-snap-btns">
+        <button class="radius-snap-btn" type="button" data-snap-km="1" style="left:0%;transform:translateX(0)" onclick="_psrSnapRadius(1)">1 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="5" style="left:16.67%" onclick="_psrSnapRadius(5)">5 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="10" style="left:37.5%" onclick="_psrSnapRadius(10)">10 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="15" style="left:58.33%" onclick="_psrSnapRadius(15)">15 km</button>
+        <button class="radius-snap-btn" type="button" data-snap-km="25" style="left:100%;transform:translateX(-100%)" onclick="_psrSnapRadius(25)">25 km</button>
       </div>
     </div>
 
-    <div id="psr-validation" class="psr-validation" style="display:none"></div>
     <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="applyPsRadius()">Ergebnisse anzeigen</button>
   </div>
 </div>

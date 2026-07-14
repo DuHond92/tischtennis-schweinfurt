@@ -625,7 +625,7 @@ function renderMapList(list) {
     const thumbInner = _mapThumbHtml(t, _load);
 
     return `
-    <div class="map-list-item" data-id="${t.id}" onclick="selectMapItem(${t.id});showTableDetail(${t.id})">
+    <div class="map-list-item" data-id="${t.id}" onclick="focusTableOnMap(${t.id})">
       <div class="mli-thumb">${thumbInner}</div>
       <div class="map-list-info">
         <div class="map-list-name">${t.name}</div>
@@ -932,6 +932,19 @@ function showMapPreview(tableId) {
   }
 
   _setActiveMarker(tableId);
+}
+
+function focusTableOnMap(tableId) {
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
+  const t   = src.find(x => x.id === tableId);
+
+  if (!t || !Number.isFinite(+t.lat) || !Number.isFinite(+t.lng)) {
+    if (t) showTableDetail(tableId);
+    else showToast('Für diese Platte ist kein Kartenstandort verfügbar.', { type: 'info' });
+    return;
+  }
+
+  showMapPreview(tableId);
 }
 
 function hideMapPreview() {
