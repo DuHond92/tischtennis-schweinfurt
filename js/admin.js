@@ -803,33 +803,47 @@ async function _confirmDeleteContent(reportId) {
 // ── Events + Mitspieler-Gesuche löschen (Mod) ────────────────────────
 
 async function deleteEvent(eventId) {
-  if (!confirm('Event und alle zugehörigen Nachrichten wirklich löschen?')) return;
-  const { ok } = await fetchWithRefresh(
-    `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}`,
-    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
-  );
-  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
-  _logModAction('delete_event', 'event', eventId);
-  showToast('Event gelöscht');
-  closeAllSheets();
-  await loadEvents();
-  renderEvents();
-  renderHome();
+  showConfirmDialog({
+    title: 'Event löschen?',
+    body: 'Das Event und alle zugehörigen Nachrichten werden dauerhaft entfernt.',
+    confirmLabel: 'Löschen',
+    danger: true,
+    onConfirm: async () => {
+      const { ok } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}`,
+        { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+      );
+      if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
+      _logModAction('delete_event', 'event', eventId);
+      showToast('Event gelöscht');
+      closeAllSheets();
+      await loadEvents();
+      renderEvents();
+      renderHome();
+    }
+  });
 }
 
 async function deletePlayerSearch(psId) {
-  if (!confirm('Mitspieler-Gesuch und alle zugehörigen Nachrichten wirklich löschen?')) return;
-  const { ok } = await fetchWithRefresh(
-    `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(psId)}`,
-    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
-  );
-  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
-  _logModAction('delete_player_search', 'player_search', psId);
-  showToast('Gesuch gelöscht');
-  closeAllSheets();
-  await loadEvents();
-  renderEvents();
-  renderHome();
+  showConfirmDialog({
+    title: 'Gesuch löschen?',
+    body: 'Das Mitspieler-Gesuch und alle zugehörigen Nachrichten werden dauerhaft entfernt.',
+    confirmLabel: 'Löschen',
+    danger: true,
+    onConfirm: async () => {
+      const { ok } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(psId)}`,
+        { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+      );
+      if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
+      _logModAction('delete_player_search', 'player_search', psId);
+      showToast('Gesuch gelöscht');
+      closeAllSheets();
+      await loadEvents();
+      renderEvents();
+      renderHome();
+    }
+  });
 }
 
 // ── Report-Modal ──────────────────────────────────────────────────────

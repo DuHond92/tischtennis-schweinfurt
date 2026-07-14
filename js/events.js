@@ -243,21 +243,12 @@ const _PSR_ERRORS = {
 };
 
 function _psrShowError(type) {
-  const v = document.getElementById('psr-validation');
-  if (!v) return;
   const e = _PSR_ERRORS[type] || _PSR_ERRORS.required;
-  v.innerHTML =
-    `<span class="form-error-icon" aria-hidden="true">${ic('triangle-alert', 16)}</span>` +
-    `<div class="form-error-content">` +
-      `<div class="form-error-title">${e.title}</div>` +
-      `<div class="form-error-desc">${e.desc}</div>` +
-    `</div>`;
-  v.style.display = '';
+  showInlineError('psr-validation', e);
 }
 
 function _psrClearError() {
-  const v = document.getElementById('psr-validation');
-  if (v) v.style.display = 'none';
+  clearInlineError('psr-validation');
   const input = document.getElementById('psr-search-input');
   if (input) {
     input.classList.remove('input-error');
@@ -833,7 +824,15 @@ async function submitCreateEvent() {
   const mode    = document.getElementById('ev-mode').value;
   const maxP    = parseInt(document.getElementById('ev-max')?.value || '4', 10) || 4;
   const desc    = (document.getElementById('ev-desc')?.value || '').trim();
-  if(!title || !tableId || !date || !time) { showToast('Bitte alle Pflichtfelder ausfüllen','warning'); return; }
+  if(!title || !tableId || !date || !time) {
+    showInlineError('ec-form-error', { title: 'Felder fehlen', desc: 'Bitte Name, Platte, Datum und Uhrzeit ausfüllen.' });
+    if (!title) document.getElementById('ev-name')?.focus();
+    else if (!tableId) document.getElementById('ev-table')?.focus();
+    else if (!date) document.getElementById('ev-date')?.focus();
+    else document.getElementById('ev-time')?.focus();
+    return;
+  }
+  clearInlineError('ec-form-error');
 
   if(_editingEventId) {
     const { error } = await new QueryBuilder('events').eq('id', _editingEventId).update({
@@ -1011,6 +1010,7 @@ function _msSelectPlace(idx) {
   _msFormLng   = item.lng;
   _msFormLabel = item.label;
   _msUpdateLocStatus();
+  clearInlineError('ms-loc-error');
 }
 
 function _msClearSearch() {
@@ -1040,6 +1040,7 @@ function _msUseCurrentLocation() {
     locateUser();
   }
   _msUpdateLocStatus();
+  clearInlineError('ms-loc-error');
 }
 
 function _msUpdateLocStatus() {
@@ -1067,10 +1068,12 @@ async function submitMitspieler() {
   }
 
   if (!lat || !lng) {
-    showToast('Bitte wähle einen Ort aus, damit andere dein Gesuch in der Nähe finden können.', 'warning');
+    showInlineError('ms-loc-error', { title: 'Ort erforderlich', desc: 'Wähle einen Ort aus der Liste oder verwende deinen aktuellen Standort.' });
+    document.getElementById('ms-loc-input')?.focus();
     if(btn) { btn.disabled = false; btn.textContent = 'Veröffentlichen'; }
     return;
   }
+  clearInlineError('ms-loc-error');
 
   const spielart       = document.getElementById('ms-spielart').value;
   const wann           = document.getElementById('ms-wann').value;

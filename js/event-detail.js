@@ -347,17 +347,24 @@ function _evtCommentItemHtml(m, myId, isMod) {
   </div>`;
 }
 
-async function deleteEventMessage(messageId, context) {
-  if (!confirm('Nachricht wirklich löschen?')) return;
-  const { ok } = await fetchWithRefresh(
-    `${SUPABASE_URL}/rest/v1/event_messages?id=eq.${encodeURIComponent(messageId)}`,
-    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
-  );
-  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
-  _logModAction('delete_event_message', 'event_message', messageId);
-  showToast('Nachricht gelöscht');
-  if (context === 'ps') loadPsChat(currentPsEventId);
-  else loadEventChat(currentEventId);
+function deleteEventMessage(messageId, context) {
+  showConfirmDialog({
+    title: 'Nachricht löschen?',
+    body: 'Die Nachricht wird dauerhaft entfernt.',
+    confirmLabel: 'Löschen',
+    danger: true,
+    onConfirm: async () => {
+      const { ok } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/event_messages?id=eq.${encodeURIComponent(messageId)}`,
+        { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+      );
+      if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
+      _logModAction('delete_event_message', 'event_message', messageId);
+      showToast('Nachricht gelöscht');
+      if (context === 'ps') loadPsChat(currentPsEventId);
+      else loadEventChat(currentEventId);
+    }
+  });
 }
 
 function escHtml(s) {

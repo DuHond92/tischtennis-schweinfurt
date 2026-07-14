@@ -331,6 +331,56 @@ function showSnackbar({ title, message, type = 'info', actionLabel, onAction, di
 function dismissSnackbar() { clearToast(); }
 function _triggerSnackbarAction() { _triggerToastAction(); }
 
+// ── INLINE-FEHLER (wiederverwendbar) ────────────────────────────────
+function showInlineError(elOrId, { title = '', desc = '' } = {}) {
+  const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+  if (!el) return;
+  el.innerHTML =
+    `<span class="form-error-icon" aria-hidden="true">${ic('triangle-alert', 16)}</span>` +
+    `<div class="form-error-content">` +
+      `<div class="form-error-title">${escHtml(title)}</div>` +
+      (desc ? `<div class="form-error-desc">${escHtml(desc)}</div>` : '') +
+    `</div>`;
+  el.style.display = '';
+}
+
+function clearInlineError(elOrId) {
+  const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+  if (el) el.style.display = 'none';
+}
+
+// ── BESTÄTIGUNGSDIALOG ──────────────────────────────────────────────
+let _cdOnConfirm = null;
+
+function showConfirmDialog({ title = '', body = '', confirmLabel = 'Löschen', cancelLabel = 'Abbrechen', onConfirm = null, danger = true } = {}) {
+  const overlay = document.getElementById('confirm-dialog');
+  if (!overlay) {
+    // Fallback: nativer confirm wenn DOM nicht bereit
+    if (confirm(body || title)) { if (onConfirm) onConfirm(); }
+    return;
+  }
+  document.getElementById('cd-title').textContent = title;
+  document.getElementById('cd-body').textContent  = body;
+  const btn = document.getElementById('cd-confirm-btn');
+  btn.textContent = confirmLabel;
+  btn.className   = 'btn ' + (danger ? 'btn-error' : 'btn-primary');
+  document.getElementById('cd-cancel-btn').textContent = cancelLabel;
+  _cdOnConfirm = onConfirm;
+  overlay.classList.add('show');
+}
+
+function _cdConfirm() {
+  document.getElementById('confirm-dialog').classList.remove('show');
+  const cb = _cdOnConfirm;
+  _cdOnConfirm = null;
+  if (cb) cb();
+}
+
+function _cdCancel() {
+  document.getElementById('confirm-dialog').classList.remove('show');
+  _cdOnConfirm = null;
+}
+
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           SEARCH AUTOCOMPLETE                                ║
 // ╚══════════════════════════════════════════════════════════════╝

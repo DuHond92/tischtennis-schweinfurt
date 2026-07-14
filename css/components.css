@@ -2555,6 +2555,31 @@
 /* Error-Kontur am Eingabefeld */
 .psr-input.input-error { border-color: var(--error) !important; }
 .psr-input.input-error:focus { border-color: var(--error) !important; }
+.form-input.input-error { border-color: var(--error) !important; }
+.form-input.input-error:focus { border-color: var(--error) !important; }
+.pe-field-input.input-error { border-color: var(--error) !important; }
+
+/* ── Bestätigungsdialog ──────────────────────────────────────── */
+.cd-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,0.52);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; box-sizing: border-box;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.cd-overlay.show { opacity: 1; pointer-events: auto; }
+.cd-box {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 24px 20px 20px; max-width: 340px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  text-align: center;
+}
+.cd-icon { color: var(--error); margin-bottom: 12px; line-height: 1; }
+.cd-title { font-size: var(--text-title); font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.cd-body  { font-size: var(--text-meta); color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+.cd-actions { display: flex; gap: 10px; }
+.cd-actions .btn { flex: 1; }
 
 /* ── FOTO QUELLE ACTION SHEET ─────────────────────────────────── */
 .photo-src-overlay {

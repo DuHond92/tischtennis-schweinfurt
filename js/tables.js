@@ -489,9 +489,17 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
   }
 }
 
-async function deleteTableImage(slideEl) {
-  if (!confirm('Bild wirklich löschen?')) return;
+function deleteTableImage(slideEl) {
+  showConfirmDialog({
+    title: 'Bild löschen?',
+    body: 'Das Foto wird dauerhaft entfernt.',
+    confirmLabel: 'Löschen',
+    danger: true,
+    onConfirm: () => _doDeleteTableImage(slideEl)
+  });
+}
 
+async function _doDeleteTableImage(slideEl) {
   const imageId  = slideEl.dataset.imgId;
   const imageUrl = slideEl.dataset.imgUrl;
 
@@ -1078,17 +1086,24 @@ function submitCmtDelete() {
   }
 }
 
-async function deleteComment(commentId, context) {
-  if (!confirm('Kommentar wirklich löschen?')) return;
-  const { ok } = await fetchWithRefresh(
-    `${SUPABASE_URL}/rest/v1/comments?id=eq.${encodeURIComponent(commentId)}`,
-    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
-  );
-  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
-  _logModAction('delete_comment', 'comment', commentId);
-  showToast('Kommentar gelöscht');
-  if (context === 'sheet') openComments(currentDetailTableId);
-  else loadCommentsInline(currentDetailTableId);
+function deleteComment(commentId, context) {
+  showConfirmDialog({
+    title: 'Kommentar löschen?',
+    body: 'Der Kommentar wird dauerhaft entfernt.',
+    confirmLabel: 'Löschen',
+    danger: true,
+    onConfirm: async () => {
+      const { ok } = await fetchWithRefresh(
+        `${SUPABASE_URL}/rest/v1/comments?id=eq.${encodeURIComponent(commentId)}`,
+        { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+      );
+      if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
+      _logModAction('delete_comment', 'comment', commentId);
+      showToast('Kommentar gelöscht');
+      if (context === 'sheet') openComments(currentDetailTableId);
+      else loadCommentsInline(currentDetailTableId);
+    }
+  });
 }
 
 async function submitComment() {

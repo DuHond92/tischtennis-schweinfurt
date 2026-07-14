@@ -660,6 +660,7 @@
       <label class="form-label">Beschreibung (optional)</label>
       <textarea class="form-textarea" id="ev-desc" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
     </div>
+    <div id="ec-form-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:10px;"></div>
     <button class="btn btn-primary btn-full" onclick="submitCreateEvent()">Spiel organisieren</button>
   </div>
 </div>
@@ -690,6 +691,7 @@
         Aktuellen Standort verwenden
       </button>
       <div id="ms-loc-status" class="psr-location-status" style="margin-top:6px;"></div>
+      <div id="ms-loc-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-top:8px;"></div>
     </div>
 
     <div class="form-group">
@@ -863,6 +865,7 @@
       <input class="pe-field-input" id="edit-name" type="text" placeholder="z. B. MichaTT" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
     </div>
 
+    <div id="profile-name-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:8px;"></div>
     <div class="pe-field">
       <div class="pe-field-label">Wohnort</div>
       <input class="pe-field-input" id="edit-city" type="text" list="pe-city-list" placeholder="z. B. Schweinfurt" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
@@ -936,6 +939,7 @@
       <div class="pe-field-label">Passwort bestätigen</div>
       <input class="pe-field-input" id="edit-pw-confirm" type="password" placeholder="Passwort wiederholen" autocomplete="new-password" onkeydown="if(event.key==='Enter')changePassword()">
     </div>
+    <div id="profile-pw-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:8px;"></div>
     <button class="pe-pw-btn" id="edit-pw-btn" onclick="changePassword()">Passwort ändern</button>
 
     <div style="height:24px;"></div>
@@ -1063,6 +1067,7 @@
       <button class="btn btn-primary btn-full" id="auth-newpw-btn" onclick="submitNewPassword()">Passwort speichern</button>
     </div>
 
+    <div id="auth-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:10px;"></div>
     <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">Anmelden</button>
     <p style="text-align:center;font-size:0.72rem;color:var(--text-xdim);margin-top:12px;">
       <a href="#" onclick="openLegalPage(PRIVACY_URL);return false;" style="color:var(--text-xdim);text-decoration:none;">Datenschutz</a>
@@ -1690,6 +1695,19 @@
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px;">
       <button class="btn btn-primary btn-full" onclick="closeSuggestSheet()">Zu den Platten</button>
       <button class="btn btn-secondary btn-full" onclick="suggestRestartFlow()">Weitere Platte vorschlagen</button>
+    </div>
+  </div>
+</div>
+
+<!-- BESTÄTIGUNGSDIALOG (geteilt für die gesamte App) -->
+<div class="cd-overlay" id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="cd-title">
+  <div class="cd-box">
+    <div class="cd-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+    <div class="cd-title" id="cd-title"></div>
+    <div class="cd-body" id="cd-body"></div>
+    <div class="cd-actions">
+      <button class="btn btn-secondary" id="cd-cancel-btn" onclick="_cdCancel()">Abbrechen</button>
+      <button class="btn btn-error" id="cd-confirm-btn" onclick="_cdConfirm()">Löschen</button>
     </div>
   </div>
 </div>

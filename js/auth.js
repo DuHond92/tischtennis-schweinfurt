@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setAuthMode(mode) {
   if (mode === 'register' && authMode !== 'register') PTAnalytics.track('signup_started');
   authMode = mode;
+  clearInlineError('auth-error');
   const isStandard = mode === 'login' || mode === 'register';
 
   // Sektionen
@@ -76,7 +77,12 @@ function setAuthMode(mode) {
 
 async function sendPasswordReset() {
   const email = document.getElementById('auth-reset-email').value.trim();
-  if (!email) { showToast('Bitte E-Mail eingeben', 'warning'); return; }
+  if (!email) {
+    showInlineError('auth-error', { title: 'E-Mail fehlt', desc: 'Bitte E-Mail-Adresse eingeben.' });
+    document.getElementById('auth-reset-email').focus();
+    return;
+  }
+  clearInlineError('auth-error');
 
   const btn = document.getElementById('auth-reset-btn');
   btn.disabled = true; btn.textContent = '…';
@@ -95,15 +101,24 @@ async function sendPasswordReset() {
         <button class="btn btn-secondary btn-full" style="margin-top:20px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
       </div>`;
   } else {
-    showToast('Fehler beim Senden — E-Mail prüfen', 'error');
+    showInlineError('auth-error', { title: 'Senden fehlgeschlagen', desc: 'E-Mail-Adresse prüfen und erneut versuchen.' });
   }
 }
 
 async function submitNewPassword() {
   const pw  = document.getElementById('auth-newpw').value;
   const pw2 = document.getElementById('auth-newpw2').value;
-  if (!pw || pw.length < 6) { showToast('Mindestens 6 Zeichen', 'warning'); return; }
-  if (pw !== pw2)            { showToast('Passwörter stimmen nicht überein', 'warning'); return; }
+  if (!pw || pw.length < 6) {
+    showInlineError('auth-error', { title: 'Passwort zu kurz', desc: 'Mindestens 6 Zeichen erforderlich.' });
+    document.getElementById('auth-newpw').focus();
+    return;
+  }
+  if (pw !== pw2) {
+    showInlineError('auth-error', { title: 'Passwörter stimmen nicht überein', desc: 'Bitte beide Felder gleich ausfüllen.' });
+    document.getElementById('auth-newpw2').focus();
+    return;
+  }
+  clearInlineError('auth-error');
 
   const btn = document.getElementById('auth-newpw-btn');
   btn.disabled = true; btn.textContent = '…';
@@ -117,7 +132,7 @@ async function submitNewPassword() {
     await sb.signOut();
     setTimeout(() => { openSheet('auth-sheet'); setAuthMode('login'); }, 800);
   } else {
-    showToast('Fehler beim Speichern', 'error');
+    showInlineError('auth-error', { title: 'Speichern fehlgeschlagen', desc: 'Bitte erneut versuchen.' });
   }
 }
 
@@ -141,15 +156,21 @@ async function submitAuth() {
   btn.textContent = '…';
 
   try {
+    clearInlineError('auth-error');
     if(authMode === 'login') {
       const email    = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-pw').value;
-      if(!email || !password) { showToast('Bitte E-Mail und Passwort eingeben','warning'); return; }
+      if(!email || !password) {
+        showInlineError('auth-error', { title: 'Felder fehlen', desc: 'Bitte E-Mail und Passwort eingeben.' });
+        if (!email) document.getElementById('auth-email').focus();
+        else document.getElementById('auth-pw').focus();
+        btn.disabled = false; btn.textContent = 'Anmelden'; return;
+      }
 
       const res = await sb.signIn(email, password);
       if(res.error || !res.access_token) {
-        showToast(res.error?.message || 'Anmeldung fehlgeschlagen','error');
-        return;
+        showInlineError('auth-error', { title: 'Anmeldung fehlgeschlagen', desc: res.error?.message || 'E-Mail oder Passwort prüfen.' });
+        btn.disabled = false; btn.textContent = 'Anmelden'; return;
       }
       _myConnections = null;
       await loadCurrentUser();
@@ -165,11 +186,24 @@ async function submitAuth() {
       const username = document.getElementById('auth-username').value.trim();
       const email    = document.getElementById('auth-reg-email').value.trim();
       const password = document.getElementById('auth-reg-pw').value;
-      if(!username || !email || !password) { showToast('Alle Felder ausfüllen','warning'); return; }
-      if(password.length < 6) { showToast('Passwort mindestens 6 Zeichen','warning'); return; }
+      if(!username || !email || !password) {
+        showInlineError('auth-error', { title: 'Felder fehlen', desc: 'Bitte alle Felder ausfüllen.' });
+        if (!username) document.getElementById('auth-username').focus();
+        else if (!email) document.getElementById('auth-reg-email').focus();
+        else document.getElementById('auth-reg-pw').focus();
+        btn.disabled = false; btn.textContent = 'Konto erstellen'; return;
+      }
+      if(password.length < 6) {
+        showInlineError('auth-error', { title: 'Passwort zu kurz', desc: 'Mindestens 6 Zeichen erforderlich.' });
+        document.getElementById('auth-reg-pw').focus();
+        btn.disabled = false; btn.textContent = 'Konto erstellen'; return;
+      }
 
       const res = await sb.signUp(email, password, username);
-      if(res.error) { showToast(res.error.message || 'Fehler bei Registrierung','error'); return; }
+      if(res.error) {
+        showInlineError('auth-error', { title: 'Registrierung fehlgeschlagen', desc: res.error.message || 'Bitte erneut versuchen.' });
+        btn.disabled = false; btn.textContent = 'Konto erstellen'; return;
+      }
       _myConnections = null;
       await loadCurrentUser();
       await loadMyConnections();
