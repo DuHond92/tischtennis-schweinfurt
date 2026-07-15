@@ -504,6 +504,8 @@ function renderPlayerSearchCard(ps, opts = {}) {
   const cardClick    = `showPlayerSearchDetail(${ps.id})`;
   const profileClick = `event.stopPropagation();showPlayerProfile('${escAttr(ps.userId||'')}','${escAttr(ps.username||'')}','${escAttr(ps.avatarEmoji||'')}',null,'${escAttr(ps.avatarUrl||'')}')`;
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
+  const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
+  const isMySearch = myId && String(ps.userId) === myId;
   const metaParts = [];
   // wann first, then distance, then search radius
   if (ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${escHtml(ps.wann)}</b>`);
@@ -529,6 +531,7 @@ function renderPlayerSearchCard(ps, opts = {}) {
             ${gameTypePill(ps.spielart)}
           </div>
           <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
+          ${isMySearch ? userStatusLine('Von dir erstellt') : ''}
         </div>
         <div class="ecb-chevron">›</div>
       </div>
@@ -586,8 +589,15 @@ function renderEventCard(e, idx = 0) {
   const thumbInner = (e.photos && e.photos.length)
     ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">`
     : `<img src="${thumbFallback}" loading="${loadAttr}" decoding="async">`;
-  const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
-  const isDabei = myId && e.participants.some(p => String(p.id) === myId);
+  const myId        = sb.isLoggedIn() ? String(sb.getUserId()) : null;
+  const isCompleted = isEventCompleted(e);
+  const isCreator   = myId && String(e.creatorId) === myId;
+  const isDabei     = myId && e.participants.some(p => String(p.id) === myId);
+  let statusHtml = '';
+  if      (isCompleted && (isCreator || isDabei))
+    statusHtml = `<div class="ecb-status-row"><span class="ev-type-pill pill-neutral">Abgeschlossen</span></div>`;
+  else if (isCreator) statusHtml = userStatusLine('Von dir erstellt');
+  else if (isDabei)   statusHtml = userStatusLine('Du nimmst teil');
   return `
   <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
     <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
@@ -595,9 +605,9 @@ function renderEventCard(e, idx = 0) {
       <div class="ecb-title-row">
         <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
         <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
-        ${isDabei ? '<span class="ecb-dabei-badge">Dabei</span>' : ''}
       </div>
       <div class="ecb-title">${e.name}</div>
+      ${statusHtml}
       <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
       <div class="ecb-creator">${ic('user',12)} ${e.creatorId
         ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`

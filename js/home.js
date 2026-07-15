@@ -53,6 +53,7 @@ function getMyActiveEvents() {
   return allEvents
     .filter(ev =>
       ev.dateStr >= todayStr &&
+      !isEventCompleted(ev) &&
       (ev.participants.some(p => String(p.id) === myId) || String(ev.creatorId) === myId)
     )
     .sort((a, b) => (a.dateStr + (a.time || '')).localeCompare(b.dateStr + (b.time || '')));
@@ -96,9 +97,12 @@ function renderHomeActivities() {
   const visible = allItems.slice(0, MAX);
   const hasMore = total > MAX;
 
+  const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
   const cardsHtml = visible.map(item => {
     if (item.kind === 'event') {
       const e = item.data;
+      const isCreator  = myId && String(e.creatorId) === myId;
+      const userStatus = isCreator ? 'Von dir erstellt' : 'Du nimmst teil';
       return `
         <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
@@ -108,6 +112,7 @@ function renderHomeActivities() {
               ${gameTypePill(e.type)}
             </div>
             <div class="home-act-title">${escHtml(e.name)}</div>
+            ${userStatusLine(userStatus)}
             <div class="home-act-meta">${ic('calendar',10)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin',10)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users',10)} ${e.p}/${e.max}</div>
           </div>
           <span class="home-act-chevron">›</span>
@@ -126,6 +131,7 @@ function renderHomeActivities() {
               ${gameTypePill(ps.spielart)}
             </div>
             <div class="home-act-title">Mitspieler gesucht</div>
+            ${userStatusLine('Von dir erstellt')}
             ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
           </div>
           <span class="home-act-chevron">›</span>
@@ -204,7 +210,10 @@ function renderHome() {
   // Events
   const evSrc = allEvents;
   const evList = document.getElementById('home-events-list');
-  const evFiltered = evSrc.filter(e => e.type !== 'player_search').slice(0, 3);
+  const _todayStr = new Date().toISOString().slice(0, 10);
+  const evFiltered = evSrc
+    .filter(e => e.type !== 'player_search' && e.dateStr >= _todayStr && !isEventCompleted(e))
+    .slice(0, 3);
   evList.innerHTML = evFiltered.length
     ? evFiltered.map((e, i) => renderEventCard(e, i)).join('')
     : '<div style="text-align:center;padding:32px 16px;color:var(--text-dim);">Noch keine Spiele geplant.</div>';

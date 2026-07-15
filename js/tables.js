@@ -80,7 +80,7 @@ function showTableDetail(id) {
       </div>
       <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" style="margin-top:12px" onclick="openComments(${t.id})">Kommentar schreiben</button>
     </div>
-    <div class="sheet-map-attr" style="padding-bottom:8px;">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></div>`;
+    <div class="sheet-map-attr" style="padding-bottom:8px;">© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>`;
 
   // Fixed Bottom Bar — CTA-Buttons mit korrekten Event-Handlern (kein inline-JS-Escaping nötig)
   const actionsEl = document.getElementById('tds-actions');

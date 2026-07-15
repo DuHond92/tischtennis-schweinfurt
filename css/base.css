@@ -104,8 +104,6 @@ body {
 .fade-up-2 { animation-delay: 0.1s; opacity: 0; }
 .fade-up-3 { animation-delay: 0.15s; opacity: 0; }
 
-/* ======= DARK MODE MAP TILE ======= */
-[data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
 
 /* ======= MAP ATTRIBUTION ======= */
 .leaflet-control-attribution {

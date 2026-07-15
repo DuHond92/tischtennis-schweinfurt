@@ -28,6 +28,9 @@
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
@@ -961,7 +964,7 @@
     </div>
     <button class="btn btn-primary btn-full" onclick="closeAllSheets();showPage('profile')">Zum Profil</button>
     <div style="height:10px;"></div>
-    <button class="btn btn-secondary btn-full" id="profile-signout-btn" onclick="doSignOut()">Abmelden</button>
+    <button class="btn btn-secondary btn-full" id="profile-signout-btn" onclick="confirmSignOut()">Abmelden</button>
   </div>
 </div>
 
@@ -1615,6 +1618,7 @@
       Pin auf Karte setzen
     </button>
     <div class="sug-coord-display" id="sug-coord-display">Noch kein Standort gewählt</div>
+    <div id="sug-loc-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-top:8px;"></div>
     <button class="btn btn-primary btn-full" id="sug-step1-next" onclick="suggestNextStep()" style="margin-top:16px;" disabled>Weiter →</button>
   </div>
 
@@ -1622,8 +1626,12 @@
   <div id="sug-step-2" class="sheet-body" style="display:none;">
     <div class="sug-step-title">Schritt 2 von 3 — Details</div>
     <div class="form-group">
-      <label class="form-label">Name *</label>
-      <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off" onkeydown="if(event.key==='Enter')suggestNextStep()">
+      <label class="form-label" for="sug-name">Name *</label>
+      <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off"
+        aria-describedby="sug-name-error"
+        onkeydown="if(event.key==='Enter')suggestNextStep()"
+        oninput="_clearSugNameError()">
+      <div id="sug-name-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-top:6px;"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Adresse (optional)</label>

@@ -198,15 +198,17 @@
   <h2>7. Kartendarstellung</h2>
   <p>
     PlattenTreff verwendet für die Kartendarstellung <strong>Leaflet.js</strong>
-    (Open Source, MIT-Lizenz) mit Kartenkacheln von <strong>CARTO</strong>
-    (CARTO B.V., Keizersgracht 313, 1016 EE Amsterdam, Niederlande).
-    Die Kartendaten basieren auf <strong>OpenStreetMap</strong>
-    (© OpenStreetMap-Mitwirkende).
+    und <strong>MapLibre GL JS</strong> (beide Open Source, MIT-Lizenz) mit
+    Vektorkarten von <strong>OpenFreeMap</strong>
+    (<a href="https://openfreemap.org" target="_blank" rel="noopener">openfreemap.org</a>,
+    Open Source, ODbL-Lizenz). Die Kartendaten basieren auf
+    <strong>OpenStreetMap</strong> (© OpenStreetMap-Mitwirkende) und
+    <strong>OpenMapTiles</strong> (© OpenMapTiles).
   </p>
   <p>
-    Beim Laden der Karte werden Anfragen an CARTO-Server gesendet, die technisch
-    die IP-Adresse des Nutzers übertragen. Dies ist für die Kartendarstellung
-    technisch notwendig.
+    Beim Laden der Karte werden Anfragen an Server von OpenFreeMap gesendet,
+    die technisch die IP-Adresse des Nutzers übertragen. Dies ist für die
+    Kartendarstellung technisch notwendig.
     Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am
     Betrieb der Kartenfunktion).
   </p>
@@ -410,9 +412,9 @@
         <td><a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></td>
       </tr>
       <tr>
-        <td>CARTO B.V.</td>
-        <td>Kartenkacheln</td>
-        <td><a href="https://carto.com/privacy" target="_blank" rel="noopener">carto.com/privacy</a></td>
+        <td>OpenFreeMap</td>
+        <td>Vektorkarten (Kartenstyle Liberty/Dark)</td>
+        <td><a href="https://openfreemap.org" target="_blank" rel="noopener">openfreemap.org</a></td>
       </tr>
       <tr>
         <td>OpenStreetMap Foundation</td>
@@ -421,7 +423,7 @@
       </tr>
       <tr>
         <td>Cloudflare / unpkg.com</td>
-        <td>Auslieferung von Leaflet.js (CDN)</td>
+        <td>Auslieferung von Leaflet.js und MapLibre GL JS (CDN)</td>
         <td><a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com</a></td>
       </tr>
       <tr>

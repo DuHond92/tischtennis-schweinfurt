@@ -45,10 +45,11 @@ function _initEdsMapPreview(lat, lng) {
     attributionControl: true
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://carto.com/" target="_blank">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19
+  L.maplibreGL({
+    style: document.documentElement.getAttribute('data-theme') === 'dark'
+      ? 'https://tiles.openfreemap.org/styles/dark'
+      : 'https://tiles.openfreemap.org/styles/liberty',
+    attribution: '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
   }).addTo(_edsMapInstance);
 
   L.circleMarker([lat, lng], {

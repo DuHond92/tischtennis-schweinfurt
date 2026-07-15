@@ -88,6 +88,7 @@ Verbessert
 
 Geändert
 
+* **Kartenstack: CARTO → OpenFreeMap** — Leaflet + MapLibre GL JS + @maplibre/maplibre-gl-leaflet 0.1.3, Vektorkarten statt Raster-Kacheln, nativer Dark-Mode-Style (kein CSS-Filter), kein API-Key erforderlich. CARTO vollständig entfernt (Code, URLs, Datenschutz, Nutzungsbedingungen).
 * “Wertungsspiel” intern auf ranked umgestellt
 * Events ohne Tisch möglich (player_search)
 * Kartenbilder ausschließlich aus Supabase

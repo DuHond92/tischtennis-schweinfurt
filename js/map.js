@@ -10,12 +10,11 @@ function _localTodayISO() {
     String(d.getDate()).padStart(2, '0');
 }
 
-// Aktive Kartenquelle: CARTO Voyager
-// Attribution: OSM + CARTO sind beide lizenzrechtlich Pflicht und müssen sichtbar bleiben
-const _TILE_URL  = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const _TILE_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>';
+const _MAP_STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/liberty';
+const _MAP_STYLE_DARK  = 'https://tiles.openfreemap.org/styles/dark';
+const _MAP_ATTR = '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
 
-let leafletMap, markers = [];
+let leafletMap, _maplibreLayer = null, markers = [];
 let mapSearchQuery   = '';
 let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'punktspiel'
 let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
@@ -23,16 +22,24 @@ let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 let _previewTableId = null; // currently shown in map preview card
 let _bsSnapTo = null;       // exposed by initBottomSheet for external snap calls
 
+function _currentMapStyle() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? _MAP_STYLE_DARK : _MAP_STYLE_LIGHT;
+}
+
+function _watchMapTheme() {
+  new MutationObserver(() => {
+    _maplibreLayer?.getMaplibreMap()?.setStyle(_currentMapStyle());
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
 function initMap() {
   leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
-  L.tileLayer(_TILE_URL, {
-    attribution: _TILE_ATTR,
-    maxZoom: 19,
-    subdomains: 'abcd',
-    detectRetina: true
+  _maplibreLayer = L.maplibreGL({
+    style: _currentMapStyle(),
+    attribution: _MAP_ATTR
   }).addTo(leafletMap);
-  // Leaflet-Prefix entfernen — BSD 2-Clause erfordert keine UI-Attribution
   leafletMap.attributionControl.setPrefix(false);
+  _watchMapTheme();
 
   const src = tablesLoaded ? tables : FALLBACK_TABLES;
   src.forEach(t => addMarker(t));

@@ -14,7 +14,9 @@
 
 ## Karten
 
-* Leaflet mit OSM-/Carto-Kacheln wird als Kartensystem verwendet.
+* Kartensystem: Leaflet 1.9.4 + MapLibre GL JS 4.7.1 + @maplibre/maplibre-gl-leaflet 0.1.3 mit Vektorkarten von OpenFreeMap (Liberty für Light, Dark für Dark Mode).
+* CARTO wurde 2026-07-15 vollständig entfernt — kein CARTO-Code, keine CARTO-URLs mehr im Projekt.
+* Dark Mode: nativer MapLibre-Style, kein CSS-Filter. Theme-Switching per MutationObserver auf `data-theme`.
 * Marker dürfen nicht hart codiert werden.
 * Karte soll möglichst viel Bildschirmfläche erhalten.
 

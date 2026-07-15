@@ -284,6 +284,18 @@ function dismissAuthPrompt() {
   if (el) el.style.display = 'none';
 }
 
+function confirmSignOut() {
+  showConfirmDialog({
+    title:        'Abmelden?',
+    body:         'Du wirst sicher von deinem Account auf diesem Gerät abgemeldet.',
+    confirmLabel: 'Abmelden',
+    cancelLabel:  'Abbrechen',
+    danger:       true,
+    iconVisible:  false,
+    onConfirm:    doSignOut,
+  });
+}
+
 async function doSignOut() {
   _myConnections = null;
   PTAnalytics.track('logout_completed');

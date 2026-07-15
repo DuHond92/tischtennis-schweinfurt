@@ -51,7 +51,7 @@ function renderProfile() {
 
   // Sign-out button
   const signOutBtn = document.querySelector('#profile-signout-btn');
-  if (signOutBtn) signOutBtn.onclick = doSignOut;
+  if (signOutBtn) signOutBtn.onclick = confirmSignOut;
 
   // Moderation link
   const adminItem = document.getElementById('admin-nav-item');

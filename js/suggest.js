@@ -45,6 +45,26 @@ function _resetSuggestForm() {
   const add  = document.getElementById('sug-add-photo-btn');
   if (prev) prev.style.display = 'none';
   if (add)  add.style.display  = '';
+  // Inline-Errors zurücksetzen
+  clearInlineError('sug-name-error');
+  clearInlineError('sug-loc-error');
+  _clearSugNameError();
+}
+
+function _clearSugNameError() {
+  const el = document.getElementById('sug-name');
+  if (el) { el.classList.remove('input-error'); el.removeAttribute('aria-invalid'); }
+  clearInlineError('sug-name-error');
+}
+
+function _showSugFieldError(fieldId, errorId, msg) {
+  const el = document.getElementById(fieldId);
+  if (el) { el.classList.add('input-error'); el.setAttribute('aria-invalid', 'true'); }
+  showInlineError(errorId, { title: msg });
+  const errEl = document.getElementById(errorId);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (errEl) errEl.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+  if (el)    el.focus({ preventScroll: true });
 }
 
 function _setSuggestStep(step) {
@@ -181,9 +201,10 @@ function _removeSuggestImage() {
 function suggestNextStep() {
   if (suggestStep === 1) {
     if (!suggestLat || !suggestLng) {
-      showToast('Bitte zuerst einen Standort wählen', 'warning');
+      showInlineError('sug-loc-error', { title: 'Standort erforderlich', desc: 'Bitte wähle einen Standort per GPS oder setze einen Pin auf der Karte.' });
       return;
     }
+    clearInlineError('sug-loc-error');
     // Duplikat-Check nur gegen echte Supabase-Daten — FALLBACK_TABLES niemals prüfen
     const src = tablesLoaded ? tables : [];
     const DUPE_M = 50;
@@ -213,7 +234,11 @@ function suggestSetType(btn) {
 
 async function _submitSuggestion() {
   const name = document.getElementById('sug-name')?.value.trim();
-  if (!name) { showToast('Name ist ein Pflichtfeld', 'warning'); return; }
+  if (!name) {
+    _showSugFieldError('sug-name', 'sug-name-error', 'Bitte gib einen Namen für die Platte ein.');
+    return;
+  }
+  _clearSugNameError();
 
   const address      = document.getElementById('sug-address')?.value.trim() || null;
   const typeBtn      = document.querySelector('.sug-type-btn.active');

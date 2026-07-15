@@ -117,6 +117,11 @@ function typeLabel(type) {
   return _GAME_TYPE_META[type]?.label || 'Spiel';
 }
 
+function userStatusLine(text) {
+  if (!text) return '';
+  return `<div class="ecb-user-status">${ic('check', 12)} ${text}</div>`;
+}
+
 // Zentraler Datumshelper für alle Event-/Spiel-Anzeigen
 // Format: "So. 10. Juli, 14:00 Uhr" | "Heute, 14:00 Uhr" | "So. 10. Juli 2026, 14:00 Uhr"
 // timeStr = null → kein Uhrzeitteil

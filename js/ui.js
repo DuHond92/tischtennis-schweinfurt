@@ -350,35 +350,46 @@ function clearInlineError(elOrId) {
 }
 
 // ── BESTÄTIGUNGSDIALOG ──────────────────────────────────────────────
-let _cdOnConfirm = null;
+let _cdOnConfirm   = null;
+let _cdReturnFocus = null;
 
-function showConfirmDialog({ title = '', body = '', confirmLabel = 'Löschen', cancelLabel = 'Abbrechen', onConfirm = null, danger = true } = {}) {
+function showConfirmDialog({ title = '', body = '', confirmLabel = 'Löschen', cancelLabel = 'Abbrechen', onConfirm = null, danger = true, iconVisible = true } = {}) {
   const overlay = document.getElementById('confirm-dialog');
   if (!overlay) {
     // Fallback: nativer confirm wenn DOM nicht bereit
     if (confirm(body || title)) { if (onConfirm) onConfirm(); }
     return;
   }
+  _cdReturnFocus = document.activeElement;
   document.getElementById('cd-title').textContent = title;
   document.getElementById('cd-body').textContent  = body;
   const btn = document.getElementById('cd-confirm-btn');
   btn.textContent = confirmLabel;
   btn.className   = 'btn ' + (danger ? 'btn-error' : 'btn-primary');
   document.getElementById('cd-cancel-btn').textContent = cancelLabel;
+  const iconEl = overlay.querySelector('.cd-icon');
+  if (iconEl) iconEl.style.display = iconVisible ? '' : 'none';
   _cdOnConfirm = onConfirm;
   overlay.classList.add('show');
+  requestAnimationFrame(() => document.getElementById('cd-cancel-btn')?.focus());
+}
+
+function _cdClose() {
+  document.getElementById('confirm-dialog').classList.remove('show');
+  _cdReturnFocus?.focus();
+  _cdReturnFocus = null;
 }
 
 function _cdConfirm() {
-  document.getElementById('confirm-dialog').classList.remove('show');
+  _cdClose();
   const cb = _cdOnConfirm;
   _cdOnConfirm = null;
   if (cb) cb();
 }
 
 function _cdCancel() {
-  document.getElementById('confirm-dialog').classList.remove('show');
   _cdOnConfirm = null;
+  _cdClose();
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -581,6 +592,13 @@ function animateCount(el, target) {
   };
   requestAnimationFrame(tick);
 }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const cd = document.getElementById('confirm-dialog');
+    if (cd?.classList.contains('show')) { _cdCancel(); e.stopPropagation(); }
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const inbox = document.getElementById('inbox-sheet');
