@@ -820,17 +820,47 @@ function activateMitspielerFilter() {
   resetEventFilters();
 }
 
-function openCreateEventSheet() {
+function _resetCreateEventForm(titleText = 'Spiel organisieren', btnText = 'Spiel organisieren') {
   _editingEventId = null;
-  PTAnalytics.track('game_create_started');
-  document.querySelector('#create-event-sheet .sheet-title').textContent = 'Spiel organisieren';
-  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Spiel organisieren';
+  const titleEl = document.getElementById('create-event-sheet-title');
+  if (titleEl) titleEl.textContent = titleText;
+  const submitBtn = document.getElementById('create-event-submit-btn');
+  if (submitBtn) submitBtn.textContent = btnText;
   document.getElementById('ev-name').value  = '';
   document.getElementById('ev-date').value  = new Date().toISOString().slice(0, 10);
   document.getElementById('ev-time').value  = '15:00';
   document.getElementById('ev-mode').value  = 'casual';
+  const evMax = document.getElementById('ev-max');
+  if (evMax) evMax.value = '4';
   const evDesc = document.getElementById('ev-desc');
   if (evDesc) evDesc.value = '';
+  clearInlineError('ec-form-error');
+}
+
+// Öffnet "Spiel erstellen" als eigenständige Unterseite der Platten-Detailansicht.
+function openCreateEventSheetFromTds(tableId) {
+  _createEventFromTds = true;
+  _resetCreateEventForm();
+  PTAnalytics.track('game_create_started', { source: 'tds' });
+  const sel = document.getElementById('ev-table');
+  if (sel) sel.value = tableId;
+  openTdsSubpage('create-event-sheet');
+}
+
+// Schließt "Spiel erstellen" und kehrt zum Ausgangspunkt zurück.
+function closeCreateEventSheet() {
+  if (_createEventFromTds) {
+    _createEventFromTds = false;
+    closeTdsSubpage('create-event-sheet');
+  } else {
+    closeAllSheets();
+  }
+}
+
+function openCreateEventSheet() {
+  _createEventFromTds = false;
+  _resetCreateEventForm();
+  PTAnalytics.track('game_create_started');
   closeAllSheets();
   openSheet('create-event-sheet');
 }
@@ -854,6 +884,8 @@ async function submitCreateEvent() {
   }
   clearInlineError('ec-form-error');
 
+  let _fromTds = false;
+
   if(_editingEventId) {
     const { error } = await new QueryBuilder('events').eq('id', _editingEventId).update({
       title, table_id: parseInt(tableId), event_date: date, event_time: time, mode,
@@ -864,7 +896,7 @@ async function submitCreateEvent() {
     closeAllSheets();
     showToast('Event gespeichert!');
   } else {
-    // 1. Event anlegen (insert gibt die neue Zeile zurück)
+    // 1. Event anlegen
     const { data: inserted, error } = await new QueryBuilder('events').insert({
       title, table_id: parseInt(tableId),
       creator_id: sb.getUserId(),
@@ -880,25 +912,30 @@ async function submitCreateEvent() {
         .insert({ event_id: newId, user_id: sb.getUserId() });
       if(pErr && pErr.code !== '23505') {
         console.warn('Participant-Insert fehlgeschlagen, versuche erneut:', pErr);
-        // Einmal wiederholen
         await new QueryBuilder('event_participants')
           .insert({ event_id: newId, user_id: sb.getUserId() });
       }
     }
 
     PTAnalytics.track('game_created', { mode });
-    closeAllSheets();
+    _fromTds = _createEventFromTds;
+    closeCreateEventSheet();
     showToast('Spiel organisiert!');
   }
 
-  // 3. Globalen State neu laden (holt Event + Participants)
+  // 3. Globalen State neu laden
   await loadEvents();
 
-  // 4. Alle Ansichten neu rendern
+  // 4. Kommende-Spiele im Table-Detail sofort aktualisieren (nur im TDS-Kontext)
+  if (_fromTds && typeof _refreshTableDetailEvents === 'function') {
+    _refreshTableDetailEvents(parseInt(tableId));
+  }
+
+  // 5. Alle Ansichten neu rendern
   renderEvents();
   renderHome();
 
-  // 5. Karte aktualisieren: Marker-Badges, Liste, offene Preview
+  // 6. Karte aktualisieren: Marker-Badges, Liste, offene Preview
   if(mapInit) {
     _refreshMarkerIcons();
     _applyMapFilters();

@@ -537,6 +537,7 @@ function startGame(eventId) {
 }
 
 function openEditEvent(eventId) {
+  _createEventFromTds = false;
   closeAllSheets();
   const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;

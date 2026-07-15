@@ -90,12 +90,7 @@ function showTableDetail(id) {
     const createBtn = document.createElement('button');
     createBtn.className = 'btn btn-primary tds-float-create';
     createBtn.innerHTML = `${ic('calendar-plus',15)} Spiel erstellen`;
-    createBtn.onclick = () => {
-      closeAllSheets();
-      const sel = document.getElementById('ev-table');
-      if (sel) sel.value = t.id;
-      openSheet('create-event-sheet');
-    };
+    createBtn.onclick = () => openCreateEventSheetFromTds(t.id);
     const routeBtn = document.createElement('button');
     routeBtn.className = 'btn btn-secondary tds-float-route';
     routeBtn.innerHTML = `${ic('navigate',15)} In Karten öffnen`;
@@ -111,6 +106,30 @@ function showTableDetail(id) {
   loadRatingsForTable(id);
   loadCommentsInline(id);
   loadTableImages(id);
+}
+
+// Aktualisiert nur die Kommende-Spiele-Sektion im geöffneten Table-Detail.
+// Wird nach erfolgreicher Spielerstellung aus dem TDS-Kontext aufgerufen.
+function _refreshTableDetailEvents(tableId) {
+  const sec = document.querySelector('#tds-body .tds-events-section');
+  if (!sec) return;
+  const evArr = allEvents.filter(e => e.tid === tableId);
+  const evHtml = evArr.length === 0
+    ? `<div class="tds-events-empty">Noch keine Spiele an dieser Platte geplant.</div>`
+    : `<div class="tds-event-list">${evArr.map(e => `
+      <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
+        <div class="tds-event-card-body">
+          <div class="tds-event-tag-row">
+            <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
+            ${gameTypePill(e.type)}
+          </div>
+          <div class="tds-event-name">${escHtml(e.name)}</div>
+          <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
+        </div>
+        <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
+      </div>`).join('')}</div>`;
+  sec.innerHTML = `<div class="eds-section-title">Kommende Spiele</div>${evHtml}`;
 }
 
 const PLATE_FALLBACK = 'images/placeholders/plate_outdoor.png';
