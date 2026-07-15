@@ -1210,6 +1210,27 @@
   display: flex; flex-direction: column; gap: 8px;
   min-height: 0;
 }
+
+/* ── INLINE-BEWERTUNGSLISTE im Table-Detail ── */
+.tds-inline-ratings { display: flex; flex-direction: column; }
+.tds-inline-rating {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tds-inline-rating:last-child { border-bottom: none; padding-bottom: 0; }
+.tds-inline-rating:first-child { padding-top: 0; }
+.tds-ir-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.tds-ir-name {
+  font-size: var(--text-ui); font-weight: 700; color: var(--text);
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tds-ir-stars { color: var(--gold); font-size: 0.7rem; letter-spacing: 0.4px; flex-shrink: 0; }
+.tds-ir-comment {
+  font-size: var(--text-meta); color: var(--text-dim); line-height: 1.5;
+  padding-left: 40px;
+}
 .tds-rc-head {
   display: flex; align-items: center; justify-content: space-between;
 }

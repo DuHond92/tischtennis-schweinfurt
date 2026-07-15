@@ -65,20 +65,14 @@ function showTableDetail(id) {
     </div>
     <!-- Bewertungs-Card (async, vor Zugang) -->
     <div class="tds-rating-section" id="tds-rating-card-${t.id}"></div>
+    <!-- Inline-Bewertungsliste (async) -->
+    <div class="tds-rating-section" id="tds-ratings-list-${t.id}"></div>
     <!-- Zugang (optional, Detailinformationen) -->
     ${accessHtml}
     <!-- Kommende Spiele -->
     <div class="eds-section tds-events-section">
       <div class="eds-section-title">Kommende Spiele</div>
       ${evHtml}
-    </div>
-    <!-- Kommentare -->
-    <div class="eds-section eds-section--comments">
-      <div class="eds-section-title">Kommentare</div>
-      <div id="tds-comments-${t.id}">
-        <div aria-hidden="true">${skeletonComment()}${skeletonComment()}</div>
-      </div>
-      <button class="btn btn-secondary btn-sm btn-full tds-comment-btn" style="margin-top:12px" onclick="openComments(${t.id})">Kommentar schreiben</button>
     </div>
     <div class="sheet-map-attr" style="padding-bottom:8px;">© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>`;
 
@@ -104,7 +98,7 @@ function showTableDetail(id) {
   const shareBtn = document.getElementById('tds-share-btn');
   if (shareBtn) shareBtn.onclick = () => shareTable(t);
   loadRatingsForTable(id);
-  loadCommentsInline(id);
+  _loadInlineRatingsList(id);
   loadTableImages(id);
 }
 
@@ -994,83 +988,37 @@ function _renderAllRatings(tableId, avg, rList) {
   }).join('');
 }
 
-// ── KOMMENTARE ────────────────────────────────────────────────────
-async function loadCommentsInline(tableId) {
-  const el    = document.getElementById(`tds-comments-${tableId}`);
-  if(!el) return;
+// ── INLINE-BEWERTUNGSLISTE ────────────────────────────────────────
+// Lädt die neuesten Bewertungen (mit optionalem Kommentar) und zeigt sie
+// direkt in der Platten-Detailansicht an — ersetzt die alte Kommentarsektion.
+async function _loadInlineRatingsList(tableId) {
+  const el = document.getElementById(`tds-ratings-list-${tableId}`);
+  if (!el) return;
   try {
-    const qb = new QueryBuilder('comments');
-    qb._select = 'id,user_id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
-    qb.eq('table_id', tableId).order('created_at', true).limit(3);
-    const {data} = await qb.execute();
-    if(!data || !data.length) {
-      el.innerHTML = `<div class="chat-empty">Noch keine Kommentare. Teile deine Erfahrung mit dieser Platte.</div>`;
-      return;
-    }
-    el.innerHTML = data.map(c => _commentItemHtml(c, 'inline')).join('');
+    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&select=overall,comment,created_at,profiles(username,avatar_emoji,avatar_url)&order=created_at.desc&limit=5`;
+    const { ok, data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (!ok || !data || !data.length) { el.innerHTML = ''; return; }
+    const withComment = data.filter(r => r.comment);
+    if (!withComment.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="eds-section">
+        <div class="eds-section-title">Stimmen</div>
+        <div class="tds-inline-ratings">
+          ${withComment.map(r => {
+            const name  = escHtml(r.profiles?.username || 'Anonym');
+            const av    = getAvatarHtml(r.profiles, { size: 32 });
+            const full  = Math.round(r.overall || 0);
+            const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+            return `<div class="tds-inline-rating">
+              <div class="tds-ir-head">${av}<span class="tds-ir-name">${name}</span><span class="tds-ir-stars">${stars}</span></div>
+              <div class="tds-ir-comment">${escHtml(r.comment)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
   } catch(e) {
-    el.innerHTML = `<div class="chat-empty">Kommentare nicht verfügbar.</div>`;
+    el.innerHTML = '';
   }
-}
-
-async function openComments(tableId) {
-  currentDetailTableId = tableId;
-  document.getElementById('comment-sheet-title').textContent = 'Kommentare';
-  const listEl = document.getElementById('comment-list');
-  listEl.innerHTML = `<div class="osm-loading"><div class="search-spinner"></div>Lade Kommentare…</div>`;
-  openSheet('comment-sheet');
-
-  try {
-    const qb = new QueryBuilder('comments');
-    qb._select = 'id,user_id,text,created_at,profiles(username,avatar_emoji,avatar_url)';
-    qb.eq('table_id', tableId).order('created_at', true);
-    const {data} = await qb.execute();
-    renderComments(data || []);
-  } catch(e) {
-    renderComments([]);
-  }
-}
-
-function renderComments(comments) {
-  const el = document.getElementById('comment-list');
-  if(!comments.length) {
-    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.85rem;">
-      Noch keine Kommentare.<br>Sei der Erste!</div>`;
-    return;
-  }
-  el.innerHTML = comments.map(c => _commentItemHtml(c, 'sheet')).join('');
-}
-
-function _commentItemHtml(c, ctx) {
-  const myId   = sb.getUserId();
-  const isMod  = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-  const isOwn  = c.user_id === myId;
-  const name   = c.profiles?.username || 'Anonym';
-  const _d     = new Date(c.created_at);
-  const date   = _d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
-  const time   = _d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  const av     = getAvatarHtml(c.profiles, { size: 34 });
-  const showDot = sb.isLoggedIn() && (isMod || !isOwn);
-  const dotBtn = showDot
-    ? `<button class="comment-dot-btn"
-         aria-label="Kommentaroptionen"
-         data-cid="${escAttr(c.id)}"
-         data-ctx="${ctx}"
-         data-own="${isOwn ? '1' : ''}"
-         data-preview="${escAttr((c.text || '').slice(0, 80))}"
-         onclick="openCommentDotMenu(this)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>`
-    : '';
-  return `<div class="comment-item">
-    <div class="comment-av">${av}</div>
-    <div class="comment-body">
-      <div class="comment-meta">
-        <span class="comment-author">${escHtml(name)}</span>
-        <span class="comment-date">· ${date} · ${time}</span>
-        ${dotBtn}
-      </div>
-      <div class="comment-text">${escHtml(c.text)}</div>
-    </div>
-  </div>`;
 }
 
 let _cmtMenuData = {};
@@ -1104,46 +1052,7 @@ function submitCmtDelete() {
   closeAllSheets();
   if (_cmtMenuData.contentType === 'event_message') {
     deleteEventMessage(_cmtMenuData.id, _cmtMenuData.ctx);
-  } else {
-    deleteComment(_cmtMenuData.id, _cmtMenuData.ctx);
   }
-}
-
-function deleteComment(commentId, context) {
-  showConfirmDialog({
-    title: 'Kommentar löschen?',
-    body: 'Der Kommentar wird dauerhaft entfernt.',
-    confirmLabel: 'Löschen',
-    danger: true,
-    onConfirm: async () => {
-      const { ok } = await fetchWithRefresh(
-        `${SUPABASE_URL}/rest/v1/comments?id=eq.${encodeURIComponent(commentId)}`,
-        { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
-      );
-      if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
-      _logModAction('delete_comment', 'comment', commentId);
-      showToast('Kommentar gelöscht');
-      if (context === 'sheet') openComments(currentDetailTableId);
-      else loadCommentsInline(currentDetailTableId);
-    }
-  });
-}
-
-async function submitComment() {
-  if(!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
-  const text = document.getElementById('new-comment').value.trim();
-  if(!text) { showToast('Bitte Text eingeben','warning'); return; }
-  const qb = new QueryBuilder('comments');
-  const {error} = await qb.insert({
-    table_id: currentDetailTableId,
-    user_id: sb.getUserId(),
-    text
-  });
-  if(error) { showToast('Fehler beim Senden','error'); return; }
-  document.getElementById('new-comment').value = '';
-  PTAnalytics.track('plate_comment_created');
-  showToast('Kommentar gesendet!');
-  openComments(currentDetailTableId);
 }
 
 // ── IMAGE LIGHTBOX ────────────────────────────────────────────────────────────
