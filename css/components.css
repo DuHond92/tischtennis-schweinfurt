@@ -1497,6 +1497,7 @@
 .psc-btn {
   flex-shrink: 0; align-self: flex-start;
   font-size: var(--text-meta) !important; padding: 6px 12px !important;
+  border-radius: var(--radius-pill) !important;
 }
 
 /* ── SUGGEST TABLE ──────────────────────────────────────────────── */
@@ -2054,8 +2055,8 @@
 }
 .psc-btn {
   display: inline-block;
-  padding: 9px 18px;
-  border-radius: var(--radius-sm);
+  padding: 11px 22px;
+  border-radius: var(--radius-pill);
   background: var(--primary);
   color: #fff;
   font-size: var(--text-ui);
@@ -2093,7 +2094,7 @@
 }
 .lpc-btn {
   display: block; width: 100%;
-  padding: 11px 16px; border-radius: var(--radius-sm);
+  padding: 11px 22px; border-radius: var(--radius-pill);
   font-size: var(--text-ui); font-weight: 700;
   border: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2133,7 +2134,7 @@
 }
 .apc-btn {
   display: block; width: 100%;
-  padding: 11px 16px; border-radius: var(--radius-sm);
+  padding: 11px 22px; border-radius: var(--radius-pill);
   font-size: var(--text-ui); font-weight: 700;
   border: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2190,8 +2191,8 @@
 }
 .esc-btn {
   display: inline-block;
-  padding: 9px 18px;
-  border-radius: var(--radius-sm);
+  padding: 11px 22px;
+  border-radius: var(--radius-pill);
   background: var(--primary); color: #fff;
   font-size: var(--text-ui); font-weight: 700;
   border: none; cursor: pointer;

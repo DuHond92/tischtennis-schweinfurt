@@ -1345,44 +1345,9 @@
   font-weight: 600;
 }
 
-/* Speichern-Button */
-.pe-save-btn {
-  display: block;
-  width: 100%;
-  margin-top: 22px;
-  padding: 15px;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: filter 0.15s;
-  box-shadow: 0 4px 14px rgba(22,163,91,0.28);
-}
-.pe-save-btn:active { filter: brightness(0.9); }
-.pe-save-btn:disabled { opacity: 0.6; cursor: default; }
-
-/* Passwort-Button */
-.pe-pw-btn {
-  display: block;
-  width: 100%;
-  margin-top: 4px;
-  padding: 14px;
-  background: var(--surface2);
-  color: var(--text);
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  font-family: var(--font-body);
-  font-size: var(--text-title);
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.15s, filter 0.15s;
-}
-.pe-pw-btn:active { filter: brightness(0.93); }
-.pe-pw-btn:disabled { opacity: 0.6; cursor: default; }
+/* Profil-Edit Buttons — Layout-Spacing only, visuals via .btn */
+.pe-save-btn { margin-top: 22px; }
+.pe-pw-btn   { margin-top: 4px; }
 
 /* ── Spielpartner-Rows in Inbox ─────────────────────── */
 .inbox-partner-row {
@@ -1403,13 +1368,15 @@
 .btn-withdraw {
   background: none; border: 1px solid var(--border); color: var(--text-dim);
   font-size: var(--text-meta); font-weight: 600; padding: 5px 10px;
-  border-radius: 20px; cursor: pointer; flex-shrink: 0;
+  border-radius: var(--radius-pill); cursor: pointer; flex-shrink: 0;
   font-family: var(--font-body);
   transition: color 0.15s, border-color 0.15s;
 }
 .btn-withdraw:active { color: var(--text); border-color: var(--text-dim); }
-.btn-danger { background: var(--error); color: #fff; border: none; }
-.btn-danger:active { background: var(--error-d); }
+/* btn-danger aliased to btn-error visuals — use .btn-error in HTML */
+.btn-danger { background: var(--error-bg); color: var(--error); border: 1.5px solid var(--error); }
+.btn-danger:hover  { filter: brightness(0.94); }
+.btn-danger:active { filter: brightness(0.88); }
 
 /* ── Empty State (keine Spielpartner/Chats) ─────────────── */
 .inbox-empty-full {
@@ -1504,7 +1471,7 @@
 }
 .btn-sm-primary {
   background: var(--primary); color: #fff;
-  border: none; border-radius: 20px;
+  border: none; border-radius: var(--radius-pill);
   font-size: var(--text-meta); font-weight: 700; padding: 6px 12px;
   cursor: pointer; font-family: var(--font-body);
   display: flex; align-items: center; gap: 4px;
@@ -1513,7 +1480,7 @@
 .btn-sm-primary:active { filter: brightness(0.88); }
 .btn-sm-ghost {
   background: none; border: 1.5px solid var(--border);
-  border-radius: 20px; color: var(--text);
+  border-radius: var(--radius-pill); color: var(--text);
   font-size: var(--text-meta); font-weight: 700; padding: 5px 12px;
   cursor: pointer; font-family: var(--font-body);
   white-space: nowrap;
@@ -1578,12 +1545,14 @@
 .da-list li {
   font-size: var(--text-ui);
   line-height: 1.45;
-  padding-left: 16px;
-  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   color: var(--text2);
 }
-.da-list-block--delete .da-list li::before { content: '×'; position: absolute; left: 0; color: #EF4444; font-weight: 700; }
-.da-list-block--keep  .da-list li::before { content: '~'; position: absolute; left: 0; color: #22C55E; font-weight: 700; }
+.da-list-icon { flex-shrink: 0; margin-top: 2px; line-height: 1; }
+.da-list-block--delete .da-list-icon { color: var(--error); }
+.da-list-block--keep  .da-list-icon { color: var(--green); }
 
 .da-actions {
   display: flex;
@@ -1591,19 +1560,6 @@
   padding: 0 16px 16px;
 }
 .da-actions .btn { flex: 1; }
-
-.da-btn-danger {
-  background: var(--error);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-btn, 10px);
-  padding: 12px 16px;
-  font-size: var(--text-title);
-  font-weight: 700;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.da-btn-danger:active { background: var(--error-d); }
 
 /* Confirm step */
 .da-confirm-box {
