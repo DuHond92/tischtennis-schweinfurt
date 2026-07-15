@@ -48,6 +48,7 @@ window.addEventListener('load', async () => {
       checkNotifications();
       startNotifPolling();
       if (typeof checkDmNotifications === 'function') checkDmNotifications();
+      if (typeof loadMySuggestions   === 'function') loadMySuggestions();
     }
     // UI mit echten Daten aktualisieren
     window._eventsLoaded = true;

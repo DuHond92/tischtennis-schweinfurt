@@ -150,6 +150,16 @@ function _clearSuggestPin() {
   }
 }
 
+// Vollständiger State-Cleanup beim Abbrechen des Suggest-Flows.
+// Guard: wenn der User gerade per Map-Klick neu positioniert (suggestMapClickActive),
+// darf der bestehende Pin nicht entfernt werden.
+function _cleanupSuggestPin() {
+  if (suggestMapClickActive) return;
+  _clearSuggestPin();
+  suggestLat = null;
+  suggestLng = null;
+}
+
 function _updateCoordDisplay() {
   const el  = document.getElementById('sug-coord-display');
   const btn = document.getElementById('sug-step1-next');
@@ -347,6 +357,7 @@ async function _submitSuggestion() {
 
   PTAnalytics.track('plate_suggest_submitted', { type });
   _clearSuggestPin();
+  if (typeof loadMySuggestions === 'function') loadMySuggestions();
   _buildSuggestPreviewCard(name, address, count, type, suggestionImageUrl);
   _setSuggestStep(3);
 }

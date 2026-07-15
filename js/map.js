@@ -50,6 +50,7 @@ function initMap() {
     if (typeof _handleSuggestMapClick === 'function') _handleSuggestMapClick(e);
   });
   _initLocChip();
+  if (typeof _refreshPendingMarkers === 'function') _refreshPendingMarkers();
 }
 
 function _makeMarkerIcon(t) {
@@ -581,13 +582,65 @@ function _mapThumbHtml(t, loadAttr) {
 // ── SHARED PLATE CARD HELPERS (used by map.js + tables.js) ───────────────────
 const _SURFACE_LABEL = { concrete:'Beton', asphalt:'Asphalt', wood:'Holz', rubber:'Gummi', artificial_turf:'Kunstrasen' };
 
-function _tableMetaLine(t, opts) {
+function _tableMetaLine(t, opts = {}) {
   const parts = [];
   if (t.tablesCount) parts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
   if (t.surface && _SURFACE_LABEL[t.surface]) parts.push(_SURFACE_LABEL[t.surface]);
   parts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
+  if (t.openingHours) parts.push(escHtml(t.openingHours));
+  if (opts?.includeAccess) {
+    const _short = { limited: 'Eingeschränkt', private_or_unclear: 'Zugang unklar', temporarily_closed: 'Geschlossen' };
+    if (t.accessType && _short[t.accessType]) parts.push(_short[t.accessType]);
+  }
   if (opts?.operator && t.operator) parts.push(`Betreiber: ${escHtml(t.operator)}`);
   return parts.join(' · ');
+}
+
+// ── GEMEINSAME BEWERTUNGS-HELFER ──────────────────────────────────────────────
+
+// Generiert Bewertungs-HTML mit eigenem Element-ID-Präfix (verhindert DOM-Kollisionen
+// zwischen Home, Kartenliste und Floating-Preview bei gleichzeitiger Anzeige).
+function _plateRatingHtml(t, idPrefix) {
+  const elId = `plt-rating-${idPrefix}-${t.id}`;
+  if (t.ratingAvg > 0) {
+    const full  = Math.round(t.ratingAvg);
+    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    const cnt   = t.ratingCount ? ` (${t.ratingCount})` : '';
+    return `<div class="plt-rating-row" id="${elId}"><span class="plt-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)}${cnt}</span></div>`;
+  }
+  if (t.ratingAvg === 0) return `<div class="plt-rating-row" id="${elId}"></div>`;
+  return `<div class="plt-rating-row plt-rating-loading" id="${elId}"></div>`;
+}
+
+function _fillRatingEl(el, t) {
+  if (!el) return;
+  el.classList.remove('plt-rating-loading');
+  if (t.ratingAvg > 0) {
+    const full  = Math.round(t.ratingAvg);
+    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    el.innerHTML = `<span class="plt-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)} (${t.ratingCount})</span>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+async function _loadTableRating(tableId, elId) {
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
+  const t = src.find(x => x.id === tableId);
+  if (!t) return;
+  if (t.ratingAvg !== undefined) { _fillRatingEl(document.getElementById(elId), t); return; }
+  try {
+    const qb = new QueryBuilder('table_ratings_avg');
+    qb.eq('table_id', tableId);
+    const { data } = await qb.execute();
+    if (data && data[0] && data[0].rating_count > 0) {
+      t.ratingAvg   = parseFloat(data[0].avg_overall);
+      t.ratingCount = data[0].rating_count;
+    } else {
+      t.ratingAvg = 0;
+    }
+  } catch (_) { t.ratingAvg = 0; }
+  _fillRatingEl(document.getElementById(elId), t);
 }
 
 function _tableDistBadge(t) {
@@ -626,23 +679,30 @@ function renderMapList(list) {
 
   const _today = _localTodayISO();
   c.innerHTML = list.map((t, i) => {
-    const evCount = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-    const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
-    const _load = i < 3 ? 'eager' : 'lazy';
+    const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
+    const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount));
+    const _load    = i < 3 ? 'eager' : 'lazy';
     const thumbInner = _mapThumbHtml(t, _load);
+    const meta     = _tableMetaLine(t, { includeAccess: true });
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="focusTableOnMap(${t.id})">
       <div class="mli-thumb">${thumbInner}</div>
       <div class="map-list-info">
-        <div class="map-list-name">${t.name}</div>
-        <div class="map-list-sub">${t.addr||'Schweinfurt'}</div>
+        <div class="map-list-name">${escHtml(t.name)}</div>
+        <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
+        ${_plateRatingHtml(t, 'list')}
+        ${meta ? `<div class="mli-meta">${meta}</div>` : ''}
         ${badgeRow}
-        <div class="mli-meta">${_tableMetaLine(t)}</div>
       </div>
       <div class="map-list-chevron">›</div>
     </div>`;
   }).join('');
+
+  // Bewertungen asynchron nachladen (gecachte Werte sofort gesetzt, unbekannte per API)
+  list.forEach(t => {
+    if (t.ratingAvg === undefined) _loadTableRating(t.id, `plt-rating-list-${t.id}`);
+  });
 
 }
 
@@ -826,44 +886,14 @@ function _resetActiveMarker() {
   });
 }
 
+// Floating-Preview-Variante nutzt den gemeinsamen Helfer mit Präfix 'fp'.
 function _tableRatingHtml(t) {
-  if (t.ratingAvg > 0) {
-    const full  = Math.round(t.ratingAvg);
-    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-    const cnt   = t.ratingCount ? ` (${t.ratingCount})` : '';
-    return `<div class="mfp-rating-row" id="mfp-rating-${t.id}"><span class="mfp-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)}${cnt}</span></div>`;
-  }
-  if (t.ratingAvg === 0) return `<div class="mfp-rating-row" id="mfp-rating-${t.id}"></div>`;
-  // undefined = not yet loaded, placeholder → async fill
-  return `<div class="mfp-rating-row" id="mfp-rating-${t.id}" style="color:var(--text-xdim);font-size:0.69rem;">…</div>`;
+  return _plateRatingHtml(t, 'fp');
 }
 
 async function _loadPreviewRating(tableId) {
-  try {
-    const qb = new QueryBuilder('table_ratings_avg');
-    qb.eq('table_id', tableId);
-    const { data } = await qb.execute();
-    const src = tablesLoaded ? tables : FALLBACK_TABLES;
-    const t = src.find(x => x.id === tableId);
-    if (!t) return;
-    if (data && data[0] && data[0].rating_count > 0) {
-      t.ratingAvg   = parseFloat(data[0].avg_overall);
-      t.ratingCount = data[0].rating_count;
-    } else {
-      t.ratingAvg = 0;
-    }
-    if (_previewTableId !== tableId) return;
-    const el = document.getElementById(`mfp-rating-${tableId}`);
-    if (!el) return;
-    if (t.ratingAvg > 0) {
-      const full  = Math.round(t.ratingAvg);
-      const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-      el.innerHTML = `<span class="mfp-stars">${stars}</span><span>${t.ratingAvg.toFixed(1)} (${t.ratingCount})</span>`;
-      el.removeAttribute('style');
-    } else {
-      el.textContent = '';
-    }
-  } catch (_) {}
+  if (_previewTableId !== tableId) return;
+  await _loadTableRating(tableId, `plt-rating-fp-${tableId}`);
 }
 
 function _dismissPreviewContent() {
@@ -895,7 +925,7 @@ function showMapPreview(tableId) {
   const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
   const thumbHtml = _mapThumbHtml(t, 'eager');
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
-  const badgeRow  = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount), _tableAccessBadge(t));
+  const badgeRow  = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount));
 
   const fp = document.getElementById('map-floating-preview');
   if (!fp) return;
@@ -911,7 +941,7 @@ function showMapPreview(tableId) {
           </div>
           <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
           ${_tableRatingHtml(t)}
-          <div class="mfp-meta">${_tableMetaLine(t)}</div>
+          <div class="mfp-meta">${_tableMetaLine(t, { includeAccess: true })}</div>
           ${badgeRow}
         </div>
       </div>

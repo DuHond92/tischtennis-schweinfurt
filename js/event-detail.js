@@ -265,19 +265,19 @@ async function loadEventParticipants(eventId) {
     qb._select = 'user_id,profiles(username,avatar_emoji,avatar_url)';
     qb.eq('event_id', eventId);
     const {data, error} = await qb.execute();
-    if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Teilnehmer gefunden.</div>'; return; }
+    if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Spieler gefunden.</div>'; return; }
 
     const ev  = allEvents.find(e => e.id === eventId);
     renderParticipantChips(data, ev?.creatorId);
   } catch(e) {
-    el.innerHTML = '<div class="participants-empty">Teilnehmer konnten nicht geladen werden.</div>';
+    el.innerHTML = '<div class="participants-empty">Spieler konnten nicht geladen werden.</div>';
   }
 }
 
 function renderParticipantChips(participants, creatorId) {
   const el = document.getElementById('eds-participants');
   if(!participants.length) {
-    el.innerHTML = '<div class="participants-empty">Noch keine Teilnehmer</div>';
+    el.innerHTML = '<div class="participants-empty">Noch keine Spieler</div>';
     return;
   }
   el.innerHTML = participants.map(p => {
@@ -415,7 +415,7 @@ function _eventMetaHtml(ev) {
   const hostLink = ev.creatorId
     ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` + escHtml(ev.creator || '') + '</b>'
     : '<b>' + escHtml(ev.creator || '') + '</b>';
-  return `${ic('calendar')} ${formatEventDateTime(ev.dateStr, ev.time)}<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Teilnehmer`;
+  return `${ic('calendar')} ${formatEventDateTime(ev.dateStr, ev.time)}<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Spieler`;
 }
 
 function _patchEventParticipantJoin(eventId) {

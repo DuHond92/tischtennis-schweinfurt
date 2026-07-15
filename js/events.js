@@ -454,7 +454,8 @@ function applyPsRadius() {
   PTAnalytics.track('radius_filter_changed', { radius_km: _psRadius });
   closeAllSheets();
   renderEvents();
-  if (typeof renderHomePsSection === 'function') renderHomePsSection();
+  // Globale Synchronisation: alle Home-Bereiche mit neuem Radius neu rendern
+  if (typeof renderHome === 'function') renderHome();
 }
 
 function _toggleFeedSection(key) {
@@ -506,28 +507,33 @@ function renderPlayerSearchCard(ps, opts = {}) {
   const avHtml = getAvatarHtml({ avatar_emoji: ps.avatarEmoji, avatar_url: ps.avatarUrl, username: ps.username }, { size: 46 });
   const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
   const isMySearch = myId && String(ps.userId) === myId;
-  const metaParts = [];
-  // wann first, then distance, then search radius
-  if (ps.wann && ps.wann !== 'Egal') metaParts.push(`${ic('clock',12)} <b style="color:var(--text);font-weight:600;">${escHtml(ps.wann)}</b>`);
+
+  // 4. Zeitpunkt
+  const wann = (ps.wann && ps.wann !== 'Egal') ? ps.wann : null;
+
+  // 5. Entfernung + Suchradius (gemeinsame Zeile)
+  const distParts = [];
   const dist = _psDist(ps);
   if (dist != null) {
     const distStr = typeof formatDistance === 'function'
       ? formatDistance(Math.round(dist))
       : (dist < 1000 ? Math.round(dist) + ' m' : (dist / 1000).toFixed(1).replace('.', ',') + ' km');
-    metaParts.push(`${ic('pin',12)} ${distStr} entfernt`);
+    distParts.push(`${distStr} entfernt`);
   } else if (ps.location_label) {
-    metaParts.push(`${ic('pin',12)} ${escHtml(ps.location_label)}`);
+    distParts.push(escHtml(ps.location_label));
   }
   const srKm = ps.search_radius_km;
-  if (srKm) metaParts.push(`${ic('navigate',12)} sucht im Umkreis ${srKm} km`);
-  else if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('navigate',12)} ${escHtml(ps.umkreis)}`);
+  if (srKm)                               distParts.push(`sucht im Umkreis ${srKm} km`);
+  else if (ps.umkreis && ps.umkreis !== 'Egal') distParts.push(escHtml(ps.umkreis));
+
   return `
     <div class="player-search-card fade-up" onclick="${cardClick}">
-      <div class="psc-profile">
+      <!-- 1. Name + Badges -->
+      <div class="psc-header">
         <div class="pp-clickable" onclick="${profileClick}">${avHtml}</div>
         <div class="psc-identity">
           <div class="psc-type-row">
-            <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+            <span class="fc-type-badge fc-type-badge--gesuch">MITSPIELER</span>
             ${gameTypePill(ps.spielart)}
           </div>
           <div class="psc-name pp-clickable" onclick="${profileClick}">${escHtml(ps.username || 'Spieler')}</div>
@@ -535,8 +541,12 @@ function renderPlayerSearchCard(ps, opts = {}) {
         </div>
         <div class="ecb-chevron">›</div>
       </div>
-      ${metaParts.length ? `<div class="psc-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-      ${ps.message ? `<div class="psc-message">"${escHtml(ps.message)}"</div>` : ''}
+      <!-- 2. Persönliche Nachricht als Sprechblase -->
+      ${ps.message ? `<div class="psc-bubble">${escHtml(ps.message)}</div>` : ''}
+      <!-- 3. Zeitpunkt -->
+      ${wann ? `<div class="psc-when">${ic('clock', 11)} ${escHtml(wann)}</div>` : ''}
+      <!-- 4. Entfernung + Suchradius -->
+      ${distParts.length ? `<div class="psc-meta">${ic('pin', 11)} ${distParts.join(' · ')}</div>` : ''}
       ${opts.noCoords ? `<div class="psc-no-location">${ic('pin', 11)} Kein Standort gesetzt</div>` : ''}
     </div>`;
 }
@@ -613,7 +623,7 @@ function renderEventCard(e, idx = 0) {
         ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
         : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
       <div class="ecb-location">${ic('pin')} ${e.tname}</div>
-      <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Teilnehmer</span></div>
+      <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Spieler</span></div>
     </div>
     <div class="ecb-chevron">›</div>
   </div>`;

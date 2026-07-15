@@ -99,25 +99,24 @@
     <!-- Willkommenskarte (nur beim ersten Start) -->
     <div id="home-welcome-card" style="display:none;"></div>
 
-    <!-- Deine Aktivitäten (rendered by renderHomeActivities) -->
+    <!-- Persönlich: Deine Aktivitäten -->
     <div id="home-activities-section"></div>
 
-    <!-- Nearby tables -->
-    <div class="section-header">
-      <div class="section-title">Platten in der Nähe</div>
-      <a class="section-link" onclick="showPage('map')">Alle sehen →</a>
-    </div>
-    <div class="cards-scroll" id="home-tables-scroll"></div>
+    <!-- Persönlich: Meine Einträge (nur bei offenen Vorschlägen) -->
+    <div id="home-suggestions-section"></div>
 
-    <!-- Mitspieler gesucht (rendered by renderHomePsSection) -->
+    <!-- Entdecken: "In deiner Nähe"-Header mit globalem Radius-Filter -->
+    <div id="home-nearby-header"></div>
+
+    <!-- Entdecken: Platten in deiner Nähe -->
+    <div id="home-tables-section"></div>
+
+    <!-- Entdecken: Mitspieler gesucht -->
     <div id="home-ps-section"></div>
 
-    <!-- Upcoming events -->
-    <div class="section-header">
-      <div class="section-title">Kommende Spiele</div>
-      <a class="section-link" onclick="showPage('events')">Alle anzeigen →</a>
-    </div>
-    <div id="home-events-list"></div>
+    <!-- Entdecken: Kommende Spiele -->
+    <div id="home-events-section"></div>
+
     <div class="pb-safe"></div>
   </div>
 
@@ -296,6 +295,12 @@
       <div id="profile-my-events" style="padding:4px 12px 8px;"></div>
     </div>
 
+    <!-- Meine Einträge (rendered by renderMySuggestionsSection) -->
+    <div class="profile-section" id="profile-suggestions-section">
+      <div class="ps-header"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg> Meine Einträge</div>
+      <div id="profile-my-suggestions" style="padding:4px 0 0;"></div>
+    </div>
+
     <!-- Settings -->
     <div class="profile-section">
       <div class="ps-header"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Einstellungen</div>
@@ -334,7 +339,7 @@
         <span class="admin-badge" id="admin-badge-nav" style="display:none;margin-right:4px;"></span>
         <span class="si-arrow">›</span>
       </div>
-      <div class="settings-item" onclick="doSignOut()">
+      <div class="settings-item" onclick="confirmSignOut()">
         <div class="si-icon" style="background:var(--accent-bg);color:var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></div>
         <div class="si-text">Abmelden<div class="si-sub">Sicher aus App ausloggen</div></div>
         <span class="si-arrow">›</span>
@@ -656,7 +661,7 @@
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Max. Teilnehmer</label>
+      <label class="form-label">Max. Spieler</label>
       <input class="form-input" type="number" id="ev-max" value="4" min="2" max="100">
     </div>
     <div class="form-group">
@@ -1441,9 +1446,9 @@
       </div>
       <div id="eds-location-info" class="eds-location-info"></div>
     </div>
-    <!-- Teilnehmer -->
+    <!-- Spieler -->
     <div class="eds-section">
-      <div class="eds-section-title">Teilnehmer</div>
+      <div class="eds-section-title">Spieler</div>
       <div class="participants-row" id="eds-participants">
         <div style="display:flex;gap:6px;" aria-hidden="true"><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div></div>
       </div>
@@ -1583,10 +1588,35 @@
 <script src="js/profile.js"></script>
 <script src="js/ps-detail.js"></script>
 <script src="js/notifications.js"></script>
+<script src="js/my-suggestions.js"></script>
 <script src="js/main.js"></script>
 <script src="js/suggest.js"></script>
 <script src="js/delete-account.js"></script>
 <script src="js/admin.js"></script>
+
+<!-- MY SUGGESTION DETAIL SHEET -->
+<div class="bottom-sheet" id="my-suggestion-detail-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Mein Eintrag</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="sheet-scroll-area">
+    <div id="msd-body"></div>
+  </div>
+</div>
+
+<!-- MY SUGGESTIONS LIST SHEET -->
+<div class="bottom-sheet" id="my-suggestions-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Meine Einträge</div>
+    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+  </div>
+  <div class="sheet-scroll-area">
+    <div id="my-suggestions-body"></div>
+  </div>
+</div>
 
 <!-- SUGGEST TABLE SHEET -->
 <div class="bottom-sheet" id="suggest-table-sheet">

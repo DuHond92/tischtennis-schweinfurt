@@ -5,6 +5,7 @@
   --bg2:         #E8EDE2;
   --surface:     #FFFFFF;
   --surface2:    #ECF1E7;
+  --bg-card:     #FFFFFF;   /* Alias für Karten-/Dialog-Hintergründe */
   --border:      #DFE7DB;
   --text:        #182420;
   --text-dim:    #5C6B61;
@@ -68,6 +69,7 @@
   --bg2:         #131C17;
   --surface:     #17231C;
   --surface2:    #1F2E25;
+  --bg-card:     #17231C;   /* Alias für Karten-/Dialog-Hintergründe */
   --border:      #2A3A30;
   --text:        #EDF4EE;
   --text-dim:    #9AAC9F;

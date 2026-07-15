@@ -46,7 +46,7 @@ function showTableDetail(id) {
             ${gameTypePill(e.type)}
           </div>
           <div class="tds-event-name">${escHtml(e.name)}</div>
-          <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Teilnehmer</div>
+          <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
       </div>`).join('')}</div>`;
@@ -60,13 +60,13 @@ function showTableDetail(id) {
     <div class="eds-section eds-section--info">
       <div class="ds-name">${t.name}</div>
       <div class="ds-address">${t.addr||'Schweinfurt'}</div>
-      <div class="plt-badge-row" style="margin-top:8px;">${distHtml}${osmHtml}</div>
       ${metaLine ? `<div class="tds-meta-line">${metaLine}</div>` : ''}
+      <div class="plt-badge-row" style="margin-top:6px;">${distHtml}${osmHtml}</div>
     </div>
-    <!-- Zugang (optional) -->
-    ${accessHtml}
-    <!-- Bewertungs-Card (async) -->
+    <!-- Bewertungs-Card (async, vor Zugang) -->
     <div class="tds-rating-section" id="tds-rating-card-${t.id}"></div>
+    <!-- Zugang (optional, Detailinformationen) -->
+    ${accessHtml}
     <!-- Kommende Spiele -->
     <div class="eds-section tds-events-section">
       <div class="eds-section-title">Kommende Spiele</div>

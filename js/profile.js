@@ -48,6 +48,8 @@ function renderProfile() {
   if (typeof renderSpielpartnerSection === 'function') renderSpielpartnerSection();
   // Meine Spiele
   renderMyEventsSection();
+  // Meine Einträge (Plattenvorschläge)
+  if (typeof renderMySuggestionsSection === 'function') renderMySuggestionsSection();
 
   // Sign-out button
   const signOutBtn = document.querySelector('#profile-signout-btn');

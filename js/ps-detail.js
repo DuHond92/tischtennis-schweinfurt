@@ -17,20 +17,22 @@ function showPlayerSearchDetail(psId) {
   // Avatar
   const avHtml = `<div class="${pClick?'pp-clickable':''}" style="flex-shrink:0;cursor:${pClick?'pointer':'default'};" ${pClick?`onclick="${pClick}"`:''}>${getAvatarHtml({ avatar_url: ps.avatarUrl || null, avatar_emoji: ps.avatarEmoji, username: ps.username }, { size: 52, extraStyle: 'border:2px solid var(--border);' })}</div>`;
 
-  const metaParts = [];
-  if(ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin',13)} ${ps.umkreis} Umkreis`);
-  if(ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock',13)} ${escHtml(ps.wann)}`);
+  // Zeitpunkt + Entfernung/Radius (neue Hierarchie)
+  const wann   = ps.wann    && ps.wann    !== 'Egal' ? ps.wann    : null;
+  const distParts = [];
+  if (ps.umkreis && ps.umkreis !== 'Egal') distParts.push(`sucht im Umkreis ${escHtml(ps.umkreis)}`);
 
   document.getElementById('psd-hero').innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;padding:16px 20px 12px;">
+    <div class="psd-hero-inner">
       ${avHtml}
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
-          <span class="fc-type-badge fc-type-badge--gesuch">GESUCH</span>
+      <div class="psd-hero-body">
+        <div class="psc-type-row">
+          <span class="fc-type-badge fc-type-badge--gesuch">MITSPIELER</span>
           ${gameTypePill(ps.spielart)}
         </div>
-        <div class="${pClick?'pp-clickable':''}" style="font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--text);cursor:${pClick?'pointer':'default'};width:fit-content;" ${pClick?`onclick="${pClick}"`:''}>${escHtml(ps.username || 'Spieler')}</div>
-        ${metaParts.length ? `<div style="font-size:0.78rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">${metaParts.join('<span style="margin:0 2px;opacity:.4;">·</span>')}</div>` : ''}
+        <div class="psd-hero-name ${pClick ? 'pp-clickable' : ''}" ${pClick ? `onclick="${pClick}"` : ''}>${escHtml(ps.username || 'Spieler')}</div>
+        ${wann        ? `<div class="psd-hero-meta">${ic('clock',13)} ${escHtml(wann)}</div>`          : ''}
+        ${distParts.length ? `<div class="psd-hero-meta">${ic('pin',13)} ${distParts.join(' · ')}</div>` : ''}
       </div>
     </div>
 `;

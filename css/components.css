@@ -150,7 +150,7 @@
 }
 
 .map-thumb-card {
-  flex: 0 0 175px; background: var(--surface);
+  flex: 0 0 215px; background: var(--surface);
   border-radius: var(--radius); overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid var(--border);
   cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -182,9 +182,12 @@
 .badge-in { background: var(--primary-bg); color: var(--primary); }
 .badge-ev { background: var(--accent-bg); color: var(--accent); }
 
-.map-thumb-body { padding: 12px 14px; }
-.map-thumb-name { font-weight: 700; font-size: var(--text-ui); color: var(--text); margin-bottom: 2px; line-height: 1.3; }
-.map-thumb-dist { font-size: var(--text-meta); color: var(--text-dim); }
+.map-thumb-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+.map-thumb-name { font-weight: 700; font-size: var(--text-ui); color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-thumb-addr { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 1px; }
+.map-thumb-body .plt-rating-row { margin-top: 0; }
+.map-thumb-dist { font-size: var(--text-label); color: var(--text-dim); margin-top: 2px; }
+.map-thumb-meta { font-size: var(--text-label); color: var(--text-dim); opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .map-thumb-ev { margin-top: 6px; font-size: var(--text-label); color: var(--accent); font-weight: 700; }
 
 /* Upcoming events vertical list (Home) */
@@ -506,15 +509,16 @@
   border-radius: 10px; overflow: hidden; background: var(--surface2);
 }
 .mli-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.map-list-info { flex: 1; min-width: 0; padding-top: 1px; }
+.map-list-info { flex: 1; min-width: 0; padding-top: 1px; display: flex; flex-direction: column; gap: 2px; }
+.map-list-info .plt-rating-row { margin-top: 0; }
 .map-list-name {
   font-weight: 700; font-size: var(--text-ui); color: var(--text);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden; hyphens: auto; -webkit-hyphens: auto;
   overflow-wrap: break-word; word-break: normal;
 }
-.map-list-sub { font-size: var(--text-meta); color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mli-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.map-list-sub { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mli-badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .mli-dist-badge, .mli-games-badge {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 8px; border-radius: 999px;
@@ -861,6 +865,21 @@
   color: var(--primary); border-radius: 3px;
   padding: 0 2px; font-weight: 800;
 }
+
+/* ======= SHARED PLATE INFO (rating, meta, games — Home, Kartenliste, Floating-Preview) ======= */
+
+/* Bewertungszeile: Sterne + Durchschnitt + Anzahl */
+.plt-rating-row {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--text-meta); color: var(--text-dim);
+  min-height: 1.1em; margin-top: 2px;
+}
+.plt-rating-loading { min-height: 0; margin-top: 0; }
+.plt-stars { color: #F59E0B; letter-spacing: 0.4px; font-size: 0.7rem; }
+
+/* Aliasse: Floating Preview nutzt weiterhin mfp-Klassen */
+.mfp-rating-row { display: flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-dim); min-height: 1.1em; }
+.mfp-stars { color: #F59E0B; letter-spacing: 0.5px; }
 
 /* ======= SHARED PLATE CARD BADGES (map list, map preview, detail) ======= */
 .plt-badge-row {
@@ -1466,7 +1485,7 @@
 /* ── PLAYER SEARCH CARDS ─────────────────────────────────────────── */
 .player-search-card {
   display: flex; flex-direction: column; align-items: stretch;
-  padding: 12px 14px;
+  padding: 14px 14px 12px;
   background: var(--surface);
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -1474,15 +1493,18 @@
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.psc-profile {
+
+/* Header-Zeile: Avatar + Name + Badge + Chevron */
+.psc-header {
   display: flex; align-items: center; gap: 12px;
-  border-radius: 8px; padding: 4px 6px; margin: -4px -6px;
-  transition: background 0.15s;
 }
-.psc-profile .pp-clickable:hover  { opacity: 0.8; }
-.psc-profile .pp-clickable:active { opacity: 0.65; }
+.psc-header .pp-clickable:hover  { opacity: 0.8; }
+.psc-header .pp-clickable:active { opacity: 0.65; }
+
+/* Rückwärtskompatibilität für psc-profile (Skeleton etc.) */
+.psc-profile { display: flex; align-items: center; gap: 12px; }
+
 .psc-identity { flex: 1; min-width: 0; }
-.psc-info { flex: 1; min-width: 0; padding-top: 2px; }
 .psc-name {
   font-weight: 800; font-size: var(--text-ui); color: var(--text);
   font-family: var(--font-head); width: fit-content;
@@ -1490,21 +1512,85 @@
 .psc-identity .ecb-user-status { margin-top: 2px; margin-bottom: 0; }
 .psc-type-row {
   display: flex; align-items: center; gap: 6px;
-  margin-top: 0; margin-bottom: 3px; flex-wrap: wrap;
+  margin-top: 0; margin-bottom: 4px; flex-wrap: wrap;
 }
+
+/* Sprechblase — dezent, kein Comic-Look */
+.psc-bubble {
+  position: relative;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px 12px 12px 12px;
+  padding: 10px 13px;
+  margin-top: 10px;
+  font-size: var(--text-meta);
+  color: var(--text);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Tail: kleines Dreieck oben-links, zeigt auf den Sprecher */
+.psc-bubble::before,
+.psc-bubble::after {
+  content: ''; position: absolute; width: 0; height: 0;
+  border-style: solid;
+}
+.psc-bubble::before {
+  top: -9px; left: 0;
+  border-width: 0 9px 9px 0;
+  border-color: transparent var(--border) transparent transparent;
+}
+.psc-bubble::after {
+  top: -7px; left: 1px;
+  border-width: 0 8px 8px 0;
+  border-color: transparent var(--surface2) transparent transparent;
+}
+
+/* Zeitpunkt */
+.psc-when {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--text-meta); color: var(--text);
+  font-weight: 600; margin-top: 8px;
+}
+
+/* Entfernung + Suchradius */
 .psc-meta {
+  display: flex; align-items: center; gap: 5px;
   font-size: var(--text-meta); color: var(--text-dim);
-  margin-top: 6px; padding-left: 58px;
+  margin-top: 4px;
 }
-.psc-message {
-  font-size: var(--text-meta); color: var(--text-dim);
-  margin-top: 5px; line-height: 1.45;
-  font-style: italic; padding-left: 58px;
+
+/* Kein-Standort-Hinweis */
+.psc-no-location {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--text-label); color: var(--text-xdim);
+  margin-top: 4px;
 }
+
 .psc-btn {
   flex-shrink: 0; align-self: flex-start;
   font-size: var(--text-meta) !important; padding: 6px 12px !important;
   border-radius: var(--radius-pill) !important;
+}
+
+/* ── PLAYER SEARCH DETAIL HERO ───────────────────────────────────── */
+.psd-hero-inner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px 14px;
+}
+.psd-hero-body { flex: 1; min-width: 0; }
+.psd-hero-name {
+  font-family: var(--font-head); font-size: 1.05rem;
+  font-weight: 800; color: var(--text); width: fit-content;
+  margin-top: 2px;
+}
+.psd-hero-name.pp-clickable { cursor: pointer; }
+.psd-hero-meta {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--text-meta); color: var(--text-dim);
+  margin-top: 5px;
 }
 
 /* ── SUGGEST TABLE ──────────────────────────────────────────────── */
@@ -2444,6 +2530,107 @@
 }
 .home-act-more:active { opacity: 0.6; }
 
+/* ── Suggestion status pills ─────────────────────────────────── */
+.sug-status-pill {
+  display: inline-flex; align-items: center;
+  font-size: var(--text-micro); font-weight: 700; line-height: 1;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.sug-status--pending  { background: #FEF3C7; color: #92400E; border: 1px solid rgba(245,158,11,0.4); }
+.sug-status--changes  { background: #FEE2E2; color: #991B1B; border: 1px solid rgba(230,126,34,0.4); }
+.sug-status--approved { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(15,138,85,0.25); }
+.sug-status--rejected { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+[data-theme="dark"] .sug-status--pending  { background: rgba(245,158,11,0.15); color: #FCD34D; border-color: rgba(245,158,11,0.3); }
+[data-theme="dark"] .sug-status--changes  { background: rgba(230,126,34,0.15); color: #FCA5A5; border-color: rgba(230,126,34,0.3); }
+[data-theme="dark"] .sug-status--approved { border-color: rgba(65,196,137,0.30); }
+
+/* ── My Suggestion Detail Sheet ─────────────────────────────── */
+.msd-img-wrap {
+  height: 180px; overflow: hidden; background: var(--surface2);
+}
+.msd-img-wrap img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.msd-info { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+.msd-name {
+  font-size: var(--text-ui); font-weight: 800;
+  font-family: var(--font-head); color: var(--text); margin-bottom: 4px;
+}
+.msd-addr {
+  font-size: var(--text-meta); color: var(--text-dim);
+  display: flex; align-items: center; gap: 4px; margin-bottom: 3px;
+}
+.msd-meta { font-size: var(--text-label); color: var(--text-xdim); }
+.msd-status-card { padding: 14px 16px; }
+.msd-status-pill { font-size: var(--text-meta); padding: 4px 10px; margin-bottom: 10px; }
+.msd-status-msg { font-size: var(--text-meta); color: var(--text-dim); line-height: 1.5; }
+.msd-reason {
+  margin-top: 8px; padding: 10px 12px;
+  background: var(--surface2); border-radius: 10px; border-left: 3px solid #E67E22;
+  font-size: var(--text-meta); color: var(--text); line-height: 1.5;
+}
+
+/* ── My Suggestions List Sheet ───────────────────────────────── */
+.mss-empty {
+  padding: 32px 20px; text-align: center;
+  color: var(--text-dim); font-size: var(--text-meta);
+}
+.mss-group { padding: 0; }
+.mss-group + .mss-group { border-top: 1px solid var(--border); }
+.mss-group-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 8px;
+}
+.mss-group-count {
+  font-size: var(--text-micro); font-weight: 700;
+  color: var(--text-dim); background: var(--surface2);
+  padding: 1px 7px; border-radius: 20px; border: 1px solid var(--border);
+}
+.mss-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; outline: none;
+}
+.mss-item:active, .mss-item:focus-visible { background: var(--surface2); }
+.mss-item-content { flex: 1; min-width: 0; }
+.mss-item-name {
+  font-size: var(--text-ui); font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mss-item-addr {
+  font-size: var(--text-meta); color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+}
+.mss-item-date { font-size: var(--text-label); color: var(--text-xdim); margin-top: 2px; }
+.mss-item-reason {
+  font-size: var(--text-label); color: #E67E22; margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+[data-theme="dark"] .mss-item-reason { color: #FCA5A5; }
+
+/* ── Profile: My Suggestions Section ────────────────────────── */
+.pms-summary { padding: 10px 12px 2px; }
+.pms-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 4px; border-bottom: 1px solid var(--border);
+}
+.pms-row:last-child { border-bottom: none; }
+.pms-count {
+  font-size: var(--text-meta); font-weight: 800; color: var(--text);
+}
+.pms-empty { padding: 16px; text-align: center; }
+.pms-empty-text { font-size: var(--text-meta); color: var(--text-dim); margin-bottom: 12px; }
+.pms-suggest-btn, .pms-all-btn {
+  display: block; width: calc(100% - 24px); margin: 8px 12px 12px;
+  padding: 10px; border-radius: var(--radius-sm);
+  font-size: var(--text-meta); font-weight: 700; cursor: pointer;
+  text-align: center; transition: opacity 0.15s;
+  border: none;
+}
+.pms-suggest-btn { background: var(--primary); color: #fff; }
+.pms-all-btn { background: var(--surface2); color: var(--primary); border: 1px solid var(--border); }
+.pms-suggest-btn:active, .pms-all-btn:active { opacity: 0.75; }
+
 /* ── Radius filter bar (Events feed) ─────────────────────────── */
 .ps-radius-bar {
   display: flex; align-items: center; justify-content: space-between;
@@ -2463,7 +2650,53 @@
 }
 .ps-radius-bar:active .ps-radius-tag { opacity: 0.7; }
 
-/* ── Radius filter chip on home page ─────────────────────────── */
+/* ── „In deiner Nähe"-Header (Discovery-Section) ─────────────── */
+.home-nearby-header-inner {
+  padding: 22px 20px 14px;
+  margin-top: 8px;
+  border-top: 1.5px solid var(--border);
+}
+.home-nearby-titlerow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 7px;
+}
+.home-nearby-title {
+  font-family: var(--font-head); font-size: 1.1rem;
+  font-weight: 800; color: var(--text);
+}
+.home-nearby-subtitle {
+  font-size: var(--text-meta); color: var(--text-dim); line-height: 1.4;
+}
+.home-nearby-counts {
+  margin-top: 4px;
+  font-size: var(--text-label); color: var(--text-xdim); font-weight: 600;
+}
+.home-radius-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 6px 11px; min-height: 32px;
+  font-size: var(--text-meta); font-weight: 700; color: var(--text);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.home-radius-chip:active { opacity: 0.6; }
+
+/* ── Home section shared helpers ──────────────────────────────── */
+.home-section-empty {
+  padding: 10px 20px 18px;
+  font-size: var(--text-meta); color: var(--text-xdim); text-align: center;
+}
+.home-section-skeleton { padding: 0 20px 16px; }
+
+/* Wrapper with horizontal padding for event preview card on home */
+.home-preview-card-wrap { padding: 0 20px 16px; }
+
+/* Wrapper für PS-Card auf dem Home-Screen */
+.home-ps-card-wrap { padding: 0 16px 8px; }
+
+/* ── Radius filter chip (legacy, PS inline) ───────────────────── */
 .hps-filter-line {
   display: flex; align-items: center; gap: 8px;
   padding: 0 20px 8px;

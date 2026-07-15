@@ -139,6 +139,7 @@ function closeAllSheets() {
   if (typeof stopDmPolling            === 'function') stopDmPolling();
   if (typeof _cancelNotifSeenTimers   === 'function') _cancelNotifSeenTimers();
   if (typeof _destroyEdsMap           === 'function') _destroyEdsMap();
+  if (typeof _cleanupSuggestPin       === 'function') _cleanupSuggestPin();
   document.querySelectorAll('.bottom-sheet.open').forEach(s => {
     s.classList.remove('open');
     s.style.removeProperty('height');
