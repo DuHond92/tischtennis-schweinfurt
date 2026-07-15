@@ -744,11 +744,11 @@ async function openRating(tableId, tableName) {
   const btn = document.getElementById('rating-submit-btn');
   if (btn) { btn.disabled = false; btn.textContent = isEdit ? 'Änderungen speichern' : 'Bewertung speichern'; }
 
-  openSheet('rating-sheet');
+  openTdsSubpage('rating-sheet');
 }
 
 function closeRatingSheet() {
-  openSheet('table-detail-sheet');
+  closeTdsSubpage('rating-sheet');
 }
 
 function _toggleRatingDetails() {
@@ -814,7 +814,7 @@ async function submitRating() {
   }
 
   PTAnalytics.track('plate_rating_submitted', { overall: payload.overall, is_update: isUpdate });
-  openSheet('table-detail-sheet');
+  closeTdsSubpage('rating-sheet');
   showToast(isUpdate ? 'Bewertung aktualisiert.' : 'Bewertung gespeichert. Danke!');
   await loadRatingsForTable(currentRatingTableId);
 }

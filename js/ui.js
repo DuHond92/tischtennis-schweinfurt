@@ -98,6 +98,25 @@ function openLegalPage(url) {
   window.open(url, target, 'noopener,noreferrer');
 }
 
+// ── TDS SUBPAGE NAVIGATION ────────────────────────────────────────
+// Öffnet eine Unterseite auf dem table-detail-sheet (slide-right, kein Sheet-Wechsel).
+// Das Parent-Sheet bleibt geöffnet — nur die Unterseite wird sichtbar.
+function openTdsSubpage(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.removeProperty('transform');
+  el.style.removeProperty('transition');
+  el.style.removeProperty('visibility');
+  el.classList.add('open');
+}
+
+// Schließt die Unterseite und kehrt zum Parent-Sheet zurück.
+function closeTdsSubpage(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+}
+
 let openSheetId = null;
 function openSheet(id) {
   if (openSheetId === id) return;
@@ -616,8 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const pes = document.getElementById('profile-edit-sheet');
   const hs  = document.getElementById('history-sheet');
   const rs  = document.getElementById('rating-sheet');
-  if (rs)  initSwipeClose(rs,  () => closeRatingSheet());
-  if (tds) initSwipeClose(tds, () => closeAllSheets(),      44);
+  if (rs)  initSwipeClose(rs,  () => closeRatingSheet(), 44);
+  if (tds) initSwipeClose(tds, () => closeAllSheets(),   44);
   if (eds) initSwipeClose(eds, () => _closeEventDetail(),   44);
   if (hs)  initSwipeClose(hs,  () => closeAllSheets(),      44);
   if (psd) initSwipeClose(psd, () => closeAllSheets(),     44);
