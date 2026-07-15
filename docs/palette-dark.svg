@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <style>
+    .label{font:700 14px 'Figtree', system-ui, sans-serif; fill:#fff}
+    .sub{font:400 12px 'Figtree', system-ui, sans-serif; fill:#ddd}
+  </style>
+  <rect x="0" y="0" width="1200" height="520" fill="#0D1512" />
+
+  <!-- Row 1 -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#41C489" />
+    <text x="10" y="22" class="label">--primary (dark)</text>
+    <text x="10" y="44" class="sub">#41C489</text>
+  </g>
+  <g transform="translate(300,20)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#2DA870" />
+    <text x="10" y="22" class="label">--primary-d</text>
+    <text x="10" y="44" class="sub">#2DA870</text>
+  </g>
+  <g transform="translate(580,20)">
+    <rect x="0" y="0" width="260" height="90" rx="10" style="fill:rgba(65,196,137,0.16)" />
+    <text x="10" y="22" class="label">--primary-bg (rgba)</text>
+    <text x="10" y="44" class="sub">rgba(65,196,137,0.16)</text>
+  </g>
+  <g transform="translate(860,20)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#FF7B57" />
+    <text x="10" y="22" class="label">--accent</text>
+    <text x="10" y="44" class="sub">#FF7B57</text>
+  </g>
+
+  <!-- Row 2 -->
+  <g transform="translate(20,140)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#FF9375" />
+    <text x="10" y="22" class="label">--accent-d</text>
+    <text x="10" y="44" class="sub">#FF9375</text>
+  </g>
+  <g transform="translate(300,140)">
+    <rect x="0" y="0" width="260" height="90" rx="10" style="fill:rgba(255,90,54,0.16)" />
+    <text x="10" y="22" class="label">--accent-bg (rgba)</text>
+    <text x="10" y="44" class="sub">rgba(255,90,54,0.16)</text>
+  </g>
+  <g transform="translate(580,140)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#EF5350" />
+    <text x="10" y="22" class="label">--error</text>
+    <text x="10" y="44" class="sub">#EF5350</text>
+  </g>
+  <g transform="translate(860,140)">
+    <rect x="0" y="0" width="260" height="90" rx="10" style="fill:rgba(229,57,53,0.15)" />
+    <text x="10" y="22" class="label">--error-bg (rgba)</text>
+    <text x="10" y="44" class="sub">rgba(229,57,53,0.15)</text>
+  </g>
+
+  <!-- Row 3 -->
+  <g transform="translate(20,260)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#4ADE80" />
+    <text x="10" y="22" class="label">--green</text>
+    <text x="10" y="44" class="sub">#4ADE80</text>
+  </g>
+  <g transform="translate(300,260)">
+    <rect x="0" y="0" width="260" height="90" rx="10" style="fill:rgba(34,197,94,0.12)" />
+    <text x="10" y="22" class="label">--green-bg (rgba)</text>
+    <text x="10" y="44" class="sub">rgba(34,197,94,0.12)</text>
+  </g>
+  <g transform="translate(580,260)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#FFCB4D" />
+    <text x="10" y="22" class="label">--gold</text>
+    <text x="10" y="44" class="sub">#FFCB4D</text>
+  </g>
+  <g transform="translate(860,260)">
+    <rect x="0" y="0" width="260" height="90" rx="10" style="fill:rgba(255,203,77,0.14)" />
+    <text x="10" y="22" class="label">--gold-bg (rgba)</text>
+    <text x="10" y="44" class="sub">rgba(255,203,77,0.14)</text>
+  </g>
+
+  <!-- Row 4 -->
+  <g transform="translate(20,380)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#94A3B8" />
+    <text x="10" y="22" class="label">--silver</text>
+    <text x="10" y="44" class="sub">#94A3B8</text>
+  </g>
+  <g transform="translate(300,380)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#FBA94C" />
+    <text x="10" y="22" class="label">--bronze</text>
+    <text x="10" y="44" class="sub">#FBA94C</text>
+  </g>
+  <g transform="translate(580,380)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#17231C" />
+    <text x="10" y="22" class="label">--surface</text>
+    <text x="10" y="44" class="sub">#17231C</text>
+  </g>
+  <g transform="translate(860,380)">
+    <rect x="0" y="0" width="260" height="90" rx="10" fill="#1F2E25" />
+    <text x="10" y="22" class="label">--surface2</text>
+    <text x="10" y="44" class="sub">#1F2E25</text>
+  </g>
+
+</svg>

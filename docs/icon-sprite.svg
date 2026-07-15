@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- Simple icon sprite for docs (symbol usage) -->
+  <symbol id="icon-avatar" viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="3.5" fill="currentColor" />
+    <path d="M4 20c0-3.3 4.6-5 8-5s8 1.7 8 5" fill="currentColor" opacity="0.9" />
+  </symbol>
+  <symbol id="icon-map" viewBox="0 0 24 24">
+    <path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7z" fill="currentColor" />
+    <circle cx="12" cy="9" r="2.2" fill="#fff" />
+  </symbol>
+  <symbol id="icon-star" viewBox="0 0 24 24">
+    <path d="M12 17.3l-6.2 3.9 1.6-6.9L2 9.8l7-0.6L12 3l3 6.2 7 0.6-5.4 4.5 1.6 6.9z" fill="currentColor" />
+  </symbol>
+</svg>
+
+<!-- Example usage block for docs -->
+<svg width="420" height="120" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Figtree', system-ui, sans-serif">
+  <rect width="420" height="120" rx="8" fill="#ffffff" stroke="#E6EAE6"/>
+  <text x="16" y="20" font-weight="700" font-size="14" fill="#111">Icon Sprite Examples</text>
+  <g transform="translate(16,36)">
+    <g transform="translate(0,0)">
+      <rect width="88" height="64" rx="8" fill="#F4F6EF"/>
+      <use href="#icon-avatar" x="22" y="14" width="40" height="40" fill="#0F8A55"/>
+      <text x="8" y="82" font-size="12" fill="#333">avatar</text>
+    </g>
+    <g transform="translate(110,0)">
+      <rect width="88" height="64" rx="8" fill="#F4F6EF"/>
+      <use href="#icon-map" x="22" y="12" width="40" height="40" fill="#FF5A36"/>
+      <text x="8" y="82" font-size="12" fill="#333">map</text>
+    </g>
+    <g transform="translate(220,0)">
+      <rect width="88" height="64" rx="8" fill="#F4F6EF"/>
+      <use href="#icon-star" x="22" y="12" width="40" height="40" fill="#F7B723"/>
+      <text x="8" y="82" font-size="12" fill="#333">star</text>
+    </g>
+  </g>
+</svg>

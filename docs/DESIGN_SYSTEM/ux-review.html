@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kritisches UX-Review — PlattenTreff</title>
+  <link rel="stylesheet" href="assets/design-system.css">
+  <script defer src="assets/design-system.js"></script>
+</head>
+<body>
+  <div class="ds-app">
+    <aside class="ds-sidebar"></aside>
+    <main class="ds-main">
+      <header class="ds-header">
+        <div class="ds-header-inner">
+          <div>
+            <h1 class="ds-title">Kritisches UX-Review</h1>
+            <p class="ds-sub">Senior-Review der Produktlogik, Informationshierarchie und langfristigen Wartbarkeit – bewusst kritisch und ohne Bestätigung des Status quo.</p>
+          </div>
+          <div class="ds-toolbar"></div>
+        </div>
+      </header>
+
+      <div class="ds-content">
+        <section class="ds-card section-hero ds-review-verdict">
+          <span class="ds-eyebrow">Freigabeurteil</span>
+          <h2>Noch nicht produktreif.</h2>
+          <p>Der Styleguide beschreibt die Oberfläche besser als das Verhalten des Produkts. Für eine verbindliche Freigabe fehlen vor allem Karten-, Such-, Teilnahme-, Chat- und Sicherheitserfahrungen.</p>
+          <div class="section-row" style="margin-top:24px">
+            <a class="btn btn-primary" href="#sofort">Sofortmaßnahmen</a>
+            <a class="btn btn-secondary" href="#befunde">Alle Befunde</a>
+          </div>
+        </section>
+
+        <section class="ds-section" aria-labelledby="reifegrad">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Reifegrad</span><h2 id="reifegrad">Wo das System heute steht</h2></div>
+            <p>Visuelle Ausarbeitung ersetzt noch keine belastbare Produktlogik.</p>
+          </div>
+          <div class="ds-score-grid">
+            <article class="ds-score"><strong>7/10</strong><span>Markenfundament</span></article>
+            <article class="ds-score"><strong>6/10</strong><span>Visuelle Konsistenz</span></article>
+            <article class="ds-score"><strong>3/10</strong><span>Produktabdeckung</span></article>
+            <article class="ds-score"><strong>2/10</strong><span>Accessibility-Nachweis</span></article>
+          </div>
+          <div class="ds-alert warning" style="margin-top:16px">
+            <strong>Zentraler Widerspruch</strong>
+            <p>Der Guide verspricht Reduktion, dokumentiert aber mehr Varianten für Chips, Cards und Animationen als Regeln für die wichtigsten Nutzerwege.</p>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Größter Hebel</span><h2>Fünf Abläufe statt weiterer Komponenten</h2></div>
+            <p>Diese Wege müssen zuerst durchgängig entschieden werden.</p>
+          </div>
+          <ol class="ds-review-flow">
+            <li><strong>Platte entdecken</strong>Suchen, Karte bewegen, Marker auswählen und Details verstehen.</li>
+            <li><strong>Runde bewerten</strong>Zeit, Ort, Entfernung und freie Plätze schnell erfassen.</li>
+            <li><strong>Runde erstellen</strong>Mit wenigen Pflichtangaben veröffentlichen und später ergänzen.</li>
+            <li><strong>Teilnehmen</strong>Anfragen, bestätigen, absagen und Änderungen nachvollziehen.</li>
+            <li><strong>Kontakt halten</strong>Chat, Eventänderungen, Sicherheit und Moderation verbinden.</li>
+          </ol>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Beispiel 1</span><h2>Informationshierarchie nach Entscheidung</h2></div>
+            <p>Nicht die Datenbankreihenfolge, sondern die Frage „Passt dieses Spiel für mich?“ führt.</p>
+          </div>
+          <div class="ds-rule-grid">
+            <article class="ds-example bad">
+              <div class="ds-example-head"><span>× Heute</span><span>zu viele gleich starke Signale</span></div>
+              <div class="ds-example-body ds-review-card-demo">
+                <div class="ds-chip-row"><span class="ev-type-pill pill-training">Neu</span><span class="ev-type-pill pill-neutral">Spiel</span><span class="ev-type-pill pill-casual">Freizeit</span><span class="efc-chip">Outdoor</span><span class="efc-chip">Heute</span></div>
+                <h3>Feierabendspiel am Main</h3>
+                <p class="muted">Maininsel · 3 Personen · 18:30 · 1,2 km</p>
+                <div class="section-row"><button class="btn btn-primary">Details</button><button class="btn btn-primary">Teilen</button><button class="btn btn-primary">Mitmachen</button></div>
+              </div>
+            </article>
+            <article class="ds-example good">
+              <div class="ds-example-head"><span>✓ Zielbild</span><span>eine klare Entscheidung</span></div>
+              <div class="ds-example-body ds-review-card-demo">
+                <p class="ds-review-main-meta">Heute · 18:30 Uhr</p>
+                <h3>Maininsel · 1,2 km entfernt</h3>
+                <p class="ds-review-sub-meta">Lea organisiert eine lockere Runde für jedes Spielniveau.</p>
+                <div class="section-row"><span class="ev-type-pill pill-casual">Just 4 Fun</span><span class="ds-review-status">2 Plätze frei</span></div>
+                <button class="btn btn-primary btn-full">Mitspielen</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Beispiel 2</span><h2>Tag, Status und Filter trennen</h2></div>
+            <p>Gleiche Form bedeutet nicht gleiche Funktion.</p>
+          </div>
+          <div class="ds-rule-grid">
+            <article class="ds-rule dont">
+              <span class="ds-rule-kicker">× Vermischt</span>
+              <h3>Alles wird zur farbigen Pille</h3>
+              <div class="ds-chip-row" style="margin-top:16px"><span class="ev-type-pill pill-training">Gesuch</span><span class="ev-type-pill pill-neutral">Spiel</span><span class="ev-type-pill pill-casual">Just 4 Fun</span><span class="ev-type-pill pill-punktspiel">2 Plätze frei</span><span class="efc-chip">Schweinfurt</span></div>
+              <p style="margin-top:16px">Kategorie, Status, Ort und Filter konkurrieren visuell.</p>
+            </article>
+            <article class="ds-rule do">
+              <span class="ds-rule-kicker">✓ Getrennt</span>
+              <h3>Jede Bedeutung erhält ein Muster</h3>
+              <div style="margin-top:16px"><span class="preview-label">Kategorie</span><span class="ev-type-pill pill-casual">Just 4 Fun</span></div>
+              <div style="margin-top:14px"><span class="preview-label">Status</span><span class="ds-review-status">2 Plätze frei</span></div>
+              <div style="margin-top:14px"><span class="preview-label">Aktiver Filter</span><button class="efc-chip efc-chip--active" aria-pressed="true">Heute</button></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Beispiel 3</span><h2>Weniger Cards, passendere Dichte</h2></div>
+            <p>Personen und Konversationen brauchen keine großen, gleichartigen Kartenflächen.</p>
+          </div>
+          <div class="ds-grid">
+            <article class="ds-card ds-span-6">
+              <h3>Personen-Zeile</h3>
+              <div class="ds-review-list" style="margin-top:16px">
+                <a class="ds-review-list-row" href="#">
+                  <span class="avatar">LM</span>
+                  <span><strong>Lea Müller</strong><p>Heute spielbereit · Freizeit</p></span>
+                  <span aria-hidden="true">›</span>
+                </a>
+                <a class="ds-review-list-row" href="#">
+                  <span class="avatar">TS</span>
+                  <span><strong>Tom Schneider</strong><p>Spielpartner · Schweinfurt</p></span>
+                  <span aria-hidden="true">›</span>
+                </a>
+              </div>
+            </article>
+            <article class="ds-card ds-span-6">
+              <h3>Konversations-Zeile</h3>
+              <div class="ds-review-list" style="margin-top:16px">
+                <a class="ds-review-list-row" href="#">
+                  <span class="avatar">TS</span>
+                  <span><strong>Tom Schneider</strong><p>Bin in 10 Minuten an der Platte.</p></span>
+                  <time datetime="18:21">18:21</time>
+                </a>
+                <a class="ds-review-list-row" href="#">
+                  <span class="avatar">3</span>
+                  <span><strong>Feierabendspiel</strong><p>Treffpunkt wurde zur Maininsel geändert.</p></span>
+                  <time datetime="17:48">17:48</time>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Beispiel 4</span><h2>Formulare auf das Minimum reduzieren</h2></div>
+            <p>Die erste Veröffentlichung braucht weniger Eingaben als die vollständige Bearbeitung.</p>
+          </div>
+          <div class="ds-rule-grid">
+            <article class="ds-example bad">
+              <div class="ds-example-head"><span>× Zu früh</span><span>falsche Genauigkeit</span></div>
+              <div class="ds-example-body">
+                <label class="form-label" for="review-range">Spielstärke: offen</label>
+                <input id="review-range" type="range" style="width:100%">
+                <p class="muted" style="margin-top:12px">Die Skala zeigt weder Bedeutung noch verständliche Zwischenwerte.</p>
+              </div>
+            </article>
+            <article class="ds-example good">
+              <div class="ds-example-head"><span>✓ Verständlich</span><span>optionale grobe Auswahl</span></div>
+              <div class="ds-example-body">
+                <span class="form-label">Für wen passt die Runde?</span>
+                <div class="ds-review-choice" style="margin-top:10px"><span>Für alle</span><span>Freizeit</span><span>Fortgeschritten</span></div>
+                <p class="muted" style="margin-top:12px">Standard ist offen; eine Eingrenzung bleibt freiwillig.</p>
+              </div>
+            </article>
+          </div>
+          <div class="ds-card" style="margin-top:16px">
+            <span class="preview-label">Pflichtangaben für die erste Veröffentlichung</span>
+            <div class="ds-review-filter-row"><span class="efc-chip efc-chip--active">Platte</span><span class="efc-chip efc-chip--active">Datum</span><span class="efc-chip efc-chip--active">Uhrzeit</span><span class="efc-chip efc-chip--active">Spielart</span></div>
+            <p class="muted" style="margin-top:14px">Beschreibung, Bälle, Indoor-Alternative und weitere Details werden erst danach oder bei Bedarf angeboten.</p>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Beispiel 5</span><h2>Feedback nach Bedeutung ordnen</h2></div>
+            <p>Dauer, Dringlichkeit und Handlungsmöglichkeit bestimmen das Muster.</p>
+          </div>
+          <div class="ds-feedback-map">
+            <strong>Snackbar</strong><span>Kurze Bestätigung: „Spielrunde gespeichert“ – möglichst mit „Rückgängig“.</span>
+            <strong>Inline-Fehler</strong><span>Lokal behebbar: „Wähle eine Platte aus.“</span>
+            <strong>Banner</strong><span>Persistente Änderung: „Der Treffpunkt wurde geändert.“</span>
+            <strong>Inhaltsstatus</strong><span>Teil der Card: „Voll“, „Abgesagt“, „2 Plätze frei“.</span>
+            <strong>Dialog</strong><span>Nur für eine kritische und schwer reversible Entscheidung.</span>
+            <strong>Aktivitätsverlauf</strong><span>Eventänderungen bleiben im Chat oder Verlauf nachvollziehbar.</span>
+          </div>
+        </section>
+
+        <section class="ds-section" id="befunde">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Vollständiges Review</span><h2>Zwölf priorisierte Befunde</h2></div>
+            <p>Jeder Befund benennt Problem, Vergleich, Verbesserung und Risiko.</p>
+          </div>
+          <div class="ds-grid">
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>1. Kernprodukt fehlt</h3><dl><div><dt>Begründung</dt><dd>Karte, Marker, Standort, Suche, Teilnahme und Chat sind nicht als zusammenhängende Erfahrungen definiert.</dd></div><div><dt>Große Produkte</dt><dd>Komoot und Airbnb dokumentieren Suche, Karte, Ergebnis und Filter als gemeinsame Nutzerreise.</dd></div><div><dt>Verbesserung</dt><dd>Die fünf Kernabläufe vor weiteren Komponenten verbindlich machen.</dd></div><div><dt>Risiko</dt><dd>Individuelle Sonderlösungen entstehen ausgerechnet in den wichtigsten Screens.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>2. Statische Hierarchie</h3><dl><div><dt>Begründung</dt><dd>Eine feste GameCard-Reihenfolge passt weder gleichermaßen zu Karte, Liste noch Gesuch.</dd></div><div><dt>Große Produkte</dt><dd>Meetup und Komoot priorisieren abhängig vom aktuellen Entscheidungskontext.</dd></div><div><dt>Verbesserung</dt><dd>Eigene Hierarchien für Karte, Runde, Gesuch und Chat definieren.</dd></div><div><dt>Risiko</dt><dd>Wichtige Informationen verschwinden zwischen dekorativen Metadaten.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>3. Zu viele Cards</h3><dl><div><dt>Begründung</dt><dd>PlayerCard, ProfileCard und MessageCard lösen ähnliche oder listenartige Aufgaben.</dd></div><div><dt>Große Produkte</dt><dd>Strava, Spotify und Linear wechseln bewusst zwischen Card, Feed und Listenzeile.</dd></div><div><dt>Verbesserung</dt><dd>Auf Runden-Card, Personen-Zeile und Konversations-Zeile reduzieren.</dd></div><div><dt>Risiko</dt><dd>Mehr Scrolllänge, schwächere Dichte und konkurrierende Klickziele.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>4. Tags ohne klare Semantik</h3><dl><div><dt>Begründung</dt><dd>Kategorien, Status, Orte und Filter verwenden zu ähnliche Formen und zu viele Farben.</dd></div><div><dt>Große Produkte</dt><dd>Material und Atlassian trennen Tags, Statusindikatoren und Filterkontrollen.</dd></div><div><dt>Verbesserung</dt><dd>Pro Card höchstens eine Kategorie und einen eigenständigen Status zeigen.</dd></div><div><dt>Risiko</dt><dd>Farbe ersetzt Hierarchie und neue Features erzeugen immer weitere Varianten.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>5. Zu komplexe Formulare</h3><dl><div><dt>Begründung</dt><dd>Der Guide zeigt Controls, entscheidet aber nicht, welche Angaben wirklich erforderlich sind.</dd></div><div><dt>Große Produkte</dt><dd>Airbnb und Meetup arbeiten mit Standardwerten und progressiver Offenlegung.</dd></div><div><dt>Verbesserung</dt><dd>Pflichtangaben reduzieren, Spielstärke-Slider entfernen und Entwürfe erhalten.</dd></div><div><dt>Risiko</dt><dd>Mehr Abbrüche und weniger veröffentlichte Spielrunden.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>6. Suche und Filter ohne Logik</h3><dl><div><dt>Begründung</dt><dd>Suchumfang, Vorschläge, Radius, Kartenbewegung und Filterpersistenz bleiben offen.</dd></div><div><dt>Große Produkte</dt><dd>Airbnb und Komoot verbinden Suche, Vorschläge, Karte und Filterzustand.</dd></div><div><dt>Verbesserung</dt><dd>Zunächst nur Zeitpunkt, Spielart, freie Plätze und Entfernung filtern.</dd></div><div><dt>Risiko</dt><dd>Nulltreffer und unverständliche Ergebnisänderungen.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>7. Navigation nicht zu Ende gedacht</h3><dl><div><dt>Begründung</dt><dd>Vier Tabs sind plausibel, aber Zustandserhalt, Deep Links, Badges und Zurück-Verhalten fehlen.</dd></div><div><dt>Große Produkte</dt><dd>Spotify hält wenige stabile Hauptbereiche und bewahrt deren Navigationszustand.</dd></div><div><dt>Verbesserung</dt><dd>Tabs stabil lassen, lokale Navigation und Suche je Bereich präzisieren.</dd></div><div><dt>Risiko</dt><dd>„Community“ wird zum Sammelbereich und Zurück verhält sich inkonsistent.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>8. Feedback nach Optik sortiert</h3><dl><div><dt>Begründung</dt><dd>Bestätigung, Status, Echtzeitänderung und Fehler werden wie Varianten derselben Meldung behandelt.</dd></div><div><dt>Große Produkte</dt><dd>Apple trennt nach Dringlichkeit, Unterbrechung und Handlungsmöglichkeit.</dd></div><div><dt>Verbesserung</dt><dd>Snackbar, Inline-Fehler, Banner, Status und Verlauf semantisch trennen.</dd></div><div><dt>Risiko</dt><dd>Wichtige Änderungen verschwinden oder unterbrechen unnötig.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority medium">Mittel</span><h3>9. Bottom-Sheet-Dogma</h3><dl><div><dt>Begründung</dt><dd>„Standard“ beantwortet nicht, wann Sheet, Vollbildablauf oder Dialog richtig ist.</dd></div><div><dt>Große Produkte</dt><dd>Apple unterscheidet Sheet, Action Sheet und Alert nach Aufgabe.</dd></div><div><dt>Verbesserung</dt><dd>Kurze Auswahl ins Sheet, lange Eingabe ins Vollbild, Dialog nur kritisch.</dd></div><div><dt>Risiko</dt><dd>Tastatur-, Fokus- und Zurück-Probleme sowie verschachtelte Ebenen.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>10. Accessibility nicht belegt</h3><dl><div><dt>Begründung</dt><dd>„Erfüllt“ steht ohne Kontrast-, Reflow-, Screenreader- oder Kartenalternativtests.</dd></div><div><dt>Große Produkte</dt><dd>Apple und Atlassian verlangen Audits und Tests der gesamten Erfahrung.</dd></div><div><dt>Verbesserung</dt><dd>Status von „nicht geprüft“ bis „manuell getestet“ nachvollziehbar führen.</dd></div><div><dt>Risiko</dt><dd>Falsche Sicherheit und späte, teure Korrekturen.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority medium">Mittel</span><h3>11. Zu weiche Designsprache</h3><dl><div><dt>Begründung</dt><dd>Viele Pastelltöne, Rundungen, Schatten und Großbuchstaben erzeugen einen Template-Look.</dd></div><div><dt>Große Produkte</dt><dd>Notion und Linear setzen stärker auf Typografie, Dichte und sparsame Farbe.</dd></div><div><dt>Verbesserung</dt><dd>Neutraler werden, Grün gezielt einsetzen und ein echtes Icon-System definieren.</dd></div><div><dt>Risiko</dt><dd>Die App wirkt eher wie Wellness als wie eine aktive Sport-Community.</dd></div></dl></article>
+            <article class="ds-card ds-span-6 ds-audit-card"><span class="ds-priority high">Hoch</span><h3>12. Doppelte Wahrheiten</h3><dl><div><dt>Begründung</dt><dd>Visueller Guide und ältere Dokumentation enthalten widersprüchliche Regeln und Reifegrade.</dd></div><div><dt>Große Produkte</dt><dd>Polaris und Atlassian kennzeichnen stabil, Beta, veraltet und geplant eindeutig.</dd></div><div><dt>Verbesserung</dt><dd>Eine verbindliche Quelle und einen nachvollziehbaren Status pro Muster führen.</dd></div><div><dt>Risiko</dt><dd>Teams wählen jeweils die Regel, die gerade passt.</dd></div></dl></article>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">80/20</span><h2>Acht Regeln liefern den größten Nutzen</h2></div>
+          </div>
+          <div class="ds-card"><ol class="ds-hierarchy"><li><span><strong>Eine Entscheidung pro Ansicht</strong><br><small class="muted">Ein klarer Fokus und ein nächster Schritt.</small></span></li><li><span><strong>Zeit, Ort und Teilnahme zuerst</strong><br><small class="muted">Bei Runden vor Dekoration und Zusatzmetadaten.</small></span></li><li><span><strong>Eine primäre Aktion</strong><br><small class="muted">Weitere Aktionen ordnen sich sichtbar unter.</small></span></li><li><span><strong>Karte, Liste und Sheet teilen Zustand</strong><br><small class="muted">Auswahl bleibt überall nachvollziehbar.</small></span></li><li><span><strong>Tags nur für Kategorien</strong><br><small class="muted">Status und Filter sind eigene Muster.</small></span></li><li><span><strong>Fehler mit nächstem Schritt</strong><br><small class="muted">Problem und Lösung in Alltagssprache.</small></span></li><li><span><strong>Kritische Aktionen sind verzeihend</strong><br><small class="muted">Rückgängig oder eindeutige Bestätigung.</small></span></li><li><span><strong>Kernabläufe sind zugänglich</strong><br><small class="muted">Große Schrift, Tastatur und Screenreader sind Teil der Abnahme.</small></span></li></ol></div>
+        </section>
+
+        <section class="ds-section" id="sofort">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Entscheidungen</span><h2>Was jetzt mit dem System passiert</h2></div>
+          </div>
+          <div class="ds-grid">
+            <article class="ds-card ds-span-6"><h3>Sofort ändern</h3><ul><li>„Bereit für die Anwendung“ entfernen</li><li>Kernabläufe dokumentieren</li><li>Tags, Status und Filter trennen</li><li>Spielstärke-Slider entfernen</li><li>Accessibility ehrlich ausweisen</li></ul></article>
+            <article class="ds-card ds-span-6"><h3>Vereinfachen</h3><ul><li>Drei Inhaltsmuster statt vieler Cards</li><li>Drei Motion-Stufen statt Einzelzeiten</li><li>Vier Kernfilter</li><li>Zwei Radien und höchstens zwei Elevationen</li><li>Weniger Großbuchstaben und Pastellflächen</li></ul></article>
+            <article class="ds-card ds-span-6"><h3>Komplett streichen</h3><ul><li>Gold, Silber und Bronze ohne Produktbedarf</li><li>Breadcrumbs als mobiles Muster</li><li>Empty Card und Loading Card</li><li>Pauschale Drei-Ebenen-Regel</li><li>Bottom Sheet als universeller Standard</li></ul></article>
+            <article class="ds-card ds-span-6"><h3>Erst später einführen</h3><ul><li>Erweiterte Filter</li><li>Komplexe Motion-Spezifikation</li><li>Zusätzliche Tagfarben</li><li>Tablet-Spezialnavigation</li><li>Umfangreiches Contribution-Modell</li></ul></article>
+          </div>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Freigabekriterien</span><h2>Was vor Produktfreigabe fehlt</h2></div>
+          </div>
+          <ul class="ds-release-gate">
+            <li>Karten-, Marker- und Standortmuster</li>
+            <li>Such- und Filterlogik</li>
+            <li>Vollständiger Teilnahmeablauf</li>
+            <li>Chat- und Echtzeitänderungen</li>
+            <li>Trust, Safety und Moderation</li>
+            <li>Nachgewiesene Accessibility</li>
+            <li>Semantische Komponentenreduktion</li>
+            <li>Eine verbindliche Dokumentationsquelle</li>
+          </ul>
+          <blockquote class="ds-quote" style="margin-top:18px">Die größte Stärke ist die Community-Philosophie. Die größte Schwäche ist, dass der Guide die Oberfläche präziser beschreibt als das Verhalten des Produkts.</blockquote>
+        </section>
+
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><span class="ds-eyebrow">Vergleichsrahmen</span><h2>Externe Referenzen</h2></div>
+            <p>Die Empfehlungen orientieren sich an etablierten mobilen und systemischen UX-Mustern.</p>
+          </div>
+          <div class="ds-source-list">
+            <a href="https://developer.apple.com/design/human-interface-guidelines/tab-bars">Apple · Tab Bars</a>
+            <a href="https://developer.apple.com/design/human-interface-guidelines/search-fields">Apple · Search Fields</a>
+            <a href="https://developer.apple.com/design/human-interface-guidelines/alerts">Apple · Alerts</a>
+            <a href="https://developer.apple.com/design/human-interface-guidelines/accessibility">Apple · Accessibility</a>
+            <a href="https://developer.android.com/develop/ui/compose/components/navigation-bar">Material · Navigation Bar</a>
+            <a href="https://developer.android.com/develop/ui/compose/quick-guides/content/create-chip">Material · Chips</a>
+            <a href="https://atlassian.design/components/tag">Atlassian · Tags</a>
+            <a href="https://atlassian.design/foundations/accessibility">Atlassian · Accessibility</a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

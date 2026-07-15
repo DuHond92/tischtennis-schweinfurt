@@ -1,0 +1,80 @@
+/* =============================================================
+   PLATTENTREFF — DESIGN-ENTWURF 2.0 · TOKEN-VORSCHLAG
+   =============================================================
+   Drop-in-Vorschlag für css/tokens.css (Phase 1 der Migration).
+   Diese Datei wird NIRGENDS eingebunden — reiner Entwurf.
+   Struktur und Token-Namen entsprechen der bestehenden tokens.css,
+   nur die Werte sind neu. Zusätzliche Tokens sind markiert.
+
+   Schriften (statt Nunito, beide Google Fonts / OFL-Lizenz):
+     --font-head:  'Bricolage Grotesque'  (Headlines, Titel, Zahlen)
+     --font-body:  'Figtree'              (UI, Fließtext, Buttons)
+   ============================================================= */
+
+:root {
+  /* Light Mode */
+  --bg:          #F4F6EF;   /* Papier — warm-grünliches Off-White (war #F4F6FB) */
+  --bg2:         #EBEFE4;
+  --surface:     #FFFFFF;
+  --surface2:    #ECF1E7;
+  --border:      #E2E9DC;
+  --text:        #182420;   /* Tinte — grünstichiges Fast-Schwarz */
+  --text-dim:    #5C6B61;
+  --text-xdim:   #98A79D;
+  --primary:     #0F8A55;   /* Platten-Grün (war Blau #3B7CF4) */
+  --primary-d:   #0B6B42;   /* Tiefgrün */
+  --primary-bg:  #DEF0E5;
+  --primary-mid: rgba(15,138,85,0.12);
+  --accent:      #FF5A36;   /* Ball-Orange — CTA-Akzent (FAB, „Ich spiel mit!") */
+  --accent-bg:   #FFE7DF;
+  --danger:      #E5484D;   /* NEU: destruktive Aktionen (vorher via --accent) */
+  --danger-bg:   #FDE7E8;   /* NEU */
+  --green:       #0F8A55;   /* Erfolg = Primärgrün */
+  --green-bg:    #DEF0E5;
+  --gold:        #F7B723;   /* Sonnengelb — Bewertungen, Highlights */
+  --gold-bg:     #FDF1D7;
+  --silver:      #64748B;
+  --bronze:      #D97706;
+  --shadow-sm:   0 1px 3px rgba(24,36,32,0.07), 0 1px 2px rgba(24,36,32,0.05);
+  --shadow-md:   0 4px 14px rgba(24,36,32,0.09), 0 2px 6px rgba(24,36,32,0.06);
+  --shadow-lg:   0 12px 40px rgba(24,36,32,0.14), 0 4px 12px rgba(24,36,32,0.08);
+  --radius-sm:   8px;
+  --radius:      14px;
+  --radius-lg:   20px;
+  --radius-xl:   26px;
+  --font-head:   'Bricolage Grotesque', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body:   'Figtree', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sk-bg:       #EAEFE3;
+  --sk-shine:    #F4F6EF;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode — grün-schwarz statt blau-grau */
+  --bg:          #0D1512;
+  --bg2:         #131D17;
+  --surface:     #17231C;
+  --surface2:    #1F2E25;
+  --border:      #2A3A30;
+  --text:        #EDF4EE;
+  --text-dim:    #9AAC9F;
+  --text-xdim:   #5E7266;
+  --primary:     #41C489;
+  --primary-d:   #2FAE75;
+  --primary-bg:  rgba(65,196,137,0.15);
+  --primary-mid: rgba(65,196,137,0.10);
+  --accent:      #FF7B57;
+  --accent-bg:   rgba(255,123,87,0.14);
+  --danger:      #F2707A;                    /* NEU */
+  --danger-bg:   rgba(229,72,77,0.14);       /* NEU */
+  --green:       #41C489;
+  --green-bg:    rgba(65,196,137,0.12);
+  --gold:        #FFCB4D;
+  --gold-bg:     rgba(255,203,77,0.12);
+  --silver:      #94A3B8;
+  --bronze:      #FBA94C;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+  --sk-bg:       rgba(255,255,255,0.05);
+  --sk-shine:    rgba(255,255,255,0.09);
+}

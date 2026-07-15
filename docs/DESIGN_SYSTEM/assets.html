@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Medien — PlattenTreff</title>
+  <link rel="stylesheet" href="assets/design-system.css">
+  <script defer src="assets/design-system.js"></script>
+</head>
+<body>
+  <div class="ds-app">
+    <aside class="ds-sidebar"></aside>
+    <main class="ds-main">
+      <header class="ds-header">
+        <div class="ds-header-inner">
+          <div>
+            <h1 class="ds-title">Medien</h1>
+            <p class="ds-sub">Logos, Icons und Bilder mit verlässlichen Quellen und klaren Ersatzdarstellungen.</p>
+          </div>
+          <div class="ds-toolbar"></div>
+        </div>
+      </header>
+      <div class="ds-content">
+        <section class="ds-section">
+          <div class="ds-section-head">
+            <div><h2>PlattenTreff Logo</h2></div>
+            <p>Die Wortmarke wird unverändert und mit ausreichend Freiraum eingesetzt.</p>
+          </div>
+          <div class="ds-grid">
+            <article class="ds-card ds-span-6">
+              <div class="ds-logo-preview">
+                <img src="../../images/logo/logo-plattentreff.svg" alt="PlattenTreff">
+              </div>
+              <h3 style="margin-top:18px">Standardlogo</h3>
+              <p>Für helle und neutrale Hintergründe.</p>
+            </article>
+            <article class="ds-card ds-span-6">
+              <div class="ds-logo-preview dark">
+                <img src="../../images/logo/logo-plattentreff-negative.svg" alt="PlattenTreff">
+              </div>
+              <h3 style="margin-top:18px">Negativlogo</h3>
+              <p>Für dunkle Hintergründe und den Dark Mode.</p>
+            </article>
+          </div>
+        </section>
+        <section class="ds-section">
+          <div class="ds-grid">
+            <article class="ds-card">
+              <span class="avatar" style="width:72px;height:72px">LM</span>
+              <h3 style="margin-top:18px">Avatar-Ersatz</h3>
+              <p>Initialen oder neutrales Symbol ersetzen fehlende Profilbilder.</p>
+            </article>
+            <article class="ds-card">
+              <div class="preview-block" style="height:72px;background:linear-gradient(145deg,var(--primary-bg),var(--surface2))"></div>
+              <h3 style="margin-top:18px">Bilder aus dem Speicher</h3>
+              <p>Nutzerbilder werden ausschließlich aus Supabase Storage geladen.</p>
+            </article>
+          </div>
+        </section>
+        <section class="ds-section">
+          <div class="ds-alert warning">
+            <strong>Keine hart codierten Nutzerbilder</strong>
+            <p>Gelöschte Bilder aktualisieren die UI automatisch; eine definierte Ersatzdarstellung fängt fehlende Medien ab. Die Logo-Dateien sind feste Marken-Assets im Projekt.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
