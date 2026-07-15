@@ -106,7 +106,7 @@ function renderHomeNearbyHeader() {
       <div class="home-nearby-titlerow">
         <span class="home-nearby-title">In deiner Nähe</span>
         <button class="home-radius-chip" onclick="openPsRadiusSheet()" aria-label="Suchradius ändern">
-          ${ic('map-pin', 13)} ${escHtml(lbl)} ▾
+          ${ic('navigate', 13)} ${escHtml(lbl)} ▾
         </button>
       </div>
       <div class="home-nearby-subtitle">Gilt für Platten, Mitspieler und Spiele.</div>
