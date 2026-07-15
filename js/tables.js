@@ -747,6 +747,10 @@ async function openRating(tableId, tableName) {
   openSheet('rating-sheet');
 }
 
+function closeRatingSheet() {
+  openSheet('table-detail-sheet');
+}
+
 function _toggleRatingDetails() {
   _ratingDetailsOpen = !_ratingDetailsOpen;
   const body    = document.getElementById('rating-details-body');
@@ -810,7 +814,7 @@ async function submitRating() {
   }
 
   PTAnalytics.track('plate_rating_submitted', { overall: payload.overall, is_update: isUpdate });
-  closeAllSheets();
+  openSheet('table-detail-sheet');
   showToast(isUpdate ? 'Bewertung aktualisiert.' : 'Bewertung gespeichert. Danke!');
   await loadRatingsForTable(currentRatingTableId);
 }
