@@ -1,9 +1,20 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           EVENT DETAIL                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
-let currentEventId  = null;
-let chatPollTimer   = null;
-let _edsMapInstance = null;
+let currentEventId    = null;
+let chatPollTimer     = null;
+let _edsMapInstance   = null;
+let _eventDetailReturn = null;
+
+function _closeEventDetail() {
+  const ret = _eventDetailReturn;
+  _eventDetailReturn = null;
+  if (ret) {
+    openSheet(ret);
+  } else {
+    closeAllSheets();
+  }
+}
 
 const EVENT_FALLBACK = 'images/placeholders/game_fun.png';
 

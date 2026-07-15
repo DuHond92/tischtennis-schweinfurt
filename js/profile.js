@@ -102,17 +102,75 @@ function renderMyEventsSection() {
       </div>`;
     return;
   }
-  el.innerHTML = myEvents.slice(0, 3).map(e => {
-    const completedPill = isEventCompleted(e)
-      ? '<span class="ev-type-pill" style="background:var(--bg-card);color:var(--text-dim);border:1.5px solid var(--border);font-size:var(--text-micro);">Abgeschlossen</span>'
-      : '';
+  const shown = myEvents.slice(0, 3);
+  const hasMore = myEvents.length > 3;
+  el.innerHTML = shown.map(e => {
+    const label = typeLabel(e.type);
+    const date  = formatEventDateTime(e.dateStr, null);
+    const meta  = label ? `${label} · ${date}` : date;
     return `
-    <div class="profile-event-row" onclick="showEventDetail(${e.id})">
-      ${gameTypePill(e.type)}${completedPill}
-      <span class="per-name">${escHtml(e.name)}</span>
-      <span class="per-date">${formatEventDateTime(e.dateStr, null)}</span>
+    <div class="profile-event-row" role="button" tabindex="0"
+         onclick="showEventDetail(${e.id})"
+         onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
+      <div class="per-content">
+        <div class="per-name">${escHtml(e.name)}</div>
+        <div class="per-meta">${meta}</div>
+      </div>
     </div>`;
-  }).join('');
+  }).join('') + (hasMore ? `<div class="per-showall" role="button" tabindex="0" onclick="openHistorySheet()" onkeydown="if(event.key==='Enter')openHistorySheet()">Alle anzeigen</div>` : '');
+}
+
+function _myEventsList() {
+  const uid = sb.getUserId();
+  return allEvents.filter(e =>
+    e.creatorId === uid || (e.participants || []).some(p => p.id === uid)
+  );
+}
+
+function openHistorySheet() {
+  if (!currentUser) return;
+  const past = _myEventsList()
+    .filter(e => isEventCompleted(e))
+    .sort((a, b) => {
+      const da = new Date(`${a.dateStr || '1970-01-01'}T${a.time || '00:00'}`);
+      const db = new Date(`${b.dateStr || '1970-01-01'}T${b.time || '00:00'}`);
+      return db - da;
+    });
+
+  const body = document.getElementById('history-body');
+  if (!body) return;
+
+  if (!past.length) {
+    body.innerHTML = `
+      <div class="history-empty">
+        <div class="history-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="history-empty-title">Noch keine vergangenen Spiele</div>
+        <div class="history-empty-text">Vergangene Spielrunden erscheinen später hier.</div>
+      </div>`;
+  } else {
+    body.innerHTML = past.map(e => {
+      const label = typeLabel(e.type);
+      const date  = formatEventDateTime(e.dateStr, null);
+      const meta  = label ? `${label} · ${date}` : date;
+      return `
+      <div class="profile-event-row" role="button" tabindex="0"
+           onclick="_openEventFromHistory(${e.id})"
+           onkeydown="if(event.key==='Enter'||event.key===' ')_openEventFromHistory(${e.id})">
+        <div class="per-content">
+          <div class="per-name">${escHtml(e.name)}</div>
+          <div class="per-meta">${meta}</div>
+        </div>
+      </div>`;
+    }).join('') + '<div class="pb-safe"></div>';
+  }
+
+  PTAnalytics.track('game_history_opened', { source: 'profile' });
+  openSheet('history-sheet');
+}
+
+function _openEventFromHistory(eventId) {
+  _eventDetailReturn = 'history-sheet';
+  showEventDetail(eventId);
 }
 
 async function selectSkill(el) {

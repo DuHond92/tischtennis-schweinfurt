@@ -2200,19 +2200,38 @@
 }
 .esc-btn:active { filter: brightness(0.88); }
 
-/* ── Profil: Meine Spiele ────────────────────────────────────────── */
+/* ── Profil: Spielverlauf ────────────────────────────────────────── */
 .profile-event-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 0; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .profile-event-row:last-child { border-bottom: none; }
+.per-content { flex: 1; min-width: 0; }
 .per-name {
-  flex: 1; font-size: var(--text-ui); font-weight: 600;
+  font-size: var(--text-ui); font-weight: 700;
   color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+}
+.per-meta {
+  font-size: var(--text-meta); color: var(--text-dim);
+  margin-top: 2px; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
-.per-date { font-size: var(--text-meta); color: var(--text-dim); flex-shrink: 0; }
+.per-showall {
+  display: block; padding: 10px 0 2px;
+  font-size: var(--text-meta); font-weight: 600;
+  color: var(--primary); text-align: center; cursor: pointer;
+}
+
+/* ── Spielverlauf-Sheet: Empty State ─────────────────────────────── */
+.history-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 52px 24px 32px; gap: 8px; text-align: center;
+}
+.history-empty-icon { color: var(--text-xdim); margin-bottom: 4px; line-height: 1; }
+.history-empty-title { font-size: var(--text-title); font-weight: 800; color: var(--text); }
+.history-empty-text  { font-size: var(--text-ui); color: var(--text-dim); line-height: 1.5; max-width: 260px; }
 
 /* ── Caps-Lock-Hinweis ───────────────────────────────────────────── */
 .caps-hint {
