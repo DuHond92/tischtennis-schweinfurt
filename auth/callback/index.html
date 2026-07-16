@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anmeldung – PlattenTreff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #F7F7F7;
+      --surface:  #FFFFFF;
+      --text:     #182420;
+      --dim:      #5C6B61;
+      --primary:  #0F8A55;
+      --accent:   #FF5A36;
+      --hint-bg:  rgba(15,138,85,0.08);
+      --border:   #DFE7DB;
+      --shadow:   0 4px 24px rgba(24,36,32,0.10);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:       #0D1512;
+        --surface:  #17231C;
+        --text:     #EDF4EE;
+        --dim:      #9AAC9F;
+        --primary:  #41C489;
+        --accent:   #FF7A5C;
+        --hint-bg:  rgba(65,196,137,0.10);
+        --border:   #2A3A30;
+        --shadow:   0 4px 24px rgba(0,0,0,0.30);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg:       #0D1512;
+      --surface:  #17231C;
+      --text:     #EDF4EE;
+      --dim:      #9AAC9F;
+      --primary:  #41C489;
+      --accent:   #FF7A5C;
+      --hint-bg:  rgba(65,196,137,0.10);
+      --border:   #2A3A30;
+      --shadow:   0 4px 24px rgba(0,0,0,0.30);
+    }
+
+    :root[data-theme="light"] {
+      --bg:       #F7F7F7;
+      --surface:  #FFFFFF;
+      --text:     #182420;
+      --dim:      #5C6B61;
+      --primary:  #0F8A55;
+      --accent:   #FF5A36;
+      --hint-bg:  rgba(15,138,85,0.08);
+      --border:   #DFE7DB;
+      --shadow:   0 4px 24px rgba(24,36,32,0.10);
+    }
+
+    body {
+      font-family: 'Figtree', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 40px 28px 36px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .logo {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--primary);
+      margin-bottom: 28px;
+      letter-spacing: -0.02em;
+    }
+
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+    }
+
+    .status-icon svg { display: block; }
+
+    .status-icon--success { background: #DEF0E5; }
+    .status-icon--error   { background: #FFE7DF; }
+
+    h1 {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      color: var(--dim);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Figtree', system-ui, sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+
+    .btn--primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--dim);
+      font-size: 0.85rem;
+      padding: 10px 20px;
+      margin-top: 8px;
+    }
+
+    .hint {
+      margin-top: 20px;
+      padding: 12px 14px;
+      background: var(--hint-bg);
+      border-radius: 10px;
+      font-size: 0.78rem;
+      color: var(--dim);
+      line-height: 1.55;
+      text-align: left;
+    }
+
+    .hint strong { color: var(--primary); }
+
+    #loading-ui h1 { color: var(--dim); font-weight: 400; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">PlattenTreff</div>
+
+    <!-- Erfolgreich -->
+    <div id="success-ui" style="display:none">
+      <div class="status-icon status-icon--success">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F8A55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h1>Anmeldung erfolgreich</h1>
+      <p>Kehre jetzt zur PlattenTreff-App zurück.</p>
+      <a href="https://plattentreff.app/" class="btn btn--primary">Zur App zurückkehren</a>
+      <div class="hint">
+        <strong>Hinweis:</strong> Tippe auf das PlattenTreff-Icon auf deinem Homescreen, falls die App nicht automatisch öffnet.
+      </div>
+    </div>
+
+    <!-- Fehler -->
+    <div id="error-ui" style="display:none">
+      <div class="status-icon status-icon--error">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF5A36" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </div>
+      <h1>Anmeldung fehlgeschlagen</h1>
+      <p id="error-msg">Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.</p>
+      <a href="https://plattentreff.app/" class="btn btn--ghost">Zurück zur App</a>
+    </div>
+
+    <!-- Lädt -->
+    <div id="loading-ui">
+      <h1>Einen Moment…</h1>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      function show(id) {
+        ['success-ui', 'error-ui', 'loading-ui'].forEach(function (el) {
+          document.getElementById(el).style.display = el === id ? '' : 'none';
+        });
+      }
+
+      function decodeJwtPayload(jwt) {
+        try {
+          var b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          return JSON.parse(atob(b64));
+        } catch (e) { return null; }
+      }
+
+      var searchParams = new URLSearchParams(window.location.search);
+      var hashParams   = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+      // Fehlerfall: Supabase / OAuth-Provider sendet error in Query oder Hash
+      var errorCode = searchParams.get('error') || hashParams.get('error');
+      var errorDesc = searchParams.get('error_description') || hashParams.get('error_description');
+
+      if (errorCode) {
+        show('error-ui');
+        if (errorDesc) {
+          document.getElementById('error-msg').textContent =
+            decodeURIComponent(errorDesc.replace(/\+/g, ' '));
+        }
+        return;
+      }
+
+      var accessToken  = hashParams.get('access_token');
+      var refreshToken = hashParams.get('refresh_token') || '';
+      var expiresIn    = parseInt(hashParams.get('expires_in') || '3600', 10);
+
+      if (!accessToken) {
+        show('error-ui');
+        return;
+      }
+
+      var payload = decodeJwtPayload(accessToken);
+      var userId  = payload && payload.sub;
+      var email   = (payload && payload.email) || '';
+
+      if (!userId) {
+        show('error-ui');
+        return;
+      }
+
+      // Session in localStorage ablegen — gleiche Keys wie sb._saveSession() in supabase.js
+      var expiresAt = Date.now() + expiresIn * 1000;
+      localStorage.setItem('sb_token',         accessToken);
+      localStorage.setItem('sb_refresh_token', refreshToken);
+      localStorage.setItem('sb_user_id',       userId);
+      localStorage.setItem('sb_email',         email);
+      localStorage.setItem('sb_expires_at',    String(expiresAt));
+
+      // Tokens aus der URL entfernen (kein Verbleib im Verlauf)
+      history.replaceState(null, '', window.location.pathname);
+
+      show('success-ui');
+    })();
+  </script>
+</body>
+</html>

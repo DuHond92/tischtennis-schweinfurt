@@ -25,6 +25,34 @@ function _initNativeOAuthCallback() {
   });
 }
 
+// PWA-Session-Recovery: greift, wenn der User nach OAuth in Safari zur installierten App
+// zurückkehrt und localStorage (iOS 15.4+, same origin) jetzt die neuen Tokens enthält.
+async function _recoverPwaSession() {
+  if (!sb.isLoggedIn() || currentUser) return;
+  if (typeof clearOAuthLoadingState === 'function') clearOAuthLoadingState();
+  await loadCurrentUser();
+  if (typeof loadMyConnections === 'function') await loadMyConnections();
+  updateTopBarForUser();
+  if (typeof renderProfile === 'function') renderProfile();
+  if (typeof checkNotifications === 'function') checkNotifications();
+  if (typeof startNotifPolling === 'function') startNotifPolling();
+  if (typeof checkDmNotifications === 'function') checkDmNotifications();
+  closeAllSheets();
+  if (typeof showWelcomeSuccess === 'function') showWelcomeSuccess();
+}
+
+// visibilitychange: App wird sichtbar, nachdem Safari für OAuth geöffnet war
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  _recoverPwaSession();
+});
+
+// pageshow: Seite kommt aus dem bfcache zurück (iOS Safari Restore)
+window.addEventListener('pageshow', () => {
+  if (typeof clearOAuthLoadingState === 'function') clearOAuthLoadingState();
+  _recoverPwaSession();
+});
+
 window.addEventListener('load', async () => {
   // Nativen OAuth-Listener sofort registrieren (vor allem anderen)
   _initNativeOAuthCallback();

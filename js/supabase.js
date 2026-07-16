@@ -100,20 +100,19 @@ const sb = {
   },
 
   // OAuth-Redirect (Google, Apple, ...)
-  // Nativ (iOS): SFSafariViewController via @capacitor/browser + Custom-URL-Scheme als Redirect.
-  // Web: window.location.href wie bisher.
+  // Nativ (iOS Capacitor): SFSafariViewController via @capacitor/browser + Custom-URL-Scheme.
+  // PWA / Web: Redirect zu /auth/callback — speichert Tokens in localStorage, zeigt CTA zurück.
   async signInWithOAuth(provider) {
     const isNative = !!(window.Capacitor?.isNativePlatform?.());
     const isLocal  = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
     let redirectTo;
     if (isNative) {
-      // Custom-URL-Scheme — iOS öffnet die App nach Google-Login wieder
       redirectTo = encodeURIComponent('de.plattentreff.app://login-callback');
     } else if (isLocal) {
-      redirectTo = encodeURIComponent(location.origin + '/');
+      redirectTo = encodeURIComponent(location.origin + '/auth/callback');
     } else {
-      redirectTo = encodeURIComponent(APP_BASE_URL + '/');
+      redirectTo = encodeURIComponent(APP_BASE_URL + '/auth/callback');
     }
 
     const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;

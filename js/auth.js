@@ -247,11 +247,20 @@ async function submitNewPassword() {
 
 // ── OAuth-Callback (Google, Apple) ───────────────────────────────
 
+// Spinner-Timeout: 30 s nach OAuth-Start — schützt vor permanent blockierten Buttons
+let _oauthLoadingTimeout = null;
+
+// Setzt OAuth-Buttons aus dem Ladezustand (public — wird auch von main.js gerufen)
+function clearOAuthLoadingState() {
+  if (_oauthLoadingTimeout) { clearTimeout(_oauthLoadingTimeout); _oauthLoadingTimeout = null; }
+  _setOAuthBtnsLoading(false);
+}
+
 // Gemeinsame Logik nach erfolgreichem OAuth-Login (Web + nativ)
 async function _finalizeOAuthLogin(hash) {
+  clearOAuthLoadingState();
   const result = sb.handleOAuthSession(hash);
   if (!result) {
-    _setOAuthBtnsLoading(false);
     showToast('Die Anmeldung war erfolgreich, die Sitzung konnte jedoch nicht gespeichert werden. Bitte versuche es erneut.', 'error');
     return;
   }
@@ -292,14 +301,23 @@ function _setOAuthBtnsLoading(loading) {
   });
 }
 
-function signInWithGoogle() {
+function _startOAuthWithTimeout() {
   _setOAuthBtnsLoading(true);
-  sb.signInWithOAuth('google').catch(() => _setOAuthBtnsLoading(false));
+  if (_oauthLoadingTimeout) clearTimeout(_oauthLoadingTimeout);
+  _oauthLoadingTimeout = setTimeout(() => {
+    _oauthLoadingTimeout = null;
+    _setOAuthBtnsLoading(false);
+  }, 30000);
+}
+
+function signInWithGoogle() {
+  _startOAuthWithTimeout();
+  sb.signInWithOAuth('google').catch(() => clearOAuthLoadingState());
 }
 
 function signInWithApple() {
-  _setOAuthBtnsLoading(true);
-  sb.signInWithOAuth('apple');
+  _startOAuthWithTimeout();
+  sb.signInWithOAuth('apple').catch(() => clearOAuthLoadingState());
 }
 
 // ── Recovery-Link aus URL-Hash ────────────────────────────────────
