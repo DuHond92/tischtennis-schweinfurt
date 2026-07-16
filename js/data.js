@@ -121,7 +121,7 @@ async function loadOSMTables() {
 async function loadEvents() {
   // 1. Events – einfacher Select, kein verschachtelter Join
   const qbE = new QueryBuilder('events');
-  qbE._select = 'id,title,table_id,creator_id,event_date,event_time,mode,max_participants,description,lat,lng,location_label,search_radius_km';
+  qbE._select = 'id,title,table_id,creator_id,event_date,event_time,end_time,status,mode,max_participants,description,lat,lng,location_label,search_radius_km';
   const {data: evData} = await qbE.order('event_date').execute();
   if(!evData || !evData.length) return;
 
@@ -192,6 +192,8 @@ async function loadEvents() {
       day:       String(d.getDate()).padStart(2,'0'),
       mon:       months[d.getMonth()],
       time:      e.event_time?.slice(0,5) || '??:??',
+      endTime:   e.end_time?.slice(0,5)   || null,
+      status:    e.status                 || null,
       type:      e.mode,
       tname:     tbl.name  || '?',
       

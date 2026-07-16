@@ -148,20 +148,34 @@ function eventStatusBlock(e) {
 
 // Wiederverwendbarer Spielstatus — gibt { text, kind } zurück.
 // kind: 'ok' | 'warn' | 'danger' | 'neutral' | 'running'
+//
+// Priorität:
+//   1. DB-Status ('cancelled' | 'completed')
+//   2. isEventCompleted() — nutzt end_time wenn vorhanden, sonst 3h-Fallback
+//   3. Gestartet aber noch nicht beendet → 'Läuft gerade'
+//   4. Platzverfügbarkeit
 function getGameDisplayStatus(e) {
+  // 1. Expliziter DB-Status
+  if (e.status === 'cancelled')  return { text: 'Abgesagt',      kind: 'danger'  };
+  if (e.status === 'completed')  return { text: 'Abgeschlossen', kind: 'neutral' };
+
   const isCompleted = typeof isEventCompleted === 'function' ? isEventCompleted(e) : false;
-  const free = Math.max(0, (e.max || 0) - (e.p || 0));
+  if (isCompleted) return { text: 'Abgeschlossen', kind: 'neutral' };
+
+  // 2. Gestartet aber noch nicht beendet?
   let isRunning = false;
-  if (!isCompleted && e.dateStr && e.time && e.time !== '??:??') {
+  if (e.dateStr && e.time && e.time !== '??:??') {
     try {
       const start = new Date(`${e.dateStr}T${e.time}`);
       if (!isNaN(start.getTime())) isRunning = Date.now() > start.getTime();
     } catch(_) {}
   }
-  if (isCompleted) return { text: 'Abgeschlossen',       kind: 'neutral' };
-  if (isRunning)   return { text: 'Läuft gerade',        kind: 'running' };
-  if (free <= 0)   return { text: 'Ausgebucht',          kind: 'danger'  };
-  if (free === 1)  return { text: 'Nur noch 1 Platz frei', kind: 'warn'  };
+  if (isRunning) return { text: 'Läuft gerade', kind: 'running' };
+
+  // 3. Platzverfügbarkeit
+  const free = Math.max(0, (e.max || 0) - (e.p || 0));
+  if (free <= 0)  return { text: 'Ausgebucht',            kind: 'danger' };
+  if (free === 1) return { text: 'Nur noch 1 Platz frei', kind: 'warn'  };
   return { text: `Noch ${free} Plätze frei`, kind: 'ok' };
 }
 

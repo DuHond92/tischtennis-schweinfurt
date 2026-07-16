@@ -122,10 +122,20 @@ function buildEventSlider(images) {
 
 function isEventCompleted(ev) {
   if (!ev || !ev.dateStr) return false;
+  // 1. Expliziter DB-Status
+  if (ev.status === 'completed') return true;
+  if (ev.status === 'cancelled') return false; // Abgesagt ≠ Abgeschlossen
   const timeStr = ev.time || '00:00';
   const start   = new Date(`${ev.dateStr}T${timeStr}`);
   if (isNaN(start.getTime())) return false;
-  return Date.now() > start.getTime() + 3 * 60 * 60 * 1000;
+  const now = Date.now();
+  // 2. Eingetragene Endzeit
+  if (ev.endTime) {
+    const end = new Date(`${ev.dateStr}T${ev.endTime}`);
+    if (!isNaN(end.getTime())) return now > end.getTime();
+  }
+  // 3. Fallback: 3 Stunden nach Startzeit
+  return now > start.getTime() + 3 * 60 * 60 * 1000;
 }
 
 function showEventDetail(eventId) {
