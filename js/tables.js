@@ -41,12 +41,12 @@ function showTableDetail(id) {
       <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
+          <div class="tds-event-name">${escHtml(e.name)}</div>
           <div class="tds-event-tag-row">
-            <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
             ${gameTypePill(e.type)}
           </div>
-          <div class="tds-event-name">${escHtml(e.name)}</div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
+          ${eventStatusBlock(e)}
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
       </div>`).join('')}</div>`;
@@ -63,10 +63,8 @@ function showTableDetail(id) {
       ${metaLine ? `<div class="tds-meta-line">${metaLine}</div>` : ''}
       <div class="plt-badge-row" style="margin-top:6px;">${distHtml}${osmHtml}</div>
     </div>
-    <!-- Bewertungs-Card (async, vor Zugang) -->
-    <div class="tds-rating-section" id="tds-rating-card-${t.id}"></div>
-    <!-- Inline-Bewertungsliste (async) -->
-    <div class="tds-rating-section" id="tds-ratings-list-${t.id}"></div>
+    <!-- Community-Bewertung (async) -->
+    <div id="tds-community-rating-${t.id}"></div>
     <!-- Zugang (optional, Detailinformationen) -->
     ${accessHtml}
     <!-- Kommende Spiele -->
@@ -98,7 +96,6 @@ function showTableDetail(id) {
   const shareBtn = document.getElementById('tds-share-btn');
   if (shareBtn) shareBtn.onclick = () => shareTable(t);
   loadRatingsForTable(id);
-  _loadInlineRatingsList(id);
   loadTableImages(id);
 }
 
@@ -114,12 +111,12 @@ function _refreshTableDetailEvents(tableId) {
       <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
+          <div class="tds-event-name">${escHtml(e.name)}</div>
           <div class="tds-event-tag-row">
-            <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
             ${gameTypePill(e.type)}
           </div>
-          <div class="tds-event-name">${escHtml(e.name)}</div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
+          ${eventStatusBlock(e)}
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
       </div>`).join('')}</div>`;
@@ -678,53 +675,86 @@ async function _loadMyRating(tableId) {
   } catch(e) { return null; }
 }
 
-function _renderRatingCardEmpty(tableId, tableName) {
-  return `
-    <div class="tds-rc-head">
-      <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
-    </div>
-    <div class="tds-rc-empty-compact">Noch keine Bewertungen — bewerte als Erster!</div>
-    <button class="btn btn-secondary btn-sm tds-rate-btn" onclick="openRating(${tableId},'${escAttr(tableName)}')">★ Platte bewerten</button>`;
-}
-
-function _renderRatingCardFilled(tableId, r, myRating) {
+function _renderCommunityRating(tableId, avg, commentList, myRating, tableName) {
   const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === tableId);
-  const score = parseFloat(r.avg_overall);
-  const count = r.rating_count;
-  const full  = Math.round(score);
-  const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-  const label = _SCORE_LABELS[full] || '';
-  const isEdit  = !!myRating;
+  const name = escAttr(t?.name || tableName || '');
+  const isEdit = !!myRating;
   const btnLabel = isEdit ? 'Bewertung bearbeiten' : 'Platte bewerten';
-  // Kriterien-Tags (nur wenn mindestens eines bewertet)
-  const crit = [
+
+  if (!avg || !avg.rating_count) {
+    return `<div class="tds-cr">
+      <div class="tds-cr-empty">Noch keine Bewertungen – sei der Erste!</div>
+      <div class="tds-cr-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openRating(${tableId},'${name}')">★ Platte bewerten</button>
+      </div>
+    </div>`;
+  }
+
+  const score = parseFloat(avg.avg_overall);
+  const count = avg.rating_count;
+  const full  = Math.round(score);
+  const label = _SCORE_LABELS[full] || '';
+
+  const shown = commentList.slice(0, 2);
+  const commentsHtml = shown.length ? `
+    <div class="tds-cr-divider"></div>
+    <div class="tds-cr-comments">
+      ${shown.map(r => {
+        const rName  = escHtml(r.profiles?.username || 'Anonym');
+        const rFull  = Math.round(r.overall || 0);
+        const rStars = '★'.repeat(rFull) + '☆'.repeat(5 - rFull);
+        return `<div class="tds-cr-comment">
+          <div class="tds-cr-cmt-text">${escHtml(r.comment)}</div>
+          <div class="tds-cr-cmt-footer">
+            <span class="tds-cr-cmt-name">${rName}</span>
+            <span class="tds-cr-cmt-stars">${rStars}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  const criteria = [
     { key: 'avg_surface',    label: 'Zustand' },
     { key: 'avg_ground',     label: 'Untergrund' },
     { key: 'avg_windshield', label: 'Windschutz' },
-  ].filter(c => r[c.key] && parseFloat(r[c.key]) > 0);
-  const critHtml = crit.length ? `<div class="tds-rc-crit-row">${
-    crit.map(c => {
-      const v = parseFloat(r[c.key]);
-      const s = '★'.repeat(Math.round(v)) + '☆'.repeat(5 - Math.round(v));
-      return `<span class="tds-rc-crit-tag">${c.label} ${s}</span>`;
-    }).join('')
-  }</div>` : '';
-  return `
-    <div class="tds-rc-head">
-      <div class="tds-section-label" style="margin-bottom:0;">${ic('star',13)} Bewertungen</div>
-      <button class="tds-rc-all-btn" onclick="openAllRatings(${tableId})">Alle ansehen ${ic('chevron-right', 16)}</button>
+  ].filter(c => avg[c.key] && parseFloat(avg[c.key]) > 0);
+  const barsHtml = criteria.length ? `
+    <div class="tds-cr-divider"></div>
+    <div class="tds-cr-bars">
+      ${criteria.map(c => {
+        const val = parseFloat(avg[c.key]);
+        const pct = (val / 5 * 100).toFixed(0);
+        return `<div class="tds-cr-bar-row">
+          <span class="tds-cr-bar-label">${c.label}</span>
+          <div class="tds-cr-bar"><div class="tds-cr-bar-fill" style="width:${pct}%"></div></div>
+          <span class="tds-cr-bar-val">${val.toFixed(1).replace('.', ',')}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  const moreCount = count > 2 ? count - 2 : 0;
+  const moreBtn = moreCount > 0
+    ? `<button class="tds-cr-more-btn" onclick="openAllRatings(${tableId})">+${moreCount} weitere Bewertung${moreCount > 1 ? 'en' : ''} ansehen</button>`
+    : '';
+
+  return `<div class="tds-cr">
+    <div class="tds-cr-score-row">
+      <div class="tds-cr-score-left">
+        <span class="tds-cr-score-num">★ ${score.toFixed(1).replace('.', ',')}</span>
+        ${label ? `<span class="tds-cr-score-label">${label}</span>` : ''}
+        <span class="tds-cr-score-count">${count} Bewertung${count > 1 ? 'en' : ''}</span>
+      </div>
+      <button class="tds-cr-all-btn" onclick="openAllRatings(${tableId})">Alle ${ic('chevron-right', 14)}</button>
     </div>
-    <div class="tds-rc-score-compact">
-      <span class="tds-rc-star-num">★ ${score.toFixed(1).replace('.',',')}</span>
-      ${label ? `<span class="tds-rc-quality">${label}</span>` : ''}
-      <span class="tds-rc-sep">·</span>
-      <span class="tds-rc-count-sm">${count} Bewertung${count > 1 ? 'en' : ''}</span>
+    ${commentsHtml}
+    ${barsHtml}
+    <div class="tds-cr-divider"></div>
+    <div class="tds-cr-actions">
+      ${moreBtn}
+      <button class="btn btn-secondary btn-sm" onclick="openRating(${tableId},'${name}')">★ ${btnLabel}</button>
     </div>
-    ${critHtml}
-    <button class="btn btn-secondary btn-sm tds-rate-btn" onclick="openRating(${tableId},'${escAttr(t?.name||'')}')">
-      ${btnLabel}
-    </button>`;
+  </div>`;
 }
 
 async function openRating(tableId, tableName) {
@@ -762,6 +792,10 @@ async function openRating(tableId, tableName) {
 
 function closeRatingSheet() {
   closeTdsSubpage('rating-sheet');
+}
+
+function closeAllRatingsSheet() {
+  closeTdsSubpage('all-ratings-sheet');
 }
 
 function _toggleRatingDetails() {
@@ -842,14 +876,20 @@ async function loadRatingsForTable(tableId) {
     const avgData = (data && data[0]) ? data[0] : null;
     const myRating = await _loadMyRating(tableId);
     _myTableRating = myRating;
-    renderRatingSummary(tableId, avgData, t?.name || '', myRating);
+    let commentList = [];
+    if (avgData && avgData.rating_count > 0) {
+      const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&comment=not.is.null&select=overall,comment,profiles(username)&order=created_at.desc&limit=3`;
+      const { ok, data: cData } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (ok && Array.isArray(cData)) commentList = cData;
+    }
+    renderRatingSummary(tableId, avgData, t?.name || '', myRating, commentList);
   } catch(e) {
     console.warn('Rating load error', e);
-    renderRatingSummary(tableId, null, t?.name || '', null);
+    renderRatingSummary(tableId, null, t?.name || '', null, []);
   }
 }
 
-function renderRatingSummary(tableId, r, tableName, myRating) {
+function renderRatingSummary(tableId, r, tableName, myRating, commentList) {
   _currentTableHasRatings = !!(r && r.rating_count > 0);
 
   // Cache into table object so the floating preview card can use it
@@ -864,14 +904,9 @@ function renderRatingSummary(tableId, r, tableName, myRating) {
   }
   if (typeof refreshActiveMapPreview === 'function') refreshActiveMapPreview();
 
-  const cardEl = document.getElementById(`tds-rating-card-${tableId}`);
-  if (!cardEl) return;
-
-  if (!r || !r.rating_count) {
-    cardEl.innerHTML = _renderRatingCardEmpty(tableId, tableName);
-  } else {
-    cardEl.innerHTML = _renderRatingCardFilled(tableId, r, myRating);
-  }
+  const el = document.getElementById(`tds-community-rating-${tableId}`);
+  if (!el) return;
+  el.innerHTML = _renderCommunityRating(tableId, r, commentList || [], myRating, tableName);
 }
 
 async function openAllRatings(tableId) {
@@ -888,7 +923,7 @@ async function openAllRatings(tableId) {
   if (summEl) summEl.innerHTML = skRow;
   if (listEl) listEl.innerHTML = skRow + skRow;
 
-  openSheet('all-ratings-sheet');
+  openTdsSubpage('all-ratings-sheet');
 
   try {
     const qb = new QueryBuilder('table_ratings_avg');
@@ -942,7 +977,7 @@ function _renderAllRatings(tableId, avg, rList) {
         </div>
         ${barsHtml ? `<div class="ar-criteria">${barsHtml}</div>` : ''}
         <div style="padding:12px 20px 0;">
-          <button class="btn btn-primary btn-sm btn-full" onclick="openRating(${tableId},'')">Bewertung abgeben</button>
+          <button class="btn btn-primary btn-sm btn-full" onclick="closeAllRatingsSheet();openRating(${tableId},'')">Bewertung abgeben</button>
         </div>`;
     } else {
       summEl.innerHTML = '';
@@ -988,38 +1023,6 @@ function _renderAllRatings(tableId, avg, rList) {
   }).join('');
 }
 
-// ── INLINE-BEWERTUNGSLISTE ────────────────────────────────────────
-// Lädt die neuesten Bewertungen (mit optionalem Kommentar) und zeigt sie
-// direkt in der Platten-Detailansicht an — ersetzt die alte Kommentarsektion.
-async function _loadInlineRatingsList(tableId) {
-  const el = document.getElementById(`tds-ratings-list-${tableId}`);
-  if (!el) return;
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&select=overall,comment,created_at,profiles(username,avatar_emoji,avatar_url)&order=created_at.desc&limit=5`;
-    const { ok, data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    if (!ok || !data || !data.length) { el.innerHTML = ''; return; }
-    const withComment = data.filter(r => r.comment);
-    if (!withComment.length) { el.innerHTML = ''; return; }
-    el.innerHTML = `
-      <div class="eds-section">
-        <div class="eds-section-title">Stimmen</div>
-        <div class="tds-inline-ratings">
-          ${withComment.map(r => {
-            const name  = escHtml(r.profiles?.username || 'Anonym');
-            const av    = getAvatarHtml(r.profiles, { size: 32 });
-            const full  = Math.round(r.overall || 0);
-            const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-            return `<div class="tds-inline-rating">
-              <div class="tds-ir-head">${av}<span class="tds-ir-name">${name}</span><span class="tds-ir-stars">${stars}</span></div>
-              <div class="tds-ir-comment">${escHtml(r.comment)}</div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-  } catch(e) {
-    el.innerHTML = '';
-  }
-}
 
 let _cmtMenuData = {};
 

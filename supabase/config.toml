@@ -25,3 +25,9 @@ site_url = "https://tischtennis-schweinfurt.vercel.app"
 additional_redirect_urls = []
 jwt_expiry = 3600
 enable_signup = true
+
+# send-welcome-email wird ausschließlich durch den DB-Trigger via pg_net aufgerufen.
+# pg_net sendet keinen JWT — verify_jwt = false ist zwingend erforderlich.
+# Zugriffsschutz erfolgt über x-webhook-secret im Handler selbst.
+[functions.send-welcome-email]
+verify_jwt = false

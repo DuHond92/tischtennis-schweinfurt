@@ -10,6 +10,14 @@ const IMPRINT_URL     = APP_BASE_URL + '/impressum/';
 const TOS_URL         = APP_BASE_URL + '/nutzungsbedingungen/';
 const COMMUNITY_URL   = APP_BASE_URL + '/community-richtlinien/';
 
+// JWT-Payload base64url-dekodieren (kein Verify — nur Lesen)
+function _decodeJwtPayload(jwt) {
+  try {
+    const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(b64));
+  } catch { return null; }
+}
+
 // Kleines Supabase-Client ohne npm – direkte fetch()-Wrapper
 const sb = {
   // --- AUTH ---
@@ -89,6 +97,38 @@ const sb = {
       body: JSON.stringify({ password: newPassword })
     });
     return r.ok;
+  },
+
+  // OAuth-Redirect (Google, Apple, ...) — navigiert den Browser zum Supabase-Auth-Endpoint
+  signInWithOAuth(provider) {
+    // Auf localhost die lokale URL nutzen, sonst immer die öffentliche Web-URL.
+    // Im Capacitor-Kontext (capacitor://) fällt es auf APP_BASE_URL zurück.
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const base = isLocal ? (location.origin + '/') : (APP_BASE_URL + '/');
+    const redirectTo = encodeURIComponent(base);
+    window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+  },
+
+  // Liest nach dem OAuth-Redirect den access_token aus dem URL-Hash und speichert die Session.
+  // Dekodiert den JWT direkt — kein API-Call, kein Single Point of Failure.
+  handleOAuthSession(hashString) {
+    const params       = new URLSearchParams(hashString.replace(/^#/, ''));
+    const accessToken  = params.get('access_token');
+    const refreshToken = params.get('refresh_token') || '';
+    if (!accessToken) return false;
+
+    const payload = _decodeJwtPayload(accessToken);
+    const userId  = payload?.sub;
+    const email   = payload?.email || localStorage.getItem('sb_email') || '';
+    if (!userId) return false;
+
+    this._saveSession({
+      access_token:  accessToken,
+      refresh_token: refreshToken,
+      user:          { id: userId, email },
+      expires_in:    parseInt(params.get('expires_in') || '3600', 10),
+    });
+    return { userId, email };
   },
 
   async signOut() {

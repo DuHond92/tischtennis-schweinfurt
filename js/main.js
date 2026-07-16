@@ -9,7 +9,8 @@ function hideSplash() {
 }
 
 window.addEventListener('load', async () => {
-  // Passwort-Recovery aus URL-Hash erkennen (Supabase Magic Link)
+  // URL-Hash auf Auth-Callbacks prüfen (OAuth-Redirect oder Passwort-Recovery)
+  await checkOAuthCallback();
   checkPasswordRecovery();
 
   // Deep-Link-Parameter einmalig auslesen, bevor URL gesäubert wird
@@ -45,6 +46,7 @@ window.addEventListener('load', async () => {
     if(sb.isLoggedIn()) {
       await loadCurrentUser();
       updateTopBarForUser();
+      if (typeof renderProfile === 'function') renderProfile();
       checkNotifications();
       startNotifPolling();
       if (typeof checkDmNotifications === 'function') checkDmNotifications();

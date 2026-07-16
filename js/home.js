@@ -334,13 +334,10 @@ function renderHomeActivities() {
         <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
           <div class="home-act-body">
-            <div class="home-act-badges">
-              <span class="fc-type-badge fc-type-badge--spiel">SPIEL</span>
-              ${gameTypePill(e.type)}
-            </div>
             <div class="home-act-title">${escHtml(e.name)}</div>
-            ${userStatusLine(userStatus)}
+            ${gameTypePill(e.type) ? `<div class="home-act-badges">${gameTypePill(e.type)}</div>` : ''}
             <div class="home-act-meta">${ic('calendar', 10)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin', 10)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users', 10)} ${e.p}/${e.max}</div>
+            ${eventStatusBlock(e)}
           </div>
           <span class="home-act-chevron">›</span>
         </div>`;
@@ -353,13 +350,10 @@ function renderHomeActivities() {
         <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
           <div class="home-act-body">
-            <div class="home-act-badges">
-              <span class="fc-type-badge fc-type-badge--gesuch">MITSPIELER</span>
-              ${gameTypePill(ps.spielart)}
-            </div>
             <div class="home-act-title">Mitspieler gesucht</div>
-            ${userStatusLine('Von dir erstellt')}
+            ${gameTypePill(ps.spielart) ? `<div class="home-act-badges">${gameTypePill(ps.spielart)}</div>` : ''}
             ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+            ${userStatusLine('Von dir erstellt')}
           </div>
           <span class="home-act-chevron">›</span>
         </div>`;

@@ -982,12 +982,12 @@
 <div class="bottom-sheet" id="auth-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="auth-sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Anmelden</div>
+    <div class="sheet-title" id="auth-sheet-title">Anmelden</div>
     <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body">
     <!-- Tabs (Login / Registrieren) -->
-    <div id="auth-tabs" style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:16px;">
+    <div id="auth-tabs" class="auth-tabs-wrap">
       <button id="auth-tab-login" onclick="setAuthMode('login')" class="auth-tab auth-tab-active">Anmelden</button>
       <button id="auth-tab-reg"   onclick="setAuthMode('register')" class="auth-tab">Registrieren</button>
     </div>
@@ -995,16 +995,19 @@
     <!-- Login -->
     <div id="auth-login-fields">
       <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
+        <label class="form-label" for="auth-email">E-Mail</label>
+        <input class="form-input" type="email" id="auth-email" placeholder="deine@email.de"
+          autocomplete="email" onkeydown="_authEnter(event)"
+          onblur="_validateEmailField(this,'auth-email')">
       </div>
       <div class="form-group">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <label class="form-label" style="margin:0;">Passwort</label>
-          <button class="auth-forgot-link" onclick="setAuthMode('reset')">Passwort vergessen?</button>
+          <label class="form-label" style="margin:0;" for="auth-pw">Passwort</label>
+          <button class="auth-forgot-link" type="button" onclick="setAuthMode('reset')">Passwort vergessen?</button>
         </div>
         <div class="pw-wrap">
           <input class="form-input" type="password" id="auth-pw" placeholder="••••••••"
+            autocomplete="current-password"
             onkeydown="checkCapsLock(event,this)" onkeyup="checkCapsLock(event,this)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
@@ -1015,18 +1018,22 @@
     <!-- Registrieren -->
     <div id="auth-reg-fields" style="display:none;">
       <div class="form-group">
-        <label class="form-label">Spielername</label>
-        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname" onkeydown="_authEnter(event)">
+        <label class="form-label" for="auth-username">Spielername</label>
+        <input class="form-input" type="text" id="auth-username" placeholder="Dein Nickname"
+          autocomplete="username" onkeydown="_authEnter(event)">
       </div>
       <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
+        <label class="form-label" for="auth-reg-email">E-Mail</label>
+        <input class="form-input" type="email" id="auth-reg-email" placeholder="deine@email.de"
+          autocomplete="email" onkeydown="_authEnter(event)"
+          onblur="_validateEmailField(this,'auth-reg-email')">
       </div>
       <div class="form-group">
-        <label class="form-label">Passwort</label>
+        <label class="form-label" for="auth-reg-pw">Passwort</label>
         <div class="pw-wrap">
           <input class="form-input" type="password" id="auth-reg-pw" placeholder="Sicheres Passwort"
-            oninput="checkPwStrength(this)" onkeydown="checkCapsLock(event,this)" onkeyup="checkCapsLock(event,this)">
+            autocomplete="new-password"
+            oninput="checkPwStrength(this);_validatePw2()" onkeydown="checkCapsLock(event,this)" onkeyup="checkCapsLock(event,this)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
         <div class="caps-hint" id="caps-hint-reg" style="display:none;">Feststelltaste ist aktiviert.</div>
@@ -1036,12 +1043,29 @@
           <div class="psl-item" data-rule="num">mindestens eine Zahl</div>
         </div>
       </div>
-      <p style="text-align:center;font-size:0.75rem;color:var(--text-xdim);margin-top:4px;margin-bottom:4px;line-height:1.55;">
-        Mit der Registrierung akzeptierst du unsere
-        <a href="#" onclick="openLegalPage(TOS_URL);return false;" style="color:var(--primary);text-decoration:underline;">Nutzungsbedingungen</a>
-        und
-        <a href="#" onclick="openLegalPage(PRIVACY_URL);return false;" style="color:var(--primary);text-decoration:underline;">Datenschutzerklärung</a>.
-      </p>
+      <div class="form-group">
+        <label class="form-label" for="auth-reg-pw2">Passwort bestätigen</label>
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="auth-reg-pw2" placeholder="••••••••"
+            autocomplete="new-password"
+            onkeydown="_authEnter(event)" onblur="_validatePw2()">
+          <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort bestätigung anzeigen"></button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:6px;">
+        <label class="auth-consent-label" for="auth-consent">
+          <input type="checkbox" id="auth-consent" class="auth-consent-check"
+            onchange="_setFieldError('auth-consent', null)"
+            aria-required="true">
+          <span class="auth-consent-box" aria-hidden="true"></span>
+          <span class="auth-consent-text">
+            Ich akzeptiere die
+            <a href="#" onclick="openLegalPage(TOS_URL);event.stopPropagation();return false;">Nutzungsbedingungen</a>
+            und die
+            <a href="#" onclick="openLegalPage(PRIVACY_URL);event.stopPropagation();return false;">Datenschutzerklärung</a>.
+          </span>
+        </label>
+      </div>
     </div>
 
     <!-- Passwort zurücksetzen -->
@@ -1050,8 +1074,9 @@
         Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link zum Zurücksetzen deines Passworts.
       </p>
       <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input class="form-input" type="email" id="auth-reset-email" placeholder="deine@email.de" onkeydown="_authEnter(event)">
+        <label class="form-label" for="auth-reset-email">E-Mail</label>
+        <input class="form-input" type="email" id="auth-reset-email" placeholder="deine@email.de"
+          autocomplete="email" onkeydown="_authEnter(event)">
       </div>
       <button class="btn btn-primary btn-full" id="auth-reset-btn" onclick="sendPasswordReset()">Reset-Link senden</button>
       <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="setAuthMode('login')">← Zurück zum Login</button>
@@ -1063,16 +1088,18 @@
         Wähle ein neues Passwort für deinen Account.
       </p>
       <div class="form-group">
-        <label class="form-label">Neues Passwort (min. 6 Zeichen)</label>
+        <label class="form-label" for="auth-newpw">Neues Passwort (min. 6 Zeichen)</label>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••" onkeydown="_authEnter(event)">
+          <input class="form-input" type="password" id="auth-newpw" placeholder="••••••••"
+            autocomplete="new-password" onkeydown="_authEnter(event)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Passwort bestätigen</label>
+        <label class="form-label" for="auth-newpw2">Passwort bestätigen</label>
         <div class="pw-wrap">
-          <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••" onkeydown="_authEnter(event)">
+          <input class="form-input" type="password" id="auth-newpw2" placeholder="••••••••"
+            autocomplete="new-password" onkeydown="_authEnter(event)">
           <button class="pw-toggle" type="button" onclick="togglePwVisibility(this)" aria-label="Passwort anzeigen"></button>
         </div>
       </div>
@@ -1080,7 +1107,39 @@
     </div>
 
     <div id="auth-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:10px;"></div>
-    <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">Anmelden</button>
+    <button class="btn btn-primary btn-full" id="auth-submit-btn" onclick="submitAuth()">
+      <span class="btn-spinner" aria-hidden="true"></span>
+      <span class="btn-label">Anmelden</span>
+    </button>
+
+    <!-- Social Login -->
+    <div id="auth-social" class="auth-social-wrap">
+      <div class="auth-divider" role="separator" aria-label="oder"><span>oder</span></div>
+
+      <button class="auth-social-btn auth-social-btn--google" onclick="signInWithGoogle()" aria-label="Mit Google fortfahren">
+        <span class="auth-social-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+        </span>
+        <span class="btn-label">Mit Google fortfahren</span>
+        <span class="btn-spinner" aria-hidden="true"></span>
+      </button>
+
+      <button class="auth-social-btn auth-social-btn--apple" onclick="signInWithApple()" aria-label="Mit Apple fortfahren" disabled title="Demnächst verfügbar">
+        <span class="auth-social-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.38.07 2.33.74 3.13.8 1.18-.24 2.32-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.56-1.32 3.1-2.58 4zm-3.23-17.3c.06 2.06-1.52 3.72-3.55 3.88-.22-2.01 1.54-3.78 3.55-3.88z"/>
+          </svg>
+        </span>
+        <span class="btn-label">Mit Apple fortfahren</span>
+        <span class="btn-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+
     <p style="text-align:center;font-size:0.72rem;color:var(--text-xdim);margin-top:12px;">
       <a href="#" onclick="openLegalPage(PRIVACY_URL);return false;" style="color:var(--text-xdim);text-decoration:none;">Datenschutz</a>
       <span style="margin:0 5px;">·</span>
@@ -1191,9 +1250,9 @@
 <!-- ALLE BEWERTUNGEN SHEET -->
 <div class="bottom-sheet fullscreen-sheet slide-right-sheet" id="all-ratings-sheet">
   <div class="sheet-header sheet-header--nav">
-    <button class="sheet-back" onclick="closeAllSheets()" aria-label="Zurück">‹</button>
+    <button class="sheet-back" onclick="closeAllRatingsSheet()" aria-label="Zurück">‹</button>
     <div class="sheet-title" id="ar-sheet-title">Bewertungen</div>
-    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+    <button class="sheet-close" onclick="closeAllRatingsSheet()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body">
     <div id="ar-summary"></div>

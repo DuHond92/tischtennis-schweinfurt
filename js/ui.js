@@ -234,6 +234,52 @@ function initSwipeClose(sheetEl, closeFn, edgePx = 0) {
   sheetEl.addEventListener('touchcancel', _snapBack);
 }
 
+// Swipe-down to close für Bottom-Sheets (nur wenn am Scroll-Anfang)
+function initSwipeDownClose(sheetEl, closeFn) {
+  let startY = 0, startX = 0, dy = 0, tracking = null;
+
+  sheetEl.addEventListener('touchstart', e => {
+    startY   = e.touches[0].clientY;
+    startX   = e.touches[0].clientX;
+    dy       = 0;
+    tracking = null;
+  }, { passive: true });
+
+  sheetEl.addEventListener('touchmove', e => {
+    if (!sheetEl.classList.contains('open')) return;
+    const ady = e.touches[0].clientY - startY;
+    const adx = Math.abs(e.touches[0].clientX - startX);
+    if (tracking === null && (Math.abs(ady) > 6 || adx > 6)) {
+      // nur starten wenn Sheet oben gescrollt + klare Abwärts-Richtung
+      tracking = ady > 0 && Math.abs(ady) > adx && sheetEl.scrollTop === 0;
+    }
+    if (!tracking) return;
+    e.preventDefault();
+    dy = Math.max(0, ady);
+    sheetEl.style.transition = 'none';
+    sheetEl.style.transform  = `translateX(-50%) translateY(${dy}px)`;
+  }, { passive: false });
+
+  const _reset = () => {
+    sheetEl.style.removeProperty('transition');
+    sheetEl.style.removeProperty('transform');
+  };
+
+  sheetEl.addEventListener('touchend', () => {
+    if (!tracking) return;
+    tracking = null;
+    if (dy > 90) {
+      sheetEl.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 1, 1)';
+      sheetEl.style.transform  = `translateX(-50%) translateY(100%)`;
+      setTimeout(() => { _reset(); closeFn(); }, 270);
+    } else {
+      _reset();
+    }
+  });
+
+  sheetEl.addEventListener('touchcancel', () => { tracking = null; _reset(); });
+}
+
 // Drag-to-expand: Sheet zwischen zwei Snap-Punkten ziehbar machen
 function initSheetDrag(sheetEl, snap1Vh, snap2Vh) {
   const handle = sheetEl.querySelector('.sheet-handle');
@@ -625,6 +671,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dm    = document.getElementById('dm-sheet');
   if (inbox) initSwipeClose(inbox, () => closeAllSheets());
   if (dm)    initSwipeClose(dm,    () => closeDmSheet());
+  const auth = document.getElementById('auth-sheet');
+  if (auth)  initSwipeDownClose(auth, () => closeAllSheets());
 
   // Fullscreen detail sheets — edge-only swipe (44px) um Konflikte mit Foto-Slidern zu vermeiden
   const tds = document.getElementById('table-detail-sheet');
@@ -638,6 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ces = document.getElementById('create-event-sheet');
   if (rs)  initSwipeClose(rs,  () => closeRatingSheet(),       44);
   if (ces) initSwipeClose(ces, () => closeCreateEventSheet(),  44);
+  const ars = document.getElementById('all-ratings-sheet');
+  if (ars) initSwipeClose(ars, () => closeAllRatingsSheet(),   44);
   if (tds) initSwipeClose(tds, () => closeAllSheets(),         44);
   if (eds) initSwipeClose(eds, () => _closeEventDetail(),   44);
   if (hs)  initSwipeClose(hs,  () => closeAllSheets(),      44);

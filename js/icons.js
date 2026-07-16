@@ -119,7 +119,25 @@ function typeLabel(type) {
 
 function userStatusLine(text) {
   if (!text) return '';
-  return `<div class="ecb-user-status">${ic('check', 12)} ${text}</div>`;
+  return `<div class="ev-status-block"><span class="ev-status ev-status--user">✓ ${text}</span></div>`;
+}
+
+function eventStatusBlock(e) {
+  const myId        = (typeof sb !== 'undefined' && sb.isLoggedIn()) ? String(sb.getUserId()) : null;
+  const isCompleted = typeof isEventCompleted === 'function' ? isEventCompleted(e) : false;
+  const isCreator   = myId && String(e.creatorId) === myId;
+  const isDabei     = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
+  const free        = (e.max || 0) - (e.p || 0);
+
+  const lines = [];
+  if (isCreator)                 lines.push(`<span class="ev-status ev-status--user">✓ Von dir erstellt</span>`);
+  else if (isDabei)              lines.push(`<span class="ev-status ev-status--user">✓ Du nimmst teil</span>`);
+  if (isCompleted)               lines.push(`<span class="ev-status ev-status--neutral">● Abgeschlossen</span>`);
+  else if (free <= 0)            lines.push(`<span class="ev-status ev-status--danger">● Voll belegt</span>`);
+  else if (free > 0 && free <= 3) lines.push(`<span class="ev-status ev-status--ok">● Noch ${free} ${free === 1 ? 'Platz' : 'Plätze'} frei</span>`);
+
+  if (!lines.length) return '';
+  return `<div class="ev-status-block">${lines.join('')}</div>`;
 }
 
 // Zentraler Datumshelper für alle Event-/Spiel-Anzeigen

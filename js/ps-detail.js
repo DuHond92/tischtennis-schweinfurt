@@ -26,11 +26,8 @@ function showPlayerSearchDetail(psId) {
     <div class="psd-hero-inner">
       ${avHtml}
       <div class="psd-hero-body">
-        <div class="psc-type-row">
-          <span class="fc-type-badge fc-type-badge--gesuch">MITSPIELER</span>
-          ${gameTypePill(ps.spielart)}
-        </div>
         <div class="psd-hero-name ${pClick ? 'pp-clickable' : ''}" ${pClick ? `onclick="${pClick}"` : ''}>${escHtml(ps.username || 'Spieler')}</div>
+        ${gameTypePill(ps.spielart) ? `<div class="psc-type-row">${gameTypePill(ps.spielart)}</div>` : ''}
         ${wann        ? `<div class="psd-hero-meta">${ic('clock',13)} ${escHtml(wann)}</div>`          : ''}
         ${distParts.length ? `<div class="psd-hero-meta">${ic('pin',13)} ${distParts.join(' · ')}</div>` : ''}
       </div>

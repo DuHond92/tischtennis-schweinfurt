@@ -236,6 +236,12 @@ function showEventDetail(eventId) {
     }
   }
 
+  // Return-Ziel: zurück zum Table-Detail falls von dort geöffnet
+  _eventDetailReturn = null;
+  const _tdsEl = document.getElementById('table-detail-sheet');
+  if (_tdsEl && _tdsEl.classList.contains('open')) {
+    _eventDetailReturn = 'table-detail-sheet';
+  }
   openSheet('event-detail-sheet');
 
   // Map-Init nach Sheet-Animation
