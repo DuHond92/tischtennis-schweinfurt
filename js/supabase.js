@@ -99,14 +99,31 @@ const sb = {
     return r.ok;
   },
 
-  // OAuth-Redirect (Google, Apple, ...) — navigiert den Browser zum Supabase-Auth-Endpoint
-  signInWithOAuth(provider) {
-    // Auf localhost die lokale URL nutzen, sonst immer die öffentliche Web-URL.
-    // Im Capacitor-Kontext (capacitor://) fällt es auf APP_BASE_URL zurück.
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const base = isLocal ? (location.origin + '/') : (APP_BASE_URL + '/');
-    const redirectTo = encodeURIComponent(base);
-    window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+  // OAuth-Redirect (Google, Apple, ...)
+  // Nativ (iOS): SFSafariViewController via @capacitor/browser + Custom-URL-Scheme als Redirect.
+  // Web: window.location.href wie bisher.
+  async signInWithOAuth(provider) {
+    const isNative = !!(window.Capacitor?.isNativePlatform?.());
+    const isLocal  = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+    let redirectTo;
+    if (isNative) {
+      // Custom-URL-Scheme — iOS öffnet die App nach Google-Login wieder
+      redirectTo = encodeURIComponent('de.plattentreff.app://login-callback');
+    } else if (isLocal) {
+      redirectTo = encodeURIComponent(location.origin + '/');
+    } else {
+      redirectTo = encodeURIComponent(APP_BASE_URL + '/');
+    }
+
+    const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+
+    if (isNative) {
+      const { Browser } = window.Capacitor.Plugins;
+      await Browser.open({ url: authUrl, presentationStyle: 'popover' });
+    } else {
+      window.location.href = authUrl;
+    }
   },
 
   // Liest nach dem OAuth-Redirect den access_token aus dem URL-Hash und speichert die Session.

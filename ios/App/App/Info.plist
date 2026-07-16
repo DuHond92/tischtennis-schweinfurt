@@ -53,5 +53,16 @@
 	<string>PlattenTreff nutzt deine Kamera, damit du direkt Fotos von Tischtennisplatten aufnehmen kannst.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PlattenTreff benötigt Zugriff auf deine Fotomediathek, damit du Fotos von Tischtennisplatten oder als Profilbild hochladen kannst.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>de.plattentreff.app</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>de.plattentreff.app</string>
+		</dict>
+	</array>
 </dict>
 </plist>

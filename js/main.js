@@ -8,7 +8,27 @@ function hideSplash() {
   setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
 }
 
+// Nativer iOS-Callback: App wird via Custom-URL-Scheme de.plattentreff.app:// geöffnet.
+// SFSafariViewController schließt sich automatisch, App bekommt die Tokens im URL-Hash.
+function _initNativeOAuthCallback() {
+  if (!window.Capacitor?.isNativePlatform?.()) return;
+  const { App, Browser } = window.Capacitor.Plugins;
+  App.addListener('appUrlOpen', async (event) => {
+    const url = event.url || '';
+    if (!url.startsWith('de.plattentreff.app://')) return;
+    // Hash aus der URL extrahieren (de.plattentreff.app://login-callback#access_token=...)
+    const hash = url.includes('#') ? '#' + url.split('#')[1] : '';
+    if (hash && hash.includes('access_token')) {
+      await Browser.close().catch(() => {});
+      await handleNativeOAuthCallback(hash);
+    }
+  });
+}
+
 window.addEventListener('load', async () => {
+  // Nativen OAuth-Listener sofort registrieren (vor allem anderen)
+  _initNativeOAuthCallback();
+
   // URL-Hash auf Auth-Callbacks prüfen (OAuth-Redirect oder Passwort-Recovery)
   await checkOAuthCallback();
   checkPasswordRecovery();

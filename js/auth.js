@@ -247,22 +247,14 @@ async function submitNewPassword() {
 
 // ── OAuth-Callback (Google, Apple) ───────────────────────────────
 
-async function checkOAuthCallback() {
-  const hash = window.location.hash;
-  if (!hash || !hash.includes('access_token')) return;
-  if (hash.includes('type=recovery')) return; // wird von checkPasswordRecovery() behandelt
-
-  // Session aus Hash speichern (JWT-Decoding, kein API-Call)
+// Gemeinsame Logik nach erfolgreichem OAuth-Login (Web + nativ)
+async function _finalizeOAuthLogin(hash) {
   const result = sb.handleOAuthSession(hash);
-
-  // Hash erst jetzt entfernen — Tokens nicht länger als nötig in der URL
-  history.replaceState(null, '', window.location.pathname);
-
   if (!result) {
+    _setOAuthBtnsLoading(false);
     showToast('Die Anmeldung war erfolgreich, die Sitzung konnte jedoch nicht gespeichert werden. Bitte versuche es erneut.', 'error');
     return;
   }
-
   _myConnections = null;
   await loadCurrentUser();
   if (typeof loadMyConnections === 'function') await loadMyConnections();
@@ -272,8 +264,23 @@ async function checkOAuthCallback() {
   if (typeof checkNotifications === 'function') checkNotifications();
   if (typeof startNotifPolling === 'function') startNotifPolling();
   if (typeof checkDmNotifications === 'function') checkDmNotifications();
+  _setOAuthBtnsLoading(false);
   PTAnalytics.track('login_completed');
   showWelcomeSuccess();
+}
+
+// Web: Hash liegt direkt in window.location (Supabase redirect zu plattentreff.app)
+async function checkOAuthCallback() {
+  const hash = window.location.hash;
+  if (!hash || !hash.includes('access_token')) return;
+  if (hash.includes('type=recovery')) return;
+  history.replaceState(null, '', window.location.pathname);
+  await _finalizeOAuthLogin(hash);
+}
+
+// Nativ (iOS): Hash kommt vom appUrlOpen-Event via Custom-URL-Scheme
+async function handleNativeOAuthCallback(hash) {
+  await _finalizeOAuthLogin(hash);
 }
 
 function _setOAuthBtnsLoading(loading) {
@@ -287,7 +294,7 @@ function _setOAuthBtnsLoading(loading) {
 
 function signInWithGoogle() {
   _setOAuthBtnsLoading(true);
-  sb.signInWithOAuth('google');
+  sb.signInWithOAuth('google').catch(() => _setOAuthBtnsLoading(false));
 }
 
 function signInWithApple() {
