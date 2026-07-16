@@ -26,10 +26,47 @@ function _initNativeOAuthCallback() {
 }
 
 // PWA-Session-Recovery: greift, wenn der User nach OAuth in Safari zur installierten App
-// zurückkehrt und localStorage (iOS 15.4+, same origin) jetzt die neuen Tokens enthält.
+// zurückkehrt. iOS 16.4+ isoliert localStorage zwischen Safari und PWA — daher prüfen wir
+// zuerst ob ein serverseitiger handoff_key eingelöst werden kann.
 async function _recoverPwaSession() {
-  if (!sb.isLoggedIn() || currentUser) return;
+  if (currentUser) return; // bereits eingeloggt
+
+  // ── Handoff-Einlösung (iOS PWA ↔ Safari) ──────────────────────────────────
+  const handoffKey = localStorage.getItem('_pt_handoff_key');
+  if (handoffKey) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/auth-handoff`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ action: 'redeem', handoff_key: handoffKey }),
+      });
+      if (r.ok) {
+        const { access_token, refresh_token } = await r.json();
+        if (access_token) {
+          localStorage.removeItem('_pt_handoff_key');
+          const fakeHash = `#access_token=${access_token}&refresh_token=${encodeURIComponent(refresh_token)}&expires_in=3600`;
+          const result = sb.handleOAuthSession(fakeHash);
+          if (result) {
+            if (typeof clearOAuthLoadingState === 'function') clearOAuthLoadingState();
+            await _finishSessionRecovery();
+            return;
+          }
+        }
+      } else {
+        // nicht gefunden, abgelaufen oder bereits eingelöst — Key entfernen
+        const status = r.status;
+        if (status === 404 || status === 410) localStorage.removeItem('_pt_handoff_key');
+      }
+    } catch (_) { /* Netzwerkfehler — Key behalten, beim nächsten Mal erneut versuchen */ }
+  }
+
+  // ── Fallback: Token bereits im PWA-localStorage (kein localStorage-Sharing) ──
+  if (!sb.isLoggedIn()) return;
   if (typeof clearOAuthLoadingState === 'function') clearOAuthLoadingState();
+  await _finishSessionRecovery();
+}
+
+async function _finishSessionRecovery() {
   await loadCurrentUser();
   if (typeof loadMyConnections === 'function') await loadMyConnections();
   updateTopBarForUser();

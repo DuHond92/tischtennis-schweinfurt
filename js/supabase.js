@@ -101,7 +101,10 @@ const sb = {
 
   // OAuth-Redirect (Google, Apple, ...)
   // Nativ (iOS Capacitor): SFSafariViewController via @capacitor/browser + Custom-URL-Scheme.
-  // PWA / Web: Redirect zu /auth/callback — speichert Tokens in localStorage, zeigt CTA zurück.
+  // PWA / Web: /auth/callback mit handoff_key — iOS 16.4+ isoliert Safari/PWA-localStorage,
+  //   daher speichern wir einen pre-generierten handoff_key im PWA-localStorage und übergeben
+  //   ihn als ?hk=-Parameter an die Callback-Seite. Diese ruft die auth-handoff Edge Function
+  //   auf. Die PWA löst den Key nach der Rückkehr ein (kein localStorage-Sharing nötig).
   async signInWithOAuth(provider) {
     const isNative = !!(window.Capacitor?.isNativePlatform?.());
     const isLocal  = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -109,10 +112,14 @@ const sb = {
     let redirectTo;
     if (isNative) {
       redirectTo = encodeURIComponent('de.plattentreff.app://login-callback');
-    } else if (isLocal) {
-      redirectTo = encodeURIComponent(location.origin + '/auth/callback');
     } else {
-      redirectTo = encodeURIComponent(APP_BASE_URL + '/auth/callback');
+      // handoff_key VOR dem Redirect generieren und im PWA-localStorage ablegen.
+      // Die Callback-Seite liest ihn aus der URL (?hk=...) und speichert die Tokens
+      // serverseitig; die PWA löst den Key ein, sobald sie sichtbar wird.
+      const handoffKey = crypto.randomUUID();
+      localStorage.setItem('_pt_handoff_key', handoffKey);
+      const base = isLocal ? location.origin : APP_BASE_URL;
+      redirectTo = encodeURIComponent(`${base}/auth/callback?hk=${handoffKey}`);
     }
 
     const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;

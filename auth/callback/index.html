@@ -17,7 +17,6 @@
       --primary:  #0F8A55;
       --accent:   #FF5A36;
       --hint-bg:  rgba(15,138,85,0.08);
-      --border:   #DFE7DB;
       --shadow:   0 4px 24px rgba(24,36,32,0.10);
     }
 
@@ -30,34 +29,12 @@
         --primary:  #41C489;
         --accent:   #FF7A5C;
         --hint-bg:  rgba(65,196,137,0.10);
-        --border:   #2A3A30;
         --shadow:   0 4px 24px rgba(0,0,0,0.30);
       }
     }
 
-    :root[data-theme="dark"] {
-      --bg:       #0D1512;
-      --surface:  #17231C;
-      --text:     #EDF4EE;
-      --dim:      #9AAC9F;
-      --primary:  #41C489;
-      --accent:   #FF7A5C;
-      --hint-bg:  rgba(65,196,137,0.10);
-      --border:   #2A3A30;
-      --shadow:   0 4px 24px rgba(0,0,0,0.30);
-    }
-
-    :root[data-theme="light"] {
-      --bg:       #F7F7F7;
-      --surface:  #FFFFFF;
-      --text:     #182420;
-      --dim:      #5C6B61;
-      --primary:  #0F8A55;
-      --accent:   #FF5A36;
-      --hint-bg:  rgba(15,138,85,0.08);
-      --border:   #DFE7DB;
-      --shadow:   0 4px 24px rgba(24,36,32,0.10);
-    }
+    :root[data-theme="dark"]  { --bg:#0D1512;--surface:#17231C;--text:#EDF4EE;--dim:#9AAC9F;--primary:#41C489;--accent:#FF7A5C;--hint-bg:rgba(65,196,137,0.10);--shadow:0 4px 24px rgba(0,0,0,0.30); }
+    :root[data-theme="light"] { --bg:#F7F7F7;--surface:#FFFFFF;--text:#182420;--dim:#5C6B61;--primary:#0F8A55;--accent:#FF5A36;--hint-bg:rgba(15,138,85,0.08);--shadow:0 4px 24px rgba(24,36,32,0.10); }
 
     body {
       font-family: 'Figtree', system-ui, sans-serif;
@@ -99,10 +76,12 @@
       margin: 0 auto 18px;
     }
 
-    .status-icon svg { display: block; }
-
     .status-icon--success { background: #DEF0E5; }
     .status-icon--error   { background: #FFE7DF; }
+    .status-icon--loading { background: rgba(15,138,85,0.10); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 0.9s linear infinite; }
 
     h1 {
       font-family: 'Bricolage Grotesque', system-ui, sans-serif;
@@ -112,12 +91,7 @@
       letter-spacing: -0.02em;
     }
 
-    p {
-      color: var(--dim);
-      font-size: 0.9rem;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
+    p { color: var(--dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 24px; }
 
     .btn {
       display: block;
@@ -132,14 +106,8 @@
       cursor: pointer;
       transition: opacity 0.15s;
     }
-
     .btn:hover { opacity: 0.88; }
-
-    .btn--primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
+    .btn--primary { background: var(--accent); color: #fff; }
     .btn--ghost {
       background: transparent;
       color: var(--dim);
@@ -158,15 +126,25 @@
       line-height: 1.55;
       text-align: left;
     }
-
     .hint strong { color: var(--primary); }
 
-    #loading-ui h1 { color: var(--dim); font-weight: 400; font-size: 1rem; }
+    #loading-ui p { margin-bottom: 0; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="logo">PlattenTreff</div>
+
+    <!-- Lädt -->
+    <div id="loading-ui">
+      <div class="status-icon status-icon--loading">
+        <svg class="spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </div>
+      <h1>Anmeldung wird abgeschlossen…</h1>
+      <p>Einen Moment bitte.</p>
+    </div>
 
     <!-- Erfolgreich -->
     <div id="success-ui" style="display:none">
@@ -176,7 +154,7 @@
         </svg>
       </div>
       <h1>Anmeldung erfolgreich</h1>
-      <p>Kehre jetzt zur PlattenTreff-App zurück.</p>
+      <p>Kehre jetzt zur PlattenTreff-App zurück — du wirst dort automatisch eingeloggt.</p>
       <a href="https://plattentreff.app/" class="btn btn--primary">Zur App zurückkehren</a>
       <div class="hint">
         <strong>Hinweis:</strong> Tippe auf das PlattenTreff-Icon auf deinem Homescreen, falls die App nicht automatisch öffnet.
@@ -194,19 +172,22 @@
       <p id="error-msg">Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.</p>
       <a href="https://plattentreff.app/" class="btn btn--ghost">Zurück zur App</a>
     </div>
-
-    <!-- Lädt -->
-    <div id="loading-ui">
-      <h1>Einen Moment…</h1>
-    </div>
   </div>
 
   <script>
     (function () {
+      // Supabase-Projektdaten (public — kein Secret)
+      var SUPABASE_URL = 'https://quelfdpqvzgnnvpuwljq.supabase.co';
+
       function show(id) {
-        ['success-ui', 'error-ui', 'loading-ui'].forEach(function (el) {
+        ['loading-ui', 'success-ui', 'error-ui'].forEach(function (el) {
           document.getElementById(el).style.display = el === id ? '' : 'none';
         });
+      }
+
+      function fail(msg) {
+        if (msg) document.getElementById('error-msg').textContent = msg;
+        show('error-ui');
       }
 
       function decodeJwtPayload(jwt) {
@@ -219,49 +200,68 @@
       var searchParams = new URLSearchParams(window.location.search);
       var hashParams   = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
-      // Fehlerfall: Supabase / OAuth-Provider sendet error in Query oder Hash
+      // OAuth-Fehler vom Provider oder Supabase
       var errorCode = searchParams.get('error') || hashParams.get('error');
       var errorDesc = searchParams.get('error_description') || hashParams.get('error_description');
-
       if (errorCode) {
-        show('error-ui');
-        if (errorDesc) {
-          document.getElementById('error-msg').textContent =
-            decodeURIComponent(errorDesc.replace(/\+/g, ' '));
-        }
+        fail(errorDesc ? decodeURIComponent(errorDesc.replace(/\+/g, ' ')) : null);
         return;
       }
 
       var accessToken  = hashParams.get('access_token');
       var refreshToken = hashParams.get('refresh_token') || '';
-      var expiresIn    = parseInt(hashParams.get('expires_in') || '3600', 10);
+      var handoffKey   = searchParams.get('hk');
 
-      if (!accessToken) {
-        show('error-ui');
-        return;
-      }
+      if (!accessToken) { fail(null); return; }
 
       var payload = decodeJwtPayload(accessToken);
-      var userId  = payload && payload.sub;
-      var email   = (payload && payload.email) || '';
+      if (!payload || !payload.sub) { fail(null); return; }
 
-      if (!userId) {
-        show('error-ui');
-        return;
+      // Tokens aus URL entfernen (kein Verbleib im Verlauf)
+      history.replaceState(null, '', window.location.pathname + (handoffKey ? '?hk=' + handoffKey : ''));
+
+      if (handoffKey) {
+        // PWA-Modus: Tokens serverseitig für den Handoff ablegen.
+        // Die PWA (isolierter localStorage) löst den Key nach Rückkehr ein.
+        fetch(SUPABASE_URL + '/functions/v1/auth-handoff', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            action:        'create',
+            handoff_key:   handoffKey,
+            access_token:  accessToken,
+            refresh_token: refreshToken,
+          }),
+        })
+        .then(function (r) {
+          if (r.ok) {
+            show('success-ui');
+          } else {
+            // Edge Function fehlgeschlagen — Fallback: Tokens direkt im localStorage
+            // (funktioniert auf Geräten ohne iOS-Isolierung, z.B. Desktop Safari)
+            _storeLocally();
+            show('success-ui');
+          }
+        })
+        .catch(function () {
+          _storeLocally();
+          show('success-ui');
+        });
+      } else {
+        // Kein handoff_key (direkter Browser-Aufruf, kein iOS-PWA-Handoff nötig)
+        _storeLocally();
+        show('success-ui');
       }
 
-      // Session in localStorage ablegen — gleiche Keys wie sb._saveSession() in supabase.js
-      var expiresAt = Date.now() + expiresIn * 1000;
-      localStorage.setItem('sb_token',         accessToken);
-      localStorage.setItem('sb_refresh_token', refreshToken);
-      localStorage.setItem('sb_user_id',       userId);
-      localStorage.setItem('sb_email',         email);
-      localStorage.setItem('sb_expires_at',    String(expiresAt));
-
-      // Tokens aus der URL entfernen (kein Verbleib im Verlauf)
-      history.replaceState(null, '', window.location.pathname);
-
-      show('success-ui');
+      function _storeLocally() {
+        var expiresIn = parseInt(hashParams.get('expires_in') || '3600', 10);
+        var expiresAt = Date.now() + expiresIn * 1000;
+        localStorage.setItem('sb_token',         accessToken);
+        localStorage.setItem('sb_refresh_token', refreshToken);
+        localStorage.setItem('sb_user_id',       payload.sub);
+        localStorage.setItem('sb_email',         payload.email || '');
+        localStorage.setItem('sb_expires_at',    String(expiresAt));
+      }
     })();
   </script>
 </body>

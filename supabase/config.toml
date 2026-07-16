@@ -31,3 +31,7 @@ enable_signup = true
 # Zugriffsschutz erfolgt über x-webhook-secret im Handler selbst.
 [functions.send-welcome-email]
 verify_jwt = false
+
+# auth-handoff: iOS-PWA → Safari Handoff (kein JWT in der PWA beim Einlösen)
+[functions.auth-handoff]
+verify_jwt = false
