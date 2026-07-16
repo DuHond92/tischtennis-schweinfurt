@@ -589,32 +589,58 @@ function sortEvents(sort, btn) {
 
 function renderEventCard(e, idx = 0) {
   const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
-    : e.type === 'casual'    ? 'images/placeholders/game_fun.png'
     : e.type === 'training'  ? 'images/placeholders/game_training.png'
     : 'images/placeholders/game_fun.png';
   const loadAttr = idx < 2 ? 'eager' : 'lazy';
-  const thumbInner = (e.photos && e.photos.length)
-    ? `<img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">`
-    : `<img src="${thumbFallback}" loading="${loadAttr}" decoding="async">`;
+  const imgSrc   = (e.photos && e.photos.length) ? e.photos[0] : thumbFallback;
+
+  // Spielstatus & persönlicher Status
+  const status  = getGameDisplayStatus(e);
+  const myId    = (typeof sb !== 'undefined' && sb.isLoggedIn()) ? String(sb.getUserId()) : null;
+  const isCreator = myId && String(e.creatorId) === myId;
+  const isDabei   = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
+  const myBadge   = isCreator ? '✓ Von dir erstellt' : isDabei ? '✓ Du nimmst teil' : null;
+
+  // Typ-Tag Farb-Klasse
+  const typeTagCls = e.type === 'casual' ? 'ecb-type-tag--casual'
+    : e.type === 'training'   ? 'ecb-type-tag--training'
+    : e.type === 'punktspiel' ? 'ecb-type-tag--punktspiel'
+    : '';
+
+  // Spielort
+  const locationHtml = e.tid
+    ? `<span class="ecb-location-link" onclick="event.stopPropagation();focusTableOnMap(${e.tid})">${icPlate(12)} ${escHtml(e.tname)}</span>`
+    : `${icPlate(12)} ${escHtml(e.tname || '–')}`;
+
+  // Ersteller
+  const creatorName = e.creatorId
+    ? `<b class="pp-clickable" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
+    : `<b>${escHtml(e.creator||'Anonym')}</b>`;
+
   return `
   <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
-    <div class="ecb-thumb ev-thumb-${e.type||'casual'}">${thumbInner}</div>
-    <div class="ecb-info">
-      <div class="ecb-title">${e.name}</div>
-      <div class="ecb-title-row">
-        <span class="ev-type-pill pill-${e.type}">${typeLabel(e.type)}</span>
-      </div>
-      <div class="ecb-date">${ic('calendar',12)} ${formatEventDate(e)}</div>
-      <div class="ecb-creator">${ic('user',12)} ${e.creatorId
-        ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
-        : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
-      <div class="ecb-location">${e.tid
-        ? `<span class="ecb-location-link" onclick="event.stopPropagation();focusTableOnMap(${e.tid})">${icPlate(12)} ${escHtml(e.tname)}</span>`
-        : `${icPlate(12)} ${escHtml(e.tname)}`}</div>
-      <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Spieler</span></div>
-      ${eventStatusBlock(e)}
+    <div class="ecb-img ev-thumb-${e.type||'casual'}">
+      <img src="${escAttr(imgSrc)}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">
     </div>
-    <div class="ecb-chevron">›</div>
+    <div class="ecb-body">
+      <div class="ecb-title">${escHtml(e.name)}</div>
+      <div class="ecb-status-row">
+        <span class="ecb-sdot ecb-sdot--${status.kind}"></span>
+        <span class="ecb-stext ecb-stext--${status.kind}">${status.text}</span>
+        ${myBadge ? `<span class="ecb-mybadge">${myBadge}</span>` : ''}
+        <span class="ecb-sep">·</span>
+        <span class="ecb-type-tag ${typeTagCls}">${typeLabel(e.type)}</span>
+      </div>
+      <div class="ecb-row">${ic('calendar',12)} ${formatEventDate(e)}</div>
+      <div class="ecb-row ecb-location">${locationHtml}</div>
+      <div class="ecb-row">
+        ${ic('user',12)} <span style="color:var(--text-dim);">von</span>&nbsp;${creatorName}
+      </div>
+      <div class="ecb-participants-row">
+        ${participantStack(e.participants, 4, 26)}
+        <span class="ecb-pcount">${e.p}/${e.max} Spieler</span>
+      </div>
+    </div>
   </div>`;
 }
 

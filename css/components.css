@@ -672,23 +672,118 @@
   margin-top: 4px;
 }
 
+/* ── SPIELE-KARTE (vertikales Layout) ────────────────────────────── */
 .event-card-big {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; flex-direction: column;
   background: var(--surface); border-radius: var(--radius);
   border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 10px 12px; cursor: pointer;
+  overflow: hidden; cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Vollbreites Bild oben */
+.ecb-img {
+  width: 100%; height: 176px; flex-shrink: 0;
+  overflow: hidden; background: var(--surface2);
+}
+.ecb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Rückwärts-Kompatibilität für Skeleton in index.html */
 .ecb-thumb {
-  flex-shrink: 0; width: 110px; height: 80px;
-  border-radius: 10px; overflow: hidden;
-  background: var(--surface2);
+  width: 100%; height: 176px; flex-shrink: 0;
+  overflow: hidden; background: var(--surface2);
 }
 .ecb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ecb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-self: stretch; }
-.ecb-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; margin-bottom: 4px; }
-/* ── EVENT STATUS BLOCK ──────────────────────────────────────────── */
+.ecb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px 14px 14px; gap: 4px; }
+
+/* Inhalt-Bereich */
+.ecb-body {
+  padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 5px; flex: 1;
+}
+
+/* 1 — Titel */
+.ecb-title {
+  font-family: var(--font-head);
+  font-weight: 800; font-size: 1.05rem; color: var(--text);
+  line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; hyphens: auto; -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+/* 2 — Status-Zeile: Punkt · Text · (mein Badge) · Tag */
+.ecb-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ecb-status-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  margin-bottom: 1px;
+}
+.ecb-sdot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.ecb-sdot--ok      { background: var(--primary); }
+.ecb-sdot--warn    { background: var(--gold); }
+.ecb-sdot--danger  { background: var(--error); }
+.ecb-sdot--neutral { background: var(--text-xdim); }
+.ecb-sdot--running {
+  background: var(--accent);
+  animation: ecb-pulse 1.5s ease-in-out infinite;
+}
+@keyframes ecb-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.85); }
+}
+
+.ecb-stext { font-size: var(--text-meta); font-weight: 700; line-height: 1; }
+.ecb-stext--ok      { color: var(--primary); }
+.ecb-stext--warn    { color: var(--gold); }
+.ecb-stext--danger  { color: var(--error); }
+.ecb-stext--neutral { color: var(--text-dim); }
+.ecb-stext--running { color: var(--accent); }
+
+.ecb-mybadge {
+  font-size: var(--text-meta); font-weight: 600; color: var(--primary);
+}
+.ecb-sep { font-size: var(--text-meta); color: var(--text-xdim); line-height: 1; }
+
+.ecb-type-tag {
+  font-size: var(--text-label); font-weight: 700; letter-spacing: 0.1px;
+  padding: 2px 8px; border-radius: 6px;
+  background: var(--surface2); color: var(--text-dim);
+  border: 1px solid var(--border); white-space: nowrap;
+}
+.ecb-type-tag--casual     { background: var(--green-bg);  color: var(--green);  border-color: transparent; }
+.ecb-type-tag--training   { background: var(--gold-bg);   color: var(--gold);   border-color: transparent; }
+.ecb-type-tag--punktspiel { background: var(--error-bg);  color: var(--error);  border-color: transparent; }
+
+/* 3–5 — Datum / Ort / Ersteller — gemeinsame Zeile */
+.ecb-row {
+  font-size: var(--text-meta); color: var(--text-dim);
+  display: flex; align-items: center; gap: 5px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  line-height: 1.4;
+}
+.ecb-row svg { flex-shrink: 0; }
+.ecb-row b { color: var(--primary); font-weight: 600; }
+
+/* Ort — klickbarer Plattenname */
+.ecb-location { font-size: var(--text-meta); color: var(--text-dim); }
+.ecb-location-link { cursor: pointer; color: var(--text-dim); display: inline-flex; align-items: center; gap: 5px; }
+.ecb-location-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+
+/* 6 — Teilnehmer */
+.ecb-participants-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: auto; padding-top: 6px;
+}
+.ecb-pcount  { font-size: var(--text-meta); color: var(--text-dim); font-weight: 600; }
+.ecb-participants { font-size: var(--text-meta); color: var(--accent); font-weight: 700; }
+.ecb-chevron { display: none; }
+.ecb-meta    { font-size: var(--text-meta); color: var(--text-dim); }
+.ecb-date    { font-size: var(--text-meta); color: var(--text-dim); }
+.ecb-creator b { color: var(--primary); }
+
+/* ── EVENT STATUS BLOCK (kompakte Kontexte: Home, Tisch-Detail) ── */
 .ev-status-block {
   display: flex; flex-direction: column; gap: 2px;
   margin-top: 7px; padding-top: 6px;
@@ -700,26 +795,9 @@
 .ev-status--warn    { color: var(--gold); }
 .ev-status--danger  { color: var(--error); }
 .ev-status--neutral { color: var(--text-dim); }
-/* Kompakte Kontexte */
 .home-act-body .ev-status-block { margin-top: 5px; padding-top: 5px; }
 .tds-event-card-body .ev-status-block { margin-top: 4px; padding-top: 4px; }
 .player-search-card .ev-status-block { margin-top: 6px; }
-.ecb-title {
-  font-weight: 800; font-size: var(--text-ui); color: var(--text);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden; hyphens: auto; -webkit-hyphens: auto;
-  overflow-wrap: break-word; word-break: normal;
-  margin-bottom: 2px;
-}
-.ecb-date { font-size: var(--text-meta); color: var(--text-dim); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ecb-meta { font-size: var(--text-meta); color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ecb-creator { font-size: var(--text-meta); color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ecb-creator b { color: var(--primary); }
-.ecb-location { font-size: var(--text-meta); color: var(--text-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ecb-location-link { cursor: pointer; color: var(--text-dim); }
-.ecb-location-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
-.ecb-participants { font-size: var(--text-meta); color: var(--accent); font-weight: 700; margin-top: 4px; }
-.ecb-chevron { display: none; }
 
 /* ======= PAGE: PROFILE ======= */
 .profile-top {

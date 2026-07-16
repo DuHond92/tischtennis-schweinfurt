@@ -146,6 +146,25 @@ function eventStatusBlock(e) {
   return `<div class="ev-status-block">${lines.join('')}</div>`;
 }
 
+// Wiederverwendbarer Spielstatus — gibt { text, kind } zurück.
+// kind: 'ok' | 'warn' | 'danger' | 'neutral' | 'running'
+function getGameDisplayStatus(e) {
+  const isCompleted = typeof isEventCompleted === 'function' ? isEventCompleted(e) : false;
+  const free = Math.max(0, (e.max || 0) - (e.p || 0));
+  let isRunning = false;
+  if (!isCompleted && e.dateStr && e.time && e.time !== '??:??') {
+    try {
+      const start = new Date(`${e.dateStr}T${e.time}`);
+      if (!isNaN(start.getTime())) isRunning = Date.now() > start.getTime();
+    } catch(_) {}
+  }
+  if (isCompleted) return { text: 'Abgeschlossen',       kind: 'neutral' };
+  if (isRunning)   return { text: 'Läuft gerade',        kind: 'running' };
+  if (free <= 0)   return { text: 'Ausgebucht',          kind: 'danger'  };
+  if (free === 1)  return { text: 'Nur noch 1 Platz frei', kind: 'warn'  };
+  return { text: `Noch ${free} Plätze frei`, kind: 'ok' };
+}
+
 // Zentraler Datumshelper für alle Event-/Spiel-Anzeigen
 // Format: "So. 10. Juli, 14:00 Uhr" | "Heute, 14:00 Uhr" | "So. 10. Juli 2026, 14:00 Uhr"
 // timeStr = null → kein Uhrzeitteil
@@ -196,17 +215,18 @@ function ptLoader(text, small) {
 // ── SKELETON TEMPLATES ────────────────────────────────────────
 function skeletonEventCard() {
   return `<div class="event-card-big" aria-hidden="true">
-    <div class="ecb-thumb skeleton"></div>
-    <div class="ecb-info" style="display:flex;flex-direction:column;gap:6px;">
-      <div style="display:flex;gap:6px;">
-        <div class="skeleton skeleton-pill" style="width:38px;height:15px;"></div>
-        <div class="skeleton skeleton-pill" style="width:58px;height:15px;"></div>
+    <div class="ecb-img skeleton" style="height:176px;"></div>
+    <div class="ecb-body" style="gap:7px;">
+      <div class="skeleton skeleton-line skeleton-line--lg" style="width:72%;height:14px;"></div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="skeleton" style="width:7px;height:7px;border-radius:50%;"></div>
+        <div class="skeleton skeleton-line skeleton-line--sm" style="width:80px;"></div>
+        <div class="skeleton skeleton-pill" style="width:54px;height:14px;"></div>
       </div>
-      <div class="skeleton skeleton-line skeleton-line--lg" style="width:68%;"></div>
-      <div class="skeleton skeleton-line" style="width:50%;"></div>
-      <div class="skeleton skeleton-line" style="width:44%;"></div>
+      <div class="skeleton skeleton-line" style="width:54%;"></div>
       <div class="skeleton skeleton-line" style="width:48%;"></div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
+      <div class="skeleton skeleton-line" style="width:44%;"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
         <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
         <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
         <div class="skeleton skeleton-line" style="width:64px;height:9px;margin-left:2px;"></div>
