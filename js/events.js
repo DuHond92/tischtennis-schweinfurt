@@ -762,11 +762,18 @@ function renderEvents() {
     });
   }
 
-  let feedHtml = combined.map((item, idx) =>
-    item.kind === 'event'
-      ? renderEventCard(item.data, idx)
-      : renderPlayerSearchCard(item.data, { noCoords: item.noCoords })
-  ).join('');
+  let feedHtml;
+  try {
+    feedHtml = combined.map((item, idx) =>
+      item.kind === 'event'
+        ? renderEventCard(item.data, idx)
+        : renderPlayerSearchCard(item.data, { noCoords: item.noCoords })
+    ).join('');
+  } catch(err) {
+    console.error('renderEvents map error:', err);
+    c.innerHTML = `<div class="empty-state-card"><div class="esc-title">Render-Fehler</div><div class="esc-body" style="font-size:0.75rem;word-break:break-all;">${escHtml(String(err))}</div></div>`;
+    return;
+  }
 
   // Fremde Gesuche ohne Koordinaten — als eigene Gruppe am Ende
   if (otherNoCoords.length > 0) {
