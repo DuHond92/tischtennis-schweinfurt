@@ -229,21 +229,25 @@ function ptLoader(text, small) {
 // ── SKELETON TEMPLATES ────────────────────────────────────────
 function skeletonEventCard() {
   return `<div class="event-card-big" aria-hidden="true">
-    <div class="ecb-img skeleton" style="height:176px;"></div>
-    <div class="ecb-body" style="gap:7px;">
-      <div class="skeleton skeleton-line skeleton-line--lg" style="width:72%;height:14px;"></div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <div class="skeleton" style="width:7px;height:7px;border-radius:50%;"></div>
-        <div class="skeleton skeleton-line skeleton-line--sm" style="width:80px;"></div>
-        <div class="skeleton skeleton-pill" style="width:54px;height:14px;"></div>
+    <div class="ecb-img skeleton"></div>
+    <div class="ecb-body" style="gap:4px;">
+      <div class="skeleton skeleton-line skeleton-line--lg" style="width:72%;height:13px;"></div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <div class="skeleton" style="width:6px;height:6px;border-radius:50%;"></div>
+        <div class="skeleton skeleton-line skeleton-line--sm" style="width:72px;"></div>
+        <div class="skeleton skeleton-pill" style="width:46px;height:13px;"></div>
       </div>
-      <div class="skeleton skeleton-line" style="width:54%;"></div>
-      <div class="skeleton skeleton-line" style="width:48%;"></div>
-      <div class="skeleton skeleton-line" style="width:44%;"></div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-        <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
-        <div class="skeleton skeleton-avatar" style="width:24px;height:24px;"></div>
-        <div class="skeleton skeleton-line" style="width:64px;height:9px;margin-left:2px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:1px;">
+        <div class="skeleton skeleton-line" style="width:38%;"></div>
+        <div class="skeleton skeleton-line" style="width:34%;"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;">
+        <div class="skeleton skeleton-line" style="width:34%;"></div>
+        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+          <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
+          <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
+          <div class="skeleton skeleton-line" style="width:52px;height:9px;margin-left:2px;"></div>
+        </div>
       </div>
     </div>
   </div>`;

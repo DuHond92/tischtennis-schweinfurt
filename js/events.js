@@ -609,8 +609,8 @@ function renderEventCard(e, idx = 0) {
 
   // Spielort
   const locationHtml = e.tid
-    ? `<span class="ecb-location-link" onclick="event.stopPropagation();focusTableOnMap(${e.tid})">${icPlate(12)} ${escHtml(e.tname)}</span>`
-    : `${icPlate(12)} ${escHtml(e.tname || '–')}`;
+    ? `<span class="ecb-location-link" onclick="event.stopPropagation();focusTableOnMap(${e.tid})">${icPlate(11)} ${escHtml(e.tname)}</span>`
+    : `${icPlate(11)} ${escHtml(e.tname || '–')}`;
 
   // Ersteller
   const creatorName = e.creatorId
@@ -628,17 +628,18 @@ function renderEventCard(e, idx = 0) {
         <span class="ecb-sdot ecb-sdot--${status.kind}"></span>
         <span class="ecb-stext ecb-stext--${status.kind}">${status.text}</span>
         ${myBadge ? `<span class="ecb-mybadge">${myBadge}</span>` : ''}
-        <span class="ecb-sep">·</span>
         <span class="ecb-type-tag ${typeTagCls}">${typeLabel(e.type)}</span>
       </div>
-      <div class="ecb-row">${ic('calendar',12)} ${formatEventDate(e)}</div>
-      <div class="ecb-row ecb-location">${locationHtml}</div>
-      <div class="ecb-row">
-        ${ic('user',12)} <span style="color:var(--text-dim);">von</span>&nbsp;${creatorName}
+      <div class="ecb-meta-row">
+        <span class="ecb-meta-item">${ic('calendar',11)} ${formatEventDate(e)}</span>
+        <span class="ecb-meta-item ecb-location">${locationHtml}</span>
       </div>
-      <div class="ecb-participants-row">
-        ${participantStack(e.participants, 4, 26)}
-        <span class="ecb-pcount">${e.p}/${e.max} Spieler</span>
+      <div class="ecb-footer">
+        <span class="ecb-creator-inline">${ic('user',11)} <span style="color:var(--text-dim);">von</span>&nbsp;${creatorName}</span>
+        <div class="ecb-participants-row">
+          ${participantStack(e.participants, 4, 24)}
+          <span class="ecb-pcount">${e.p}/${e.max} Spieler</span>
+        </div>
       </div>
     </div>
   </div>`;
