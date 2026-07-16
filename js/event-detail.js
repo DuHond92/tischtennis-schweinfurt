@@ -70,8 +70,10 @@ function _buildLocationInfoHtml(ev) {
   const placeName = (ev.tname && ev.tname !== '?') ? ev.tname : (tbl.name || '');
   const addr      = tbl.addr || ev.colLocationLabel || '';
   return `
-    ${placeName ? `<div class="eds-loc-name">${icPlate(15)} ${escHtml(placeName)}</div>` : ''}
-    ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>`                    : ''}
+    ${placeName ? `<div class="eds-loc-name">${ev.tid
+      ? `<span class="eds-loc-link" onclick="closeAllSheets();focusTableOnMap(${ev.tid})">${icPlate(15)} ${escHtml(placeName)}</span>`
+      : `${icPlate(15)} ${escHtml(placeName)}`}</div>` : ''}
+    ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>` : ''}
   `;
 }
 

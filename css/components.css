@@ -716,6 +716,8 @@
 .ecb-creator { font-size: var(--text-meta); color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ecb-creator b { color: var(--primary); }
 .ecb-location { font-size: var(--text-meta); color: var(--text-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ecb-location-link { cursor: pointer; color: var(--text-dim); }
+.ecb-location-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
 .ecb-participants { font-size: var(--text-meta); color: var(--accent); font-weight: 700; margin-top: 4px; }
 .ecb-chevron { display: none; }
 

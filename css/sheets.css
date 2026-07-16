@@ -209,6 +209,8 @@
   gap: 4px;
 }
 .eds-loc-name { font-size: var(--text-ui); font-weight: 700; color: var(--text); }
+.eds-loc-link { cursor: pointer; color: var(--text); }
+.eds-loc-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
 .eds-loc-addr { font-size: var(--text-meta); color: var(--text-dim); }
 
 /* Kommentar-Input im Kommentarbereich (nicht sticky) */
