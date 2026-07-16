@@ -625,9 +625,8 @@ function renderEventCard(e, idx = 0) {
     <div class="ecb-body">
       <div class="ecb-title">${escHtml(e.name)}</div>
       <div class="ecb-status-row">
-        <span class="ecb-sdot ecb-sdot--${status.kind}"></span>
-        <span class="ecb-stext ecb-stext--${status.kind}">${status.text}</span>
-        ${myBadge ? `<span class="ecb-mybadge">${myBadge}</span>` : ''}
+        <span class="ecb-stag ecb-stag--${status.kind}">${status.text}</span>
+        ${myBadge ? `<span class="ecb-stag ecb-stag--participation">${myBadge}</span>` : ''}
         <span class="ecb-type-tag ${typeTagCls}">${typeLabel(e.type)}</span>
       </div>
       <div class="ecb-meta-row">

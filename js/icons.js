@@ -174,9 +174,9 @@ function getGameDisplayStatus(e) {
 
   // 3. Platzverfügbarkeit
   const free = Math.max(0, (e.max || 0) - (e.p || 0));
-  if (free <= 0)  return { text: 'Ausgebucht',            kind: 'danger' };
-  if (free === 1) return { text: 'Nur noch 1 Platz frei', kind: 'warn'  };
-  return { text: `Noch ${free} Plätze frei`, kind: 'ok' };
+  if (free <= 0)  return { text: 'Ausgebucht',       kind: 'danger' };
+  if (free === 1) return { text: '1 Platz frei',    kind: 'warn'  };
+  return { text: `${free} Plätze frei`, kind: 'ok' };
 }
 
 // Zentraler Datumshelper für alle Event-/Spiel-Anzeigen

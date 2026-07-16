@@ -712,40 +712,40 @@
   overflow-wrap: break-word;
 }
 
-/* 2 — Status-Zeile: Punkt · Text · (mein Badge) · Tag */
+/* 2 — Status-Zeile: nur Tags */
 .ecb-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ecb-status-row {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
   margin-bottom: 1px;
 }
-.ecb-sdot {
-  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
-}
-.ecb-sdot--ok      { background: var(--primary); }
-.ecb-sdot--warn    { background: var(--gold); }
-.ecb-sdot--danger  { background: var(--error); }
-.ecb-sdot--neutral { background: var(--text-xdim); }
-.ecb-sdot--running {
-  background: var(--accent);
-  animation: ecb-pulse 1.5s ease-in-out infinite;
-}
+
 @keyframes ecb-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.45; transform: scale(0.85); }
 }
 
-.ecb-stext { font-size: var(--text-meta); font-weight: 700; line-height: 1; }
-.ecb-stext--ok      { color: var(--primary); }
-.ecb-stext--warn    { color: var(--gold); }
-.ecb-stext--danger  { color: var(--error); }
-.ecb-stext--neutral { color: var(--text-dim); }
-.ecb-stext--running { color: var(--accent); }
-
-.ecb-mybadge {
-  font-size: var(--text-meta); font-weight: 600; color: var(--primary);
+/* Basis-Tag */
+.ecb-stag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: var(--text-micro); font-weight: 600;
+  padding: 2px 7px; border-radius: 6px;
+  white-space: nowrap; line-height: 1.4;
+  border: 1px solid transparent;
 }
-.ecb-sep { font-size: var(--text-meta); color: var(--text-xdim); line-height: 1; }
+/* Freie Plätze — grüner Outline, kein Fill (dezenter) */
+.ecb-stag--ok      { color: var(--primary); border-color: var(--primary); }
+/* Letzter Platz — orangener Outline */
+.ecb-stag--warn    { color: var(--gold); border-color: var(--gold); }
+/* Ausgebucht / Abgesagt — rotes Fill */
+.ecb-stag--danger  { color: var(--error); background: var(--error-bg); border-color: var(--error-bg); }
+/* Abgeschlossen — gedimmter Surface-Tag */
+.ecb-stag--neutral { color: var(--text-dim); background: var(--surface2); border-color: var(--border); }
+/* Läuft gerade — Akzent-Outline mit Puls */
+.ecb-stag--running { color: var(--accent); border-color: var(--accent); animation: ecb-pulse 1.5s ease-in-out infinite; }
+/* Teilnahme / Von dir erstellt — grünes Fill, prominenter */
+.ecb-stag--participation { color: var(--primary); background: var(--green-bg); border-color: var(--primary); font-weight: 700; }
 
+/* Spieltyp-Tag */
 .ecb-type-tag {
   font-size: var(--text-micro); font-weight: 700; letter-spacing: 0.1px;
   padding: 1px 6px; border-radius: 6px;
