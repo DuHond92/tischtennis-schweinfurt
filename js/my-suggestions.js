@@ -120,7 +120,7 @@ function showMySuggestionDetail(id) {
     </div>
     <div class="msd-info">
       <div class="msd-name">${escHtml(s.name)}</div>
-      ${s.address ? `<div class="msd-addr">${ic('map-pin', 12)} ${escHtml(s.address)}</div>` : ''}
+      ${s.address ? `<div class="msd-addr">${icPlate(12)} ${escHtml(s.address)}</div>` : ''}
       <div class="msd-meta">${typeTag} · Eingereicht am ${dateStr}</div>
     </div>
     <div class="msd-status-card">

@@ -608,7 +608,7 @@ function renderEventCard(e, idx = 0) {
       <div class="ecb-creator">${ic('user',12)} ${e.creatorId
         ? `<b class="pp-clickable" style="cursor:pointer;" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
         : `<b>${escHtml(e.creator||'Anonym')}</b>`}</div>
-      <div class="ecb-location">${ic('pin')} ${e.tname}</div>
+      <div class="ecb-location">${icPlate(12)} ${e.tname}</div>
       <div class="ecb-participants-row">${participantStack(e.participants,4,26)}<span class="ecb-pcount">${e.p}/${e.max} Spieler</span></div>
       ${eventStatusBlock(e)}
     </div>

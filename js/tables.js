@@ -59,7 +59,7 @@ function showTableDetail(id) {
     <!-- Basisinfos -->
     <div class="eds-section eds-section--info">
       <div class="ds-name">${t.name}</div>
-      <div class="ds-address">${t.addr||'Schweinfurt'}</div>
+      <div class="ds-address">${icPlate(13)} ${t.addr||'Schweinfurt'}</div>
       ${metaLine ? `<div class="tds-meta-line">${metaLine}</div>` : ''}
       <div class="plt-badge-row" style="margin-top:6px;">${distHtml}${osmHtml}</div>
     </div>

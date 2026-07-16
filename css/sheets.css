@@ -943,7 +943,19 @@
   flex-shrink: 0; width: 8px; height: 8px;
   border-radius: 50%; background: var(--primary);
 }
+.notif-dot--hidden { background: transparent; }
 
+/* Ungelesen: leichte Tönung + fetter Titel */
+.notif-item--unread { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+.notif-item--unread:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+
+/* Gelesen: normal, kein Dot */
+.notif-item--read { /* no override */ }
+
+/* System-Notifs (report_resolved, suggestion_approved) — klickbar für Navigation */
+.notif-item--system { cursor: pointer; }
+
+/* Für alte .notif-item--report / --suggestion: abwärtskompatibel */
 .notif-item--report,
 .notif-item--suggestion { cursor: default; }
 .notif-item--report:hover,
@@ -956,6 +968,65 @@
   background: color-mix(in srgb, var(--primary) 14%, transparent);
   border-radius: 50%; color: var(--primary);
 }
+
+/* Löschen-Button pro Item */
+.notif-delete-btn {
+  flex-shrink: 0;
+  background: none; border: none; padding: 6px; margin: -6px -4px -6px 0;
+  color: var(--text-xdim); cursor: pointer; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s, background 0.15s;
+}
+.notif-item:hover .notif-delete-btn,
+.notif-item:focus-within .notif-delete-btn { opacity: 1; }
+.notif-delete-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+@media (hover: none) { .notif-delete-btn { opacity: 1; } } /* Touch: immer sichtbar */
+
+/* Header-Aktionen (Alle löschen) */
+.notif-sheet-actions {
+  display: flex; justify-content: flex-end;
+  padding: 8px 16px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.notif-action-link {
+  background: none; border: none; padding: 4px 0;
+  font-size: var(--text-meta); color: var(--text-dim);
+  cursor: pointer; font-family: inherit; font-weight: 500;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.notif-action-link:hover { color: var(--accent); }
+
+/* Bestätigungs-Dialog für "Alle löschen" */
+.notif-confirm-overlay {
+  position: sticky; bottom: 0;
+  inset-inline: 0;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  z-index: 10;
+}
+.notif-confirm-card {
+  background: var(--surface2);
+  border-radius: 14px; padding: 18px 16px 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.notif-confirm-title {
+  font-size: var(--text-ui); font-weight: 700; color: var(--text);
+  margin-bottom: 6px;
+}
+.notif-confirm-msg {
+  font-size: var(--text-meta); color: var(--text-dim); margin-bottom: 14px; line-height: 1.5;
+}
+.notif-confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.notif-confirm-btn {
+  border: none; border-radius: 10px; padding: 9px 18px;
+  font-size: var(--text-ui); font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: opacity 0.15s;
+}
+.notif-confirm-btn:hover { opacity: 0.82; }
+.notif-confirm-btn--cancel { background: var(--surface2); color: var(--text-dim); }
+.notif-confirm-btn--danger  { background: var(--accent); color: #fff; }
 
 .notif-empty {
   display: flex; flex-direction: column; align-items: center;

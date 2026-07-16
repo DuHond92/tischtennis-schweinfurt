@@ -70,8 +70,8 @@ function _buildLocationInfoHtml(ev) {
   const placeName = (ev.tname && ev.tname !== '?') ? ev.tname : (tbl.name || '');
   const addr      = tbl.addr || ev.colLocationLabel || '';
   return `
-    ${placeName ? `<div class="eds-loc-name">${escHtml(placeName)}</div>` : ''}
-    ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>`      : ''}
+    ${placeName ? `<div class="eds-loc-name">${icPlate(15)} ${escHtml(placeName)}</div>` : ''}
+    ${addr      ? `<div class="eds-loc-addr">${escHtml(addr)}</div>`                    : ''}
   `;
 }
 
@@ -421,7 +421,7 @@ function _eventMetaHtml(ev) {
   const hostLink = ev.creatorId
     ? `<b class="pp-clickable" style="cursor:pointer;" onclick="showPlayerProfile('${escAttr(ev.creatorId)}','${escAttr(ev.creator||'')}','${escAttr(ev.creatorEmoji||'')}',null,'${escAttr(ev.creatorAvatarUrl||'')}')">` + escHtml(ev.creator || '') + '</b>'
     : '<b>' + escHtml(ev.creator || '') + '</b>';
-  return `${ic('calendar')} ${formatEventDateTime(ev.dateStr, ev.time)}<br>${ic('pin')} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Spieler`;
+  return `${ic('calendar')} ${formatEventDateTime(ev.dateStr, ev.time)}<br>${icPlate(13)} ${ev.tname} &nbsp;·&nbsp; ${ic('user')} von ${hostLink}<br>${ic('users')} ${ev.p}/${ev.max} Spieler`;
 }
 
 function _patchEventParticipantJoin(eventId) {

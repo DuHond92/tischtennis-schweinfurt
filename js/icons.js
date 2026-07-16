@@ -79,6 +79,12 @@ function ic(name, size) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px;flex-shrink:0;">${_IC[name] || ''}</svg>`;
 }
 
+// Tischtennisplatte-Icon (fill-basiert, aus images/icons/plate.svg)
+function icPlate(size) {
+  const s = size || 16;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 17 17" fill="currentColor" aria-hidden="true" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M3.03452 9.73425V12.5517C3.03452 12.6544 2.80952 12.7343 2.54077 12.7343C2.27202 12.7343 2.04077 12.6521 2.04077 12.5517V9.73425H3.04077H3.03452Z"/><path d="M15.0346 9.73425V12.5517C15.0346 12.6544 14.811 12.7343 14.5377 12.7343C14.2644 12.7343 14.0408 12.6521 14.0408 12.5517V9.73425H15.0408H15.0346Z"/><path d="M1.98224 5.78685L0.272039 9.05765C0.241439 9.11545 0.282239 9.18685 0.350239 9.18685H8.26544V5.78345H1.98224V5.78685ZM16.8062 9.05765L15.096 5.78345H8.80944V9.18685H16.7212C16.7892 9.18685 16.8334 9.11545 16.8062 9.05765Z"/><path d="M15.5992 4.15479H1.47559V5.24279H15.5992V4.15479Z"/></svg>`;
+}
+
 // ── AVATAR HELPERS ────────────────────────────────────────────────
 const _AV_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
 
