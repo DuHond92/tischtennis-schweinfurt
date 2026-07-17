@@ -910,6 +910,13 @@ async function _loadListMeta(tableId) {
   if (el && t) el.innerHTML = _tableCompactMeta(t);
 }
 
+async function _loadHomeMeta(tableId) {
+  await _loadTableRating(tableId, `plt-rating-home-${tableId}`);
+  const t = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
+  const el = document.getElementById(`home-meta-${tableId}`);
+  if (el && t) el.innerHTML = _tableCompactMeta(t);
+}
+
 function _dismissPreviewContent() {
   if (!_previewTableId) return;
   _previewTableId = null;

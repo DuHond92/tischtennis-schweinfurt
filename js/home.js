@@ -234,41 +234,38 @@ function renderHomeTablesSection() {
     return;
   }
 
+  const _today = typeof _localTodayISO === 'function' ? _localTodayISO() : new Date().toISOString().slice(0, 10);
   const cardsHtml = items.map(({ t, distM }, i) => {
-    const plateFb  = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
-    const loadAttr = i < 2 ? 'eager' : 'lazy';
+    const plateFb    = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+    const loadAttr   = i < 2 ? 'eager' : 'lazy';
     const thumbInner = (t.photos && t.photos.length)
       ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="${loadAttr}" decoding="async">`
       : `<img src="${plateFb}" loading="${loadAttr}" decoding="async" class="thumb-placeholder-img">`;
-    const addr     = t.addr || '';
-    const distStr  = distM != null ? formatDistance(distM) : null;
-    const ratingHtml = typeof _plateRatingHtml === 'function' ? _plateRatingHtml(t, 'home') : '';
-    const metaParts = [];
-    if (t.tablesCount) metaParts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
-    metaParts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
-    const metaText = metaParts.join(' · ');
+    const addr      = t.addr || '';
+    const distStr   = distM != null ? formatDistance(distM) : null;
+    const metaHtml  = typeof _tableCompactMeta === 'function' ? _tableCompactMeta(t) : '';
+    const evCount   = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
+    const gamesHtml = (evCount && typeof _tableGamesBadge === 'function') ? _tableGamesBadge(evCount) : '';
     return `
       <div class="map-thumb-card" onclick="openMapAndFocusTable(${t.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')openMapAndFocusTable(${t.id})">
-        <div class="map-thumb-img">
-          ${thumbInner}
-        </div>
+        <div class="map-thumb-img">${thumbInner}</div>
         <div class="map-thumb-body">
           <div class="map-thumb-name">${escHtml(t.name)}</div>
           ${addr ? `<div class="map-thumb-addr">${escHtml(addr)}</div>` : ''}
-          ${ratingHtml}
+          <div class="map-thumb-compact-meta" id="home-meta-${t.id}">${metaHtml}</div>
           ${distStr ? `<div class="map-thumb-dist">${escHtml(distStr)} entfernt</div>` : ''}
-          ${metaText ? `<div class="map-thumb-meta">${escHtml(metaText)}</div>` : ''}
+          ${gamesHtml ? `<div class="map-thumb-games">${gamesHtml}</div>` : ''}
         </div>
       </div>`;
   }).join('');
 
   el.innerHTML = `${header}<div class="cards-scroll">${cardsHtml}</div>`;
 
-  // Bewertungen asynchron nachladen
-  if (typeof _loadTableRating === 'function') {
+  // Bewertungen asynchron nachladen, Meta-Zeile danach aktualisieren
+  if (typeof _loadHomeMeta === 'function') {
     items.forEach(({ t }) => {
-      if (t.ratingAvg === undefined) _loadTableRating(t.id, `plt-rating-home-${t.id}`);
+      if (t.ratingAvg === undefined) _loadHomeMeta(t.id);
     });
   }
 }

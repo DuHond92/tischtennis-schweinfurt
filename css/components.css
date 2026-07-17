@@ -185,9 +185,9 @@
 .map-thumb-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
 .map-thumb-name { font-weight: 700; font-size: var(--text-ui); color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .map-thumb-addr { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 1px; }
-.map-thumb-body .plt-rating-row { margin-top: 0; }
-.map-thumb-dist { font-size: var(--text-label); color: var(--text-dim); margin-top: 2px; }
-.map-thumb-meta { font-size: var(--text-label); color: var(--text-dim); opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-thumb-compact-meta { font-size: var(--text-meta); color: var(--text-dim); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-thumb-dist { font-size: var(--text-label); color: var(--text-dim); }
+.map-thumb-games { margin-top: 4px; }
 .map-thumb-ev { margin-top: 6px; font-size: var(--text-label); color: var(--accent); font-weight: 700; }
 
 /* Upcoming events vertical list (Home) */
