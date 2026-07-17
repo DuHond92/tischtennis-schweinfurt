@@ -681,6 +681,11 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Kompakte Karte (ohne Bild) — Karte beginnt direkt mit dem Titel */
+.event-card-big--compact .ecb-body { padding: 8px 12px 10px; gap: 2px; }
+.event-card-big--compact .ecb-meta-row { margin-top: 0; }
+.event-card-big--compact .ecb-footer { margin-top: 1px; }
+
 /* Vollbreites Bild oben */
 .ecb-img {
   width: 100%; height: clamp(160px, 46vw, 210px); flex-shrink: 0;

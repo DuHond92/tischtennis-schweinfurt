@@ -232,10 +232,9 @@ function skeletonEventCard() {
     <div class="ecb-img skeleton"></div>
     <div class="ecb-body" style="gap:4px;">
       <div class="skeleton skeleton-line skeleton-line--lg" style="width:72%;height:13px;"></div>
-      <div style="display:flex;gap:5px;align-items:center;">
-        <div class="skeleton" style="width:6px;height:6px;border-radius:50%;"></div>
-        <div class="skeleton skeleton-line skeleton-line--sm" style="width:72px;"></div>
-        <div class="skeleton skeleton-pill" style="width:46px;height:13px;"></div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <div class="skeleton skeleton-pill" style="width:78px;height:15px;border-radius:6px;"></div>
+        <div class="skeleton skeleton-pill" style="width:54px;height:15px;border-radius:6px;"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:1px;">
         <div class="skeleton skeleton-line" style="width:38%;"></div>
@@ -243,6 +242,30 @@ function skeletonEventCard() {
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;">
         <div class="skeleton skeleton-line" style="width:34%;"></div>
+        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+          <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
+          <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
+          <div class="skeleton skeleton-line" style="width:52px;height:9px;margin-left:2px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function skeletonEventCardCompact() {
+  return `<div class="event-card-big event-card-big--compact" aria-hidden="true">
+    <div class="ecb-body" style="gap:2px;padding:8px 12px 10px;">
+      <div class="skeleton skeleton-line skeleton-line--lg" style="width:65%;height:13px;"></div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <div class="skeleton skeleton-pill" style="width:70px;height:15px;border-radius:6px;"></div>
+        <div class="skeleton skeleton-pill" style="width:58px;height:15px;border-radius:6px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="skeleton skeleton-line" style="width:40%;"></div>
+        <div class="skeleton skeleton-line" style="width:32%;"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:1px;">
+        <div class="skeleton skeleton-line" style="width:32%;"></div>
         <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
           <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
           <div class="skeleton skeleton-avatar" style="width:22px;height:22px;"></div>
@@ -304,7 +327,12 @@ function skeletonAdminRow() {
 
 function skeletonList(type, count) {
   count = count || 3;
-  const fn = { event: skeletonEventCard, ps: skeletonPsCard, message: skeletonMessageRow, comment: skeletonComment, admin: skeletonAdminRow }[type] || skeletonAdminRow;
+  if (type === 'event') {
+    return Array.from({length: count}, (_, i) =>
+      i % 2 === 0 ? skeletonEventCard() : skeletonEventCardCompact()
+    ).join('');
+  }
+  const fn = { ps: skeletonPsCard, message: skeletonMessageRow, comment: skeletonComment, admin: skeletonAdminRow }[type] || skeletonAdminRow;
   return Array.from({length: count}, fn).join('');
 }
 

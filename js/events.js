@@ -592,7 +592,7 @@ function renderEventCard(e, idx = 0) {
     : e.type === 'training'  ? 'images/placeholders/game_training.png'
     : 'images/placeholders/game_fun.png';
   const loadAttr = idx < 2 ? 'eager' : 'lazy';
-  const imgSrc   = (e.photos && e.photos.length) ? e.photos[0] : thumbFallback;
+  const hasImage = Boolean(e.photos && e.photos.length);
 
   // Spielstatus & persönlicher Status
   const status  = getGameDisplayStatus(e);
@@ -618,10 +618,10 @@ function renderEventCard(e, idx = 0) {
     : `<b>${escHtml(e.creator||'Anonym')}</b>`;
 
   return `
-  <div class="event-card-big fade-up" onclick="showEventDetail(${e.id})">
-    <div class="ecb-img ev-thumb-${e.type||'casual'}">
-      <img src="${escAttr(imgSrc)}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">
-    </div>
+  <div class="event-card-big${hasImage ? '' : ' event-card-big--compact'} fade-up" onclick="showEventDetail(${e.id})">
+    ${hasImage ? `<div class="ecb-img ev-thumb-${e.type||'casual'}">
+      <img src="${escAttr(e.photos[0])}" onerror="this.src='${thumbFallback}'" loading="${loadAttr}" decoding="async">
+    </div>` : ''}
     <div class="ecb-body">
       <div class="ecb-title">${escHtml(e.name)}</div>
       <div class="ecb-status-row">
