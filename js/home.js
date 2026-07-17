@@ -241,11 +241,16 @@ function renderHomeTablesSection() {
     const thumbInner = (t.photos && t.photos.length)
       ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="${loadAttr}" decoding="async">`
       : `<img src="${plateFb}" loading="${loadAttr}" decoding="async" class="thumb-placeholder-img">`;
-    const addr      = t.addr || '';
-    const distStr   = distM != null ? formatDistance(distM) : null;
-    const metaHtml  = typeof _tableCompactMeta === 'function' ? _tableCompactMeta(t) : '';
-    const evCount   = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-    const gamesHtml = (evCount && typeof _tableGamesBadge === 'function') ? _tableGamesBadge(evCount) : '';
+    const addr     = t.addr || '';
+    const metaHtml = typeof _tableCompactMeta === 'function' ? _tableCompactMeta(t) : '';
+    const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
+    const distTag  = distM != null
+      ? `<span class="htt-dist">${ic('pin', 10)}&thinsp;${escHtml(formatDistance(distM))}</span>`
+      : '';
+    const gamesTag = evCount
+      ? `<span class="htt-games">${ic('calendar', 10)}&thinsp;${evCount}&thinsp;${evCount === 1 ? 'Spiel' : 'Spiele'}</span>`
+      : '';
+    const tagRow = (distTag || gamesTag) ? `<div class="home-tag-row">${distTag}${gamesTag}</div>` : '';
     return `
       <div class="map-thumb-card" onclick="openMapAndFocusTable(${t.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')openMapAndFocusTable(${t.id})">
@@ -254,8 +259,7 @@ function renderHomeTablesSection() {
           <div class="map-thumb-name">${escHtml(t.name)}</div>
           ${addr ? `<div class="map-thumb-addr">${escHtml(addr)}</div>` : ''}
           <div class="map-thumb-compact-meta" id="home-meta-${t.id}">${metaHtml}</div>
-          ${distStr ? `<div class="map-thumb-dist">${escHtml(distStr)} entfernt</div>` : ''}
-          ${gamesHtml ? `<div class="map-thumb-games">${gamesHtml}</div>` : ''}
+          ${tagRow}
         </div>
       </div>`;
   }).join('');
