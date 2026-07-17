@@ -347,7 +347,8 @@ function escHtml(s) {
 }
 
 // Renders overlapping avatar stack (Slack/Notion style) — items are clickable
-function participantStack(participants, maxShow, size) {
+function participantStack(participants, maxShow, size, clickable) {
+  if (clickable === undefined) clickable = true;
   maxShow = maxShow || 3;
   size    = size    || 24;
   if(!participants || !participants.length) return '';
@@ -355,14 +356,16 @@ function participantStack(participants, maxShow, size) {
   const extra   = participants.length - maxShow;
   const fs = Math.round(size * 0.38);
   const items = visible.map(p => {
-    const n   = p.username || '?';
-    const uid = escAttr(p.id   || '');
-    const nm  = escAttr(n);
-    const em  = escAttr(p.avatar_emoji || '');
-    const ur  = escAttr(p.avatar_url   || '');
-    const clickHandler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji,null,this.dataset.url)`;
     const inner = getAvatarHtml(p, {size, extraStyle:'border:2px solid var(--surface);'});
-    return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" data-url="${ur}" onclick="${clickHandler}" style="width:${size}px;height:${size}px;">${inner}</div>`;
+    if (clickable) {
+      const uid = escAttr(p.id   || '');
+      const nm  = escAttr(p.username || '?');
+      const em  = escAttr(p.avatar_emoji || '');
+      const ur  = escAttr(p.avatar_url   || '');
+      const handler = `event.stopPropagation();showPlayerProfile(this.dataset.uid,this.dataset.name,this.dataset.emoji,null,this.dataset.url)`;
+      return `<div class="pstack-item pstack-clickable" data-uid="${uid}" data-name="${nm}" data-emoji="${em}" data-url="${ur}" onclick="${handler}" style="width:${size}px;height:${size}px;">${inner}</div>`;
+    }
+    return `<div class="pstack-item" style="width:${size}px;height:${size}px;">${inner}</div>`;
   }).join('');
   const extraHtml = extra > 0
     ? `<div class="pstack-item pstack-extra" style="width:${size}px;height:${size}px;font-size:${fs}px;">+${extra}</div>`

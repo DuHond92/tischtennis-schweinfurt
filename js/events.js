@@ -607,15 +607,11 @@ function renderEventCard(e, idx = 0) {
     : e.type === 'punktspiel' ? 'ecb-type-tag--punktspiel'
     : '';
 
-  // Spielort
-  const locationHtml = e.tid
-    ? `<span class="ecb-location-link" onclick="event.stopPropagation();focusTableOnMap(${e.tid})">${icPlate(11)} ${escHtml(e.tname)}</span>`
-    : `${icPlate(11)} ${escHtml(e.tname || '–')}`;
+  // Spielort — nur informativ, kein Link
+  const locationHtml = `${icPlate(11)} ${escHtml(e.tname || '–')}`;
 
-  // Ersteller
-  const creatorName = e.creatorId
-    ? `<b class="pp-clickable" onclick="event.stopPropagation();showPlayerProfile('${escAttr(e.creatorId)}','${escAttr(e.creator||'')}','${escAttr(e.creatorEmoji||'')}',null,'${escAttr(e.creatorAvatarUrl||'')}')">${escHtml(e.creator||'Anonym')}</b>`
-    : `<b>${escHtml(e.creator||'Anonym')}</b>`;
+  // Ersteller — nur informativ, kein Link
+  const creatorName = `<b>${escHtml(e.creator || 'Anonym')}</b>`;
 
   return `
   <div class="event-card-big${hasImage ? '' : ' event-card-big--compact'} fade-up" onclick="showEventDetail(${e.id})">
@@ -636,7 +632,7 @@ function renderEventCard(e, idx = 0) {
       <div class="ecb-footer">
         <span class="ecb-creator-inline">${ic('user',11)} <span style="color:var(--text-dim);">von</span>&nbsp;${creatorName}</span>
         <div class="ecb-participants-row">
-          ${participantStack(e.participants, 4, 24)}
+          ${participantStack(e.participants, 4, 24, false)}
           <span class="ecb-pcount">${e.p}/${e.max} Spieler</span>
         </div>
       </div>
