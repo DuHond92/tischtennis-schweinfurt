@@ -885,13 +885,9 @@ function _resetActiveMarker() {
 // Wird von Popup-Card (showMapPreview) und Listen-Card (renderMapList) genutzt.
 function _tableCompactMeta(t) {
   const parts = [];
-  if (t.ratingAvg === undefined) {
-    // Rating noch nicht geladen — Platten + Typ vorab zeigen
-  } else if (t.ratingAvg > 0) {
+  if (t.ratingAvg > 0) {
     const avg = t.ratingAvg.toFixed(1).replace('.', ',');
     parts.push(`<span class="mfp-meta-star">★</span>&thinsp;${avg}`);
-  } else {
-    parts.push(`<span>☆</span>&thinsp;Keine Bewertung`);
   }
   if (t.tablesCount) parts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
   parts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
