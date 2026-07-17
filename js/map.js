@@ -679,11 +679,8 @@ function renderMapList(list) {
 
   const _today = _localTodayISO();
   c.innerHTML = list.map((t, i) => {
-    const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-    const badgeRow = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount));
-    const _load    = i < 3 ? 'eager' : 'lazy';
-    const thumbInner = _mapThumbHtml(t, _load);
-    const meta     = _tableMetaLine(t, { includeAccess: true });
+    const evCount    = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
+    const thumbInner = _mapThumbHtml(t, i < 3 ? 'eager' : 'lazy');
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="focusTableOnMap(${t.id})">
@@ -691,17 +688,15 @@ function renderMapList(list) {
       <div class="map-list-info">
         <div class="map-list-name">${escHtml(t.name)}</div>
         <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
-        ${_plateRatingHtml(t, 'list')}
-        ${meta ? `<div class="mli-meta">${meta}</div>` : ''}
-        ${badgeRow}
+        <div class="mli-compact-meta" id="mli-meta-${t.id}">${_tableCompactMeta(t)}</div>
+        <div class="mli-games-slot">${_tableGamesBadge(evCount)}</div>
       </div>
-      <div class="map-list-chevron">›</div>
     </div>`;
   }).join('');
 
-  // Bewertungen asynchron nachladen (gecachte Werte sofort gesetzt, unbekannte per API)
+  // Bewertungen asynchron nachladen, Meta-Zeile danach aktualisieren
   list.forEach(t => {
-    if (t.ratingAvg === undefined) _loadTableRating(t.id, `plt-rating-list-${t.id}`);
+    if (t.ratingAvg === undefined) _loadListMeta(t.id);
   });
 
 }
@@ -886,14 +881,37 @@ function _resetActiveMarker() {
   });
 }
 
-// Floating-Preview-Variante nutzt den gemeinsamen Helfer mit Präfix 'fp'.
-function _tableRatingHtml(t) {
-  return _plateRatingHtml(t, 'fp');
+// Gemeinsame kompakte Meta-Zeile: ★ 4,3 · 2 Platten · Outdoor
+// Wird von Popup-Card (showMapPreview) und Listen-Card (renderMapList) genutzt.
+function _tableCompactMeta(t) {
+  const parts = [];
+  if (t.ratingAvg === undefined) {
+    // Rating noch nicht geladen — Platten + Typ vorab zeigen
+  } else if (t.ratingAvg > 0) {
+    const avg = t.ratingAvg.toFixed(1).replace('.', ',');
+    parts.push(`<span class="mfp-meta-star">★</span>&thinsp;${avg}`);
+  } else {
+    parts.push(`<span>☆</span>&thinsp;Keine Bewertung`);
+  }
+  if (t.tablesCount) parts.push(`${t.tablesCount} ${t.tablesCount === 1 ? 'Platte' : 'Platten'}`);
+  parts.push(t.type === 'indoor' ? 'Indoor' : 'Outdoor');
+  return parts.join(' · ');
 }
 
 async function _loadPreviewRating(tableId) {
   if (_previewTableId !== tableId) return;
   await _loadTableRating(tableId, `plt-rating-fp-${tableId}`);
+  if (_previewTableId !== tableId) return;
+  const t = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
+  const el = document.getElementById(`mfp-meta-${tableId}`);
+  if (el && t) el.innerHTML = _tableCompactMeta(t);
+}
+
+async function _loadListMeta(tableId) {
+  await _loadTableRating(tableId, `plt-rating-list-${tableId}`);
+  const t = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
+  const el = document.getElementById(`mli-meta-${tableId}`);
+  if (el && t) el.innerHTML = _tableCompactMeta(t);
 }
 
 function _dismissPreviewContent() {
@@ -925,7 +943,6 @@ function showMapPreview(tableId) {
   const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
   const thumbHtml = _mapThumbHtml(t, 'eager');
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
-  const badgeRow  = _tableBadgeRow(_tableDistBadge(t), _tableGamesBadge(evCount));
 
   const fp = document.getElementById('map-floating-preview');
   if (!fp) return;
@@ -940,9 +957,8 @@ function showMapPreview(tableId) {
             <button class="mfp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen" aria-label="Schließen">×</button>
           </div>
           <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
-          ${_tableRatingHtml(t)}
-          <div class="mfp-meta">${_tableMetaLine(t, { includeAccess: true })}</div>
-          ${badgeRow}
+          <div class="mfp-compact-meta" id="mfp-meta-${t.id}">${_tableCompactMeta(t)}</div>
+          <div class="mfp-games-slot">${_tableGamesBadge(evCount)}</div>
         </div>
       </div>
     </div>`;

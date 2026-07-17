@@ -433,7 +433,7 @@
   display: flex; align-items: stretch;
 }
 .mfp-thumb {
-  width: 96px; min-height: 116px;
+  width: 96px; height: 116px;
   flex-shrink: 0; overflow: hidden;
   background: var(--surface2);
 }
@@ -451,6 +451,7 @@
 .mfp-name {
   flex: 1; font-weight: 800; font-size: var(--text-ui);
   color: var(--text); line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .mfp-close {
   width: 24px; height: 24px; flex-shrink: 0;
@@ -466,13 +467,14 @@
   font-size: var(--text-meta); color: var(--text-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.mfp-rating-row {
-  display: flex; align-items: center; gap: 5px;
-  font-size: var(--text-meta); color: var(--text-dim);
-  min-height: 1em;
+.mfp-compact-meta {
+  font-size: var(--text-meta); color: var(--text-dim); line-height: 1.3;
 }
-.mfp-stars { color: #F59E0B; letter-spacing: 0.5px; }
-.mfp-meta { font-size: var(--text-label); color: var(--text-dim); }
+.mfp-meta-star { color: #F59E0B; }
+.mfp-games-slot {
+  min-height: 22px;
+  display: flex; align-items: center;
+}
 /* Shift Leaflet attribution above the card when preview is open */
 .has-fp .leaflet-bottom.leaflet-right { bottom: 155px; }
 
@@ -495,7 +497,7 @@
 }
 
 .map-list-item {
-  display: flex; align-items: flex-start; gap: 12px;
+  display: flex; align-items: stretch; gap: 12px;
   padding: 10px 12px; margin: 0 12px 10px;
   background: var(--surface); border-radius: var(--radius);
   border: 1px solid var(--border); box-shadow: var(--shadow-sm);
@@ -507,30 +509,26 @@
 .mli-thumb {
   flex-shrink: 0; width: 92px; height: 72px;
   border-radius: 10px; overflow: hidden; background: var(--surface2);
+  align-self: center;
 }
 .mli-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.map-list-info { flex: 1; min-width: 0; padding-top: 1px; display: flex; flex-direction: column; gap: 2px; }
-.map-list-info .plt-rating-row { margin-top: 0; }
+.map-list-info {
+  flex: 1; min-width: 0; min-height: 72px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 2px;
+}
 .map-list-name {
   font-weight: 700; font-size: var(--text-ui); color: var(--text);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden; hyphens: auto; -webkit-hyphens: auto;
-  overflow-wrap: break-word; word-break: normal;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .map-list-sub { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mli-badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.mli-dist-badge, .mli-games-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 999px;
-  font-size: var(--text-label); font-weight: 700;
+.mli-compact-meta {
+  font-size: var(--text-meta); color: var(--text-dim); line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.mli-dist-badge { background: var(--green-bg); color: var(--green); }
-.mli-games-badge { background: rgba(239,68,68,0.1); color: #ef4444; }
-.mli-access-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: var(--text-label); font-weight: 700; }
-.mli-access-limited { background: rgba(245,158,11,0.12); color: #b45309; }
-.mli-access-unclear  { background: var(--surface2); color: var(--text-dim); }
-.mli-access-closed   { background: rgba(239,68,68,0.1); color: #dc2626; }
-.mli-meta { font-size: var(--text-label); color: var(--text-dim); margin-top: 5px; }
+.mli-games-slot {
+  min-height: 20px;
+  display: flex; align-items: center;
+}
 .map-list-chevron { display: none; }
 
 /* ── Dezenter Standort-Chip auf der Karte ───────────────────────── */
@@ -992,9 +990,6 @@
 .plt-rating-loading { min-height: 0; margin-top: 0; }
 .plt-stars { color: #F59E0B; letter-spacing: 0.4px; font-size: 0.7rem; }
 
-/* Aliasse: Floating Preview nutzt weiterhin mfp-Klassen */
-.mfp-rating-row { display: flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-dim); min-height: 1.1em; }
-.mfp-stars { color: #F59E0B; letter-spacing: 0.5px; }
 
 /* ======= SHARED PLATE CARD BADGES (map list, map preview, detail) ======= */
 .plt-badge-row {
