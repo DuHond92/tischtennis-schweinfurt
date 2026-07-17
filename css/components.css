@@ -478,11 +478,6 @@
   font-size: var(--text-meta); color: var(--text-dim); line-height: 1.3;
 }
 .mfp-meta-star { color: #F59E0B; }
-.mfp-dist { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mfp-games-slot {
-  min-height: 22px;
-  display: flex; align-items: center;
-}
 /* Shift Leaflet attribution above the card when preview is open */
 .has-fp .leaflet-bottom.leaflet-right { bottom: 155px; }
 
@@ -532,11 +527,6 @@
 .mli-compact-meta {
   font-size: var(--text-meta); color: var(--text-dim); line-height: 1.3;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mli-dist { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mli-games-slot {
-  min-height: 20px;
-  display: flex; align-items: center;
 }
 .map-list-chevron { display: none; }
 
