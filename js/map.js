@@ -681,6 +681,7 @@ function renderMapList(list) {
   c.innerHTML = list.map((t, i) => {
     const evCount    = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
     const thumbInner = _mapThumbHtml(t, i < 3 ? 'eager' : 'lazy');
+    const distStr    = t.distance != null ? `${formatDistance(t.distance)} entfernt` : null;
 
     return `
     <div class="map-list-item" data-id="${t.id}" onclick="focusTableOnMap(${t.id})">
@@ -689,6 +690,7 @@ function renderMapList(list) {
         <div class="map-list-name">${escHtml(t.name)}</div>
         <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
         <div class="mli-compact-meta" id="mli-meta-${t.id}">${_tableCompactMeta(t)}</div>
+        ${distStr ? `<div class="mli-dist">${escHtml(distStr)}</div>` : ''}
         <div class="mli-games-slot">${_tableGamesBadge(evCount)}</div>
       </div>
     </div>`;
@@ -946,6 +948,7 @@ function showMapPreview(tableId) {
   const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
   const thumbHtml = _mapThumbHtml(t, 'eager');
   const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
+  const distStr   = t.distance != null ? `${formatDistance(t.distance)} entfernt` : null;
 
   const fp = document.getElementById('map-floating-preview');
   if (!fp) return;
@@ -961,6 +964,7 @@ function showMapPreview(tableId) {
           </div>
           <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
           <div class="mfp-compact-meta" id="mfp-meta-${t.id}">${_tableCompactMeta(t)}</div>
+          ${distStr ? `<div class="mfp-dist">${escHtml(distStr)}</div>` : ''}
           <div class="mfp-games-slot">${_tableGamesBadge(evCount)}</div>
         </div>
       </div>
