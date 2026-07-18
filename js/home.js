@@ -190,6 +190,91 @@ function renderHomePsSection() {
   el.innerHTML = `${header}<div class="home-ps-card-wrap">${cardHtml}</div>`;
 }
 
+// ── ACTIVITY PULSE ───────────────────────────────────────────────
+
+function renderActivityPulse() {
+  const el = document.getElementById('home-activity-pulse');
+  if (!el) return;
+
+  // Noch nicht geladen — Section leer lassen (erscheint sobald Daten da sind)
+  if (!window._eventsLoaded) { el.innerHTML = ''; return; }
+
+  const todayStr     = new Date().toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const c            = (typeof _psCenter === 'function') ? _psCenter() : null;
+  const radiusKm     = (typeof _psRadius !== 'undefined') ? _psRadius : 5;
+
+  // 1. Spiele die heute stattfinden (radius-gefiltert falls Standort bekannt)
+  const tMap = new Map((tables || []).map(t => [t.id, t]));
+  let todayEvents = (allEvents || []).filter(e => e.dateStr === todayStr && !isEventCompleted(e));
+  if (c) {
+    todayEvents = todayEvents.filter(e => {
+      const t = tMap.get(e.tid);
+      if (!t || t.lat == null || t.lng == null) return true;
+      return calcDistance(c.lat, c.lng, t.lat, t.lng) / 1000 <= radiusKm;
+    });
+  }
+  const evCount = todayEvents.length;
+
+  // 2. Offene Mitspieler-Gesuche (verwendet bestehenden radius-aware Filter)
+  const { list: filteredPs } = (typeof _psGetFiltered === 'function')
+    ? _psGetFiltered(allPlayerSearches || [])
+    : { list: (allPlayerSearches || []) };
+  const psCount = filteredPs.length;
+
+  // 3. Neu hinzugefügte Platten der letzten 7 Tage (nur Supabase-Platten mit createdAt)
+  const src = tablesLoaded ? tables : [];
+  let newTables = src.filter(t => !t.osmId && t.createdAt && t.createdAt.slice(0, 10) >= sevenDaysAgo);
+  if (c) {
+    newTables = newTables.filter(t =>
+      t.lat != null && t.lng != null &&
+      calcDistance(c.lat, c.lng, t.lat, t.lng) / 1000 <= radiusKm
+    );
+  }
+  const newCount = newTables.length;
+
+  // Nichts zu zeigen → Section komplett ausblenden
+  if (!evCount && !psCount && !newCount) { el.innerHTML = ''; return; }
+
+  const titleLabel = c ? 'Aktiv in deiner Nähe' : 'Heute bei PlattenTreff';
+  const total      = evCount + psCount + newCount;
+  const subtitle   = total >= 5 ? 'Heute ist was los 🔥'
+    : total >= 2 ? 'Heute ist etwas los'
+    : 'Heute ist es etwas ruhiger 🙂';
+
+  const lbl = (typeof _psChipLabel === 'function') ? _psChipLabel() : `${radiusKm} km`;
+  const radiusBtn = c
+    ? `<button class="home-radius-chip" onclick="openPsRadiusSheet()" aria-label="Suchradius ändern">${ic('navigate', 13)} ${escHtml(lbl)} ▾</button>`
+    : '';
+
+  // Kacheln — nur Werte > 0
+  const tiles = [];
+  if (evCount)  tiles.push({ type: 'events',  num: evCount,  label: 'Spiele',        sub: 'Finden heute statt' });
+  if (psCount)  tiles.push({ type: 'players', num: psCount,  label: 'Mitspieler',    sub: 'Suchen Spielpartner' });
+  if (newCount) tiles.push({ type: 'tables',  num: newCount, label: 'Neue Platten',  sub: 'der letzten 7 Tage' });
+
+  const tilesHtml = tiles.map(tile => `
+    <div class="act-tile act-tile--${tile.type}">
+      <div class="act-tile-num">${tile.num}</div>
+      <div class="act-tile-label">${escHtml(tile.label)}</div>
+      <div class="act-tile-sub">${escHtml(tile.sub)}</div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="act-pulse">
+      <div class="act-pulse-title-row">
+        <div class="act-pulse-title">${ic('activity', 15)}&nbsp;${escHtml(titleLabel)}</div>
+        ${radiusBtn}
+      </div>
+      <div class="act-pulse-subtitle">${subtitle}</div>
+      <div class="act-pulse-tiles">${tilesHtml}</div>
+      <div class="act-pulse-footer" onclick="showPage('events')" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter')showPage('events')">
+        Alle Aktivitäten anzeigen →
+      </div>
+    </div>`;
+}
+
 // ── PLATTEN IN DER NÄHE ───────────────────────────────────────────
 
 // Öffnet die Kartenansicht und fokussiert die gewählte Platte mit Pin-Highlight + Floating Preview.
@@ -404,7 +489,10 @@ function renderHome() {
   if (typeof renderHomeSuggestionsSection === 'function') renderHomeSuggestionsSection();
 
   // ── Entdecken-Bereiche (mit globalem Radius) ─────────────────────
-  // 3. „In deiner Nähe"-Header mit Radius-Chip
+  // 3. Community-Aktivitätspuls
+  renderActivityPulse();
+
+  // 4. „In deiner Nähe"-Header mit Radius-Chip
   renderHomeNearbyHeader();
 
   // 4. Platten in deiner Nähe

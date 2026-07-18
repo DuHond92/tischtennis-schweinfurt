@@ -4,7 +4,7 @@
 async function loadTables() {
   try {
     const qb = new QueryBuilder('tables');
-    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours';
+    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours,created_at';
     const {data} = await qb.order('name').execute();
     // Auch leeres Array [] ist ein gültiges Supabase-Ergebnis — nicht mit "nicht geladen" gleichsetzen
     if(data) {
@@ -17,6 +17,7 @@ async function loadTables() {
         accessType: t.access_type || 'public',
         accessNote: t.access_note || null,
         openingHours: t.opening_hours || null,
+        createdAt: t.created_at || null,
         photos: [], comments: [], osmId: null, events: []
       }));
     }
