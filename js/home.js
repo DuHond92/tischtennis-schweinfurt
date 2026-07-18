@@ -87,17 +87,53 @@ function renderHomeNearbyHeader() {
   const r   = (typeof _psRadius    !== 'undefined') ? _psRadius    : 5;
   const lbl = (typeof _psChipLabel === 'function')  ? _psChipLabel() : `${r} km Umkreis`;
 
-  let countsHtml = '';
+  let countsHtml   = '';
+  let actHintHtml  = '';
+
   if (window._eventsLoaded) {
     const tCount  = _nearbyTableCount();
     const psCount = _nearbyPsCount();
     const evCount = _nearbyEventCount();
     const parts = [];
-    if (tCount  > 0) parts.push(`${tCount} ${tCount  === 1 ? 'Platte'     : 'Platten'}`);
+    if (tCount  > 0) parts.push(`${tCount} ${tCount  === 1 ? 'Platte'  : 'Platten'}`);
     if (psCount > 0) parts.push(`${psCount} Mitspieler`);
-    if (evCount > 0) parts.push(`${evCount} ${evCount === 1 ? 'Spiel'      : 'Spiele'}`);
+    if (evCount > 0) parts.push(`${evCount} ${evCount === 1 ? 'Spiel'   : 'Spiele'}`);
     if (parts.length) {
       countsHtml = `<div class="home-nearby-counts">${escHtml(parts.join(' · '))}</div>`;
+    }
+
+    // Kompakte Aktivitäts-Nachricht — nur der relevanteste Wert, Priorität: Mitspieler → Spiele heute → Neue Platten
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayEvCount = _eventsForHome().filter(e => e.dateStr === todayStr).length;
+
+    const sevenAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const c2 = (typeof _psCenter === 'function') ? _psCenter() : null;
+    const rKm = (typeof _psRadius !== 'undefined') ? _psRadius : 5;
+    let newTabSrc = (tablesLoaded ? tables : []).filter(t => !t.osmId && t.createdAt && t.createdAt.slice(0, 10) >= sevenAgo);
+    if (c2) newTabSrc = newTabSrc.filter(t => t.lat != null && t.lng != null && calcDistance(c2.lat, c2.lng, t.lat, t.lng) / 1000 <= rKm);
+    const newCount = newTabSrc.length;
+
+    let msg = '', hintIcon = 'users', hintAction = '';
+    if (psCount > 0) {
+      msg        = psCount === 1 ? 'Ein Spieler sucht gerade Mitspieler.' : `${psCount} Spieler suchen gerade Mitspieler.`;
+      hintIcon   = 'users';
+      hintAction = `onclick="navStat('searches')"`;
+    } else if (todayEvCount > 0) {
+      msg        = todayEvCount === 1 ? 'Heute findet ein Spiel in deiner Nähe statt.' : `Heute finden ${todayEvCount} Spiele in deiner Nähe statt.`;
+      hintIcon   = 'calendar';
+      hintAction = `onclick="navStat('events')"`;
+    } else if (newCount > 0) {
+      msg        = newCount === 1 ? 'In den letzten 7 Tagen wurde eine neue Platte entdeckt.' : `In den letzten 7 Tagen wurden ${newCount} neue Platten entdeckt.`;
+      hintIcon   = 'pin';
+      hintAction = `onclick="navStat('map')"`;
+    }
+    if (msg) {
+      actHintHtml = `
+        <div class="act-hint" ${hintAction} role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')this.click()">
+          <span class="act-hint-icon">${ic(hintIcon, 14)}</span>
+          <span class="act-hint-msg">${escHtml(msg)}</span>
+        </div>`;
     }
   }
 
@@ -111,6 +147,7 @@ function renderHomeNearbyHeader() {
       </div>
       <div class="home-nearby-subtitle">Gilt für Platten, Mitspieler und Spiele.</div>
       ${countsHtml}
+      ${actHintHtml}
     </div>`;
 }
 
@@ -188,91 +225,6 @@ function renderHomePsSection() {
     : '';
 
   el.innerHTML = `${header}<div class="home-ps-card-wrap">${cardHtml}</div>`;
-}
-
-// ── ACTIVITY PULSE ───────────────────────────────────────────────
-
-function renderActivityPulse() {
-  const el = document.getElementById('home-activity-pulse');
-  if (!el) return;
-
-  // Noch nicht geladen — Section leer lassen (erscheint sobald Daten da sind)
-  if (!window._eventsLoaded) { el.innerHTML = ''; return; }
-
-  const todayStr     = new Date().toISOString().slice(0, 10);
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const c            = (typeof _psCenter === 'function') ? _psCenter() : null;
-  const radiusKm     = (typeof _psRadius !== 'undefined') ? _psRadius : 5;
-
-  // 1. Spiele die heute stattfinden (radius-gefiltert falls Standort bekannt)
-  const tMap = new Map((tables || []).map(t => [t.id, t]));
-  let todayEvents = (allEvents || []).filter(e => e.dateStr === todayStr && !isEventCompleted(e));
-  if (c) {
-    todayEvents = todayEvents.filter(e => {
-      const t = tMap.get(e.tid);
-      if (!t || t.lat == null || t.lng == null) return true;
-      return calcDistance(c.lat, c.lng, t.lat, t.lng) / 1000 <= radiusKm;
-    });
-  }
-  const evCount = todayEvents.length;
-
-  // 2. Offene Mitspieler-Gesuche (verwendet bestehenden radius-aware Filter)
-  const { list: filteredPs } = (typeof _psGetFiltered === 'function')
-    ? _psGetFiltered(allPlayerSearches || [])
-    : { list: (allPlayerSearches || []) };
-  const psCount = filteredPs.length;
-
-  // 3. Neu hinzugefügte Platten der letzten 7 Tage (nur Supabase-Platten mit createdAt)
-  const src = tablesLoaded ? tables : [];
-  let newTables = src.filter(t => !t.osmId && t.createdAt && t.createdAt.slice(0, 10) >= sevenDaysAgo);
-  if (c) {
-    newTables = newTables.filter(t =>
-      t.lat != null && t.lng != null &&
-      calcDistance(c.lat, c.lng, t.lat, t.lng) / 1000 <= radiusKm
-    );
-  }
-  const newCount = newTables.length;
-
-  // Nichts zu zeigen → Section komplett ausblenden
-  if (!evCount && !psCount && !newCount) { el.innerHTML = ''; return; }
-
-  const titleLabel = c ? 'Aktiv in deiner Nähe' : 'Heute bei PlattenTreff';
-  const total      = evCount + psCount + newCount;
-  const subtitle   = total >= 5 ? 'Heute ist was los 🔥'
-    : total >= 2 ? 'Heute ist etwas los'
-    : 'Heute ist es etwas ruhiger 🙂';
-
-  const lbl = (typeof _psChipLabel === 'function') ? _psChipLabel() : `${radiusKm} km`;
-  const radiusBtn = c
-    ? `<button class="home-radius-chip" onclick="openPsRadiusSheet()" aria-label="Suchradius ändern">${ic('navigate', 13)} ${escHtml(lbl)} ▾</button>`
-    : '';
-
-  // Kacheln — nur Werte > 0
-  const tiles = [];
-  if (evCount)  tiles.push({ type: 'events',  num: evCount,  label: 'Spiele',        sub: 'Finden heute statt' });
-  if (psCount)  tiles.push({ type: 'players', num: psCount,  label: 'Mitspieler',    sub: 'Suchen Spielpartner' });
-  if (newCount) tiles.push({ type: 'tables',  num: newCount, label: 'Neue Platten',  sub: 'der letzten 7 Tage' });
-
-  const tilesHtml = tiles.map(tile => `
-    <div class="act-tile act-tile--${tile.type}">
-      <div class="act-tile-num">${tile.num}</div>
-      <div class="act-tile-label">${escHtml(tile.label)}</div>
-      <div class="act-tile-sub">${escHtml(tile.sub)}</div>
-    </div>`).join('');
-
-  el.innerHTML = `
-    <div class="act-pulse">
-      <div class="act-pulse-title-row">
-        <div class="act-pulse-title">${ic('activity', 15)}&nbsp;${escHtml(titleLabel)}</div>
-        ${radiusBtn}
-      </div>
-      <div class="act-pulse-subtitle">${subtitle}</div>
-      <div class="act-pulse-tiles">${tilesHtml}</div>
-      <div class="act-pulse-footer" onclick="showPage('events')" role="button" tabindex="0"
-           onkeydown="if(event.key==='Enter')showPage('events')">
-        Alle Aktivitäten anzeigen →
-      </div>
-    </div>`;
 }
 
 // ── PLATTEN IN DER NÄHE ───────────────────────────────────────────
@@ -489,10 +441,7 @@ function renderHome() {
   if (typeof renderHomeSuggestionsSection === 'function') renderHomeSuggestionsSection();
 
   // ── Entdecken-Bereiche (mit globalem Radius) ─────────────────────
-  // 3. Community-Aktivitätspuls
-  renderActivityPulse();
-
-  // 4. „In deiner Nähe"-Header mit Radius-Chip
+  // 3. „In deiner Nähe"-Header mit Radius-Chip + kompakter Aktivitäts-Hinweis
   renderHomeNearbyHeader();
 
   // 4. Platten in deiner Nähe
