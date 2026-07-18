@@ -95,13 +95,22 @@ async function checkNotifications() {
     try {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const url = `${SUPABASE_URL}/rest/v1/event_messages`
-        + `?select=id,message,created_at,user_id,event_id,profiles(username,avatar_emoji,avatar_url)`
+        + `?select=id,message,created_at,user_id,event_id`
         + `&event_id=in.(${myEventIds.join(',')})`
         + `&user_id=neq.${userId}`
         + `&created_at=gt.${sevenDaysAgo}`
         + `&order=created_at.desc&limit=100`;
-      const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      const messages   = Array.isArray(data) ? data : [];
+      const { data: msgData } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      const rawMsgs = Array.isArray(msgData) ? msgData : [];
+      // Profiles separat laden (stabiler als PostgREST embedded join)
+      const profMap = {};
+      const uIds = [...new Set(rawMsgs.map(m => m.user_id).filter(Boolean))];
+      if (uIds.length) {
+        const profUrl = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${uIds.join(',')})`;
+        const {ok, data: profs} = await fetchWithRefresh(profUrl, {headers: dbHeaders()});
+        if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+      }
+      const messages = rawMsgs.map(m => ({...m, profiles: profMap[m.user_id] || null}));
       const hiddenIds  = _getHiddenMsgIds();
       _allRecentMessages = messages.filter(m => !hiddenIds.has(String(m.id)));
       // Badge-Quelle: nur echte Ungelesene

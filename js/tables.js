@@ -878,9 +878,18 @@ async function loadRatingsForTable(tableId) {
     _myTableRating = myRating;
     let commentList = [];
     if (avgData && avgData.rating_count > 0) {
-      const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&comment=not.is.null&select=overall,comment,profiles(username)&order=created_at.desc&limit=3`;
+      const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&comment=not.is.null&select=overall,comment,user_id&order=created_at.desc&limit=3`;
       const { ok, data: cData } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      if (ok && Array.isArray(cData)) commentList = cData;
+      if (ok && Array.isArray(cData)) {
+        const uIds = [...new Set(cData.map(r => r.user_id).filter(Boolean))];
+        const pMap = {};
+        if (uIds.length) {
+          const pu = `${SUPABASE_URL}/rest/v1/profiles?select=id,username&id=in.(${uIds.join(',')})`;
+          const {ok: pOk, data: pD} = await fetchWithRefresh(pu, {headers: dbHeaders()});
+          if (pOk && Array.isArray(pD)) pD.forEach(p => { pMap[p.id] = p; });
+        }
+        commentList = cData.map(r => ({...r, profiles: pMap[r.user_id] || null}));
+      }
     }
     renderRatingSummary(tableId, avgData, t?.name || '', myRating, commentList);
   } catch(e) {
@@ -931,10 +940,21 @@ async function openAllRatings(tableId) {
     const { data: avgData } = await qb.execute();
     const avg = (avgData && avgData[0]) ? avgData[0] : null;
 
-    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&select=overall,surface,ground,windshield,comment,created_at,profiles(username,avatar_emoji,avatar_url)&order=created_at.desc`;
-    const { ok, data: rList } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    const url = `${SUPABASE_URL}/rest/v1/ratings?table_id=eq.${tableId}&select=overall,surface,ground,windshield,comment,created_at,user_id&order=created_at.desc`;
+    const { ok, data: rRaw } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    let rList = [];
+    if (ok && Array.isArray(rRaw)) {
+      const uIds = [...new Set(rRaw.map(r => r.user_id).filter(Boolean))];
+      const pMap = {};
+      if (uIds.length) {
+        const pu = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${uIds.join(',')})`;
+        const {ok: pOk, data: pD} = await fetchWithRefresh(pu, {headers: dbHeaders()});
+        if (pOk && Array.isArray(pD)) pD.forEach(p => { pMap[p.id] = p; });
+      }
+      rList = rRaw.map(r => ({...r, profiles: pMap[r.user_id] || null}));
+    }
 
-    _renderAllRatings(tableId, avg, ok ? (rList || []) : []);
+    _renderAllRatings(tableId, avg, rList);
   } catch(e) {
     if (listEl) listEl.innerHTML = `<div class="ar-empty">Bewertungen konnten nicht geladen werden.</div>`;
   }

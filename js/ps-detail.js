@@ -76,11 +76,18 @@ async function loadPsChat(eventId) {
   if(!el) return;
   try {
     const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
+    qb._select = 'id,message,created_at,user_id';
     qb.eq('event_id', eventId).order('created_at');
-    const {data, error} = await qb.execute();
-    if(error) { el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>'; return; }
-    _renderPsChatMessages(data || []);
+    const {data: msgs, error} = await qb.execute();
+    if (error) { el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>'; return; }
+    const userIds = [...new Set((msgs || []).map(m => m.user_id).filter(Boolean))];
+    const profMap = {};
+    if (userIds.length) {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
+      const {ok, data: profs} = await fetchWithRefresh(url, {headers: dbHeaders()});
+      if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+    }
+    _renderPsChatMessages((msgs || []).map(m => ({...m, profiles: profMap[m.user_id] || null})));
   } catch(e) {
     el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>';
   }

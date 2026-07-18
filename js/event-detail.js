@@ -280,13 +280,22 @@ async function loadEventParticipants(eventId) {
   const el = document.getElementById('eds-participants');
   try {
     const qb = new QueryBuilder('event_participants');
-    qb._select = 'user_id,profiles(username,avatar_emoji,avatar_url)';
+    qb._select = 'user_id';
     qb.eq('event_id', eventId);
-    const {data, error} = await qb.execute();
-    if(error || !data) { el.innerHTML = '<div class="participants-empty">Keine Spieler gefunden.</div>'; return; }
-
-    const ev  = allEvents.find(e => e.id === eventId);
-    renderParticipantChips(data, ev?.creatorId);
+    const {data: pData, error} = await qb.execute();
+    if (error || !pData || !pData.length) {
+      el.innerHTML = '<div class="participants-empty">Noch keine Spieler</div>';
+      return;
+    }
+    const userIds = pData.map(p => p.user_id).filter(Boolean);
+    const profMap = {};
+    if (userIds.length) {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
+      const {ok, data: profs} = await fetchWithRefresh(url, {headers: dbHeaders()});
+      if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+    }
+    const ev = allEvents.find(e => e.id === eventId);
+    renderParticipantChips(pData.map(p => ({user_id: p.user_id, profiles: profMap[p.user_id] || null})), ev?.creatorId);
   } catch(e) {
     el.innerHTML = '<div class="participants-empty">Spieler konnten nicht geladen werden.</div>';
   }
@@ -321,11 +330,19 @@ function renderParticipantChips(participants, creatorId) {
 async function loadEventChat(eventId) {
   try {
     const qb = new QueryBuilder('event_messages');
-    qb._select = 'id,message,created_at,user_id,profiles(username,avatar_emoji,avatar_url)';
+    qb._select = 'id,message,created_at,user_id';
     qb.eq('event_id', eventId).order('created_at');
-    const {data, error} = await qb.execute();
-    if(error) { renderChatMessages(null); return; }
-    renderChatMessages(data || []);
+    const {data: msgs, error} = await qb.execute();
+    if (error) { renderChatMessages(null); return; }
+    if (!msgs || !msgs.length) { renderChatMessages([]); return; }
+    const userIds = [...new Set(msgs.map(m => m.user_id).filter(Boolean))];
+    const profMap = {};
+    if (userIds.length) {
+      const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
+      const {ok, data: profs} = await fetchWithRefresh(url, {headers: dbHeaders()});
+      if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+    }
+    renderChatMessages(msgs.map(m => ({...m, profiles: profMap[m.user_id] || null})));
   } catch(e) {
     renderChatMessages(null);
   }
