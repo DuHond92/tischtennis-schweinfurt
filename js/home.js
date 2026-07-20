@@ -262,7 +262,7 @@ function renderHomeTablesSection() {
   }
 
   const header = _homeSectionHeaderHtml(
-    'Platten in deiner Nähe', items.length,
+    'Beliebte Platten', items.length,
     `onclick="showPage('map')"`, 'Zur Karte →'
   );
 
