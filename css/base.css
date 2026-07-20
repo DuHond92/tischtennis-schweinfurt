@@ -31,7 +31,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
   line-height: 1.55;
-  transition: background 0.3s, color 0.3s;
 }
 
 /* ======= LAYOUT ======= */

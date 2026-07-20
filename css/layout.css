@@ -1,17 +1,12 @@
 /* ======= TOP BAR ======= */
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
+  /* backdrop-filter entfernt: verursacht 2-3s Tastatur-Lag auf iOS (WKWebView Compositor-Block) */
   padding: env(safe-area-inset-top) 16px 0;
   min-height: calc(56px + env(safe-area-inset-top));
   display: flex; align-items: center; justify-content: space-between;
-  transition: background 0.3s, box-shadow 0.3s;
   box-shadow: 0 1px 0 var(--border);
-}
-[data-theme="dark"] .topbar {
-  background: rgba(23,35,28,0.92);
 }
 
 .topbar-logo {
@@ -57,23 +52,18 @@
   box-shadow: var(--shadow-sm);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 1rem;
-  transition: all 0.3s;
+  transition: background 0.2s, border-color 0.2s;
 }
 .theme-toggle:hover { background: var(--gold-bg); border-color: var(--gold); }
 
 /* ======= BOTTOM NAV ======= */
 .bottom-nav {
   position: sticky; bottom: 0; z-index: 100;
-  background: rgba(255,255,255,0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--surface);
+  /* backdrop-filter entfernt: verursacht 2-3s Tastatur-Lag auf iOS (WKWebView Compositor-Block) */
   border-top: 1px solid var(--border);
   display: flex;
   padding-bottom: env(safe-area-inset-bottom);
-  transition: background 0.3s, border-color 0.3s;
-}
-[data-theme="dark"] .bottom-nav {
-  background: rgba(18,28,22,0.96);
 }
 
 .nav-item {
