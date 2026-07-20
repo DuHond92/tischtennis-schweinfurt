@@ -1847,3 +1847,22 @@
   .ms-spielart-training:not(.active):hover  { border-color: var(--gold);   color: var(--gold);   }
   .ms-spielart-punktspiel:not(.active):hover{ border-color: var(--accent); color: var(--accent); }
 }
+
+/* ── Blocked Users Sheet ─────────────────────────────────────── */
+.blocked-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.blocked-av { flex-shrink: 0; }
+.blocked-name {
+  flex: 1; font-weight: 700; font-size: 0.95rem; color: var(--text);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.blocked-unblock-btn { flex-shrink: 0; }
+.blocked-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 56px 32px 32px; text-align: center;
+}
+.blocked-empty-icon { color: var(--text-dim); opacity: 0.5; }
+.blocked-empty-title { font-family: var(--font-head); font-size: 1.05rem; font-weight: 800; color: var(--text); }
+.blocked-empty-sub { font-size: 0.875rem; color: var(--text-dim); line-height: 1.5; }

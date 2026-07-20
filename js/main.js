@@ -69,6 +69,7 @@ async function _recoverPwaSession() {
 async function _finishSessionRecovery() {
   await loadCurrentUser();
   if (typeof loadMyConnections === 'function') await loadMyConnections();
+  if (typeof loadBlockedUsers   === 'function') await loadBlockedUsers();
   updateTopBarForUser();
   if (typeof renderProfile === 'function') renderProfile();
   if (typeof checkNotifications === 'function') checkNotifications();
@@ -130,6 +131,8 @@ window.addEventListener('load', async () => {
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {
       await loadCurrentUser();
+      if (typeof loadMyConnections === 'function') await loadMyConnections();
+      if (typeof loadBlockedUsers  === 'function') await loadBlockedUsers();
       updateTopBarForUser();
       if (typeof renderProfile === 'function') renderProfile();
       checkNotifications();

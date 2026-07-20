@@ -718,3 +718,22 @@ function _dmTime(isoStr) {
 function onDmInputKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDm(); }
 }
+
+function openDmDotMenu() {
+  const titleEl = document.getElementById('dm-action-title');
+  if (titleEl) titleEl.textContent = _dmPartnerName || 'Spieler';
+  openSheet('dm-action-sheet');
+}
+
+function openDmReport() {
+  const pid = _dmPartnerId;
+  closeAllSheets();
+  openReport('user', pid, _dmPartnerName, pid);
+}
+
+function openDmBlock() {
+  const partnerId   = _dmPartnerId;
+  const partnerName = _dmPartnerName;
+  closeAllSheets();
+  confirmBlockUser(partnerId, partnerName, 'dm', null);
+}

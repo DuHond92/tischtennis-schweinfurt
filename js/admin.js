@@ -848,15 +848,15 @@ async function deletePlayerSearch(psId) {
 
 // ── Report-Modal ──────────────────────────────────────────────────────
 
-let _reportData = { contentType: null, contentId: null, reason: null };
+let _reportData = { contentType: null, contentId: null, reason: null, userId: null };
 
 function openReportFromBtn(btn) {
   openReport(btn.dataset.type, btn.dataset.id, btn.dataset.preview);
 }
 
-function openReport(contentType, contentId, preview) {
+function openReport(contentType, contentId, preview, userId) {
   if (!sb.isLoggedIn()) { showToast('Bitte melde dich an, um Inhalte zu melden.', 'info'); return; }
-  _reportData = { contentType, contentId, reason: null };
+  _reportData = { contentType, contentId, reason: null, userId: userId || null };
   const prev = document.getElementById('report-preview');
   if (prev) prev.textContent = preview ? `"${preview}"` : '';
   const noteEl = document.getElementById('report-note');
@@ -896,10 +896,15 @@ async function submitReport() {
       status:       'pending'
     })
   });
+  const reportedUserId = _reportData.userId;
   closeAllSheets();
   if (ok) {
     PTAnalytics.track('report_submitted', { content_type: _reportData.contentType });
     showToast('Danke, wir prüfen den Inhalt.');
+    // Offer to block the reported user (with a short delay so the toast is visible first)
+    if (reportedUserId && reportedUserId !== sb.getUserId()) {
+      setTimeout(() => confirmBlockUser(reportedUserId, '', 'report', null), 400);
+    }
   } else showToast('Fehler beim Melden', 'error');
 }
 

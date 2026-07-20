@@ -65,6 +65,13 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
     }
   }
 
+  // Show 3-dot menu only for other users when logged in
+  const ppDotBtn = document.getElementById('pp-dot-btn');
+  if (ppDotBtn) {
+    const myId = sb.getUserId();
+    ppDotBtn.style.display = (userId && userId !== myId && sb.isLoggedIn()) ? '' : 'none';
+  }
+
   openPlayerSheet();
 
   if(!userId) {
@@ -86,6 +93,22 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
     document.getElementById('pp-details').innerHTML = '';
     console.warn('Player profile load error', e);
   }
+}
+
+function openPpDotMenu() {
+  const titleEl = document.getElementById('pp-action-title');
+  if (titleEl) titleEl.textContent = _ppCurrentUserName || 'Spieler';
+  openSheet('pp-action-sheet');
+}
+
+function openPpReport() {
+  closeAllSheets();
+  openReport('user', _ppCurrentUserId, _ppCurrentUserName, _ppCurrentUserId);
+}
+
+function openPpBlock() {
+  closeAllSheets();
+  confirmBlockUser(_ppCurrentUserId, _ppCurrentUserName, 'player_profile', null);
 }
 
 function renderPlayerProfileData(profile) {

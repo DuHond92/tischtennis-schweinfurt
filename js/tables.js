@@ -1052,19 +1052,30 @@ function openCommentDotMenu(btn) {
     contentType: btn.dataset.contentType || 'comment',
     ctx:         btn.dataset.ctx,
     isOwn:       btn.dataset.own === '1',
-    preview:     btn.dataset.preview
+    preview:     btn.dataset.preview,
+    userId:      btn.dataset.userId || null
   };
   const isMod      = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   const reportBtn  = document.getElementById('cmt-action-report');
   const deleteBtn  = document.getElementById('cmt-action-delete');
+  const blockBtn   = document.getElementById('cmt-action-block');
   const titleEl    = document.getElementById('cmt-action-title');
   const deleteLbl  = document.getElementById('cmt-delete-label');
   const showReport = !_cmtMenuData.isOwn && !isMod;
+  const showBlock  = !_cmtMenuData.isOwn && !!_cmtMenuData.userId;
   if (titleEl)    titleEl.textContent   = 'Kommentar';
   if (deleteLbl)  deleteLbl.textContent = 'Kommentar löschen';
   if (reportBtn)  reportBtn.style.display = showReport ? '' : 'none';
   if (deleteBtn)  deleteBtn.style.display = isMod ? '' : 'none';
+  if (blockBtn)   blockBtn.style.display  = showBlock ? '' : 'none';
   openSheet('cmt-action-sheet');
+}
+
+function openCmtBlockDialog() {
+  const uid  = _cmtMenuData.userId;
+  const name = _cmtMenuData.preview ? _cmtMenuData.preview.slice(0, 30) : 'diese Person';
+  closeAllSheets();
+  confirmBlockUser(uid, '', 'comment', null);
 }
 
 function openCmtReportDialog() {
