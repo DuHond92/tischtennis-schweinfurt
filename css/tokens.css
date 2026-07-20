@@ -2,11 +2,11 @@
 :root {
   /* Light Mode — PlattenTreff Styleguide */
   --bg:          #F7F7F7;
-  --bg2:         #E8EDE2;
+  --bg2:         #F2F3F2;
   --surface:     #FFFFFF;
-  --surface2:    #ECF1E7;
+  --surface2:    #F1F2F1;
   --bg-card:     #FFFFFF;   /* Alias für Karten-/Dialog-Hintergründe */
-  --border:      #DFE7DB;
+  --border:      #E2E5E3;
   --text:        #182420;
   --text-dim:    #5C6B61;
   --text-xdim:   #98A79D;

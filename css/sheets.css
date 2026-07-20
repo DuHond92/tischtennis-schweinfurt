@@ -11,7 +11,9 @@
   width: 100%; max-width: 430px; z-index: 600;
   background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
   padding-bottom: env(safe-area-inset-bottom);
 }
 .bottom-sheet.open { transform: translateX(-50%) translateY(0); }
@@ -66,7 +68,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   min-height: 0;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -129,7 +131,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Floating Teilnahme-Bar (Event-Detail) */
@@ -1079,7 +1081,7 @@
   flex: 1; min-width: 0;
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 20px; padding: 10px 16px;
-  font-size: var(--text-ui); color: var(--text); outline: none;
+  font-size: 1rem; color: var(--text); outline: none;
   font-family: var(--font-body, sans-serif);
 }
 .dm-input:focus { border-color: var(--primary); }

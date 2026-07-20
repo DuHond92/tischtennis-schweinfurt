@@ -21,6 +21,11 @@ input, textarea, select {
   font-size: 1rem;
 }
 
+/* Remove 300ms tap delay on interactive elements on iOS */
+button, input, textarea, select, a, [role="button"] {
+  touch-action: manipulation;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--bg);

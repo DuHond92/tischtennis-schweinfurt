@@ -114,7 +114,7 @@
 .cards-scroll {
   display: flex; gap: 12px; padding: 6px 20px 20px;
   overflow-x: auto; overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
 }
 .cards-scroll::-webkit-scrollbar { display: none; }
@@ -926,7 +926,7 @@
   max-height: min(300px, 50vh);
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   display: none;
   border: 1px solid var(--border);
   pointer-events: auto;
@@ -3132,7 +3132,7 @@
   padding: 10px 36px 10px 12px;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--surface2); color: var(--text);
-  font-size: var(--text-ui); line-height: 1.4; outline: none;
+  font-size: 1rem; line-height: 1.4; outline: none;
   -webkit-appearance: none; -webkit-tap-highlight-color: transparent;
 }
 .psr-input:focus { border-color: var(--primary); }
@@ -3146,7 +3146,7 @@
   background: var(--surface); border-radius: var(--radius-sm);
   box-shadow: 0 6px 20px rgba(0,0,0,0.14); border: 1px solid var(--border);
   margin-top: 4px; max-height: 200px; overflow-y: auto;
-  display: none; -webkit-overflow-scrolling: touch;
+  display: none; overscroll-behavior: contain;
 }
 .psr-dropdown.open { display: block; }
 .psr-or-row {

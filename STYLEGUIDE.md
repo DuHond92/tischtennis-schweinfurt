@@ -9,7 +9,7 @@ Dieser Styleguide fasst die in den CSS-Token- und Komponenten-Dateien (`css/toke
 - **Akzent (Ball-Orange):** `--accent`: #FF5A36 — `--accent-d`: #E5431F — `--accent-bg`: #FFE7DF
 - **Fehler / Destruktiv:** `--error`: #E53935 — `--error-d`: #C62828 — `--error-bg`: #FFE7DF
 - **Sekundärfarben:** `--green`: #22C55E (`--green-bg`: #E8F9EE), `--gold`: #F7B723 (`--gold-bg`: #FDF1D7), `--silver`: #64748B, `--bronze`: #D97706
-- **Neutral / Oberfläche:** `--bg`: #F4F6EF, `--bg2`: #E8EDE2, `--surface`: #FFFFFF, `--surface2`: #ECF1E7, `--border`: #DFE7DB
+- **Neutral / Oberfläche:** `--bg`: #F7F7F7, `--bg2`: #F2F3F2, `--surface`: #FFFFFF, `--surface2`: #F1F2F1, `--border`: #E2E5E3
 - **Textfarben:** `--text`: #182420, `--text-dim`: #5C6B61, `--text-xdim`: #98A79D
 - **Skeleton:** `--sk-bg`: #e2e9dc, `--sk-shine`: #f0f3ec
 

@@ -1,5 +1,11 @@
 {
   "appId": "de.plattentreff.app",
   "appName": "PlattenTreff",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    }
+  }
 }
