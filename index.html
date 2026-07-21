@@ -236,7 +236,6 @@
 
     <!-- Eingeloggt -->
     <div id="profile-logged-view" style="display:none;">
-    <div id="profile-setup-hint"></div>
     <div class="profile-top">
       <div class="profile-avatar-wrap" onclick="openAvatarPicker()">
         <div class="profile-avatar" id="profile-avatar-el">😎</div>
@@ -277,6 +276,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Profilfortschritt (nur bei unvollständigem Profil) -->
+    <div id="profile-setup-hint"></div>
 
     <!-- Spielpartner → Link zur Inbox -->
     <div class="profile-section">
@@ -566,7 +568,7 @@
     <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body" style="display:flex;flex-direction:column;gap:12px;padding:8px 20px 28px;">
-    <button class="choice-card choice-card--primary" onclick="closeAllSheets();openMitspielerSheet()">
+    <button class="choice-card choice-card--primary" onclick="openMitspielerSheet()">
       <div class="choice-card-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
@@ -685,14 +687,15 @@
 </div>
 
 <!-- MITSPIELER FINDEN SHEET -->
-<div class="bottom-sheet" id="mitspieler-sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Mitspieler finden</div>
-    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+<div class="bottom-sheet fullscreen-sheet slide-right-sheet" id="mitspieler-sheet">
+  <div class="sheet-header sheet-header--nav">
+    <button class="sheet-back" onclick="closeMitspielerSheet()" aria-label="Zurück">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    </button>
+    <div class="sheet-title">Mitspieler finden</div>
   </div>
-  <div class="sheet-body">
-    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:20px;">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
+  <div class="detail-scroll" style="padding:0 20px;">
+    <p style="font-size:0.85rem;color:var(--text-dim);margin:20px 0;">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
 
     <!-- Wo suchst du? (Pflicht) -->
     <div class="form-group">
@@ -763,9 +766,11 @@
       <label class="form-label">Nachricht <span style="color:var(--text-xdim);font-weight:400;">optional</span></label>
       <textarea class="form-textarea" id="ms-message" placeholder="z.B. Suche jemanden für 1–2 Stunden Casual Ping Pong am Nachmittag…" style="min-height:70px;"></textarea>
     </div>
-    <button class="btn btn-primary btn-full" id="ms-submit-btn" onclick="submitMitspieler()">
-      Veröffentlichen
-    </button>
+    <div style="padding:8px 0 max(28px,env(safe-area-inset-bottom));">
+      <button class="btn btn-primary btn-full" id="ms-submit-btn" onclick="submitMitspieler()">
+        Veröffentlichen
+      </button>
+    </div>
   </div>
 </div>
 
@@ -900,7 +905,7 @@
     <div class="pe-field-hint">Ort oder Ortsteil reicht.</div>
 
     <div class="pe-field">
-      <div class="pe-field-label">Verein</div>
+      <div class="pe-field-label">Verein <span class="pe-field-label-note">· Optional</span></div>
       <input class="pe-field-input" id="edit-club" type="text" list="pe-club-list" placeholder="z. B. DJK Schweinfurt" autocomplete="off" onkeydown="if(event.key==='Enter')saveProfile()">
       <datalist id="pe-club-list">
         <option value="Kein Verein"><option value="DJK Schweinfurt">
@@ -917,9 +922,14 @@
       <div class="pe-bio-counter"><span id="edit-bio-counter">0</span>/160</div>
     </div>
 
-    <div class="pe-skill-row">
-      <span class="pe-skill-row-label">Spielniveau</span>
-      <span class="pe-skill-row-hint">Auf deiner Profilseite ändern</span>
+    <div class="pe-field">
+      <div class="pe-field-label">Spielniveau</div>
+      <select class="pe-field-input pe-field-select" id="edit-skill">
+        <option value="">– wählen –</option>
+        <option value="anfaenger">Anfänger</option>
+        <option value="fortgeschritten">Fortgeschritten</option>
+        <option value="profi">Profi</option>
+      </select>
     </div>
 
     <!-- Privates Konto -->
@@ -941,7 +951,7 @@
     </div>
 
     <div class="pe-field">
-      <div class="pe-field-label">Geburtsdatum <span class="pe-field-label-note">· Nicht öffentlich</span></div>
+      <div class="pe-field-label">Geburtsdatum <span class="pe-field-label-note">· Optional · Nicht öffentlich</span></div>
       <input class="pe-field-input" id="edit-birthdate" type="date">
     </div>
 
@@ -1741,7 +1751,7 @@
 <div class="bottom-sheet" id="suggest-table-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>Platte vorschlagen</div>
+    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><span id="sug-sheet-mode-title">Platte vorschlagen</span></div>
     <button class="sheet-close" onclick="closeSuggestSheet()" aria-label="Schließen">×</button>
   </div>
 
@@ -1774,6 +1784,7 @@
   <!-- Step 2: Details -->
   <div id="sug-step-2" class="sheet-body" style="display:none;">
     <div class="sug-step-title">Schritt 2 von 3 — Details</div>
+    <div id="sug-edit-feedback" class="sug-edit-feedback" style="display:none;"></div>
     <div class="form-group">
       <label class="form-label" for="sug-name">Name *</label>
       <input class="form-input" id="sug-name" type="text" placeholder="z. B. Spielplatz Stadtpark" autocomplete="off"
@@ -1852,15 +1863,15 @@
     <div class="sug-step-title">Schritt 3 von 3 — Prüfung</div>
     <div class="sug-success">
       <div class="sug-success-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div>
-      <div class="sug-success-title">Deine Platte wurde eingetragen!</div>
-      <div class="sug-success-text">Danke für deinen Vorschlag. Wir prüfen die Platte und geben sie frei, sobald alles passt.</div>
-      <div class="sug-success-sub">Bis dahin ist sie noch nicht öffentlich sichtbar.</div>
+      <div class="sug-success-title" id="sug-success-title">Deine Platte wurde eingetragen!</div>
+      <div class="sug-success-text" id="sug-success-text">Danke für deinen Vorschlag. Wir prüfen die Platte und geben sie frei, sobald alles passt.</div>
+      <div class="sug-success-sub" id="sug-success-sub">Bis dahin ist sie noch nicht öffentlich sichtbar.</div>
     </div>
     <div class="sug-preview-card" id="sug-preview-card"></div>
     <div class="sug-success-note">Du bekommst eine Benachrichtigung, sobald sie freigegeben wird.</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px;">
       <button class="btn btn-primary btn-full" onclick="closeSuggestSheet()">Zu den Platten</button>
-      <button class="btn btn-secondary btn-full" onclick="suggestRestartFlow()">Weitere Platte vorschlagen</button>
+      <button class="btn btn-secondary btn-full" id="sug-restart-btn" onclick="suggestRestartFlow()">Weitere Platte vorschlagen</button>
     </div>
   </div>
 </div>

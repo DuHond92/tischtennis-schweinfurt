@@ -34,7 +34,7 @@ async function loadMySuggestions() {
   if (!sb.isLoggedIn()) { mySuggestions = []; return; }
   try {
     const qb = new QueryBuilder('table_suggestions');
-    qb._select = 'id,name,address,lat,lng,status,rejection_reason,created_at,type,image_url';
+    qb._select = 'id,name,address,lat,lng,status,rejection_reason,created_at,type,image_url,description,table_count,condition,access_type,opening_hours,access_note';
     qb._filters.push(`submitted_by=eq.${sb.getUserId()}`);
     qb.order('created_at', true); // descending = newest first
     const { data } = await qb.execute();
@@ -111,6 +111,13 @@ function showMySuggestionDetail(id) {
     statusMsg = 'Dein Eintrag ist freigegeben und für alle Nutzer auf der Karte sichtbar. Danke für deinen Beitrag!';
   }
 
+  const isActionable = s.status === 'rejected';
+  const actionsHtml = isActionable ? `
+    <div class="msd-actions">
+      <button class="btn btn-primary btn-full" onclick="editMySuggestion(${s.id})">Eintrag bearbeiten</button>
+      <button class="msd-delete-btn" onclick="_confirmDeleteMySuggestion(${s.id})">Eintrag löschen</button>
+    </div>` : '';
+
   const body = document.getElementById('msd-body');
   if (!body) return;
   body.innerHTML = `
@@ -127,7 +134,8 @@ function showMySuggestionDetail(id) {
       <div class="sug-status-pill ${status.cls} msd-status-pill">${status.label}</div>
       <div class="msd-status-msg">${escHtml(statusMsg)}</div>
       ${reasonHtml}
-    </div>`;
+    </div>
+    ${actionsHtml}`;
   openSheet('my-suggestion-detail-sheet');
 }
 
@@ -224,6 +232,48 @@ function renderHomeSuggestionsSection() {
       <div class="home-act-list">${cardsHtml}</div>
       ${moreHtml}
     </div>`;
+}
+
+// ── BEARBEITEN ────────────────────────────────────────────────────
+
+function editMySuggestion(id) {
+  const s = mySuggestions.find(x => x.id === id);
+  if (!s) return;
+  closeAllSheets();
+  setTimeout(() => {
+    if (typeof openSuggestSheetForEdit === 'function') openSuggestSheetForEdit(s);
+  }, 260);
+}
+
+// ── LÖSCHEN ───────────────────────────────────────────────────────
+
+function _confirmDeleteMySuggestion(id) {
+  const s = mySuggestions.find(x => x.id === id);
+  if (!s) return;
+  showConfirmDialog({
+    title:        'Eintrag wirklich löschen?',
+    body:         'Dieser Entwurf und das Moderationsfeedback werden dauerhaft entfernt.',
+    confirmLabel: 'Endgültig löschen',
+    cancelLabel:  'Abbrechen',
+    danger:       true,
+    onConfirm:    () => _deleteMySuggestion(id),
+  });
+}
+
+async function _deleteMySuggestion(id) {
+  const uid = sb.getUserId();
+  const { ok } = await fetchWithRefresh(
+    `${SUPABASE_URL}/rest/v1/table_suggestions?id=eq.${id}&submitted_by=eq.${encodeURIComponent(uid)}`,
+    { method: 'DELETE', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' } }
+  );
+  if (!ok) { showToast('Fehler beim Löschen', 'error'); return; }
+  mySuggestions = mySuggestions.filter(s => s.id !== id);
+  _refreshPendingMarkers();
+  closeAllSheets();
+  renderHomeSuggestionsSection();
+  renderMySuggestionsSection();
+  _renderMySuggestionsSheet();
+  showToast('Eintrag wurde gelöscht');
 }
 
 // ── PROFIL: STATUS-ZUSAMMENFASSUNG ────────────────────────────────

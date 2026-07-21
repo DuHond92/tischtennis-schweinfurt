@@ -7,6 +7,8 @@ let suggestPinMarker = null;
 let suggestStep = 1;
 let suggestMapClickActive = false;
 let _suggestImageFile = null;
+let _editingSuggestionId       = null;
+let _editingSuggestionImageUrl = null;
 
 function openSuggestSheet() {
   if (!sb.isLoggedIn()) {
@@ -25,6 +27,8 @@ function closeSuggestSheet() {
 }
 
 function _resetSuggestForm() {
+  _editingSuggestionId       = null;
+  _editingSuggestionImageUrl = null;
   suggestLat = null;
   suggestLng = null;
   _setSuggestStep(1);
@@ -45,10 +49,91 @@ function _resetSuggestForm() {
   const add  = document.getElementById('sug-add-photo-btn');
   if (prev) prev.style.display = 'none';
   if (add)  add.style.display  = '';
+  // Edit-Mode UI zurücksetzen
+  const modeTitle = document.getElementById('sug-sheet-mode-title');
+  if (modeTitle) modeTitle.textContent = 'Platte vorschlagen';
+  const submitBtn = document.getElementById('sug-submit-btn');
+  if (submitBtn) submitBtn.textContent = 'Absenden';
+  const fb = document.getElementById('sug-edit-feedback');
+  if (fb) { fb.style.display = 'none'; fb.innerHTML = ''; }
+  const successTitle = document.getElementById('sug-success-title');
+  if (successTitle) successTitle.textContent = 'Deine Platte wurde eingetragen!';
+  const successText = document.getElementById('sug-success-text');
+  if (successText) successText.textContent = 'Danke für deinen Vorschlag. Wir prüfen die Platte und geben sie frei, sobald alles passt.';
+  const successSub = document.getElementById('sug-success-sub');
+  if (successSub) successSub.style.display = '';
+  const restartBtn = document.getElementById('sug-restart-btn');
+  if (restartBtn) restartBtn.style.display = '';
   // Inline-Errors zurücksetzen
   clearInlineError('sug-name-error');
   clearInlineError('sug-loc-error');
   _clearSugNameError();
+}
+
+// ── BEARBEITEN-MODUS (abgelehnte Einträge) ────────────────────────────────────
+
+function openSuggestSheetForEdit(s) {
+  if (!sb.isLoggedIn()) { showToast('Bitte zuerst anmelden', 'info'); return; }
+  _resetSuggestForm();
+
+  _editingSuggestionId       = s.id;
+  _editingSuggestionImageUrl = s.image_url || null;
+
+  // Standort vorbelegen
+  suggestLat = s.lat;
+  suggestLng = s.lng;
+  _updateCoordDisplay();
+  if (suggestLat && suggestLng) _placeSuggestPin(suggestLat, suggestLng);
+
+  // Felder vorbelegen
+  const fields = {
+    'sug-name':           s.name          || '',
+    'sug-address':        s.address       || '',
+    'sug-count':          s.table_count   != null ? String(s.table_count) : '',
+    'sug-desc':           s.description   || '',
+    'sug-opening-hours':  s.opening_hours || '',
+    'sug-access-note':    s.access_note   || '',
+  };
+  Object.entries(fields).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  const cond = document.getElementById('sug-condition');
+  if (cond) cond.value = s.condition || '';
+  const acc = document.getElementById('sug-access-type');
+  if (acc) acc.value = s.access_type || 'public';
+  document.querySelectorAll('.sug-type-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.type === (s.type || 'outdoor')));
+
+  // Vorhandenes Bild anzeigen
+  if (s.image_url) {
+    const img  = document.getElementById('sug-img-preview');
+    const prev = document.getElementById('sug-photo-preview');
+    const add  = document.getElementById('sug-add-photo-btn');
+    if (img)  img.src = s.image_url;
+    if (prev) prev.style.display = '';
+    if (add)  add.style.display  = 'none';
+  }
+
+  // UI auf Bearbeitungs-Modus umschalten
+  const modeTitle = document.getElementById('sug-sheet-mode-title');
+  if (modeTitle) modeTitle.textContent = 'Eintrag bearbeiten';
+  const submitBtn = document.getElementById('sug-submit-btn');
+  if (submitBtn) submitBtn.textContent = 'Erneut einreichen';
+  const restartBtn = document.getElementById('sug-restart-btn');
+  if (restartBtn) restartBtn.style.display = 'none';
+
+  // Moderationsfeedback-Banner einblenden
+  if (s.rejection_reason) {
+    const fb = document.getElementById('sug-edit-feedback');
+    if (fb) {
+      fb.innerHTML = `<div class="sug-edit-feedback-inner"><b>Feedback vom Team:</b><br>${escHtml(s.rejection_reason)}</div>`;
+      fb.style.display = '';
+    }
+  }
+
+  openSheet('suggest-table-sheet');
+  _setSuggestStep(2);
 }
 
 function _clearSugNameError() {
@@ -199,7 +284,8 @@ function _handleSuggestImageSelect(input) {
   reader.readAsDataURL(_suggestImageFile);
 }
 function _removeSuggestImage() {
-  _suggestImageFile = null;
+  _suggestImageFile         = null;
+  _editingSuggestionImageUrl = null;
   const prev = document.getElementById('sug-photo-preview');
   const add  = document.getElementById('sug-add-photo-btn');
   if (prev) prev.style.display = 'none';
@@ -317,7 +403,7 @@ async function _submitSuggestion() {
     return;
   }
 
-  // Bild vor dem Insert hochladen, damit die URL im Datensatz landet
+  // Bild hochladen (neu gewählt oder vorhandenes übernehmen)
   let suggestionImageUrl = null;
   if (_suggestImageFile) {
     try {
@@ -328,6 +414,47 @@ async function _submitSuggestion() {
     }
   }
   _suggestImageFile = null;
+  const finalImageUrl = suggestionImageUrl || _editingSuggestionImageUrl || null;
+
+  // ── BEARBEITEN-MODUS: PATCH statt INSERT ─────────────────────────
+  if (_editingSuggestionId) {
+    const { ok } = await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/table_suggestions?id=eq.${_editingSuggestionId}&submitted_by=eq.${uid}`,
+      {
+        method:  'PATCH',
+        headers: { ...dbHeaders(), 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          name, address, lat: suggestLat, lng: suggestLng,
+          description:   desc, type, table_count: count, condition,
+          access_type:   accessType, opening_hours: openingHours, access_note: accessNote,
+          image_url:     finalImageUrl,
+          status:        'pending',
+          rejection_reason: null,
+        })
+      }
+    );
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Erneut einreichen'; }
+
+    if (!ok) {
+      showToast('Fehler beim Speichern. Bitte erneut versuchen.', 'error');
+      return;
+    }
+
+    // Schritt 3 auf Wiedervorlage anpassen
+    const sTitle = document.getElementById('sug-success-title');
+    if (sTitle) sTitle.textContent = 'Eintrag erneut eingereicht!';
+    const sText = document.getElementById('sug-success-text');
+    if (sText) sText.textContent = 'Dein Eintrag wurde erneut zur Prüfung eingereicht.';
+    const sSub = document.getElementById('sug-success-sub');
+    if (sSub) sSub.style.display = 'none';
+
+    PTAnalytics.track('plate_suggest_resubmitted', { type });
+    if (typeof loadMySuggestions === 'function') loadMySuggestions();
+    _buildSuggestPreviewCard(name, address, count, type, finalImageUrl);
+    _setSuggestStep(3);
+    return;
+  }
 
   const qb = new QueryBuilder('table_suggestions');
   const { error } = await qb.insert({
@@ -342,7 +469,7 @@ async function _submitSuggestion() {
     access_type:   accessType,
     opening_hours: openingHours,
     access_note:   accessNote,
-    image_url:     suggestionImageUrl,
+    image_url:     finalImageUrl,
     submitted_by:  uid,
     status:        'pending'
   });
@@ -358,7 +485,7 @@ async function _submitSuggestion() {
   PTAnalytics.track('plate_suggest_submitted', { type });
   _clearSuggestPin();
   if (typeof loadMySuggestions === 'function') loadMySuggestions();
-  _buildSuggestPreviewCard(name, address, count, type, suggestionImageUrl);
+  _buildSuggestPreviewCard(name, address, count, type, finalImageUrl);
   _setSuggestStep(3);
 }
 
