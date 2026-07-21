@@ -13,8 +13,9 @@
 let notifPollTimer     = null;
 let _notifSeenTimer    = null;
 let pendingNotifs      = [];   // ungelesene Chat-Nachrichten  (Badge)
-let _allRecentMessages = [];   // alle Chat-Nachrichten, 7 Tage (Sheet)
+let _allRecentMessages = [];   // alle Chat-Nachrichten (Sheet, kein Zeitlimit)
 let _systemNotifs      = [];   // nicht-gelöschte System-Notifs (report_resolved, suggestion_approved)
+let _notifShownCount   = 10;   // Pagination: aktuell sichtbare Einträge im Sheet
 
 // ── Lokal versteckte Nachrichten (Soft-Delete, localStorage) ────
 
@@ -90,15 +91,13 @@ async function checkNotifications() {
 
   const myEventIds = [...new Set([...creatorIds, ...participantIds, ...psCreatorIds, ...psParticipantIds])];
 
-  // 2. Chat-Nachrichten der letzten 7 Tage (Verlauf — NICHT auf seen_chat_* gefiltert)
+  // 2. Chat-Nachrichten (Verlauf — kein Zeitlimit, NICHT auf seen_chat_* gefiltert)
   if (myEventIds.length) {
     try {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const url = `${SUPABASE_URL}/rest/v1/event_messages`
         + `?select=id,message,created_at,user_id,event_id`
         + `&event_id=in.(${myEventIds.join(',')})`
         + `&user_id=neq.${userId}`
-        + `&created_at=gt.${sevenDaysAgo}`
         + `&order=created_at.desc&limit=100`;
       const { data: msgData } = await fetchWithRefresh(url, { headers: dbHeaders() });
       const rawMsgs = Array.isArray(msgData) ? msgData : [];
@@ -132,7 +131,7 @@ async function checkNotifications() {
       + `?user_id=eq.${userId}`
       + `&deleted_at=is.null`
       + `&type=in.(report_resolved,suggestion_approved)`
-      + `&order=created_at.desc&limit=50`;
+      + `&order=created_at.desc&limit=100`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
     _systemNotifs = Array.isArray(data) ? data : [];
   } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] systemNotifs fetch:', e); }
@@ -245,6 +244,7 @@ async function _confirmDeleteAll() {
 
 function openNotifSheet() {
   _cancelNotifSeenTimers();
+  _notifShownCount = 10;
   renderNotifSheet();
   openSheet('notif-sheet');
   // Nach 1,2 s als gelesen markieren — Einträge bleiben im Verlauf sichtbar
@@ -260,6 +260,82 @@ function openNotifSheet() {
 
 function _cancelNotifSeenTimers() {
   if (_notifSeenTimer) { clearTimeout(_notifSeenTimer); _notifSeenTimer = null; }
+}
+
+// ── Datum-Gruppierung ────────────────────────────────────────────
+
+function _notifDateGroup(isoStr) {
+  const d = new Date(isoStr);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const itemDayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const ageDays = (todayStart - itemDayStart) / 86400000;
+  if (ageDays <= 0) return 'Heute';
+  if (ageDays <= 1) return 'Gestern';
+  if (ageDays < 7)  return 'Letzte 7 Tage';
+  if (ageDays < 30) return 'Letzte 30 Tage';
+  return 'Älter';
+}
+
+// ── Pagination ───────────────────────────────────────────────────
+
+function _loadMoreNotifs() {
+  _notifShownCount += 10;
+  renderNotifSheet();
+}
+
+// ── Alle als gelesen ─────────────────────────────────────────────
+
+function markAllRead() {
+  markAllSeen();
+  _markSystemNotifsRead();
+}
+
+// ── Item-Renderer ────────────────────────────────────────────────
+
+function _renderSystemItem(n) {
+  const unread = !n.read_at;
+  const time   = _notifTime(n.created_at);
+  const icon   = n.type === 'suggestion_approved' ? ic('table-tennis', 20) : ic('bell', 20);
+  const cls    = `notif-item${unread ? ' notif-item--unread' : ' notif-item--read'} notif-item--system`;
+  return `<div class="${cls}" onclick="_tapSystemNotif('${escAttr(n.id)}')">
+    <div class="notif-report-icon">${icon}</div>
+    <div class="notif-content">
+      <div class="notif-title">${unread ? `<b>${escHtml(n.title || '')}</b>` : escHtml(n.title || '')}</div>
+      <div class="notif-preview">${escHtml(n.body || '')}</div>
+      <div class="notif-time">${time}</div>
+    </div>
+    ${unread ? '<div class="notif-dot"></div>' : '<div class="notif-dot notif-dot--hidden"></div>'}
+    <button class="notif-delete-btn" onclick="event.stopPropagation();_deleteSystemNotif('${escAttr(n.id)}')" aria-label="Löschen">${ic('x', 14)}</button>
+  </div>`;
+}
+
+function _renderChatItem(m, evMap) {
+  const seenTs  = localStorage.getItem('seen_chat_' + m.event_id) || '1970-01-01T00:00:00Z';
+  const unread  = m.created_at > seenTs;
+  const ev      = evMap[m.event_id];
+  const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
+  const isPs    = allPlayerSearches.some(ps => ps.id === m.event_id);
+  const verb    = isPs ? 'hat geantwortet' : 'hat kommentiert';
+  const sender  = m.profiles?.username || 'Jemand';
+  const emoji   = m.profiles?.avatar_emoji || '';
+  const avUrl   = m.profiles?.avatar_url   || '';
+  const uid     = m.user_id || '';
+  const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(sender)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
+  const avHtml  = getAvatarHtml(m.profiles, { size: 38 });
+  const preview = m.message.length > 60 ? m.message.slice(0, 60) + '…' : m.message;
+  const time    = _notifTime(m.created_at);
+  const cls     = `notif-item${unread ? ' notif-item--unread' : ' notif-item--read'}`;
+  return `<div class="${cls}" onclick="openNotifEvent(${m.event_id})">
+    <div class="notif-av pp-clickable" ${avClick}>${avHtml}</div>
+    <div class="notif-content">
+      <div class="notif-title">${unread ? `<b>${escHtml(sender)} ${verb}</b> in „${escHtml(evTitle)}"` : `${escHtml(sender)} ${verb} in „${escHtml(evTitle)}"`}</div>
+      <div class="notif-preview">${escHtml(preview)}</div>
+      <div class="notif-time">${time}</div>
+    </div>
+    ${unread ? '<div class="notif-dot"></div>' : '<div class="notif-dot notif-dot--hidden"></div>'}
+    <button class="notif-delete-btn" onclick="event.stopPropagation();_deleteMsgNotif(${m.id})" aria-label="Löschen">${ic('x', 14)}</button>
+  </div>`;
 }
 
 // ── Sheet rendern ─────────────────────────────────────────────────
@@ -290,69 +366,49 @@ function renderNotifSheet() {
     return;
   }
 
-  // ── Header-Aktionen ──────────────────────────────────────────────
+  // ── Header ───────────────────────────────────────────────────────
   const headerHtml = `<div class="notif-sheet-actions">
+    <button class="notif-action-link" onclick="markAllRead()">Alle als gelesen</button>
     <button class="notif-action-link" onclick="_showDeleteAllConfirm()">Alle löschen</button>
   </div>`;
 
-  // ── System-Notifs ────────────────────────────────────────────────
-  const systemHtml = _systemNotifs.map(n => {
-    const unread    = !n.read_at;
-    const time      = _notifTime(n.created_at);
-    const icon      = n.type === 'suggestion_approved' ? ic('table-tennis', 20) : ic('bell', 20);
-    const cls       = `notif-item${unread ? ' notif-item--unread' : ' notif-item--read'} notif-item--system`;
-    return `<div class="${cls}" onclick="_tapSystemNotif('${escAttr(n.id)}')">
-      <div class="notif-report-icon">${icon}</div>
-      <div class="notif-content">
-        <div class="notif-title">${unread ? `<b>${escHtml(n.title || '')}</b>` : escHtml(n.title || '')}</div>
-        <div class="notif-preview">${escHtml(n.body || '')}</div>
-        <div class="notif-time">${time}</div>
-      </div>
-      ${unread ? '<div class="notif-dot"></div>' : '<div class="notif-dot notif-dot--hidden"></div>'}
-      <button class="notif-delete-btn" onclick="event.stopPropagation();_deleteSystemNotif('${escAttr(n.id)}')" aria-label="Löschen">${ic('x', 14)}</button>
-    </div>`;
-  }).join('');
-
-  // ── Verbindungsanfragen ──────────────────────────────────────────
+  // ── Verbindungsanfragen (immer oben, nicht paginiert) ────────────
   const connHtml = typeof renderConnectionRequestNotifs === 'function'
     ? renderConnectionRequestNotifs() : '';
 
-  // ── Chat-Nachrichten ─────────────────────────────────────────────
+  // ── Einheitliche chronologische Timeline ──────────────────────────
   const evMap = {};
   allEvents.forEach(e => { evMap[e.id] = e; });
   allPlayerSearches.forEach(ps => {
     if (!evMap[ps.id]) evMap[ps.id] = { id: ps.id, name: (ps.username || '') + ' sucht Mitspieler' };
   });
 
-  const msgHtml = _allRecentMessages.slice(0, 30).map(m => {
-    const seenTs  = localStorage.getItem('seen_chat_' + m.event_id) || '1970-01-01T00:00:00Z';
-    const unread  = m.created_at > seenTs;
-    const ev      = evMap[m.event_id];
-    const evTitle = ev ? ev.name : 'Mitspieler-Gesuch';
-    const isPs    = allPlayerSearches.some(ps => ps.id === m.event_id);
-    const verb    = isPs ? 'hat geantwortet' : 'hat kommentiert';
-    const sender  = m.profiles?.username || 'Jemand';
-    const emoji   = m.profiles?.avatar_emoji || '';
-    const avUrl   = m.profiles?.avatar_url   || '';
-    const uid     = m.user_id || '';
-    const avClick = uid ? `onclick="event.stopPropagation();showPlayerProfile('${escAttr(uid)}','${escAttr(sender)}','${escAttr(emoji)}',null,'${escAttr(avUrl)}')"` : '';
-    const avHtml  = getAvatarHtml(m.profiles, { size: 38 });
-    const preview = m.message.length > 60 ? m.message.slice(0, 60) + '…' : m.message;
-    const time    = _notifTime(m.created_at);
-    const cls     = `notif-item${unread ? ' notif-item--unread' : ' notif-item--read'}`;
-    return `<div class="${cls}" onclick="openNotifEvent(${m.event_id})">
-      <div class="notif-av pp-clickable" ${avClick}>${avHtml}</div>
-      <div class="notif-content">
-        <div class="notif-title">${unread ? `<b>${escHtml(sender)} ${verb}</b> in „${escHtml(evTitle)}"` : `${escHtml(sender)} ${verb} in „${escHtml(evTitle)}"`}</div>
-        <div class="notif-preview">${escHtml(preview)}</div>
-        <div class="notif-time">${time}</div>
-      </div>
-      ${unread ? '<div class="notif-dot"></div>' : '<div class="notif-dot notif-dot--hidden"></div>'}
-      <button class="notif-delete-btn" onclick="event.stopPropagation();_deleteMsgNotif(${m.id})" aria-label="Löschen">${ic('x', 14)}</button>
-    </div>`;
-  }).join('');
+  const unified = [
+    ..._systemNotifs.map(n  => ({ ...n, _type: 'system', _ts: n.created_at })),
+    ..._allRecentMessages.map(m => ({ ...m, _type: 'chat',   _ts: m.created_at })),
+  ].sort((a, b) => (b._ts > a._ts ? 1 : b._ts < a._ts ? -1 : 0));
 
-  body.innerHTML = headerHtml + systemHtml + connHtml + msgHtml;
+  const visible = unified.slice(0, _notifShownCount);
+  const hasMore = unified.length > _notifShownCount;
+
+  let timelineHtml = '';
+  let currentGroup = null;
+  for (const item of visible) {
+    const group = _notifDateGroup(item._ts);
+    if (group !== currentGroup) {
+      timelineHtml += `<div class="notif-group-header">${escHtml(group)}</div>`;
+      currentGroup = group;
+    }
+    timelineHtml += item._type === 'system'
+      ? _renderSystemItem(item)
+      : _renderChatItem(item, evMap);
+  }
+
+  const loadMoreHtml = hasMore
+    ? `<button class="notif-load-more" onclick="_loadMoreNotifs()">Weitere Benachrichtigungen anzeigen</button>`
+    : '';
+
+  body.innerHTML = headerHtml + connHtml + timelineHtml + loadMoreHtml;
 }
 
 // ── System-Notif antippen → als gelesen + navigieren ─────────────
