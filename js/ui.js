@@ -696,3 +696,43 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pps) initSwipeClose(pps, () => closePlayerProfile(), 44);
   if (pes) initSwipeClose(pes, () => closeAllSheets(),     44);
 });
+
+// ── Keyboard Avoidance ────────────────────────────────────────────────────
+// Setzt --app-height auf die tatsächlich sichtbare Viewport-Höhe (ohne
+// Tastatur). Fullscreen-Sheets nutzen diese Variable anstelle von 100dvh,
+// damit Eingabefelder nie von der Tastatur verdeckt werden.
+(function _initKeyboardAvoidance() {
+  function _updateAppHeight() {
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px');
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', _updateAppHeight);
+    window.visualViewport.addEventListener('scroll', _updateAppHeight);
+  }
+  window.addEventListener('resize', _updateAppHeight);
+  _updateAppHeight();
+
+  // Fokussiertes Input in den sichtbaren Bereich scrollen.
+  // Nötig für Inputs innerhalb scrollbarer Container (z.B. Event-Kommentare
+  // in eds-scroll-body), wo der Browser nicht automatisch scrollt.
+  document.addEventListener('focusin', function(e) {
+    const el = e.target;
+    if (!el || !el.matches(
+      'input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),' +
+      'textarea'
+    )) return;
+
+    setTimeout(function() {
+      // DM-Chat: letzter Feed-Eintrag sichtbar halten (Input ist sticky unten)
+      if (el.id === 'dm-input') {
+        const feed = document.getElementById('dm-feed');
+        if (feed) feed.scrollTop = feed.scrollHeight;
+        return;
+      }
+      // Alle anderen Inputs: in nächstgelegenen Scrollcontainer einrollen
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 350); // Tastatur-Animations-Delay abwarten
+  }, true);
+})();

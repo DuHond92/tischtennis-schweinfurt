@@ -5,6 +5,13 @@ html {
   overflow-x: hidden; /* prevent horizontal scroll at document level */
 }
 
+:root {
+  /* Tastatur-sicherer Viewport: wird per JS auf visualViewport.height gesetzt.
+     Fullscreen-Sheets nutzen diese Variable statt 100dvh, damit die Tastatur
+     auf iOS und Android den Sheet-Inhalt nicht verdeckt. */
+  --app-height: 100dvh;
+}
+
 
 /* Prevent images from overflowing their containers */
 img, video { max-width: 100%; height: auto; }

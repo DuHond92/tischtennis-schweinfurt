@@ -39,10 +39,12 @@
 
 /* ── Fullscreen-Sheet (Nachrichten, Benachrichtigungen) ──────── */
 .bottom-sheet.fullscreen-sheet {
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100vh;
-  max-height: 100dvh;
+  /* --app-height wird per JS auf visualViewport.height gesetzt und
+     schrumpft automatisch wenn die Tastatur geöffnet wird. Damit
+     bleibt der Sheet-Inhalt immer sichtbar, ohne von der Tastatur
+     verdeckt zu werden. Fallback: 100dvh für den Startzustand. */
+  height: var(--app-height, 100dvh);
+  max-height: var(--app-height, 100dvh);
   border-radius: 0;
   display: flex;
   flex-direction: column;
