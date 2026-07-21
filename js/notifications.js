@@ -134,7 +134,7 @@ async function checkNotifications() {
       + `&type=in.(report_resolved,suggestion_approved)`
       + `&order=created_at.desc&limit=50`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
-    _systemNotifs = data || [];
+    _systemNotifs = Array.isArray(data) ? data : [];
   } catch(e) { if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] systemNotifs fetch:', e); }
 
   _updateBadgeCount();
@@ -165,6 +165,7 @@ function markAllSeen() {
 // Setzt read_at, löscht NICHT aus dem Verlauf.
 
 async function _markSystemNotifsRead() {
+  if (!Array.isArray(_systemNotifs)) return;
   const unread = _systemNotifs.filter(n => !n.read_at);
   if (!unread.length) return;
   const now = new Date().toISOString();
