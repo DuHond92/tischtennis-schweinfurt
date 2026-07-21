@@ -98,6 +98,8 @@ async function onAvatarFileSelected(event) {
     await _saveAvatarToProfile({ avatar_url: url, avatar_emoji: null });
     if (currentUser) { currentUser.avatar_url = url; currentUser.avatar_emoji = null; }
     updateProfileAvatarEl(currentUser);
+    if (typeof renderProfile === 'function') renderProfile();
+    if (typeof renderHome === 'function') renderHome();
     showToast('Profilbild aktualisiert!');
   } catch (e) {
     console.error('Avatar upload error:', e);
@@ -110,6 +112,8 @@ async function selectAvatarEmoji(emoji) {
     await _saveAvatarToProfile({ avatar_emoji: emoji, avatar_url: null });
     if (currentUser) { currentUser.avatar_emoji = emoji; currentUser.avatar_url = null; }
     updateProfileAvatarEl(currentUser);
+    if (typeof renderProfile === 'function') renderProfile();
+    if (typeof renderHome === 'function') renderHome();
     closeAllSheets();
     showToast('Emoji gespeichert!');
   } catch (e) {
@@ -122,6 +126,8 @@ async function removeAvatar() {
     await _saveAvatarToProfile({ avatar_emoji: null, avatar_url: null });
     if (currentUser) { currentUser.avatar_emoji = null; currentUser.avatar_url = null; }
     updateProfileAvatarEl(currentUser);
+    if (typeof renderProfile === 'function') renderProfile();
+    if (typeof renderHome === 'function') renderHome();
     closeAllSheets();
     showToast('Profilbild entfernt');
   } catch (e) {

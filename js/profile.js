@@ -39,7 +39,7 @@ function renderProfile() {
   const psAvEl = document.getElementById('ps-avatar-el');
   if (psAvEl) psAvEl.textContent = currentUser.avatar_emoji || '😎';
   // Skill level
-  const skill = currentUser.skill_level || 'anfaenger';
+  const skill = currentUser.skill_level || null;
   document.querySelectorAll('.skill-opt').forEach((el, i) => {
     el.classList.toggle('active', ['anfaenger','fortgeschritten','profi'][i] === skill);
   });
@@ -57,33 +57,63 @@ function renderProfile() {
 
   // Moderation link
   const adminItem = document.getElementById('admin-nav-item');
+  const canModerate = ['moderator', 'admin'].includes(currentUser.role);
   if (adminItem) {
-    adminItem.style.display = (currentUser.role === 'moderator' || currentUser.role === 'admin') ? '' : 'none';
+    adminItem.style.display = canModerate ? '' : 'none';
   }
+  const diagnosticItem = document.getElementById('diagnostic-log-nav-item');
+  if (diagnosticItem) diagnosticItem.style.display = canModerate ? '' : 'none';
 }
 
 function _isProfileComplete(u) {
-  const hasAvatar = !!(u.avatar_emoji || u.avatar_url);
-  const hasSkill  = !!(u.skill_level);
-  return hasAvatar && hasSkill;
+  return getProfileCompletion(u).isComplete;
+}
+
+function getProfileCompletion(u) {
+  const profile = u || {};
+  const items = [
+    { key: 'avatar', label: 'Profilbild oder Avatar hinzufügen', complete: !!(profile.avatar_url || profile.avatar_emoji) },
+    { key: 'city',   label: 'Wohnort ergänzen',                   complete: !!String(profile.city || '').trim() },
+    { key: 'skill',  label: 'Spielniveau auswählen',             complete: !!profile.skill_level },
+    { key: 'bio',    label: '„Über mich“ ergänzen',              complete: !!String(profile.bio || '').trim() }
+  ];
+  const completedCount = items.filter(item => item.complete).length;
+  return {
+    percent: Math.round((completedCount / items.length) * 100),
+    isComplete: completedCount === items.length,
+    missing: items.filter(item => !item.complete),
+    items
+  };
+}
+
+function profileCompletionCardHtml(u) {
+  const completion = getProfileCompletion(u);
+  if (completion.isComplete) return '';
+  const missing = completion.missing;
+  return `
+    <section class="profile-completion-card" aria-labelledby="profile-completion-title">
+      <div class="profile-completion-head">
+        <span class="profile-completion-icon" aria-hidden="true">${ic('user', 18)}</span>
+        <div>
+          <div class="profile-completion-title" id="profile-completion-title">Profil vervollständigen</div>
+          <div class="profile-completion-value">${completion.percent} % abgeschlossen</div>
+        </div>
+      </div>
+      <div class="profile-completion-progress" role="progressbar" aria-label="Profilfortschritt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${completion.percent}">
+        <span style="--profile-progress:${completion.percent}%"></span>
+      </div>
+      <p class="profile-completion-copy">Vervollständige dein Profil, damit andere Spieler dich besser kennenlernen und leichter Kontakt aufnehmen können.</p>
+      <ul class="profile-completion-list">
+        ${missing.map(item => `<li>${escHtml(item.label)}</li>`).join('')}
+      </ul>
+      <button type="button" class="btn btn-primary profile-completion-button" onclick="openProfileEditSheet()">Profil vervollständigen</button>
+    </section>`;
 }
 
 function _renderSetupHint(u) {
   const el = document.getElementById('profile-setup-hint');
   if (!el) return;
-  if (_isProfileComplete(u)) { el.innerHTML = ''; return; }
-  el.innerHTML = `
-    <div class="profile-setup-card">
-      <div class="psc-title">Schön, dass du da bist!</div>
-      <div class="psc-body">Vervollständige kurz dein Profil, damit andere Spieler dich besser einschätzen können.</div>
-      <ul class="psc-list">
-        <li>Avatar oder Emoji wählen</li>
-        <li>Anzeigename prüfen</li>
-        <li>Spielniveau auswählen</li>
-        <li>Ort optional ergänzen</li>
-      </ul>
-      <button class="psc-btn" onclick="openProfileEditSheet()">Profil bearbeiten</button>
-    </div>`;
+  el.innerHTML = profileCompletionCardHtml(u);
 }
 
 function renderMyEventsSection() {
@@ -108,15 +138,15 @@ function renderMyEventsSection() {
   const hasMore = myEvents.length > 3;
   el.innerHTML = shown.map(e => {
     const label = typeLabel(e.type);
-    const date  = formatEventDateTime(e.dateStr, null);
-    const meta  = label ? `${label} · ${date}` : date;
+    const date  = formatEventDate(e);
     return `
     <div class="profile-event-row" role="button" tabindex="0"
          onclick="showEventDetail(${e.id})"
          onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
       <div class="per-content">
         <div class="per-name">${escHtml(e.name)}</div>
-        <div class="per-meta">${meta}</div>
+        <div class="per-meta">${ic('calendar', 10)} ${date}${label ? ` · ${label}` : ''}</div>
+        <div class="per-meta">${icPlate(10)} ${escHtml(e.tname || '–')}</div>
       </div>
     </div>`;
   }).join('') + (hasMore ? `<div class="per-showall" role="button" tabindex="0" onclick="openHistorySheet()" onkeydown="if(event.key==='Enter')openHistorySheet()">Alle anzeigen</div>` : '');
@@ -152,15 +182,15 @@ function openHistorySheet() {
   } else {
     body.innerHTML = past.map(e => {
       const label = typeLabel(e.type);
-      const date  = formatEventDateTime(e.dateStr, null);
-      const meta  = label ? `${label} · ${date}` : date;
+      const date  = formatEventDate(e);
       return `
       <div class="profile-event-row" role="button" tabindex="0"
            onclick="_openEventFromHistory(${e.id})"
            onkeydown="if(event.key==='Enter'||event.key===' ')_openEventFromHistory(${e.id})">
         <div class="per-content">
           <div class="per-name">${escHtml(e.name)}</div>
-          <div class="per-meta">${meta}</div>
+          <div class="per-meta">${ic('calendar', 10)} ${date}${label ? ` · ${label}` : ''}</div>
+          <div class="per-meta">${icPlate(10)} ${escHtml(e.tname || '–')}</div>
         </div>
       </div>`;
     }).join('') + '<div class="pb-safe"></div>';
@@ -175,6 +205,14 @@ function _openEventFromHistory(eventId) {
   showEventDetail(eventId);
 }
 
+function _syncMySearchSkillLevel(skillLevel) {
+  const myId = String(sb.getUserId() || '');
+  if (!myId || !Array.isArray(allPlayerSearches)) return;
+  allPlayerSearches.forEach(search => {
+    if (String(search.userId) === myId) search.skillLevel = skillLevel || '';
+  });
+}
+
 async function selectSkill(el) {
   const vals=['anfaenger','fortgeschritten','profi'];
   document.querySelectorAll('.skill-opt').forEach((o,i)=>{
@@ -185,7 +223,11 @@ async function selectSkill(el) {
     const qb = new QueryBuilder('profiles');
     await qb.eq('id', sb.getUserId()).update({ skill_level: skill });
     if(currentUser) currentUser.skill_level = skill;
+    _syncMySearchSkillLevel(skill);
   }
+  renderProfile();
+  if (typeof renderHome === 'function') renderHome();
+  if (typeof renderEvents === 'function') renderEvents();
   showToast('Spielniveau gespeichert!');
 }
 
@@ -198,6 +240,7 @@ function openProfileEditSheet() {
   document.getElementById('edit-birthdate').value = currentUser.birthdate || '';
   document.getElementById('edit-club').value      = currentUser.club_name || '';
   document.getElementById('edit-bio').value       = currentUser.bio       || '';
+  document.getElementById('edit-skill').value     = currentUser.skill_level || '';
   _updateBioCounter();
   openSheet('profile-edit-sheet');
 }
@@ -216,6 +259,7 @@ async function saveProfile() {
   const birthdate = document.getElementById('edit-birthdate')?.value || null;
   const club      = document.getElementById('edit-club')?.value.trim() || '';
   const bio       = (document.getElementById('edit-bio')?.value || '').trim().slice(0, 160);
+  const skill     = document.getElementById('edit-skill')?.value || null;
 
   if (!name) {
     showInlineError('profile-name-error', { title: 'Spielername fehlt', desc: 'Bitte einen Spielernamen eingeben.' });
@@ -234,7 +278,8 @@ async function saveProfile() {
     gender:     gender,
     birthdate:  birthdate || null,
     club_name:  club   || null,
-    bio:        bio    || null
+    bio:        bio    || null,
+    skill_level: skill
   });
 
   if (btn) { btn.disabled = false; btn.textContent = 'Speichern'; }
@@ -247,10 +292,14 @@ async function saveProfile() {
     currentUser.birthdate = birthdate;
     currentUser.club_name = club;
     currentUser.bio       = bio;
+    currentUser.skill_level = skill;
+    _syncMySearchSkillLevel(skill);
   }
   closeAllSheets();
   showToast('Profil gespeichert');
   renderProfile();
+  if (typeof renderHome === 'function') renderHome();
+  if (typeof renderEvents === 'function') renderEvents();
 }
 
 async function changePassword() {

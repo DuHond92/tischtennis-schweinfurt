@@ -23,7 +23,9 @@ function closePlayerProfile() {
 }
 
 async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, avatarUrl) {
-  _ppCurrentUserId    = userId;
+  const requestedUserId = userId ? String(userId) : '';
+  let profileAvailable = null;
+  _ppCurrentUserId    = requestedUserId;
   _ppCurrentUserName  = username    || '';
   _ppCurrentUserEmoji = avatarEmoji || '';
   _ppCurrentUserUrl   = avatarUrl   || null;
@@ -53,15 +55,17 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
   const connEl = document.getElementById('pp-connection-btn');
   if (connEl) {
     const myId = sb.getUserId();
-    if (!userId || userId === myId) {
+    if (!requestedUserId || requestedUserId === String(myId || '')) {
       connEl.innerHTML = '';
     } else if (typeof _myConnections !== 'undefined' && _myConnections === null) {
       connEl.innerHTML = '<button class="btn btn-secondary btn-full" disabled style="opacity:.5">Lade…</button>';
       loadMyConnections().then(() => {
-        if (_ppCurrentUserId === userId) connEl.innerHTML = getConnectionButtonHtml(userId);
+        if (_ppCurrentUserId === requestedUserId && profileAvailable !== false) {
+          connEl.innerHTML = getConnectionButtonHtml(requestedUserId);
+        }
       });
     } else {
-      connEl.innerHTML = typeof getConnectionButtonHtml === 'function' ? getConnectionButtonHtml(userId) : '';
+      connEl.innerHTML = typeof getConnectionButtonHtml === 'function' ? getConnectionButtonHtml(requestedUserId) : '';
     }
   }
 
@@ -69,30 +73,45 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
   const ppDotBtn = document.getElementById('pp-dot-btn');
   if (ppDotBtn) {
     const myId = sb.getUserId();
-    ppDotBtn.style.display = (userId && userId !== myId && sb.isLoggedIn()) ? '' : 'none';
+    ppDotBtn.style.display = (requestedUserId && requestedUserId !== String(myId || '') && sb.isLoggedIn()) ? '' : 'none';
   }
 
   openPlayerSheet();
 
-  if(!userId) {
-    document.getElementById('pp-details').innerHTML = '';
+  if(!requestedUserId) {
+    _renderPlayerProfileUnavailable('Dieses Profil ist nicht mehr verfügbar.');
     return;
   }
 
   try {
     const qb = new QueryBuilder('profiles');
     qb._select = 'id,username,avatar_emoji,avatar_url,skill_level,city';
-    qb.eq('id', userId);
-    const {data} = await qb.execute();
+    qb.eq('id', requestedUserId);
+    const {data, error} = await qb.execute();
+    if (_ppCurrentUserId !== requestedUserId) return;
+    if (error) throw error;
     if(data && data[0]) {
+      profileAvailable = true;
       renderPlayerProfileData(data[0]);
     } else {
-      document.getElementById('pp-details').innerHTML = '';
+      profileAvailable = false;
+      _renderPlayerProfileUnavailable('Dieses Profil ist nicht mehr verfügbar.');
     }
   } catch(e) {
-    document.getElementById('pp-details').innerHTML = '';
+    if (_ppCurrentUserId !== requestedUserId) return;
+    profileAvailable = false;
+    _renderPlayerProfileUnavailable('Das Profil konnte nicht geladen werden.');
     console.warn('Player profile load error', e);
   }
+}
+
+function _renderPlayerProfileUnavailable(message) {
+  const detailsEl = document.getElementById('pp-details');
+  const connEl    = document.getElementById('pp-connection-btn');
+  const dotBtn    = document.getElementById('pp-dot-btn');
+  if (detailsEl) detailsEl.innerHTML = `<div class="pp-unavailable">${ic('user', 24)}<span>${escHtml(message)}</span></div>`;
+  if (connEl) connEl.innerHTML = '';
+  if (dotBtn) dotBtn.style.display = 'none';
 }
 
 function openPpDotMenu() {
@@ -114,10 +133,13 @@ function openPpBlock() {
 
 function renderPlayerProfileData(profile) {
   // Avatar + globale URL-State mit vollständigen Daten aktualisieren
+  _ppCurrentUserName  = profile.username      || _ppCurrentUserName;
   _ppCurrentUserUrl   = profile.avatar_url   || null;
   _ppCurrentUserEmoji = profile.avatar_emoji || '';
   const avEl = document.getElementById('pp-avatar');
   if (avEl) avEl.innerHTML = getAvatarHtml(profile, {size: 72});
+  const nameEl = document.getElementById('pp-username');
+  if (nameEl) nameEl.textContent = _ppCurrentUserName || 'Spieler';
 
   // Stadt
   const cityEl = document.getElementById('pp-city');

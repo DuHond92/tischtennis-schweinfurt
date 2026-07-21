@@ -27,7 +27,9 @@ function showPlayerSearchDetail(psId) {
       ${avHtml}
       <div class="psd-hero-body">
         <div class="psd-hero-name ${pClick ? 'pp-clickable' : ''}" ${pClick ? `onclick="${pClick}"` : ''}>${escHtml(ps.username || 'Spieler')}</div>
-        ${gameTypePill(ps.spielart) ? `<div class="psc-type-row">${gameTypePill(ps.spielart)}</div>` : ''}
+        ${(gameTypePill(ps.spielart) || playerSkillPill(ps.skillLevel))
+          ? `<div class="psc-type-row">${gameTypePill(ps.spielart)}${playerSkillPill(ps.skillLevel)}</div>`
+          : ''}
         ${wann        ? `<div class="psd-hero-meta">${ic('clock',13)} ${escHtml(wann)}</div>`          : ''}
         ${distParts.length ? `<div class="psd-hero-meta">${ic('pin',13)} ${distParts.join(' · ')}</div>` : ''}
       </div>

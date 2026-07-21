@@ -149,14 +149,11 @@ function showEventDetail(eventId) {
   currentEventId = eventId;
   const isCompleted = isEventCompleted(ev);
 
-  // Bild-Slider – Punktspiel-Placeholder wenn kein Foto hochgeladen
-  const sliderPhotos = (ev.photos && ev.photos.length)
-    ? ev.photos
-    : ev.type === 'punktspiel' ? ['images/placeholders/game_tournament.png']
-    : ev.type === 'casual'     ? ['images/placeholders/game_fun.png']
-    : ev.type === 'training'   ? ['images/placeholders/game_training.png']
-    : ['images/placeholders/game_fun.png'];
-  document.getElementById('eds-slider').innerHTML = buildEventSlider(sliderPhotos);
+  // Eigenes Eventbild > Plattenbild > kein Headerbild.
+  const sliderPhotos = Array.isArray(ev.photos) ? ev.photos.filter(Boolean) : [];
+  const sliderEl = document.getElementById('eds-slider');
+  sliderEl.innerHTML = buildEventSlider(sliderPhotos);
+  sliderEl.style.display = sliderPhotos.length ? '' : 'none';
 
   // Titel
   document.getElementById('eds-title').textContent = ev.name;
@@ -637,21 +634,39 @@ function startGame(eventId) {
 
 function openEditEvent(eventId) {
   _createEventFromTds = false;
+  _createEventReturnToChoice = false;
   closeAllSheets();
   const ev  = allEvents.find(e => e.id === eventId);
   if(!ev) return;
   _editingEventId = eventId;
-  document.querySelector('#create-event-sheet .sheet-title').textContent = 'Event bearbeiten';
-  document.querySelector('#create-event-sheet .btn-primary').textContent = 'Speichern';
+  document.getElementById('create-event-sheet-title').textContent = 'Spiel bearbeiten';
+  const submitBtn = document.getElementById('create-event-submit-btn');
+  submitBtn.textContent = 'Änderungen speichern';
+  submitBtn.disabled = false;
   document.getElementById('ev-name').value  = ev.name    || '';
-  document.getElementById('ev-table').value = ev.tid     || '';
-  document.getElementById('ev-date').value  = ev.dateStr || '';
-  document.getElementById('ev-time').value  = ev.time    || '';
-  document.getElementById('ev-mode').value  = ev.type    || 'casual';
+  if (typeof _setEventTableSelection === 'function') _setEventTableSelection(ev.tid || null, ev.tname || '');
+  const dateInput = document.getElementById('ev-date');
+  const timeInput = document.getElementById('ev-time');
+  dateInput.value = ev.dateStr || '';
+  timeInput.value = ev.time || '';
+  dateInput.dataset.editOriginalValue = dateInput.value;
+  timeInput.dataset.editOriginalValue = timeInput.value;
+  if (typeof _prepareEventDateTimeFields === 'function') _prepareEventDateTimeFields();
+  if (typeof _setFieldError === 'function') {
+    _setFieldError('ev-name', null);
+    _setFieldError('ev-table', null);
+    _setFieldError('ev-date', null);
+    _setFieldError('ev-time', null);
+    _setFieldError('ev-max', null);
+  }
+  if (typeof _setEventMode === 'function') _setEventMode(ev.type || 'casual');
   const evMax = document.getElementById('ev-max');
   if (evMax) evMax.value = ev.max || 4;
   const evDesc = document.getElementById('ev-desc');
   if (evDesc) evDesc.value = ev.desc || '';
+  if (typeof _resetCreateEventImage === 'function') _resetCreateEventImage();
+  if (typeof _setExistingCreateEventImage === 'function') _setExistingCreateEventImage(ev.eventPhotos?.[0] || '');
+  if (typeof _setEventWizardStep === 'function') _setEventWizardStep(1, 'none');
   openSheet('create-event-sheet');
 }
 
@@ -664,8 +679,10 @@ async function loadEventImages(eventId) {
 }
 
 function _appendDbImagesToEventSlider(dbImages) {
+  const sliderContainer = document.getElementById('eds-slider');
   const slider = document.querySelector('#eds-slider .detail-slider');
   if (!slider) return;
+  if (sliderContainer) sliderContainer.style.display = '';
   const slidesWrap = slider.querySelector('.ds-slides-wrap');
   const thumbsRow  = slider.querySelector('.ds-thumbs');
   const addBtn     = thumbsRow?.querySelector('.ds-thumb-add');
@@ -676,7 +693,7 @@ function _appendDbImagesToEventSlider(dbImages) {
   if (emptySlide) emptySlide.remove();
 
   const existingUrls = new Set(
-    [...slidesWrap.querySelectorAll('.ds-db-slide')].map(el => el.dataset.imgUrl)
+    [...slidesWrap.querySelectorAll('.ds-slide[data-img-url]')].map(el => el.dataset.imgUrl)
   );
 
   dbImages.forEach((img, idx) => {

@@ -309,6 +309,60 @@
 .form-select { appearance: none; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* Spiel organisieren: native Picker mit stabiler Mobile-Breite */
+.event-datetime-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.event-datetime-group { min-width: 0; }
+.form-label-required {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1.15em;
+  line-height: 0;
+  margin-left: 2px;
+}
+.event-datetime-control {
+  position: relative;
+  min-width: 0;
+}
+.event-datetime-input {
+  min-width: 0;
+  min-height: 46px;
+  color-scheme: light;
+}
+[data-theme="dark"] .event-datetime-input { color-scheme: dark; }
+.event-datetime-input.is-empty { color: transparent; }
+.event-datetime-input.is-empty::-webkit-datetime-edit { color: transparent; }
+.event-datetime-input.is-empty:focus { color: var(--text); }
+.event-datetime-input.is-empty:focus::-webkit-datetime-edit { color: var(--text); }
+.event-datetime-input::-webkit-date-and-time-value {
+  min-height: 1.2em;
+  text-align: left;
+}
+.event-datetime-input.is-empty::-webkit-date-and-time-value { color: transparent; }
+.event-datetime-input.is-empty:focus::-webkit-date-and-time-value { color: var(--text); }
+.event-datetime-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  right: 42px;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 1rem;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.event-datetime-input:not(.is-empty) + .event-datetime-placeholder,
+.event-datetime-input:focus + .event-datetime-placeholder { display: none; }
+
+@media (max-width: 350px) {
+  .event-datetime-row { grid-template-columns: 1fr; gap: 0; }
+}
+
 /* Utility: padded action bar used for single full-width buttons within a sheet */
 .sheet-action-bar { padding: 0 20px 12px; }
 
@@ -869,6 +923,7 @@
 #leave-event-sheet { z-index: 910; }
 #pp-action-sheet { z-index: 910; }
 #dm-action-sheet { z-index: 920; }
+#event-table-picker-sheet { z-index: 930; }
 
 .pp-hero {
   display: flex; flex-direction: column; align-items: center;
@@ -1740,6 +1795,81 @@
   margin-bottom: 2px;
 }
 
+/* ── Mitspieler finden: kompakter, ortsbezogener Formularaufbau ── */
+.mitspieler-scroll {
+  padding: 0 20px 18px;
+}
+.mitspieler-intro {
+  margin: 18px 0 20px;
+  color: var(--text-dim);
+  font-size: var(--text-ui);
+  line-height: 1.5;
+}
+.form-required {
+  color: var(--primary);
+  font-weight: 800;
+}
+.mitspieler-location-group {
+  margin-bottom: 18px;
+}
+.mitspieler-location-group .psr-location-status:empty {
+  min-height: 0;
+  margin-top: 0 !important;
+}
+.mitspieler-radius-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  transition: opacity 0.15s ease;
+}
+.mitspieler-radius-block .form-label {
+  margin-bottom: 0;
+}
+.mitspieler-radius-hint {
+  display: none;
+  margin-top: 5px;
+  color: var(--text-dim);
+  font-size: var(--text-meta);
+  line-height: 1.35;
+}
+.mitspieler-radius-block.is-disabled .mitspieler-radius-hint {
+  display: block;
+}
+.mitspieler-radius-block.is-disabled > .form-label,
+.mitspieler-radius-block.is-disabled .radius-slider-input,
+.mitspieler-radius-block.is-disabled .radius-snap-btn {
+  opacity: 0.48;
+}
+.mitspieler-radius-block.is-disabled .radius-slider-input,
+.mitspieler-radius-block.is-disabled .radius-snap-btn {
+  cursor: not-allowed;
+}
+.mitspieler-submit-bar {
+  flex: 0 0 auto;
+  padding: 10px 20px max(10px, env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.psr-loc-pending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: var(--text-meta);
+}
+.psr-loc-pending .search-spinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+.psr-loc-use-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 /* ── Mitspieler finden: Wann-Chips ───────────────────────────────── */
 .ms-wann-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ms-wann-chip {
@@ -1892,11 +2022,11 @@
   align-items: center;
 }
 .ms-spielart-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.ms-spielart-casual.active    { background: var(--green-bg);  border-color: var(--green);  color: var(--green);  font-weight: 700; }
+.ms-spielart-casual.active    { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); font-weight: 700; }
 .ms-spielart-training.active  { background: var(--gold-bg);   border-color: var(--gold);   color: var(--gold);   font-weight: 700; }
 .ms-spielart-punktspiel.active{ background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 700; }
 @media (hover: hover) and (pointer: fine) {
-  .ms-spielart-casual:not(.active):hover    { border-color: var(--green);  color: var(--green);  }
+  .ms-spielart-casual:not(.active):hover    { border-color: var(--primary); color: var(--primary); }
   .ms-spielart-training:not(.active):hover  { border-color: var(--gold);   color: var(--gold);   }
   .ms-spielart-punktspiel:not(.active):hover{ border-color: var(--accent); color: var(--accent); }
 }

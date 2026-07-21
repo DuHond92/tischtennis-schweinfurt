@@ -38,6 +38,7 @@ function _ptSafeStr(v) {
 }
 
 function showDiagnosticLogs() {
+  if (!currentUser || !['moderator', 'admin'].includes(currentUser.role)) return;
   const logs  = window._PT_LOGS || [];
   const lines = logs.map(l => {
     const ts   = l.t.slice(11, 23);

@@ -2,6 +2,7 @@
 // ║           DATEN LADEN (Supabase)                             ║
 // ╚══════════════════════════════════════════════════════════════╝
 async function loadTables() {
+  selectableEventTables = [];
   try {
     const qb = new QueryBuilder('tables');
     qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours,created_at';
@@ -20,6 +21,7 @@ async function loadTables() {
         createdAt: t.created_at || null,
         photos: [], comments: [], osmId: null, events: []
       }));
+      selectableEventTables = [...tables];
     }
   } catch(e) { console.warn('Supabase tables error', e); }
   // Immer setzen — auch bei Fehler oder leerem Ergebnis; runSearch() wartet auf dieses Flag
@@ -28,7 +30,8 @@ async function loadTables() {
   await _loadApprovedTableImagesForTables(tables);
 
   const opts = tables.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-  ['ev-table','match-table-sel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+  const matchTableSelect = document.getElementById('match-table-sel');
+  if (matchTableSelect) matchTableSelect.innerHTML = opts;
 }
 
 async function _loadApprovedTableImagesForTables(tableItems) {
@@ -175,12 +178,31 @@ async function loadEvents() {
   const profileMap = {};
   try {
     const qbProf = new QueryBuilder('profiles');
-    qbProf._select = 'id,username,avatar_emoji,avatar_url';
+    qbProf._select = 'id,username,avatar_emoji,avatar_url,skill_level';
     const {data: pData} = await qbProf.execute();
     if(pData) pData.forEach(p => { profileMap[p.id] = p; });
   } catch(e) {}
 
-  // 5. Daten im JS zusammensetzen
+  // 5. Eigene Eventbilder haben Vorrang vor dem Bild der ausgewählten Platte.
+  // RLS liefert öffentliche/freigegebene Bilder sowie eigene noch ausstehende Uploads.
+  const eventImageMap = {};
+  try {
+    const eventIds = evData.map(event => event.id).filter(Boolean);
+    if (eventIds.length) {
+      const url = `${SUPABASE_URL}/rest/v1/event_images?select=event_id,image_url,status,uploaded_by,created_at&event_id=in.(${eventIds.join(',')})&order=created_at.desc`;
+      const { data: imageData } = await fetchWithRefresh(url, { headers: dbHeaders() });
+      if (Array.isArray(imageData)) imageData.forEach(image => {
+        if (!image.event_id || !image.image_url) return;
+        const visible = image.status === 'approved' ||
+          (image.status === 'pending' && image.uploaded_by === sb.getUserId());
+        if (!visible) return;
+        eventImageMap[image.event_id] = eventImageMap[image.event_id] || [];
+        eventImageMap[image.event_id].push(image.image_url);
+      });
+    }
+  } catch(e) { console.warn('Eventbilder laden fehlgeschlagen', e); }
+
+  // 6. Daten im JS zusammensetzen
   const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
   const _evRaw = evData.map(e => {
     const d   = new Date(e.event_date);
@@ -203,11 +225,13 @@ async function loadEvents() {
       creatorId:    e.creator_id,
       creatorEmoji:    prof.avatar_emoji || '',
       creatorAvatarUrl: prof.avatar_url  || null,
+      creatorSkillLevel: prof.skill_level || '',
       desc:         e.description || '',
       p:            pCounts[e.id] || 0,
       max:          e.max_participants,
       participants: pParticipants[e.id] || [],
-      photos:       tbl.photos || [],
+      eventPhotos:  eventImageMap[e.id] || [],
+      photos:       eventImageMap[e.id]?.length ? eventImageMap[e.id] : (tbl.photos || []),
       // echte DB-Spalten (nach Migration); null wenn Spalten noch nicht existieren
       colLat:            e.lat              != null ? +e.lat              : null,
       colLng:            e.lng              != null ? +e.lng              : null,
@@ -230,8 +254,9 @@ async function loadEvents() {
         username:    e.creator,
         avatarEmoji:  e.creatorEmoji    || extra.avatarEmoji  || '',
         avatarUrl:    e.creatorAvatarUrl || extra.avatarUrl || null,
+        skillLevel:   e.creatorSkillLevel || extra.skillLevel || '',
         spielart:    extra.spielart  || 'casual',
-        wann:        extra.wann      || 'Egal',
+        wann:        extra.wann === 'Egal' ? 'Zeitlich flexibel' : (extra.wann || 'Zeitlich flexibel'),
         umkreis:     extra.umkreis   || '5 km',
         message:     extra.message   || '',
         // Spalte bevorzugen; JSON als Fallback für alte Gesuche
@@ -244,4 +269,3 @@ async function loadEvents() {
 
   tables.forEach(t => t.events = allEvents.filter(e => e.tid === t.id));
 }
-

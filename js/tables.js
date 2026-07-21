@@ -37,19 +37,29 @@ function showTableDetail(id) {
     ? `<div class="tds-events-empty">
         Noch keine Spiele an dieser Platte geplant.
        </div>`
-    : `<div class="tds-event-list">${evArr.map(e=>`
-      <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+    : `<div class="tds-event-list">${evArr.map(e => {
+      const isCreator = sb.isLoggedIn() && String(e.creatorId) === String(sb.getUserId());
+      const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
+      const isParticipating = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
+      const status = getGameDisplayStatus(e);
+      const relationBadge = eventRelationFloatBadge(isCreator, isParticipating);
+      return `
+      <div class="tds-event-card${isCreator ? ' is-own-content' : ''}" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
-          <div class="tds-event-name">${escHtml(e.name)}</div>
-          <div class="tds-event-tag-row">
+          <div class="tds-event-title-row">
+            <div class="tds-event-name">${escHtml(e.name)}</div>
+            ${relationBadge}
+          </div>
+          <div class="tds-event-tag-row ecb-status-row">
             ${gameTypePill(e.type)}
+            ${status ? `<span class="ecb-stag ecb-stag--${status.kind}">${status.text}</span>` : ''}
           </div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
-          ${eventStatusBlock(e)}
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
-      </div>`).join('')}</div>`;
+      </div>`;
+    }).join('')}</div>`;
 
   // Basisinfos-Meta (sync, kein Rating hier — das kommt in die Rating-Card)
   const metaLine = _tableMetaLine(t, { operator: true });
@@ -100,26 +110,37 @@ function showTableDetail(id) {
 }
 
 // Aktualisiert nur die Kommende-Spiele-Sektion im geöffneten Table-Detail.
-// Wird nach erfolgreicher Spielerstellung aus dem TDS-Kontext aufgerufen.
+// Wird nach Spielerstellung sowie nach Änderungen der zugeordneten Platte aufgerufen.
 function _refreshTableDetailEvents(tableId) {
+  if (String(currentDetailTableId) !== String(tableId)) return;
   const sec = document.querySelector('#tds-body .tds-events-section');
   if (!sec) return;
   const evArr = allEvents.filter(e => e.tid === tableId);
   const evHtml = evArr.length === 0
     ? `<div class="tds-events-empty">Noch keine Spiele an dieser Platte geplant.</div>`
-    : `<div class="tds-event-list">${evArr.map(e => `
-      <div class="tds-event-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+    : `<div class="tds-event-list">${evArr.map(e => {
+      const isCreator = sb.isLoggedIn() && String(e.creatorId) === String(sb.getUserId());
+      const myId = sb.isLoggedIn() ? String(sb.getUserId()) : null;
+      const isParticipating = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
+      const status = getGameDisplayStatus(e);
+      const relationBadge = eventRelationFloatBadge(isCreator, isParticipating);
+      return `
+      <div class="tds-event-card${isCreator ? ' is-own-content' : ''}" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')showEventDetail(${e.id})">
         <div class="tds-event-card-body">
-          <div class="tds-event-name">${escHtml(e.name)}</div>
-          <div class="tds-event-tag-row">
+          <div class="tds-event-title-row">
+            <div class="tds-event-name">${escHtml(e.name)}</div>
+            ${relationBadge}
+          </div>
+          <div class="tds-event-tag-row ecb-status-row">
             ${gameTypePill(e.type)}
+            ${status ? `<span class="ecb-stag ecb-stag--${status.kind}">${status.text}</span>` : ''}
           </div>
           <div class="tds-event-meta">${ic('calendar',12)} ${formatEventDate(e)} · ${ic('users',12)} ${e.p}/${e.max} Spieler</div>
-          ${eventStatusBlock(e)}
         </div>
         <div class="tds-event-chevron">${ic('chevron-right', 16)}</div>
-      </div>`).join('')}</div>`;
+      </div>`;
+    }).join('')}</div>`;
   sec.innerHTML = `<div class="eds-section-title">Kommende Spiele</div>${evHtml}`;
 }
 
@@ -238,7 +259,40 @@ function _initSliderTouch(mainEl) {
   });
 }
 
-// Event-Bild Upload (Weiterleitung an event-detail.js)
+async function uploadEventImageFile(file, eventId) {
+  const blob  = await _resizeTableImage(file);
+  const token = await sb.getValidToken();
+  const uid   = sb.getUserId();
+  const path  = `${eventId}/${uid}_${Date.now()}.jpg`;
+  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/event-images/${path}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
+    body: blob
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Storage-Upload fehlgeschlagen');
+  }
+
+  const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/event-images/${path}`;
+  const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
+  const record = {
+    event_id: eventId,
+    uploaded_by: uid,
+    image_url: imageUrl,
+    status: isMod ? 'approved' : 'pending',
+    ...(isMod ? { reviewed_by: uid, reviewed_at: new Date().toISOString() } : {})
+  };
+  const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/event_images`, {
+    method: 'POST',
+    headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+    body: JSON.stringify(record)
+  });
+  if (!ok) throw new Error('Datenbank-Eintrag fehlgeschlagen');
+  return { imageUrl, status: record.status, isMod };
+}
+
+// Event-Bild Upload aus der Detailansicht
 async function handleDetailImageUpload(input) {
   if (!input.files || !input.files[0]) return;
   if (!sb.isLoggedIn()) { input.value = ''; closeAllSheets(); openSheet('auth-sheet'); return; }
@@ -246,34 +300,9 @@ async function handleDetailImageUpload(input) {
   input.value = '';
   showToast('Bild wird hochgeladen…', '⏳');
   try {
-    const blob     = await _resizeTableImage(file);
-    const token    = await sb.getValidToken();
-    const ts       = Date.now();
-    const uid      = sb.getUserId();
-    const path     = `${currentEventId}/${uid}_${ts}.jpg`;
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/event-images/${path}`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
-      body: blob
-    });
-    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || 'Storage-Upload fehlgeschlagen'); }
-    const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/event-images/${path}`;
-    const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
-    const record = {
-      event_id:    currentEventId,
-      uploaded_by: uid,
-      image_url:   imageUrl,
-      status:      isMod ? 'approved' : 'pending',
-      ...(isMod ? { reviewed_by: uid, reviewed_at: new Date().toISOString() } : {})
-    };
-    const { ok } = await fetchWithRefresh(`${SUPABASE_URL}/rest/v1/event_images`, {
-      method: 'POST',
-      headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
-      body: JSON.stringify(record)
-    });
-    if (!ok) throw new Error('Datenbank-Eintrag fehlgeschlagen');
-    showToast(isMod ? 'Bild hochgeladen und sofort freigegeben.' : 'Bild hochgeladen! Wird nach Freigabe sichtbar.');
-    if (isMod && typeof loadEventImages === 'function') await loadEventImages(currentEventId);
+    const result = await uploadEventImageFile(file, currentEventId);
+    showToast(result.isMod ? 'Bild hochgeladen und sofort freigegeben.' : 'Bild hochgeladen! Wird nach Freigabe sichtbar.');
+    if (result.isMod && typeof loadEventImages === 'function') await loadEventImages(currentEventId);
   } catch(e) {
     showToast('Fehler beim Hochladen: ' + (e.message || ''), 'error');
   }

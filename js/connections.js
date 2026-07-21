@@ -200,7 +200,7 @@ async function checkConnectionNotifications() {
   let pending = [];
   try {
     const qb = new QueryBuilder('player_connections');
-    qb._select = 'id,requester_id,status,created_at';
+    qb._select = 'id,requester_id,status,created_at,receiver_seen_at';
     qb.eq('receiver_id', uid).eq('status', 'pending');
     const { data } = await qb.execute();
     pending = data || [];
@@ -218,6 +218,7 @@ async function checkConnectionNotifications() {
   } else {
     pendingConnectionRequests = [];
   }
+  if (typeof _updateBadgeCount === 'function') _updateBadgeCount();
 }
 
 // Rendert Verbindungs-Anfragen als HTML für das Notif-Sheet
@@ -226,16 +227,18 @@ function renderConnectionRequestNotifs() {
   return pendingConnectionRequests.map(req => {
     const p   = req.profile;
     const av  = p ? getAvatarHtml(p, { size: 40 }) : initAvatar('?', 40);
-    const nm  = escHtml(p?.username || 'Spieler');
+    const rawName = p?.username || 'Spieler';
+    const nm  = escHtml(rawName);
     const cid = escAttr(req.id);
     const uid = escAttr(req.requester_id);
+    const profileData = `data-user-id="${uid}" data-username="${escAttr(rawName)}" data-avatar-emoji="${escAttr(p?.avatar_emoji || '')}" data-avatar-url="${escAttr(p?.avatar_url || '')}"`;
     const time = typeof _notifTime === 'function' ? _notifTime(req.created_at) : '';
     return `
       <div class="notif-conn-req">
         <div class="notif-conn-header">
-          <div class="notif-av">${av}</div>
+          <button type="button" class="notif-conn-avatar-btn pp-clickable" ${profileData} onclick="event.stopPropagation();openConnectionRequestProfile(this)" aria-label="Profil von ${escAttr(rawName)} öffnen">${av}</button>
           <div class="notif-conn-text">
-            <div class="notif-conn-title"><b>${nm}</b> möchte dein Spielpartner werden</div>
+            <div class="notif-conn-title"><button type="button" class="notif-conn-name-btn pp-clickable" ${profileData} onclick="event.stopPropagation();openConnectionRequestProfile(this)">${nm}</button><span>möchte dein Spielpartner werden</span></div>
             ${time ? `<div class="notif-conn-time">${time}</div>` : ''}
           </div>
         </div>
@@ -245,6 +248,21 @@ function renderConnectionRequestNotifs() {
         </div>
       </div>`;
   }).join('');
+}
+
+function openConnectionRequestProfile(trigger) {
+  const userId = trigger?.dataset?.userId || '';
+  if (!userId) {
+    showToast('Dieses Profil ist nicht mehr verfügbar.', 'info');
+    return;
+  }
+  showPlayerProfile(
+    userId,
+    trigger.dataset.username || 'Spieler',
+    trigger.dataset.avatarEmoji || '',
+    null,
+    trigger.dataset.avatarUrl || ''
+  );
 }
 
 // ── Profil-Seite: Spielpartner-Liste ─────────────────────────────

@@ -76,7 +76,6 @@ async function _finishSessionRecovery() {
   if (typeof startNotifPolling === 'function') startNotifPolling();
   if (typeof checkDmNotifications === 'function') checkDmNotifications();
   closeAllSheets();
-  if (typeof showWelcomeSuccess === 'function') showWelcomeSuccess();
 }
 
 // visibilitychange: App wird sichtbar, nachdem Safari für OAuth geöffnet war
@@ -166,10 +165,6 @@ window.addEventListener('load', async () => {
     renderHome();
     renderEvents();
     hideSplash();
-    // Select-Optionen befüllen
-    const opts = tables.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-    ['ev-table'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
-
     // 2b. Deep-Link auflösen — nach allen Daten, URL danach säubern
     if (_dlTable || _dlEvent || _dlSearch) {
       history.replaceState(null, '', window.location.pathname);

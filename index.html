@@ -28,6 +28,8 @@
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
@@ -148,7 +150,7 @@
 
       <!-- Dezenter Standort-Chip (sitzungsweise, unter Suchleiste) -->
       <div id="map-loc-chip" class="map-loc-chip hidden" onclick="locateUser()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3F7CF4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg class="map-loc-chip-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
         <span>Standort aktivieren</span>
         <button class="map-loc-chip-dismiss" onclick="event.stopPropagation();_dismissLocChip()" aria-label="Hinweis schließen">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -379,7 +381,7 @@
         <div class="si-text" style="color:#EF4444;">Account löschen<div class="si-sub" style="color:#F87171;">Dauerhaft und unwiderruflich</div></div>
         <span class="si-arrow" style="color:#EF4444;">›</span>
       </div>
-      <div class="settings-item" onclick="showDiagnosticLogs()" style="margin-top:12px;">
+      <div class="settings-item" id="diagnostic-log-nav-item" onclick="showDiagnosticLogs()" style="display:none;margin-top:12px;">
         <div class="si-icon" style="background:var(--surface2);color:var(--text-dim);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="6 8 10 12 14 8 18 12"/></svg></div>
         <div class="si-text">Diagnose-Log<div class="si-sub">Interne Logs für iOS-Debugging</div></div>
         <span class="si-arrow">›</span>
@@ -639,50 +641,159 @@
 <!-- CREATE EVENT SHEET -->
 <div class="bottom-sheet fullscreen-sheet slide-right-sheet" id="create-event-sheet">
   <div class="sheet-header sheet-header--nav">
-    <button class="sheet-back" onclick="closeCreateEventSheet()" aria-label="Zurück">
+    <button class="sheet-back" onclick="handleCreateEventBack()" aria-label="Zurück">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
     </button>
     <div class="sheet-title" id="create-event-sheet-title">Spiel organisieren</div>
+    <button class="sheet-close" type="button" onclick="requestCancelCreateEvent()" aria-label="Vorgang abbrechen">×</button>
   </div>
-  <div class="detail-scroll" style="padding:0 20px;">
-    <div class="form-group" style="margin-top:20px;">
-      <label class="form-label">Name der Spielrunde</label>
-      <input class="form-input" placeholder="z.B. Casual Runde für alle" id="ev-name" onkeydown="if(event.key==='Enter')submitCreateEvent()">
+  <div class="event-wizard-progress" aria-live="polite">
+    <div class="event-wizard-progress-label" id="event-wizard-progress-label">Schritt 1 von 3</div>
+    <div class="event-wizard-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="3" aria-valuenow="1" id="event-wizard-progressbar">
+      <span id="event-wizard-progress-fill"></span>
     </div>
-    <div class="form-group">
-      <label class="form-label">Platte</label>
-      <select class="form-select" id="ev-table"></select>
-    </div>
-    <div class="form-row">
+  </div>
+  <div class="detail-scroll event-wizard-scroll" id="event-wizard-scroll">
+    <section class="event-wizard-step is-active" id="event-wizard-step-1" aria-labelledby="event-wizard-title-1">
+      <h2 class="event-wizard-title" id="event-wizard-title-1">Spiel erstellen</h2>
+      <p class="event-wizard-description">Plane eine Spielrunde an einer Tischtennisplatte und lade andere Spieler zum Mitmachen ein.</p>
       <div class="form-group">
-        <label class="form-label">Datum</label>
-        <input class="form-input" type="date" id="ev-date">
+        <label class="form-label" for="ev-name">Name der Spielrunde <span class="form-label-required" aria-hidden="true">*</span></label>
+        <input class="form-input" placeholder="z. B. Feierabendrunde für alle" id="ev-name" required aria-required="true"
+          oninput="onCreateEventFieldInput(this)" onkeydown="if(event.key==='Enter')eventWizardNext()">
       </div>
       <div class="form-group">
-        <label class="form-label">Uhrzeit</label>
-        <input class="form-input" type="time" value="15:00" id="ev-time">
+        <label class="form-label" id="ev-table-label">Platte <span class="form-label-required" aria-hidden="true">*</span></label>
+        <input type="hidden" id="ev-table" value="" required aria-required="true" data-error-target="ev-table-trigger">
+        <button class="event-table-trigger" id="ev-table-trigger" type="button"
+                aria-labelledby="ev-table-label ev-table-value" aria-haspopup="dialog"
+                onclick="openEventTablePicker('list')">
+          <span id="ev-table-value" class="event-table-trigger-value is-placeholder">Bitte Platte auswählen</span>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <div class="event-table-hint">Wähle die Platte aus, auf der das Spiel stattfindet.</div>
+        <div class="event-table-actions">
+          <button type="button" onclick="openEventTablePicker('map')">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+            Auf Karte wählen
+          </button>
+          <button type="button" onclick="openEventTablePicker('list', true)">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            Platte suchen
+          </button>
+        </div>
       </div>
+    </section>
+
+    <section class="event-wizard-step" id="event-wizard-step-2" aria-labelledby="event-wizard-title-2" hidden>
+      <h2 class="event-wizard-title" id="event-wizard-title-2">Wann und wie möchtet ihr spielen?</h2>
+      <div class="form-row event-datetime-row">
+        <div class="form-group event-datetime-group">
+          <label class="form-label" for="ev-date">Datum <span class="form-label-required" aria-hidden="true">*</span></label>
+          <div class="event-datetime-control">
+            <input class="form-input event-datetime-input is-empty" type="date" id="ev-date" required aria-required="true"
+              placeholder="Datum wählen" oninput="onEventDateTimeInput(this)">
+            <span class="event-datetime-placeholder" aria-hidden="true">Datum wählen</span>
+          </div>
+        </div>
+        <div class="form-group event-datetime-group">
+          <label class="form-label" for="ev-time">Uhrzeit <span class="form-label-required" aria-hidden="true">*</span></label>
+          <div class="event-datetime-control">
+            <input class="form-input event-datetime-input is-empty" type="time" id="ev-time" required aria-required="true"
+              placeholder="Uhrzeit wählen" oninput="onEventDateTimeInput(this)">
+            <span class="event-datetime-placeholder" aria-hidden="true">Uhrzeit wählen</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="ev-mode-label">Spielart <span class="form-label-required" aria-hidden="true">*</span></label>
+        <input type="hidden" id="ev-mode" value="casual" required aria-required="true">
+        <div class="ms-spielart-chips" id="ev-mode-chips" role="radiogroup" aria-labelledby="ev-mode-label">
+          <button class="ms-spielart-chip ms-spielart-casual active" type="button" data-spielart="casual" role="radio" aria-checked="true" onclick="_setEventMode('casual')">Just 4 Fun</button>
+          <button class="ms-spielart-chip ms-spielart-training" type="button" data-spielart="training" role="radio" aria-checked="false" onclick="_setEventMode('training')">Training</button>
+          <button class="ms-spielart-chip ms-spielart-punktspiel" type="button" data-spielart="punktspiel" role="radio" aria-checked="false" onclick="_setEventMode('punktspiel')">Punktspiel</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ev-max">Maximale Teilnehmerzahl <span class="form-label-required" aria-hidden="true">*</span></label>
+        <input class="form-input" type="number" id="ev-max" value="4" min="2" max="100" required aria-required="true" oninput="onCreateEventFieldInput(this)">
+      </div>
+    </section>
+
+    <section class="event-wizard-step" id="event-wizard-step-3" aria-labelledby="event-wizard-title-3" hidden>
+      <h2 class="event-wizard-title" id="event-wizard-title-3">Weitere Informationen <span>(optional)</span></h2>
+      <div class="form-group">
+        <label class="form-label" for="ev-desc">Beschreibung (optional)</label>
+        <textarea class="form-textarea" id="ev-desc" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Spielbild (optional)</label>
+        <input type="file" id="event-create-image-input" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" hidden onchange="handleCreateEventImageSelect(this)">
+        <div class="sug-photo-preview event-create-image-preview" id="event-create-image-preview" hidden>
+          <img class="sug-photo-img" id="event-create-image" src="" alt="Vorschau des Spielbilds">
+          <span class="event-create-image-source" id="event-create-image-source"></span>
+          <button class="sug-photo-remove" id="event-create-image-remove" onclick="removeCreateEventImage()" type="button" aria-label="Eigenes Spielbild entfernen">×</button>
+        </div>
+        <button class="sug-photo-add event-create-image-add" id="event-create-image-add" type="button" onclick="document.getElementById('event-create-image-input').click()">
+          <span class="sug-photo-add-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+          <span id="event-create-image-add-label">Spielbild hinzufügen</span>
+        </button>
+        <p class="event-create-image-hint" id="event-create-image-hint">Ohne eigenes Bild wird – falls vorhanden – das Bild der ausgewählten Platte verwendet.</p>
+      </div>
+      <div class="event-wizard-summary" aria-labelledby="event-wizard-summary-title">
+        <h3 id="event-wizard-summary-title">Zusammenfassung</h3>
+        <dl id="event-wizard-summary"></dl>
+      </div>
+    </section>
+  </div>
+  <div class="event-wizard-actions">
+    <button class="btn btn-secondary event-wizard-back" id="event-wizard-back-btn" type="button" onclick="eventWizardBack()" hidden>← Zurück</button>
+    <button class="btn btn-primary event-wizard-next" id="event-wizard-next-btn" type="button" onclick="eventWizardNext()">Weiter</button>
+    <button class="btn btn-primary event-wizard-submit" id="create-event-submit-btn" type="button" onclick="submitCreateEvent()" hidden>Spiel veröffentlichen</button>
+  </div>
+</div>
+
+<!-- EVENT TABLE PICKER: Unterebene, erhält alle Formulardaten im Eltern-Screen -->
+<div class="bottom-sheet fullscreen-sheet slide-right-sheet event-table-picker-sheet" id="event-table-picker-sheet"
+     role="dialog" aria-modal="true" aria-labelledby="event-table-picker-title">
+  <div class="sheet-header sheet-header--nav">
+    <button class="sheet-back" type="button" onclick="closeEventTablePicker()" aria-label="Zurück zu Spiel organisieren">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    </button>
+    <div class="sheet-title" id="event-table-picker-title">Platte auswählen</div>
+  </div>
+  <div class="event-table-picker-toolbar">
+    <div class="event-table-picker-tabs" role="tablist" aria-label="Darstellung wählen">
+      <button id="event-table-picker-map-tab" type="button" role="tab" aria-controls="event-table-picker-map-panel"
+              onclick="setEventTablePickerMode('map')">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        Karte
+      </button>
+      <button id="event-table-picker-list-tab" type="button" role="tab" aria-controls="event-table-picker-list-panel"
+              onclick="setEventTablePickerMode('list')">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Liste
+      </button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Spielmodus</label>
-      <select class="form-select" id="ev-mode">
-        <option value="casual">Just 4 Fun – Spaß für alle</option>
-        <option value="training">Training</option>
-        <option value="punktspiel">Punktspiel</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Max. Spieler</label>
-      <input class="form-input" type="number" id="ev-max" value="4" min="2" max="100">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Beschreibung (optional)</label>
-      <textarea class="form-textarea" id="ev-desc" placeholder="Schläger mitbringen, alle Levels willkommen…"></textarea>
-    </div>
-    <div id="ec-form-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-bottom:10px;"></div>
-    <div style="padding:8px 0 max(28px,env(safe-area-inset-bottom));">
-      <button class="btn btn-primary btn-full" id="create-event-submit-btn" onclick="submitCreateEvent()">Spiel organisieren</button>
-    </div>
+    <label class="event-table-picker-search">
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="event-table-picker-search" type="search" autocomplete="off" placeholder="Platte suchen …"
+             aria-label="Platte nach Name oder Adresse suchen" oninput="onEventTablePickerSearch(this.value)">
+    </label>
+  </div>
+  <div class="event-table-picker-content">
+    <section class="event-table-picker-map-panel" id="event-table-picker-map-panel" role="tabpanel"
+             aria-labelledby="event-table-picker-map-tab">
+      <div id="event-table-picker-map" aria-label="Karte mit Tischtennisplatten"></div>
+      <button class="event-table-picker-locate" type="button" onclick="locateEventTablePicker()" aria-label="Aktuellen Standort anzeigen">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      </button>
+      <div class="map-floating-preview event-table-picker-preview" id="event-table-picker-preview"></div>
+    </section>
+    <section class="event-table-picker-list-panel" id="event-table-picker-list-panel" role="tabpanel"
+             aria-labelledby="event-table-picker-list-tab">
+      <div id="event-table-picker-list" class="event-table-picker-list"></div>
+    </section>
   </div>
 </div>
 
@@ -693,13 +804,14 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
     </button>
     <div class="sheet-title">Mitspieler finden</div>
+    <button class="sheet-close" type="button" onclick="requestCancelMitspieler()" aria-label="Erstellung abbrechen">×</button>
   </div>
-  <div class="detail-scroll" style="padding:0 20px;">
-    <p style="font-size:0.85rem;color:var(--text-dim);margin:20px 0;">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
+  <div class="detail-scroll mitspieler-scroll">
+    <p class="mitspieler-intro">Suche andere Tischtennisspieler in deiner Umgebung und verabrede dich spontan.</p>
 
     <!-- Wo suchst du? (Pflicht) -->
-    <div class="form-group">
-      <label class="form-label">Wo suchst du? <span style="color:var(--primary);font-size:0.75rem;font-weight:400;">Pflicht</span></label>
+    <div class="form-group mitspieler-location-group">
+      <label class="form-label">Wo suchst du? <span class="form-required" aria-label="Pflichtfeld">*</span></label>
       <div class="psr-input-wrap">
         <input class="psr-input" id="ms-loc-input" type="search" autocomplete="off" inputmode="search"
                placeholder="z. B. Schweinfurt, Innenstadt, PLZ…"
@@ -708,12 +820,29 @@
         <button class="psr-input-clear" id="ms-loc-clear" onclick="_msClearSearch()" style="display:none" aria-label="Löschen">×</button>
       </div>
       <div class="psr-dropdown" id="ms-loc-dropdown"></div>
-      <button class="psr-loc-use-btn" style="margin-top:8px;" onclick="_msUseCurrentLocation()">
+      <button class="psr-loc-use-btn" id="ms-current-location-btn" type="button" style="margin-top:8px;" onclick="_msUseCurrentLocation()">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
         Aktuellen Standort verwenden
       </button>
       <div id="ms-loc-status" class="psr-location-status" style="margin-top:6px;"></div>
       <div id="ms-loc-error" class="form-error" role="alert" aria-live="polite" style="display:none;margin-top:8px;"></div>
+
+      <div class="mitspieler-radius-block is-disabled" id="ms-radius-block" aria-disabled="true">
+        <label class="form-label" for="ms-umkreis">Umkreis <span class="radius-val-display" id="ms-radius-display">5 km</span></label>
+        <div class="mitspieler-radius-hint">Wähle zuerst einen Ort oder deinen aktuellen Standort aus.</div>
+        <input type="range" class="radius-slider-input" id="ms-umkreis"
+               min="1" max="25" step="1" value="5" disabled
+               aria-label="Umkreis in Kilometern" aria-valuemin="1" aria-valuemax="25" aria-valuenow="5" aria-valuetext="5 Kilometer"
+               oninput="_msSliderInput(this.value)"
+               onchange="PTAnalytics.track('radius_filter_changed',{radius_km:parseInt(this.value)})">
+        <div class="radius-snap-btns">
+          <button class="radius-snap-btn" type="button" data-snap-km="1" style="left:0%;transform:translateX(0)" onclick="_msSnapRadius(1)" disabled>1 km</button>
+          <button class="radius-snap-btn" type="button" data-snap-km="5" style="left:16.67%" onclick="_msSnapRadius(5)" disabled>5 km</button>
+          <button class="radius-snap-btn" type="button" data-snap-km="10" style="left:37.5%" onclick="_msSnapRadius(10)" disabled>10 km</button>
+          <button class="radius-snap-btn" type="button" data-snap-km="15" style="left:58.33%" onclick="_msSnapRadius(15)" disabled>15 km</button>
+          <button class="radius-snap-btn" type="button" data-snap-km="25" style="left:100%;transform:translateX(-100%)" onclick="_msSnapRadius(25)" disabled>25 km</button>
+        </div>
+      </div>
     </div>
 
     <div class="form-group">
@@ -737,40 +866,23 @@
       <label class="form-label">Wann?</label>
       <input type="hidden" id="ms-wann" value="Heute">
       <div class="ms-wann-chips" id="ms-wann-chips">
-        <button class="ms-wann-chip" type="button" data-wann="Jetzt" onclick="_msSetWann('Jetzt')">Jetzt</button>
         <button class="ms-wann-chip active" type="button" data-wann="Heute" onclick="_msSetWann('Heute')">Heute</button>
         <button class="ms-wann-chip" type="button" data-wann="Heute Abend" onclick="_msSetWann('Heute Abend')">Heute Abend</button>
         <button class="ms-wann-chip" type="button" data-wann="Morgen" onclick="_msSetWann('Morgen')">Morgen</button>
         <button class="ms-wann-chip" type="button" data-wann="Diese Woche" onclick="_msSetWann('Diese Woche')">Diese Woche</button>
-        <button class="ms-wann-chip" type="button" data-wann="Egal" onclick="_msSetWann('Egal')">Egal</button>
+        <button class="ms-wann-chip" type="button" data-wann="Zeitlich flexibel" onclick="_msSetWann('Zeitlich flexibel')">Zeitlich flexibel</button>
       </div>
     </div>
 
-    <!-- Umkreis Slider -->
-    <div class="form-group">
-      <label class="form-label" for="ms-umkreis">Umkreis <span class="radius-val-display" id="ms-radius-display">5 km</span></label>
-      <input type="range" class="radius-slider-input" id="ms-umkreis"
-             min="1" max="25" step="1" value="5"
-             aria-label="Umkreis in Kilometern" aria-valuemin="1" aria-valuemax="25" aria-valuenow="5" aria-valuetext="5 Kilometer"
-             oninput="_msSliderInput(this.value)"
-             onchange="PTAnalytics.track('radius_filter_changed',{radius_km:parseInt(this.value)})">
-      <div class="radius-snap-btns">
-        <button class="radius-snap-btn" type="button" data-snap-km="1" style="left:0%;transform:translateX(0)" onclick="_msSnapRadius(1)">1 km</button>
-        <button class="radius-snap-btn" type="button" data-snap-km="5" style="left:16.67%" onclick="_msSnapRadius(5)">5 km</button>
-        <button class="radius-snap-btn" type="button" data-snap-km="10" style="left:37.5%" onclick="_msSnapRadius(10)">10 km</button>
-        <button class="radius-snap-btn" type="button" data-snap-km="15" style="left:58.33%" onclick="_msSnapRadius(15)">15 km</button>
-        <button class="radius-snap-btn" type="button" data-snap-km="25" style="left:100%;transform:translateX(-100%)" onclick="_msSnapRadius(25)">25 km</button>
-      </div>
-    </div>
     <div class="form-group">
       <label class="form-label">Nachricht <span style="color:var(--text-xdim);font-weight:400;">optional</span></label>
-      <textarea class="form-textarea" id="ms-message" placeholder="z.B. Suche jemanden für 1–2 Stunden Casual Ping Pong am Nachmittag…" style="min-height:70px;"></textarea>
+      <textarea class="form-textarea" id="ms-message" placeholder="z. B. Lust auf eine lockere Runde Ping Pong am Nachmittag …" style="min-height:70px;"></textarea>
     </div>
-    <div style="padding:8px 0 max(28px,env(safe-area-inset-bottom));">
-      <button class="btn btn-primary btn-full" id="ms-submit-btn" onclick="submitMitspieler()">
-        Veröffentlichen
-      </button>
-    </div>
+  </div>
+  <div class="mitspieler-submit-bar">
+    <button class="btn btn-primary btn-full" id="ms-submit-btn" onclick="submitMitspieler()">
+      Veröffentlichen
+    </button>
   </div>
 </div>
 

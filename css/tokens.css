@@ -18,6 +18,7 @@
   --primary-bg:  #DEF0E5;
   --primary-mid: rgba(15,138,85,0.12);
   --on-primary:  #FFFFFF;
+  --map-marker-green: #16A35B;
 
   /* Ball-Orange als Akzent */
   --accent:      #FF5A36;
@@ -33,7 +34,7 @@
   /* Sekundäre Farben */
   --green:       #22C55E;
   --green-bg:    #E8F9EE;
-  --gold:        #F7B723;
+  --gold:        #996300;
   --gold-bg:     #FDF1D7;
   --silver:      #64748B;
   --bronze:      #D97706;

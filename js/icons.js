@@ -6,6 +6,7 @@ const _IC = {
   pin:           '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   'map-pinned':  '<path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.869 15.429 6 11.613 6 8a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.714 14h-3.71a1 1 0 0 0-.9.553l-2.662 5.324a.5.5 0 0 0 .448.724h18.22a.5.5 0 0 0 .448-.724l-2.662-5.324A1 1 0 0 0 18.996 14H15.29"/>',
   'arrow-left':  '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  'chevron-right': '<path d="m9 18 6-6-6-6"/>',
   'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   navigate:      '<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
   search:        '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
@@ -119,25 +120,39 @@ function gameTypePill(type) {
   return `<span class="ev-type-pill ${meta.cls}">${meta.label}</span>`;
 }
 
+const _PLAYER_SKILL_LABELS = {
+  anfaenger: 'Anfänger',
+  fortgeschritten: 'Fortgeschritten',
+  profi: 'Profi'
+};
+
+function playerSkillPill(skillLevel) {
+  const label = _PLAYER_SKILL_LABELS[skillLevel];
+  return label ? `<span class="ev-type-pill psc-skill-pill">${label}</span>` : '';
+}
+
 function typeLabel(type) {
   return _GAME_TYPE_META[type]?.label || 'Spiel';
 }
 
-function userStatusLine(text) {
-  if (!text) return '';
-  return `<div class="ev-status-block"><span class="ev-status ev-status--user">✓ ${text}</span></div>`;
+function creatorFloatBadge(isCreator) {
+  return isCreator
+    ? '<span class="creator-float-badge"><span aria-hidden="true">✓</span> Von dir erstellt</span>'
+    : '';
+}
+
+function eventRelationFloatBadge(isCreator, isParticipating) {
+  if (isCreator) return creatorFloatBadge(true);
+  return isParticipating
+    ? '<span class="creator-float-badge"><span aria-hidden="true">✓</span> Du nimmst teil</span>'
+    : '';
 }
 
 function eventStatusBlock(e) {
-  const myId        = (typeof sb !== 'undefined' && sb.isLoggedIn()) ? String(sb.getUserId()) : null;
   const isCompleted = typeof isEventCompleted === 'function' ? isEventCompleted(e) : false;
-  const isCreator   = myId && String(e.creatorId) === myId;
-  const isDabei     = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
   const free        = (e.max || 0) - (e.p || 0);
 
   const lines = [];
-  if (isCreator)                 lines.push(`<span class="ev-status ev-status--user">✓ Von dir erstellt</span>`);
-  else if (isDabei)              lines.push(`<span class="ev-status ev-status--user">✓ Du nimmst teil</span>`);
   if (isCompleted)               lines.push(`<span class="ev-status ev-status--neutral">● Abgeschlossen</span>`);
   else if (free <= 0)            lines.push(`<span class="ev-status ev-status--danger">● Voll belegt</span>`);
   else if (free > 0 && free <= 3) lines.push(`<span class="ev-status ev-status--ok">● Noch ${free} ${free === 1 ? 'Platz' : 'Plätze'} frei</span>`);
@@ -147,7 +162,7 @@ function eventStatusBlock(e) {
 }
 
 // Wiederverwendbarer Spielstatus — gibt { text, kind } zurück.
-// kind: 'ok' | 'warn' | 'danger' | 'neutral' | 'running'
+// kind: 'warn' | 'danger' | 'neutral' | 'running'; null bei mehreren freien Plätzen
 //
 // Priorität:
 //   1. DB-Status ('cancelled' | 'completed')
@@ -176,7 +191,7 @@ function getGameDisplayStatus(e) {
   const free = Math.max(0, (e.max || 0) - (e.p || 0));
   if (free <= 0)  return { text: 'Ausgebucht',       kind: 'danger' };
   if (free === 1) return { text: '1 Platz frei',    kind: 'warn'  };
-  return { text: `${free} Plätze frei`, kind: 'ok' };
+  return null;
 }
 
 // Zentraler Datumshelper für alle Event-/Spiel-Anzeigen

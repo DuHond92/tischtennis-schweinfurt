@@ -26,8 +26,12 @@ function updateHeroLocation() {
 updateHeroLocation();
 
 function initWelcomeCard() {
-  if (localStorage.getItem('tt_welcomed')) return;
   const el = document.getElementById('home-welcome-card');
+  if (currentUser) {
+    if (el) { el.innerHTML = ''; el.style.display = 'none'; }
+    return;
+  }
+  if (localStorage.getItem('tt_welcomed')) return;
   if (!el) return;
   el.innerHTML = `
     <div class="welcome-card">
@@ -285,13 +289,13 @@ function renderHomeTablesSection() {
       ? `<span class="htt-dist">${ic('pin', 10)}&thinsp;${escHtml(formatDistance(distM))}</span>`
       : '';
     const gamesTag = evCount
-      ? `<span class="htt-games">${ic('calendar', 10)}&thinsp;${evCount}&thinsp;${evCount === 1 ? 'Spiel' : 'Spiele'}</span>`
+      ? `<span class="htt-games map-thumb-games-badge">${ic('calendar', 10)}&thinsp;${evCount}&thinsp;${evCount === 1 ? 'Spiel' : 'Spiele'}</span>`
       : '';
-    const tagRow = (distTag || gamesTag) ? `<div class="home-tag-row">${distTag}${gamesTag}</div>` : '';
+    const tagRow = distTag ? `<div class="home-tag-row">${distTag}</div>` : '';
     return `
       <div class="map-thumb-card" onclick="openMapAndFocusTable(${t.id})" role="button" tabindex="0"
            onkeydown="if(event.key==='Enter'||event.key===' ')openMapAndFocusTable(${t.id})">
-        <div class="map-thumb-img">${thumbInner}</div>
+        <div class="map-thumb-img">${thumbInner}${gamesTag}</div>
         <div class="map-thumb-body">
           <div class="map-thumb-name">${escHtml(t.name)}</div>
           ${addr ? `<div class="map-thumb-addr">${escHtml(addr)}</div>` : ''}
@@ -367,14 +371,23 @@ function renderHomeActivities() {
     if (item.kind === 'event') {
       const e = item.data;
       const isCreator  = myId && String(e.creatorId) === myId;
-      const userStatus = isCreator ? 'Von dir erstellt' : 'Du nimmst teil';
+      const isParticipating = myId && Array.isArray(e.participants) && e.participants.some(p => String(p.id) === myId);
       return `
-        <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
+        <div class="home-act-card${isCreator ? ' is-own-content' : ''}" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showEventDetail(${e.id})}">
           <div class="home-act-body">
-            <div class="home-act-title">${escHtml(e.name)}</div>
+            <div class="home-act-title-row">
+              <div class="home-act-title">${escHtml(e.name)}</div>
+              ${eventRelationFloatBadge(isCreator, isParticipating)}
+            </div>
             ${gameTypePill(e.type) ? `<div class="home-act-badges">${gameTypePill(e.type)}</div>` : ''}
-            <div class="home-act-meta">${ic('calendar', 10)} ${formatEventDate(e)} &nbsp;·&nbsp; ${ic('pin', 10)} ${escHtml(e.tname)} &nbsp;·&nbsp; ${ic('users', 10)} ${e.p}/${e.max}</div>
+            <div class="home-act-event-meta">
+              <div class="home-act-meta">${ic('calendar', 10)} ${formatEventDate(e)}</div>
+              <div class="home-act-meta-bottom">
+                <div class="home-act-meta home-act-location">${icPlate(10)} ${escHtml(e.tname || '–')}</div>
+                <div class="home-act-meta home-act-participants">${ic('users', 10)} ${e.p}/${e.max}</div>
+              </div>
+            </div>
             ${eventStatusBlock(e)}
           </div>
           <span class="home-act-chevron">›</span>
@@ -385,13 +398,17 @@ function renderHomeActivities() {
       if (ps.wann    && ps.wann    !== 'Egal') metaParts.push(`${ic('clock', 10)} ${escHtml(ps.wann)}`);
       if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin', 10)} ${escHtml(ps.umkreis)} Umkreis`);
       return `
-        <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
+        <div class="home-act-card is-own-content" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPlayerSearchDetail(${ps.id})}">
           <div class="home-act-body">
-            <div class="home-act-title">Mitspieler gesucht</div>
-            ${gameTypePill(ps.spielart) ? `<div class="home-act-badges">${gameTypePill(ps.spielart)}</div>` : ''}
+            <div class="home-act-title-row">
+              <div class="home-act-title">Mitspieler gesucht</div>
+              ${creatorFloatBadge(true)}
+            </div>
+            ${(gameTypePill(ps.spielart) || playerSkillPill(ps.skillLevel))
+              ? `<div class="home-act-badges">${gameTypePill(ps.spielart)}${playerSkillPill(ps.skillLevel)}</div>`
+              : ''}
             ${metaParts.length ? `<div class="home-act-meta">${metaParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-            ${userStatusLine('Von dir erstellt')}
           </div>
           <span class="home-act-chevron">›</span>
         </div>`;

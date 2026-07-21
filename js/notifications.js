@@ -46,7 +46,8 @@ function hideNotifBadge() {
 }
 function _updateBadgeCount() {
   const unreadSys = _systemNotifs.filter(n => !n.read_at).length;
-  const total     = pendingNotifs.length + (pendingConnectionRequests?.length || 0) + unreadSys;
+  const unreadConnections = (pendingConnectionRequests || []).filter(req => !req.receiver_seen_at).length;
+  const total = pendingNotifs.length + unreadConnections + unreadSys;
   total > 0 ? showNotifBadge(total) : hideNotifBadge();
 }
 
@@ -245,7 +246,7 @@ async function _confirmDeleteAll() {
 function openNotifSheet() {
   _cancelNotifSeenTimers();
   _notifShownCount = 10;
-  renderNotifSheet();
+  renderNotifSheet(false);
   openSheet('notif-sheet');
   // Nach 1,2 s als gelesen markieren — Einträge bleiben im Verlauf sichtbar
   _notifSeenTimer = setTimeout(() => {
@@ -288,7 +289,31 @@ function _loadMoreNotifs() {
 
 function markAllRead() {
   markAllSeen();
+  _markConnectionRequestsRead();
   _markSystemNotifsRead();
+}
+
+async function _markConnectionRequestsRead() {
+  const unread = (pendingConnectionRequests || []).filter(req => !req.receiver_seen_at);
+  if (!unread.length) return;
+  const now = new Date().toISOString();
+  const unreadIds = new Set(unread.map(req => String(req.id)));
+  pendingConnectionRequests = pendingConnectionRequests.map(req =>
+    unreadIds.has(String(req.id)) ? { ...req, receiver_seen_at: now } : req
+  );
+  _updateBadgeCount();
+  renderNotifSheet();
+
+  try {
+    const ids = unread.map(req => encodeURIComponent(req.id)).join(',');
+    await fetchWithRefresh(
+      `${SUPABASE_URL}/rest/v1/player_connections?id=in.(${ids})&receiver_id=eq.${encodeURIComponent(sb.getUserId())}`,
+      { method: 'PATCH', headers: { ...dbHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ receiver_seen_at: now }) }
+    );
+  } catch(e) {
+    if (window.PT_DEBUG || location.hostname === 'localhost') console.warn('[notif] markConnectionsRead:', e);
+  }
 }
 
 // ── Item-Renderer ────────────────────────────────────────────────
@@ -340,17 +365,22 @@ function _renderChatItem(m, evMap) {
 
 // ── Sheet rendern ─────────────────────────────────────────────────
 
-function renderNotifSheet() {
+function renderNotifSheet(preserveScroll = true) {
   const body = document.getElementById('notif-body');
   if (!body) return;
+  const previousScrollTop = preserveScroll ? body.scrollTop : 0;
+  const setBodyHtml = html => {
+    body.innerHTML = html;
+    body.scrollTop = previousScrollTop;
+  };
 
   if (!sb.isLoggedIn()) {
-    body.innerHTML = `<div class="notif-empty">
+    setBodyHtml(`<div class="notif-empty">
       <div class="notif-empty-icon">${ic('bell', 36)}</div>
       <div>Melde dich an, um Benachrichtigungen zu sehen.</div>
       <button class="btn btn-primary btn-sm" style="margin-top:12px;"
         onclick="closeAllSheets();openSheet('auth-sheet')">Anmelden</button>
-    </div>`;
+    </div>`);
     return;
   }
 
@@ -359,10 +389,10 @@ function renderNotifSheet() {
   const hasConn = !!(pendingConnectionRequests?.length);
 
   if (!hasSys && !hasMsgs && !hasConn) {
-    body.innerHTML = `<div class="notif-empty">
+    setBodyHtml(`<div class="notif-empty">
       <div class="notif-empty-icon">${ic('check-circle', 36)}</div>
       <div>Noch keine Benachrichtigungen</div>
-    </div>`;
+    </div>`);
     return;
   }
 
@@ -408,7 +438,7 @@ function renderNotifSheet() {
     ? `<button class="notif-load-more" onclick="_loadMoreNotifs()">Weitere Benachrichtigungen anzeigen</button>`
     : '';
 
-  body.innerHTML = headerHtml + connHtml + timelineHtml + loadMoreHtml;
+  setBodyHtml(headerHtml + connHtml + timelineHtml + loadMoreHtml);
 }
 
 // ── System-Notif antippen → als gelesen + navigieren ─────────────

@@ -19,24 +19,28 @@ function _setFieldError(inputId, message) {
   if (!input) return;
   const group = input.closest('.form-group');
   if (!group) return;
+  const visibleTargetId = input.dataset.errorTarget;
+  const errorTarget = visibleTargetId ? document.getElementById(visibleTargetId) : input;
+  if (!errorTarget) return;
   const errId = `${inputId}-error`;
   if (message) {
-    input.classList.add('input-error');
-    input.setAttribute('aria-invalid', 'true');
-    input.setAttribute('aria-describedby', errId);
+    errorTarget.classList.add('input-error');
+    errorTarget.setAttribute('aria-invalid', 'true');
+    errorTarget.setAttribute('aria-describedby', errId);
     let errEl = group.querySelector('.field-error');
     if (!errEl) {
       errEl = document.createElement('div');
       errEl.className = 'field-error';
       errEl.setAttribute('role', 'alert');
-      group.appendChild(errEl);
+      if (visibleTargetId) errorTarget.insertAdjacentElement('afterend', errEl);
+      else group.appendChild(errEl);
     }
     errEl.id = errId;
     errEl.textContent = message;
   } else {
-    input.classList.remove('input-error');
-    input.removeAttribute('aria-invalid');
-    input.removeAttribute('aria-describedby');
+    errorTarget.classList.remove('input-error');
+    errorTarget.removeAttribute('aria-invalid');
+    errorTarget.removeAttribute('aria-describedby');
     const errEl = group.querySelector('.field-error');
     if (errEl) errEl.remove();
   }
@@ -493,6 +497,18 @@ function updateTopBarForUser() {
 // ── Willkommens-Overlay nach Anmeldung ───────────────────────────
 
 function showWelcomeSuccess() {
+  if (!currentUser) return;
+  if (typeof renderHome === 'function') renderHome();
+  const uid = sb.getUserId() || currentUser.id;
+  if (!uid) return;
+  const seenKey = `tt_profile_welcome_shown_${uid}`;
+  if (currentUser.profile_welcome_seen_at || localStorage.getItem(seenKey)) return;
+  const seenAt = new Date().toISOString();
+  localStorage.setItem(seenKey, '1');
+  currentUser.profile_welcome_seen_at = seenAt;
+  _persistProfileWelcomeSeen(uid, seenAt);
+  if (typeof _isProfileComplete === 'function' && _isProfileComplete(currentUser)) return;
+
   let el = document.getElementById('welcome-success-overlay');
   if (!el) {
     el = document.createElement('div');
@@ -507,10 +523,19 @@ function showWelcomeSuccess() {
       <div style="margin-bottom:10px;color:var(--primary);">${ic('check-circle', 40)}</div>
       <div class="apc-title">Willkommen, ${escHtml(name)}!</div>
       <div class="apc-body">Du kannst jetzt Spielen beitreten, Mitspieler kontaktieren und dein Profil einrichten.</div>
-      <button class="apc-btn apc-btn-primary" onclick="_dismissWelcomeSuccess();showPage('profile');setTimeout(()=>openSheet('profile-edit-sheet'),150)">Profil vervollständigen</button>
+      <button class="apc-btn apc-btn-primary" onclick="_dismissWelcomeSuccess();showPage('profile');setTimeout(()=>openProfileEditSheet(),150)">Profil vervollständigen</button>
       <button class="apc-btn apc-btn-ghost" onclick="_dismissWelcomeSuccess()">Später</button>
     </div>`;
   el.style.display = 'flex';
+}
+
+async function _persistProfileWelcomeSeen(uid, seenAt) {
+  try {
+    const qb = new QueryBuilder('profiles');
+    await qb.eq('id', uid).update({ profile_welcome_seen_at: seenAt });
+  } catch (_) {
+    // Der lokale Status verhindert ein erneutes Modal, falls das Gerät kurz offline ist.
+  }
 }
 
 function _dismissWelcomeSuccess() {
@@ -567,6 +592,7 @@ async function doSignOut() {
   closeAllSheets();
   updateTopBarForUser();
   if (typeof renderProfile === 'function') renderProfile();
+  if (typeof renderHome === 'function') renderHome();
   setAuthMode('login');
   showToast('Bis bald!');
   showPage('home');

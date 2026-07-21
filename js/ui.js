@@ -145,6 +145,11 @@ function openSubSheet(id) {
 
 function closeSubSheet() {
   if (!_openSubSheetId) return;
+  const closingSubSheetId = _openSubSheetId;
+  if (closingSubSheetId === 'event-table-picker-sheet'
+      && typeof _resetEventTablePickerConfirmation === 'function') {
+    _resetEventTablePickerConfirmation();
+  }
   const el = document.getElementById(_openSubSheetId);
   if (el) {
     el.classList.remove('open');
@@ -724,8 +729,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const hs  = document.getElementById('history-sheet');
   const rs  = document.getElementById('rating-sheet');
   const ces = document.getElementById('create-event-sheet');
+  const etp = document.getElementById('event-table-picker-sheet');
+  const mss = document.getElementById('mitspieler-sheet');
   if (rs)  initSwipeClose(rs,  () => closeRatingSheet(),       44);
-  if (ces) initSwipeClose(ces, () => closeCreateEventSheet(),  44);
+  if (ces) initSwipeClose(ces, () => handleCreateEventBack(),  44);
+  if (etp) initSwipeClose(etp, () => closeEventTablePicker(), 44);
+  if (mss) initSwipeClose(mss, () => closeMitspielerSheet(),   44);
   const ars = document.getElementById('all-ratings-sheet');
   if (ars) initSwipeClose(ars, () => closeAllRatingsSheet(),   44);
   if (tds) initSwipeClose(tds, () => closeAllSheets(),         44);

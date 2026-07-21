@@ -13,14 +13,19 @@ function _localTodayISO() {
 const _MAP_STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/liberty';
 const _MAP_STYLE_DARK  = 'https://tiles.openfreemap.org/styles/dark';
 const _MAP_ATTR = '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
+const _TABLE_MARKER_GREEN = 'var(--map-marker-green)';
 
-let leafletMap, _maplibreLayer = null, markers = [];
+let leafletMap, _maplibreLayer = null, markers = [], _mapMarkerCluster = null;
 let mapSearchQuery   = '';
 let mapSpielartFilter = 'all'; // 'all' | 'casual' | 'training' | 'punktspiel'
 let mapPlaceFilter    = 'all'; // 'all' | 'indoor' | 'outdoor'
 
 let _previewTableId = null; // currently shown in map preview card
 let _bsSnapTo = null;       // exposed by initBottomSheet for external snap calls
+
+const TABLE_LIST_BATCH_SIZE = 10;
+let _mapListItems = [];
+let _mapListVisibleCount = TABLE_LIST_BATCH_SIZE;
 
 function _currentMapStyle() {
   return document.documentElement.getAttribute('data-theme') === 'dark' ? _MAP_STYLE_DARK : _MAP_STYLE_LIGHT;
@@ -29,11 +34,12 @@ function _currentMapStyle() {
 function _watchMapTheme() {
   new MutationObserver(() => {
     _maplibreLayer?.getMaplibreMap()?.setStyle(_currentMapStyle());
+    if (typeof _refreshEventTablePickerTheme === 'function') _refreshEventTablePickerTheme();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
 function initMap() {
-  leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, zoomControl:false });
+  leafletMap = L.map('map', { center:[50.0490,10.2310], zoom:14, maxZoom:19, zoomControl:false });
   _maplibreLayer = L.maplibreGL({
     style: _currentMapStyle(),
     attribution: _MAP_ATTR
@@ -41,6 +47,7 @@ function initMap() {
   leafletMap.attributionControl.setPrefix(false);
   _watchMapTheme();
 
+  _mapMarkerCluster = _createTableMarkerClusterGroup().addTo(leafletMap);
   const src = tablesLoaded ? tables : FALLBACK_TABLES;
   src.forEach(t => addMarker(t));
   renderMapList(src);
@@ -53,15 +60,15 @@ function initMap() {
   if (typeof _refreshPendingMarkers === 'function') _refreshPendingMarkers();
 }
 
-function _makeMarkerIcon(t) {
-  const color = t.type === 'indoor' ? '#16A35B' : '#22C55E';
+function _makeMarkerIcon(t, selected = false) {
   const today = _localTodayISO();
   const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
   return L.divIcon({
     className: '',
-    html: `<div style="background:${color};width:36px;height:36px;border-radius:50%;
+    html: `<div style="background:${_TABLE_MARKER_GREEN};width:36px;height:36px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
-      box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;">
+      box-shadow:0 3px 12px rgba(0,0,0,0.25);border:2px solid #fff;cursor:pointer;position:relative;
+      transform:${selected ? 'scale(1.25)' : 'none'};transition:transform .15s;">
 <img src="images/icons/play-map-white.svg" width="24" height="24" style="display:block;width:24px;height:24px;flex-shrink:0;pointer-events:none;object-fit:contain;" alt="">${evCount ? `<span style="position:absolute;top:-5px;right:-5px;background:#EF4444;
         color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;
         display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;">${evCount}</span>` : ''}
@@ -70,10 +77,61 @@ function _makeMarkerIcon(t) {
   });
 }
 
+function _makeTableClusterIcon(cluster) {
+  const count = cluster.getChildCount();
+  const size = count >= 100 ? 48 : count >= 10 ? 44 : 40;
+  return L.divIcon({
+    className: '',
+    html: `<div class="table-marker-cluster" style="background:${_TABLE_MARKER_GREEN};width:${size}px;height:${size}px;
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
+      color:#fff;font-size:${count >= 100 ? 13 : 15}px;font-weight:800;line-height:1;
+      box-shadow:0 3px 12px rgba(0,0,0,.25);border:2px solid #fff;cursor:pointer;"
+      aria-label="${count} Tischtennisplatten">${count}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2]
+  });
+}
+
+function _createTableMarkerClusterGroup() {
+  if (typeof L.markerClusterGroup !== 'function') return L.layerGroup();
+  return L.markerClusterGroup({
+    iconCreateFunction: _makeTableClusterIcon,
+    maxClusterRadius: 52,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    spiderfyOnMaxZoom: true,
+    spiderfyDistanceMultiplier: 1.15,
+    removeOutsideVisibleBounds: true,
+    animate: true
+  });
+}
+
 function addMarker(t) {
-  const m = L.marker([t.lat, t.lng], { icon: _makeMarkerIcon(t) }).addTo(leafletMap);
+  if (!leafletMap || !Number.isFinite(Number(t.lat)) || !Number.isFinite(Number(t.lng))) return;
+  if (markers.some(markerEntry => String(markerEntry.id) === String(t.id))) return;
+  if (!_mapMarkerCluster) _mapMarkerCluster = _createTableMarkerClusterGroup().addTo(leafletMap);
+  const m = L.marker([Number(t.lat), Number(t.lng)], {
+    icon: _makeMarkerIcon(t),
+    keyboard: true,
+    title: t.name || 'Tischtennisplatte'
+  });
   m.on('click', () => showMapPreview(t.id));
-  markers.push({ id: t.id, m });
+  _mapMarkerCluster.addLayer(m);
+  markers.push({ id: t.id, m, visible: true });
+}
+
+function _syncMapMarkers(sourceTables) {
+  if (!leafletMap || !_mapMarkerCluster) return;
+  const sourceIds = new Set(sourceTables.map(table => String(table.id)));
+  markers = markers.filter(markerEntry => {
+    if (sourceIds.has(String(markerEntry.id))) return true;
+    _mapMarkerCluster.removeLayer(markerEntry.m);
+    return false;
+  });
+  const existingIds = new Set(markers.map(markerEntry => String(markerEntry.id)));
+  sourceTables.forEach(table => {
+    if (!existingIds.has(String(table.id))) addMarker(table);
+  });
 }
 
 function _refreshMarkerIcons() {
@@ -81,8 +139,9 @@ function _refreshMarkerIcons() {
   const byId = new Map(src.map(t => [t.id, t]));
   markers.forEach(({ id, m }) => {
     const t = byId.get(id);
-    if (t) m.setIcon(_makeMarkerIcon(t));
+    if (t) m.setIcon(_makeMarkerIcon(t, String(id) === String(_previewTableId)));
   });
+  _mapMarkerCluster?.refreshClusters?.();
 }
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
@@ -371,16 +430,20 @@ function getFilteredTables(src) {
 
 function _applyMapFilters() {
   const src      = tablesLoaded ? tables : FALLBACK_TABLES;
+  _syncMapMarkers(src);
   const filtered = getFilteredTables(src);
   renderMapList(filtered);
   _updateMarkerVisibility(filtered);
 }
 
 function _updateMarkerVisibility(filtered) {
-  const ids = new Set(filtered.map(t => t.id));
-  markers.forEach(({ id, m }) => {
-    const el = m.getElement();
-    if(el) el.style.opacity = ids.has(id) ? '1' : '0.22';
+  const ids = new Set(filtered.map(t => String(t.id)));
+  markers.forEach(markerEntry => {
+    const shouldShow = ids.has(String(markerEntry.id));
+    if (shouldShow === markerEntry.visible) return;
+    markerEntry.visible = shouldShow;
+    if (shouldShow) _mapMarkerCluster?.addLayer(markerEntry.m);
+    else _mapMarkerCluster?.removeLayer(markerEntry.m);
   });
 }
 
@@ -530,12 +593,18 @@ function updateDistances() {
 // ── LIST ──────────────────────────────────────────────────────────────────────
 
 function selectMapItem(id) {
-  document.querySelectorAll('.map-list-item').forEach(el =>
+  const list = document.getElementById('map-list-container');
+  const itemIndex = _mapListItems.findIndex(table => String(table.id) === String(id));
+  if (itemIndex >= _mapListVisibleCount) {
+    _mapListVisibleCount = Math.ceil((itemIndex + 1) / TABLE_LIST_BATCH_SIZE) * TABLE_LIST_BATCH_SIZE;
+    _renderVisibleMapListItems();
+  }
+  list?.querySelectorAll('.map-list-item').forEach(el =>
     el.classList.toggle('selected', el.dataset.id == id));
   const src = tablesLoaded ? tables : FALLBACK_TABLES;
   const t = src.find(x => x.id === id);
   if(t && leafletMap) leafletMap.setView([t.lat, t.lng], 16, { animate:true });
-  const selected = document.querySelector('.map-list-item.selected');
+  const selected = list?.querySelector('.map-list-item.selected');
   if(selected) selected.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
@@ -665,9 +734,78 @@ function _tableBadgeRow() {
   return html ? `<div class="plt-badge-row">${html}</div>` : '';
 }
 
+function renderTableListCardHtml(t, { mode = 'map', eager = false, selected = false, metaIdPrefix = 'mli-meta' } = {}) {
+  const today = _localTodayISO();
+  const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
+  const metaId = `${metaIdPrefix}-${t.id}`;
+  const activation = mode === 'select'
+    ? 'confirmEventTableSelection(this.dataset.id)'
+    : 'focusTableOnMap(Number(this.dataset.id))';
+  const selectionState = mode === 'select' ? ` aria-pressed="${selected ? 'true' : 'false'}"` : '';
+
+  return `
+    <div class="map-list-item${selected ? ' selected' : ''}" data-id="${escAttr(String(t.id))}"
+         role="button" tabindex="0"${selectionState}
+         onclick="${activation}"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${activation}}">
+      <div class="mli-thumb">${_mapThumbHtml(t, eager ? 'eager' : 'lazy')}</div>
+      <div class="map-list-info">
+        <div class="map-list-title-row">
+          <div class="map-list-name">${escHtml(t.name || 'Unbenannte Platte')}</div>
+          ${_communityGamesTag(evCount)}
+        </div>
+        <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
+        <div class="mli-compact-meta" id="${escAttr(metaId)}">${_tableCompactMeta(t)}</div>
+        ${_communityTags(t, 0)}
+      </div>
+    </div>`;
+}
+
+function _loadVisibleMapListMeta(items) {
+  items.forEach(table => {
+    if (table.ratingAvg === undefined) _loadListMeta(table.id);
+  });
+}
+
+function _renderVisibleMapListItems() {
+  const container = document.getElementById('map-list-container');
+  if (!container || !_mapListItems.length) return;
+  const visibleItems = _mapListItems.slice(0, _mapListVisibleCount);
+  container.innerHTML = visibleItems.map((table, index) =>
+    renderTableListCardHtml(table, { eager: index < 3 })
+  ).join('');
+  _loadVisibleMapListMeta(visibleItems);
+}
+
+function _appendNextMapListBatch() {
+  if (_mapListVisibleCount >= _mapListItems.length) return;
+  const container = document.getElementById('map-list-container');
+  if (!container) return;
+  const start = _mapListVisibleCount;
+  _mapListVisibleCount = Math.min(start + TABLE_LIST_BATCH_SIZE, _mapListItems.length);
+  const nextItems = _mapListItems.slice(start, _mapListVisibleCount);
+  container.insertAdjacentHTML('beforeend', nextItems.map((table, index) =>
+    renderTableListCardHtml(table, { eager: start + index < 3 })
+  ).join(''));
+  _loadVisibleMapListMeta(nextItems);
+}
+
+function _bindMapListProgressiveRendering(container) {
+  if (container.dataset.progressiveRenderingBound === 'true') return;
+  container.dataset.progressiveRenderingBound = 'true';
+  container.addEventListener('scroll', () => {
+    const distanceToEnd = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceToEnd < 240) _appendNextMapListBatch();
+  }, { passive: true });
+}
+
 function renderMapList(list) {
   const c = document.getElementById('map-list-container');
   if (!c) return;
+
+  _mapListItems = Array.from(list);
+  _mapListVisibleCount = TABLE_LIST_BATCH_SIZE;
+  _bindMapListProgressiveRendering(c);
 
   const titleEl = document.getElementById('map-sheet-title');
   if (titleEl) titleEl.textContent = `${list.length} Platte${list.length !== 1 ? 'n' : ''}`;
@@ -677,28 +815,8 @@ function renderMapList(list) {
     return;
   }
 
-  const _today = _localTodayISO();
-  c.innerHTML = list.map((t, i) => {
-    const evCount    = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-    const thumbInner = _mapThumbHtml(t, i < 3 ? 'eager' : 'lazy');
-
-    return `
-    <div class="map-list-item" data-id="${t.id}" onclick="focusTableOnMap(${t.id})">
-      <div class="mli-thumb">${thumbInner}</div>
-      <div class="map-list-info">
-        <div class="map-list-name">${escHtml(t.name)}</div>
-        <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
-        <div class="mli-compact-meta" id="mli-meta-${t.id}">${_tableCompactMeta(t)}</div>
-        ${_communityTags(t, evCount)}
-      </div>
-    </div>`;
-  }).join('');
-
-  // Bewertungen asynchron nachladen, Meta-Zeile danach aktualisieren
-  list.forEach(t => {
-    if (t.ratingAvg === undefined) _loadListMeta(t.id);
-  });
-
+  c.scrollTop = 0;
+  _renderVisibleMapListItems();
 }
 
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
@@ -868,28 +986,93 @@ function initBottomSheet() {
 // ── MARKER PREVIEW ───────────────────────────────────────────────────────────
 
 function _setActiveMarker(id) {
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
+  const byId = new Map(src.map(table => [String(table.id), table]));
   markers.forEach(({ id: mId, m }) => {
-    const inner = m.getElement()?.querySelector('div');
-    if (inner) inner.style.transform = mId === id ? 'scale(1.25)' : '';
+    const table = byId.get(String(mId));
+    if (table) m.setIcon(_makeMarkerIcon(table, String(mId) === String(id)));
   });
+  _mapMarkerCluster?.refreshClusters?.();
 }
 
 function _resetActiveMarker() {
-  markers.forEach(({ m }) => {
-    const inner = m.getElement()?.querySelector('div');
-    if (inner) inner.style.transform = '';
+  const src = tablesLoaded ? tables : FALLBACK_TABLES;
+  const byId = new Map(src.map(table => [String(table.id), table]));
+  markers.forEach(({ id, m }) => {
+    const table = byId.get(String(id));
+    if (table) m.setIcon(_makeMarkerIcon(table));
   });
+  _mapMarkerCluster?.refreshClusters?.();
+}
+
+function _mapPreviewCardHtml(t, { metaId, showClose = true, selected = false, actionLabel = '' } = {}) {
+  const today = _localTodayISO();
+  const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
+  const thumbHtml = _mapThumbHtml(t, 'eager');
+  const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
+  return `
+    <div class="mfp-card${selected ? ' is-selection-confirmed' : ''}" role="button" tabindex="0"
+         aria-label="${escAttr(actionLabel ? `${t.name}: ${actionLabel}` : t.name)}">
+      <div class="mfp-inner">
+        <div class="mfp-thumb">${thumbHtml}</div>
+        <div class="mfp-body">
+          <div class="mfp-name-row">
+            <div class="mfp-name">${escHtml(t.name)}</div>
+            ${showClose ? '<button class="mfp-close" type="button" title="Schließen" aria-label="Schließen">×</button>' : ''}
+          </div>
+          <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
+          <div class="mfp-compact-meta" id="${escAttr(metaId)}">${_tableCompactMeta(t)}</div>
+          <div class="mfp-footer-row">
+            ${_communityTags(t, evCount)}
+            ${actionLabel ? `<span class="mfp-action-hint">${escHtml(actionLabel)} →</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${selected ? `<span class="mfp-selection-check" aria-hidden="true">${ic('check', 20)}</span>` : ''}
+    </div>`;
+}
+
+function renderMapPreviewCard({ container, table, onActivate, onClose, metaId, selected = false, actionLabel = '' }) {
+  if (!container || !table) return;
+  container.innerHTML = _mapPreviewCardHtml(table, { metaId, showClose: !!onClose, selected, actionLabel });
+  const card = container.querySelector('.mfp-card');
+  if (card) {
+    const activate = event => {
+      if (event.target.closest('.mfp-close')) return;
+      if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+      if (event.type === 'keydown') event.preventDefault();
+      onActivate?.(table.id);
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', activate);
+  }
+  const close = container.querySelector('.mfp-close');
+  if (close) close.addEventListener('click', event => {
+    event.stopPropagation();
+    onClose?.();
+  });
+
+  if (table.ratingAvg === undefined) {
+    _loadTableRating(table.id, metaId).then(() => {
+      const meta = document.getElementById(metaId);
+      if (meta) meta.innerHTML = _tableCompactMeta(table);
+    });
+  }
 }
 
 // Gemeinsame Community-Tag-Zeile: [📍 628 m] [📅 3 Spiele]
 // Identische Darstellung wie Home-Seite — nutzt htt-dist/htt-games/home-tag-row CSS.
+function _communityGamesTag(evCount) {
+  return evCount
+    ? `<span class="htt-games">${ic('calendar', 10)}&thinsp;${evCount}&thinsp;${evCount === 1 ? 'Spiel' : 'Spiele'}</span>`
+    : '';
+}
+
 function _communityTags(t, evCount) {
   const distTag  = t.distance != null
     ? `<span class="htt-dist">${ic('pin', 10)}&thinsp;${formatDistance(t.distance)}</span>`
     : '';
-  const gamesTag = evCount
-    ? `<span class="htt-games">${ic('calendar', 10)}&thinsp;${evCount}&thinsp;${evCount === 1 ? 'Spiel' : 'Spiele'}</span>`
-    : '';
+  const gamesTag = _communityGamesTag(evCount);
   return (distTag || gamesTag) ? `<div class="home-tag-row">${distTag}${gamesTag}</div>` : '';
 }
 
@@ -906,19 +1089,10 @@ function _tableCompactMeta(t) {
   return parts.join(' · ');
 }
 
-async function _loadPreviewRating(tableId) {
-  if (_previewTableId !== tableId) return;
-  await _loadTableRating(tableId, `plt-rating-fp-${tableId}`);
-  if (_previewTableId !== tableId) return;
-  const t = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
-  const el = document.getElementById(`mfp-meta-${tableId}`);
-  if (el && t) el.innerHTML = _tableCompactMeta(t);
-}
-
-async function _loadListMeta(tableId) {
+async function _loadListMeta(tableId, metaId = `mli-meta-${tableId}`) {
   await _loadTableRating(tableId, `plt-rating-list-${tableId}`);
   const t = (tablesLoaded ? tables : FALLBACK_TABLES).find(x => x.id === tableId);
-  const el = document.getElementById(`mli-meta-${tableId}`);
+  const el = document.getElementById(metaId);
   if (el && t) el.innerHTML = _tableCompactMeta(t);
 }
 
@@ -954,31 +1128,16 @@ function showMapPreview(tableId) {
   const wasAlreadyShowing = !!_previewTableId;
   _previewTableId = tableId;
 
-  const _today    = _localTodayISO();
-  const evCount   = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;
-  const thumbHtml = _mapThumbHtml(t, 'eager');
-  const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
-
   const fp = document.getElementById('map-floating-preview');
   if (!fp) return;
-
-  fp.innerHTML = `
-    <div class="mfp-card" onclick="showTableDetail(${t.id})">
-      <div class="mfp-inner">
-        <div class="mfp-thumb">${thumbHtml}</div>
-        <div class="mfp-body">
-          <div class="mfp-name-row">
-            <div class="mfp-name">${escHtml(t.name)}</div>
-            <button class="mfp-close" onclick="event.stopPropagation();hideMapPreview()" title="Schließen" aria-label="Schließen">×</button>
-          </div>
-          <div class="mfp-addr">${ic('pin', 11)} ${escHtml(shortAddr)}</div>
-          <div class="mfp-compact-meta" id="mfp-meta-${t.id}">${_tableCompactMeta(t)}</div>
-          ${_communityTags(t, evCount)}
-        </div>
-      </div>
-    </div>`;
-
-  if (t.ratingAvg === undefined) _loadPreviewRating(tableId);
+  renderMapPreviewCard({
+    container: fp,
+    table: t,
+    metaId: `mfp-meta-${t.id}`,
+    onActivate: () => showTableDetail(t.id),
+    onClose: () => hideMapPreview(),
+    actionLabel: 'Details ansehen'
+  });
 
   if (!wasAlreadyShowing) {
     fp.classList.remove('is-visible');
