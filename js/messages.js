@@ -129,18 +129,24 @@ async function renderInboxChats() {
   const el = document.getElementById('inbox-body');
   if (!el) return;
   if (!sb.isLoggedIn()) { el.innerHTML = _inboxEmpty('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg>', 'Bitte melde dich an.'); return; }
+  if (typeof ptLog === 'function') ptLog('inbox', 'renderInboxChats START', { isLoggedIn: sb.isLoggedIn() });
   el.innerHTML = skeletonList('message', 4);
+  if (typeof ptLog === 'function') ptLog('inbox', 'skeleton shown');
 
   const uid = sb.getUserId();
 
   // Verbindungen für Badge laden
   if (typeof loadMyConnections === 'function' && typeof _myConnections !== 'undefined' && _myConnections === null) {
+    if (typeof ptLog === 'function') ptLog('inbox', 'loadMyConnections START');
     await loadMyConnections();
+    if (typeof ptLog === 'function') ptLog('inbox', 'loadMyConnections DONE');
   }
   _updateRequestsBadge();
 
   // DM-Konversationen laden
+  if (typeof ptLog === 'function') ptLog('inbox', '_loadDmMessages START');
   const dmMessages = await _loadDmMessages(uid);
+  if (typeof ptLog === 'function') ptLog('inbox', '_loadDmMessages DONE', { count: dmMessages.length });
   const dmConvs    = _groupDmsByPartner(dmMessages, uid);
 
   let dmProfs = {};
@@ -171,6 +177,7 @@ async function renderInboxChats() {
     return;
   }
 
+  if (typeof ptLog === 'function') ptLog('inbox', 'render DONE', { convCount: dmConvs.length });
   el.innerHTML = dmConvs.map(c => _renderDmRow(c, dmProfs, uid)).join('');
 }
 
@@ -493,11 +500,16 @@ function toggleInboxSection(key, btn) {
 
 // ── Datenlader ────────────────────────────────────────────────
 async function _loadDmMessages(uid) {
+  if (typeof ptLog === 'function') ptLog('dm', '_loadDmMessages START', { uid });
   try {
     const url = `${SUPABASE_URL}/rest/v1/direct_messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(sender_id.eq.${uid},receiver_id.eq.${uid})&order=created_at.desc&limit=200`;
     const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+    if (typeof ptLog === 'function') ptLog('dm', '_loadDmMessages DONE', { count: (data || []).length });
     return data || [];
-  } catch(e) { return []; }
+  } catch(e) {
+    if (typeof ptLogError === 'function') ptLogError('dm', '_loadDmMessages CATCH', e);
+    return [];
+  }
 }
 
 // ── Render-Helfer ─────────────────────────────────────────────
@@ -722,18 +734,19 @@ function onDmInputKey(e) {
 function openDmDotMenu() {
   const titleEl = document.getElementById('dm-action-title');
   if (titleEl) titleEl.textContent = _dmPartnerName || 'Spieler';
-  openSheet('dm-action-sheet');
+  openSubSheet('dm-action-sheet');
 }
 
 function openDmReport() {
   const pid = _dmPartnerId;
-  closeAllSheets();
+  closeSubSheet();
+  closeDmSheet();
   openReport('user', pid, _dmPartnerName, pid);
 }
 
 function openDmBlock() {
   const partnerId   = _dmPartnerId;
   const partnerName = _dmPartnerName;
-  closeAllSheets();
+  closeSubSheet();
   confirmBlockUser(partnerId, partnerName, 'dm', null);
 }

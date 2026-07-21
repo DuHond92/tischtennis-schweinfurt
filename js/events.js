@@ -478,7 +478,7 @@ async function joinEvent(eventId, btn) {
   const isFallback = allEvents.length === 0;
   if (isFallback) {
     setTimeout(()=>{
-      btn.textContent='Dabei'; btn.style.background='var(--green)';
+      btn.textContent='Dabei';
       showToast('Du nimmst am Event teil!');
     }, 400);
     return;
@@ -487,12 +487,12 @@ async function joinEvent(eventId, btn) {
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
   if(error && error.code === '23505') {
     showToast('Du nimmst bereits teil','info');
-    btn.textContent='Dabei'; btn.style.background='var(--green)';
+    btn.textContent='Dabei';
   } else if(error) {
     showToast('Fehler beim Beitreten','error');
     btn.disabled=false; btn.textContent='Dabei';
   } else {
-    btn.textContent='Dabei'; btn.style.background='var(--green)';
+    btn.textContent='Dabei';
     PTAnalytics.track('game_joined');
     showToast('Du nimmst am Event teil!');
     _patchEventParticipantJoin(eventId);

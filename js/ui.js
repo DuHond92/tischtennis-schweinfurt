@@ -118,6 +118,44 @@ function closeTdsSubpage(id) {
 }
 
 let openSheetId = null;
+
+// ── SUB-SHEET: stapelt über einem bestehenden Eltern-Sheet ──
+// openSubSheet / closeSubSheet berühren weder openSheetId noch den regulären
+// Sheet-Stack. Das darunterliegende Sheet bleibt vollständig erhalten.
+let _openSubSheetId = null;
+
+function openSubSheet(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (_openSubSheetId && _openSubSheetId !== id) {
+    const prev = document.getElementById(_openSubSheetId);
+    if (prev) {
+      prev.classList.remove('open');
+      prev.style.removeProperty('transform');
+      prev.style.removeProperty('transition');
+    }
+  }
+  const ov = document.getElementById('sub-sheet-overlay');
+  if (ov) ov.classList.add('open');
+  el.style.removeProperty('transform');
+  el.style.removeProperty('transition');
+  el.classList.add('open');
+  _openSubSheetId = id;
+}
+
+function closeSubSheet() {
+  if (!_openSubSheetId) return;
+  const el = document.getElementById(_openSubSheetId);
+  if (el) {
+    el.classList.remove('open');
+    el.style.removeProperty('transform');
+    el.style.removeProperty('transition');
+  }
+  const ov = document.getElementById('sub-sheet-overlay');
+  if (ov) ov.classList.remove('open');
+  _openSubSheetId = null;
+}
+
 function openSheet(id) {
   if (openSheetId === id) return;
   const el = document.getElementById(id);
@@ -154,6 +192,7 @@ function openSheet(id) {
   openSheetId = id;
 }
 function closeAllSheets() {
+  closeSubSheet();
   stopChatPolling();
   if (typeof stopDmPolling            === 'function') stopDmPolling();
   if (typeof _cancelNotifSeenTimers   === 'function') _cancelNotifSeenTimers();
@@ -661,6 +700,7 @@ function animateCount(el, target) {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (_openSubSheetId) { closeSubSheet(); return; }
     const cd = document.getElementById('confirm-dialog');
     if (cd?.classList.contains('show')) { _cdCancel(); e.stopPropagation(); }
   }
@@ -695,6 +735,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (nst) initSwipeClose(nst, () => closeAllSheets(),     44);
   if (pps) initSwipeClose(pps, () => closePlayerProfile(), 44);
   if (pes) initSwipeClose(pes, () => closeAllSheets(),     44);
+
+  // Sub-sheets: Swipe-down schließt nur das Sub-Sheet
+  const leaveEventSheet = document.getElementById('leave-event-sheet');
+  const ppAs = document.getElementById('pp-action-sheet');
+  const dmAs = document.getElementById('dm-action-sheet');
+  if (leaveEventSheet) initSwipeDownClose(leaveEventSheet, () => closeSubSheet());
+  if (ppAs) initSwipeDownClose(ppAs, () => closeSubSheet());
+  if (dmAs) initSwipeDownClose(dmAs, () => closeSubSheet());
 });
 
 // ── Keyboard Avoidance ────────────────────────────────────────────────────

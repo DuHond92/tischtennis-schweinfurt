@@ -1,10 +1,15 @@
 // ╔══════════════════════════════════════════════════════════════╗
 // ║           EVENT DETAIL                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
-let currentEventId    = null;
-let chatPollTimer     = null;
-let _edsMapInstance   = null;
-let _eventDetailReturn = null;
+let currentEventId           = null;
+let chatPollTimer            = null;
+let _chatLoadPending         = false;
+let _participantsLoadPending = false;
+let _chatFailed              = false;
+let _participantsFailed      = false;
+let _edsMapInstance          = null;
+let _eventDetailReturn       = null;
+let _edsResumeListenerAdded  = false;
 
 function _closeEventDetail() {
   const ret = _eventDetailReturn;
@@ -205,7 +210,7 @@ function showEventDetail(eventId) {
   } else if (isHost) {
     actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="openEditEvent(${ev.id})">Bearbeiten</button>${delBtn}`;
   } else if (isAlreadyIn) {
-    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;background:var(--green);" onclick="leaveEventFromDetail(${ev.id})">Dabei</button>${delBtn}`;
+    actEl.innerHTML = `<button class="btn btn-primary" style="flex:1;" onclick="leaveEventFromDetail(${ev.id})">Dabei</button>${delBtn}`;
   } else if (isFull) {
     actEl.innerHTML = `<button class="btn btn-secondary" style="flex:1;" disabled>Ausgebucht</button>${delBtn}`;
   } else {
@@ -213,6 +218,10 @@ function showEventDetail(eventId) {
   }
 
   // Reset participants & chat
+  _chatLoadPending         = false;
+  _participantsLoadPending = false;
+  _chatFailed              = false;
+  _participantsFailed      = false;
   document.getElementById('eds-participants').innerHTML = '<div style="display:flex;gap:6px;" aria-hidden="true"><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div></div>';
   document.getElementById('eds-chat-feed').innerHTML    = skeletonList('comment', 3);
 
@@ -277,6 +286,9 @@ function showEventDetail(eventId) {
 }
 
 async function loadEventParticipants(eventId) {
+  if (_participantsLoadPending) return;
+  _participantsLoadPending = true;
+  if (typeof ptLog === 'function') ptLog('participants', 'loadEventParticipants START', { eventId });
   const el = document.getElementById('eds-participants');
   try {
     const qb = new QueryBuilder('event_participants');
@@ -284,6 +296,8 @@ async function loadEventParticipants(eventId) {
     qb.eq('event_id', eventId);
     const {data: pData, error} = await qb.execute();
     if (error || !pData || !pData.length) {
+      if (typeof ptLog === 'function') ptLog('participants', error ? 'HTTP error — empty' : 'empty');
+      _participantsFailed = false;
       el.innerHTML = '<div class="participants-empty">Noch keine Spieler</div>';
       return;
     }
@@ -294,11 +308,27 @@ async function loadEventParticipants(eventId) {
       const {ok, data: profs} = await fetchWithRefresh(url, {headers: dbHeaders()});
       if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
     }
+    if (typeof ptLog === 'function') ptLog('participants', 'loadEventParticipants DONE', { count: pData.length });
+    _participantsFailed = false;
     const ev = allEvents.find(e => e.id === eventId);
     renderParticipantChips(pData.map(p => ({user_id: p.user_id, profiles: profMap[p.user_id] || null})), ev?.creatorId);
   } catch(e) {
-    el.innerHTML = '<div class="participants-empty">Spieler konnten nicht geladen werden.</div>';
+    if (typeof ptLogError === 'function') ptLogError('participants', 'loadEventParticipants FINAL ERROR — zeige Fehlerzustand', e);
+    _participantsFailed = true;
+    if (el) el.innerHTML = '<div class="participants-empty">Spieler konnten nicht geladen werden. <button class="pt-retry-btn" onclick="reloadEventParticipants()">Erneut versuchen</button></div>';
+  } finally {
+    _participantsLoadPending = false;
   }
+}
+
+function reloadEventParticipants() {
+  if (typeof ptLog === 'function') ptLog('participants', 'RETRY durch Nutzer', { eventId: currentEventId });
+  if (!currentEventId) return;
+  const el = document.getElementById('eds-participants');
+  if (el) el.innerHTML = '<div style="display:flex;gap:6px;" aria-hidden="true"><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div><div class="skeleton skeleton-avatar" style="width:28px;height:28px;"></div></div>';
+  _participantsFailed      = false;
+  _participantsLoadPending = false;
+  loadEventParticipants(currentEventId);
 }
 
 function renderParticipantChips(participants, creatorId) {
@@ -328,13 +358,26 @@ function renderParticipantChips(participants, creatorId) {
 }
 
 async function loadEventChat(eventId) {
+  if (_chatLoadPending) return;
+  _chatLoadPending = true;
+  if (typeof ptLog === 'function') ptLog('chat', 'loadEventChat START', { eventId });
   try {
     const qb = new QueryBuilder('event_messages');
     qb._select = 'id,message,created_at,user_id';
     qb.eq('event_id', eventId).order('created_at');
     const {data: msgs, error} = await qb.execute();
-    if (error) { renderChatMessages(null); return; }
-    if (!msgs || !msgs.length) { renderChatMessages([]); return; }
+    if (error) {
+      if (typeof ptLog === 'function') ptLog('chat', 'HTTP error');
+      _chatFailed = false;
+      renderChatMessages(null);
+      return;
+    }
+    if (!msgs || !msgs.length) {
+      if (typeof ptLog === 'function') ptLog('chat', 'empty');
+      _chatFailed = false;
+      renderChatMessages([]);
+      return;
+    }
     const userIds = [...new Set(msgs.map(m => m.user_id).filter(Boolean))];
     const profMap = {};
     if (userIds.length) {
@@ -342,10 +385,31 @@ async function loadEventChat(eventId) {
       const {ok, data: profs} = await fetchWithRefresh(url, {headers: dbHeaders()});
       if (ok && Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
     }
+    if (typeof ptLog === 'function') ptLog('chat', 'loadEventChat DONE', { count: msgs.length });
+    _chatFailed = false;
     renderChatMessages(msgs.map(m => ({...m, profiles: profMap[m.user_id] || null})));
   } catch(e) {
-    renderChatMessages(null);
+    if (typeof ptLogError === 'function') ptLogError('chat', 'loadEventChat FINAL ERROR — zeige Fehlerzustand', e);
+    _chatFailed = true;
+    _renderChatError();
+  } finally {
+    _chatLoadPending = false;
   }
+}
+
+function _renderChatError() {
+  const el = document.getElementById('eds-chat-feed');
+  if (el) el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar. <button class="pt-retry-btn" onclick="reloadEventChat()">Erneut versuchen</button></div>';
+}
+
+function reloadEventChat() {
+  if (typeof ptLog === 'function') ptLog('chat', 'RETRY durch Nutzer', { eventId: currentEventId });
+  if (!currentEventId) return;
+  const el = document.getElementById('eds-chat-feed');
+  if (el) el.innerHTML = skeletonList('comment', 3);
+  _chatFailed      = false;
+  _chatLoadPending = false;
+  loadEventChat(currentEventId);
 }
 
 function renderChatMessages(messages) {
@@ -353,7 +417,7 @@ function renderChatMessages(messages) {
   const myId  = sb.getUserId();
   const isMod = currentUser && ['moderator', 'admin'].includes(currentUser.role);
   if (!messages) {
-    el.innerHTML = '<div class="chat-empty">Kommentare nicht verfügbar.</div>';
+    _renderChatError();
     return;
   }
   if (!messages.length) {
@@ -472,7 +536,7 @@ function _patchEventParticipantJoin(eventId) {
 function leaveEventFromDetail(eventId) {
   if (!sb.isLoggedIn()) return;
   currentEventId = eventId;
-  openSheet('leave-event-sheet');
+  openSubSheet('leave-event-sheet');
 }
 
 function _patchEventParticipantLeave(eventId) {
@@ -492,11 +556,11 @@ async function _confirmLeaveEvent() {
   const _leavingEv = allEvents.find(e => e.id === eventId);
   if (isEventCompleted(_leavingEv)) {
     showToast('Diese Spielrunde ist bereits beendet.', 'info');
-    closeAllSheets();
+    closeSubSheet();
     return;
   }
 
-  closeAllSheets();
+  closeSubSheet();
 
   const { ok } = await fetchWithRefresh(
     `${SUPABASE_URL}/rest/v1/event_participants?event_id=eq.${eventId}&user_id=eq.${encodeURIComponent(sb.getUserId())}`,
@@ -505,7 +569,6 @@ async function _confirmLeaveEvent() {
 
   if (!ok) {
     showToast('Teilnahme konnte nicht zurückgezogen werden', 'error');
-    showEventDetail(eventId);
     return;
   }
 
@@ -537,7 +600,7 @@ async function joinEventFromDetail(eventId) {
   const isFallback = allEvents.length === 0;
   if(isFallback) {
     setTimeout(() => {
-      if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+      if(btn) btn.textContent = 'Dabei!';
       showToast('Du nimmst am Event teil!');
     }, 400);
     return;
@@ -547,7 +610,7 @@ async function joinEventFromDetail(eventId) {
   const {error} = await qb.insert({ event_id: eventId, user_id: sb.getUserId() });
 
   if(error && error.code === '23505') {
-    if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+    if(btn) btn.textContent = 'Dabei!';
     showToast('Du nimmst bereits teil','info');
     return;
   }
@@ -557,7 +620,7 @@ async function joinEventFromDetail(eventId) {
     return;
   }
 
-  if(btn) { btn.textContent = 'Dabei!'; btn.style.background = 'var(--green)'; }
+  if(btn) btn.textContent = 'Dabei!';
   showToast('Du nimmst am Event teil!');
   // Sofort in allEvents patchen — kein loadEvents() nötig
   _patchEventParticipantJoin(eventId);
@@ -699,4 +762,25 @@ function toggleDescExpand(btn) {
   if (short) short.hidden = expanding;
   if (full)  full.hidden  = !expanding;
   btn.textContent = expanding ? 'Weniger anzeigen' : 'Mehr anzeigen';
+}
+
+// ── App-Resume: neu laden wenn Event-Detail mit Fehlerzustand ─────────
+// Einmalig registrieren — kein Duplicate-Listener möglich dank Flag.
+function _initEventDetailResumeHandler() {
+  if (_edsResumeListenerAdded) return;
+  _edsResumeListenerAdded = true;
+  if (!window.Capacitor?.isNativePlatform?.()) return;
+  const { App } = window.Capacitor?.Plugins || {};
+  if (!App) return;
+  App.addListener('appStateChange', ({ isActive }) => {
+    if (!isActive) return;
+    const sheet = document.getElementById('event-detail-sheet');
+    if (!sheet?.classList.contains('open') || !currentEventId) return;
+    const needsParticipants = _participantsFailed && !_participantsLoadPending;
+    const needsChat         = _chatFailed && !_chatLoadPending;
+    if (!needsParticipants && !needsChat) return;
+    if (typeof ptLog === 'function') ptLog('resume', 'App-Resume — Event-Detail Reload', { eventId: currentEventId, participantsFailed: _participantsFailed, chatFailed: _chatFailed });
+    if (needsParticipants) reloadEventParticipants();
+    if (needsChat)         reloadEventChat();
+  });
 }

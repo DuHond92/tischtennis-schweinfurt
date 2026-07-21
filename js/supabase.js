@@ -52,7 +52,11 @@ const sb = {
 
   async refreshToken() {
     const refreshToken = localStorage.getItem('sb_refresh_token');
-    if(!refreshToken) return false;
+    if (typeof ptLog === 'function') ptLog('auth', 'refreshToken START', { hasRefreshToken: !!refreshToken });
+    if(!refreshToken) {
+      if (typeof ptLog === 'function') ptLog('auth', 'refreshToken SKIP — no refresh token');
+      return false;
+    }
     try {
       const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
         method:'POST', headers: authHeaders(),
@@ -61,10 +65,15 @@ const sb = {
       const data = await r.json();
       if(data.access_token) {
         this._saveSession(data);
+        if (typeof ptLog === 'function') ptLog('auth', 'refreshToken OK');
         if (window.PT_DEBUG || location.hostname === 'localhost') console.log('✅ Token automatisch erneuert');
         return true;
       }
-    } catch(e) { console.warn('Token refresh fehlgeschlagen', e); }
+      if (typeof ptLog === 'function') ptLog('auth', 'refreshToken FAILED — no access_token in response', { error: data.error });
+    } catch(e) {
+      if (typeof ptLogError === 'function') ptLogError('auth', 'refreshToken EXCEPTION', e);
+      console.warn('Token refresh fehlgeschlagen', e);
+    }
     return false;
   },
 
@@ -251,20 +260,48 @@ function dbHeaders() {
   };
 }
 
-// Führt einen API-Call aus, erneuert bei JWT-Fehler automatisch den Token
+// Führt einen API-Call aus.
+// Timeout: 10 s pro Versuch — schützt gegen hängende fetch()-Calls auf iOS WKWebView.
+// Bei AbortError oder TypeError (Netzwerkfehler) wird genau ein Retry durchgeführt
+// (300–800 ms Jitter-Delay); HTTP-Fehler (4xx/5xx) werden nicht blind wiederholt.
+const _FETCH_TIMEOUT_MS = 10000;
+
 async function fetchWithRefresh(url, options) {
-  let r = await fetch(url, options);
+  const _shortUrl = url.replace(SUPABASE_URL, '').slice(0, 120);
+  const _method   = (options && options.method) || 'GET';
+
+  // ── Netzwerk-Retry-Loop (max. 2 Versuche) ────────────────────
+  let r;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (typeof ptLog === 'function') ptLog('fetch', `ATTEMPT ${attempt} START`, { url: _shortUrl, method: _method });
+    try {
+      r = await _fetchWithTimeout(url, options, _FETCH_TIMEOUT_MS);
+      if (typeof ptLog === 'function') ptLog('fetch', `ATTEMPT ${attempt} RESPONSE`, { status: r.status, url: _shortUrl });
+      break; // Erfolg — Retry-Loop verlassen
+    } catch(e) {
+      const isNetErr = e.name === 'AbortError' || e instanceof TypeError;
+      if (typeof ptLogError === 'function') ptLogError('fetch', `ATTEMPT ${attempt} ${e.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK_ERROR'}`, e);
+      if (!isNetErr || attempt >= 2) throw e; // Nicht wiederholbarer Fehler oder letzter Versuch
+      const delay = 300 + Math.random() * 500;
+      if (typeof ptLog === 'function') ptLog('fetch', 'RETRY scheduled', { delayMs: Math.round(delay), url: _shortUrl });
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+
   let data = await _parseResponse(r);
 
   // JWT expired → Token erneuern und nochmal versuchen
   if(data.message === 'JWT expired' || data.code === 'PGRST301' ||
      (data.error === 'invalid_jwt') || JSON.stringify(data).includes('JWT expired')) {
     if (window.PT_DEBUG || location.hostname === 'localhost') console.log('JWT expired – erneuere Token…');
+    if (typeof ptLog === 'function') ptLog('fetch', 'JWT expired — refreshing', { url: _shortUrl });
     const refreshed = await sb.refreshToken();
     if(refreshed) {
       options.headers = { ...options.headers, ...dbHeaders() };
-      r = await fetch(url, options);
+      if (typeof ptLog === 'function') ptLog('fetch', 'RETRY after JWT refresh', { url: _shortUrl });
+      r = await _fetchWithTimeout(url, options, _FETCH_TIMEOUT_MS);
       data = await _parseResponse(r);
+      if (typeof ptLog === 'function') ptLog('fetch', 'JWT RETRY RESPONSE', { status: r.status, url: _shortUrl });
     } else {
       showToast('Sitzung abgelaufen – bitte neu einloggen', 'warning');
       await sb.signOut();
@@ -274,6 +311,13 @@ async function fetchWithRefresh(url, options) {
     }
   }
   return { ok: r.ok, data };
+}
+
+function _fetchWithTimeout(url, options, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  const opts  = { ...options, signal: controller.signal };
+  return fetch(url, opts).finally(() => clearTimeout(timer));
 }
 
 async function _parseResponse(r) {

@@ -108,7 +108,14 @@
 .section-link {
   font-size: var(--text-meta); color: var(--primary); font-weight: 700;
   cursor: pointer; text-decoration: none;
+  border: none; background: transparent; padding: 2px;
+  border-radius: 6px; outline: none;
 }
+@media (hover: hover) and (pointer: fine) {
+  .section-link:hover { color: var(--primary-d); }
+}
+.section-link:active { opacity: 0.65; }
+.section-link:focus-visible { box-shadow: 0 0 0 2px var(--primary); }
 
 /* Nearby tables horizontal scroll */
 .cards-scroll {
@@ -163,12 +170,12 @@
 .thumb-empty {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  background: #eef7f2;
+  background: var(--image-placeholder);
 }
 .thumb-placeholder-img {
   width: 100%; height: 100%;
   object-fit: contain; object-position: center;
-  background: #eef7f2;
+  background: var(--image-placeholder);
   display: block;
 }
 
@@ -193,8 +200,7 @@
   font-size: var(--text-label); font-weight: 700; white-space: nowrap;
 }
 .htt-dist { background: var(--primary-bg); color: var(--primary); }
-.htt-games { background: #FFE7DF; color: #FF5A36; }
-[data-theme="dark"] .htt-games { background: rgba(255,90,54,0.18); color: #FF7A5C; }
+.htt-games { background: var(--accent-bg); color: var(--accent); }
 
 /* Upcoming events vertical list (Home) */
 .event-list-item {
@@ -2381,7 +2387,7 @@
   padding: 8px 18px;
   border-radius: var(--radius-sm);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-size: var(--text-ui);
   font-weight: 700;
   border: none;
@@ -2613,6 +2619,16 @@
 }
 .pw-toggle:active { color: var(--text); }
 
+/* Passwortpunkte: dezenter, weniger massiv durch mehr Abstand zwischen den Zeichen.
+   Nur wirksam im maskierten Zustand (type="password"); beim Umschalten auf text wird
+   letter-spacing zurückgesetzt. */
+.pw-wrap input[type="password"] {
+  letter-spacing: 0.2em;
+}
+.pw-wrap input[type="text"] {
+  letter-spacing: normal;
+}
+
 /* ── Empty State Cards ───────────────────────────────────────────── */
 .empty-state-card {
   background: var(--surface2);
@@ -2830,15 +2846,16 @@
 }
 .home-act-head {
   padding: 12px 14px 10px;
-  background: #ffffff; border-bottom: 1px solid var(--border);
+  background: var(--surface); border-bottom: 1px solid var(--border);
 }
 .home-act-headrow { display: flex; align-items: center; gap: 8px; }
 .home-act-headtitle { font-weight: 800; font-size: var(--text-ui); color: var(--text); }
 .act-badge {
-  background: var(--primary); color: #fff;
+  background: var(--primary); color: var(--on-primary);
   font-size: var(--text-micro); padding: 1px 6px;
   border-radius: 20px; font-weight: 800; line-height: 1.6; flex-shrink: 0;
 }
+.act-badge--entries { background: var(--accent); color: var(--on-accent); }
 .home-act-subtitle { font-size: var(--text-label); color: var(--text-dim); margin-top: 2px; }
 .home-act-list { display: flex; flex-direction: column; }
 .home-act-card {
@@ -2847,7 +2864,14 @@
   cursor: pointer; transition: background 0.15s; outline: none;
 }
 .home-act-card:last-child { border-bottom: none; }
-.home-act-card:active, .home-act-card:focus-visible { background: var(--surface2); }
+@media (hover: hover) and (pointer: fine) {
+  .home-act-card:hover { background: var(--surface2); }
+}
+.home-act-card:active { background: var(--surface2); }
+.home-act-card:focus-visible {
+  background: var(--surface2);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
 .home-act-body { flex: 1; min-width: 0; }
 .home-act-label {
   display: flex; align-items: center; gap: 4px;
@@ -2869,14 +2893,21 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .home-act-chevron { display: none; }
+.home-act-chevron--visible { display: block; color: var(--text-xdim); }
 .home-act-more {
   display: flex; align-items: center; gap: 6px;
+  width: 100%; text-align: left;
   padding: 10px 14px;
   font-size: var(--text-meta); font-weight: 700; color: var(--primary);
-  cursor: pointer; border-top: 1px solid var(--border);
-  background: var(--surface2); transition: opacity 0.15s;
+  cursor: pointer; border: none; border-top: 1px solid var(--border);
+  background: var(--surface2); transition: background 0.15s, opacity 0.15s;
+  outline: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-act-more:hover { background: var(--primary-bg); }
 }
 .home-act-more:active { opacity: 0.6; }
+.home-act-more:focus-visible { box-shadow: inset 0 0 0 2px var(--primary); }
 
 /* ── Suggestion status pills ─────────────────────────────────── */
 .sug-status-pill {

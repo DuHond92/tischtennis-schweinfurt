@@ -367,11 +367,14 @@ async function submitAuth() {
       }
       _myConnections = null;
       await loadCurrentUser();
-      await loadMyConnections();
+      if (typeof loadMyConnections    === 'function') await loadMyConnections();
+      if (typeof loadBlockedUsers     === 'function') await loadBlockedUsers();
       closeAllSheets();
       updateTopBarForUser();
-      checkNotifications();
-      startNotifPolling();
+      if (typeof renderProfile        === 'function') renderProfile();
+      if (typeof checkNotifications   === 'function') checkNotifications();
+      if (typeof startNotifPolling    === 'function') startNotifPolling();
+      if (typeof checkDmNotifications === 'function') checkDmNotifications();
       PTAnalytics.track('login_completed');
       showWelcomeSuccess();
 
@@ -426,8 +429,14 @@ async function submitAuth() {
       }
       _myConnections = null;
       await loadCurrentUser();
-      await loadMyConnections();
+      if (typeof loadMyConnections    === 'function') await loadMyConnections();
+      if (typeof loadBlockedUsers     === 'function') await loadBlockedUsers();
       closeAllSheets();
+      updateTopBarForUser();
+      if (typeof renderProfile        === 'function') renderProfile();
+      if (typeof checkNotifications   === 'function') checkNotifications();
+      if (typeof startNotifPolling    === 'function') startNotifPolling();
+      if (typeof checkDmNotifications === 'function') checkDmNotifications();
       PTAnalytics.track('signup_completed');
       showWelcomeSuccess();
       setAuthMode('login');

@@ -51,7 +51,7 @@ function _homeSectionHeaderHtml(title, count, linkAttrs, linkText) {
   return `
     <div class="section-header">
       <div class="section-title">${escHtml(title)}${badge ? ' ' + badge : ''}</div>
-      <a class="section-link" ${linkAttrs}>${linkText}</a>
+      <button type="button" class="section-link" ${linkAttrs}>${linkText}</button>
     </div>`;
 }
 
@@ -370,7 +370,7 @@ function renderHomeActivities() {
       const userStatus = isCreator ? 'Von dir erstellt' : 'Du nimmst teil';
       return `
         <div class="home-act-card" onclick="showEventDetail(${e.id})" role="button" tabindex="0"
-             onkeydown="if(event.key==='Enter')showEventDetail(${e.id})">
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showEventDetail(${e.id})}">
           <div class="home-act-body">
             <div class="home-act-title">${escHtml(e.name)}</div>
             ${gameTypePill(e.type) ? `<div class="home-act-badges">${gameTypePill(e.type)}</div>` : ''}
@@ -386,7 +386,7 @@ function renderHomeActivities() {
       if (ps.umkreis && ps.umkreis !== 'Egal') metaParts.push(`${ic('pin', 10)} ${escHtml(ps.umkreis)} Umkreis`);
       return `
         <div class="home-act-card" onclick="showPlayerSearchDetail(${ps.id})" role="button" tabindex="0"
-             onkeydown="if(event.key==='Enter')showPlayerSearchDetail(${ps.id})">
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPlayerSearchDetail(${ps.id})}">
           <div class="home-act-body">
             <div class="home-act-title">Mitspieler gesucht</div>
             ${gameTypePill(ps.spielart) ? `<div class="home-act-badges">${gameTypePill(ps.spielart)}</div>` : ''}
@@ -399,7 +399,7 @@ function renderHomeActivities() {
   }).join('');
 
   const moreHtml = hasMore
-    ? `<div class="home-act-more" onclick="showPage('events')">${ic('calendar', 12)} Alle ${total} Aktivitäten ansehen</div>`
+    ? `<button type="button" class="home-act-more" onclick="showPage('events')">${ic('calendar', 12)} Alle ${total} Aktivitäten ansehen</button>`
     : '';
 
   container.innerHTML = `

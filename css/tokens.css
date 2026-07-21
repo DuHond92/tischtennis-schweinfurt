@@ -10,17 +10,20 @@
   --text:        #182420;
   --text-dim:    #5C6B61;
   --text-xdim:   #98A79D;
+  --image-placeholder: #EEF7F2;
 
   /* Plattengrün als Primärfarbe */
   --primary:     #0F8A55;
   --primary-d:   #0B6B42;
   --primary-bg:  #DEF0E5;
   --primary-mid: rgba(15,138,85,0.12);
+  --on-primary:  #FFFFFF;
 
   /* Ball-Orange als Akzent */
   --accent:      #FF5A36;
   --accent-d:    #E5431F;
   --accent-bg:   #FFE7DF;
+  --on-accent:   #FFFFFF;
 
   /* Error / Destruktiv */
   --error:       #E53935;
@@ -74,15 +77,18 @@
   --text:        #EDF4EE;
   --text-dim:    #9AAC9F;
   --text-xdim:   #5E7266;
+  --image-placeholder: var(--surface2);
 
   --primary:     #41C489;
   --primary-d:   #2DA870;
   --primary-bg:  rgba(65,196,137,0.16);
   --primary-mid: rgba(65,196,137,0.10);
+  --on-primary:  #0D1512;
 
   --accent:      #FF7B57;
   --accent-d:    #FF9375;
   --accent-bg:   rgba(255,90,54,0.16);
+  --on-accent:   #0D1512;
 
   --error:       #EF5350;
   --error-d:     #E53935;

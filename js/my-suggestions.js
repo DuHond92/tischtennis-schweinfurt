@@ -204,20 +204,20 @@ function renderHomeSuggestionsSection() {
           <div class="home-act-title">${escHtml(s.name)}</div>
           <div class="home-act-meta">${ic('clock', 10)} Eingereicht ${ago}</div>
         </div>
-        <span class="home-act-chevron" style="display:block;">›</span>
+        <span class="home-act-chevron home-act-chevron--visible">›</span>
       </div>`;
   }).join('');
 
   const moreHtml = open.length > 2
-    ? `<div class="home-act-more" onclick="openMySuggestionsSheet()">${ic('map-pinned', 12)} Alle ${open.length} Einträge ansehen</div>`
-    : `<div class="home-act-more" onclick="openMySuggestionsSheet()">${ic('map-pinned', 12)} Alle Einträge ansehen</div>`;
+    ? `<button type="button" class="home-act-more" onclick="openMySuggestionsSheet()">${ic('map-pinned', 12)} Alle ${open.length} Einträge ansehen</button>`
+    : `<button type="button" class="home-act-more" onclick="openMySuggestionsSheet()">${ic('map-pinned', 12)} Alle Einträge ansehen</button>`;
 
   container.innerHTML = `
     <div class="home-act-section">
       <div class="home-act-head">
         <div class="home-act-headrow">
           <span class="home-act-headtitle">Meine Einträge</span>
-          <span class="act-badge" style="background:var(--accent);">${open.length}</span>
+          <span class="act-badge act-badge--entries">${open.length}</span>
         </div>
         <div class="home-act-subtitle">Noch nicht freigegebene Platten</div>
       </div>

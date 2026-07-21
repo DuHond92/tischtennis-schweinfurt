@@ -377,6 +377,11 @@
         <div class="si-text" style="color:#EF4444;">Account löschen<div class="si-sub" style="color:#F87171;">Dauerhaft und unwiderruflich</div></div>
         <span class="si-arrow" style="color:#EF4444;">›</span>
       </div>
+      <div class="settings-item" onclick="showDiagnosticLogs()" style="margin-top:12px;">
+        <div class="si-icon" style="background:var(--surface2);color:var(--text-dim);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="6 8 10 12 14 8 18 12"/></svg></div>
+        <div class="si-text">Diagnose-Log<div class="si-sub">Interne Logs für iOS-Debugging</div></div>
+        <span class="si-arrow">›</span>
+      </div>
     </div>
     <div class="pb-safe"></div>
     </div><!-- /profile-logged-view -->
@@ -1398,7 +1403,7 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-title" id="pp-action-title">Optionen</div>
-    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+    <button class="sheet-close" onclick="closeSubSheet()" aria-label="Schließen">×</button>
   </div>
   <div class="cmt-action-list">
     <button class="cmt-action-item" onclick="openPpReport()">
@@ -1418,7 +1423,7 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-title" id="dm-action-title">Optionen</div>
-    <button class="sheet-close" onclick="closeAllSheets()" aria-label="Schließen">×</button>
+    <button class="sheet-close" onclick="closeSubSheet()" aria-label="Schließen">×</button>
   </div>
   <div class="cmt-action-list">
     <button class="cmt-action-item" onclick="openDmReport()">
@@ -1492,13 +1497,13 @@
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-title">Teilnahme</div>
-    <button class="sheet-close" onclick="showEventDetail(currentEventId)" aria-label="Schließen">×</button>
+    <button class="sheet-close" onclick="closeSubSheet()" aria-label="Schließen">×</button>
   </div>
   <div class="sheet-body" style="padding:4px 20px 8px;">
     <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 20px;">Du bist bei diesem Spiel dabei.</p>
     <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:max(28px,env(safe-area-inset-bottom));">
       <button class="btn btn-full" style="background:var(--accent);color:#fff;" onclick="_confirmLeaveEvent()">Teilnahme zurückziehen</button>
-      <button class="btn btn-secondary btn-full" onclick="showEventDetail(currentEventId)">Abbrechen</button>
+      <button class="btn btn-secondary btn-full" onclick="closeSubSheet()">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -1567,6 +1572,9 @@
     <div class="eds-float-actions" id="eds-actions"></div>
   </div>
 </div>
+
+<!-- SUB-SHEET OVERLAY: erscheint über dem jeweils geöffneten Eltern-Sheet -->
+<div id="sub-sheet-overlay" onclick="closeSubSheet()"></div>
 
 <!-- PLAYER PROFILE OVERLAY (stacks on top of other sheets) -->
 <div id="pp-overlay" onclick="closePlayerProfile()"></div>
@@ -1652,6 +1660,7 @@
 </div>
 
 <!-- JS: load order matters — globals must be defined before consumers -->
+<script src="js/debug-diagnostics.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/analytics.js"></script>

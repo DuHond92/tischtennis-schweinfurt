@@ -94,6 +94,7 @@ window.addEventListener('pageshow', () => {
 window.addEventListener('load', async () => {
   // Nativen OAuth-Listener sofort registrieren (vor allem anderen)
   _initNativeOAuthCallback();
+  if (typeof _initEventDetailResumeHandler === 'function') _initEventDetailResumeHandler();
 
   // URL-Hash auf Auth-Callbacks prüfen (OAuth-Redirect oder Passwort-Recovery)
   await checkOAuthCallback();
@@ -105,10 +106,23 @@ window.addEventListener('load', async () => {
   const _dlEvent   = _dlParams.get('event');
   const _dlSearch  = _dlParams.get('search') || _dlParams.get('request');
 
+  // Startup-Diagnose
+  if (typeof ptLog === 'function') {
+    const expiresAt = parseInt(localStorage.getItem('sb_expires_at') || '0');
+    ptLog('startup', 'APP LOAD', {
+      origin:     location.origin,
+      isNative:   !!(window.Capacitor?.isNativePlatform?.()),
+      isLoggedIn: sb.isLoggedIn(),
+      hasToken:   !!localStorage.getItem('sb_token'),
+      tokenExpiresIn: expiresAt ? Math.round((expiresAt - Date.now()) / 1000) + 's' : 'n/a',
+    });
+  }
+
   // Token beim Start sofort prüfen und ggf. erneuern
   if(sb.isLoggedIn()) {
     await sb.refreshToken();
   }
+  if (typeof ptLog === 'function') ptLog('startup', 'refreshToken done', { isLoggedIn: sb.isLoggedIn() });
   // Alle 50 Minuten automatisch erneuern (Token läuft nach 60min ab)
   setInterval(() => {
     if(sb.isLoggedIn()) sb.refreshToken();
@@ -124,13 +138,19 @@ window.addEventListener('load', async () => {
 
   // 2. Supabase-Daten laden (OSM wird parallel im Hintergrund geladen)
   try {
+    if (typeof ptLog === 'function') ptLog('startup', 'loadTables START');
     await loadTables();
+    if (typeof ptLog === 'function') ptLog('startup', 'loadTables DONE', { count: tables?.length });
     if(mapInit) _applyMapFilters();
+    if (typeof ptLog === 'function') ptLog('startup', 'loadEvents START');
     await Promise.all([loadEvents()]);
+    if (typeof ptLog === 'function') ptLog('startup', 'loadEvents DONE');
     if(mapInit) { _applyMapFilters(); _refreshMarkerIcons(); }
     // Wenn eingeloggt: User-Daten laden
     if(sb.isLoggedIn()) {
+      if (typeof ptLog === 'function') ptLog('startup', 'loadCurrentUser START');
       await loadCurrentUser();
+      if (typeof ptLog === 'function') ptLog('startup', 'loadCurrentUser DONE', { userId: sb.getUserId() });
       if (typeof loadMyConnections === 'function') await loadMyConnections();
       if (typeof loadBlockedUsers  === 'function') await loadBlockedUsers();
       updateTopBarForUser();
@@ -140,6 +160,7 @@ window.addEventListener('load', async () => {
       if (typeof checkDmNotifications === 'function') checkDmNotifications();
       if (typeof loadMySuggestions   === 'function') loadMySuggestions();
     }
+    if (typeof ptLog === 'function') ptLog('startup', 'INIT COMPLETE');
     // UI mit echten Daten aktualisieren
     window._eventsLoaded = true;
     renderHome();

@@ -98,16 +98,17 @@ async function showPlayerProfile(userId, username, avatarEmoji, contextLabel, av
 function openPpDotMenu() {
   const titleEl = document.getElementById('pp-action-title');
   if (titleEl) titleEl.textContent = _ppCurrentUserName || 'Spieler';
-  openSheet('pp-action-sheet');
+  openSubSheet('pp-action-sheet');
 }
 
 function openPpReport() {
-  closeAllSheets();
+  closeSubSheet();
+  closePlayerProfile();
   openReport('user', _ppCurrentUserId, _ppCurrentUserName, _ppCurrentUserId);
 }
 
 function openPpBlock() {
-  closeAllSheets();
+  closeSubSheet();
   confirmBlockUser(_ppCurrentUserId, _ppCurrentUserName, 'player_profile', null);
 }
 
