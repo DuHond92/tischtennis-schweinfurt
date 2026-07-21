@@ -587,6 +587,7 @@ function confirmSignOut() {
 async function doSignOut() {
   _myConnections = null;
   PTAnalytics.track('logout_completed');
+  if (typeof deinitPush === 'function') await deinitPush();
   await sb.signOut();
   currentUser = null;
   closeAllSheets();

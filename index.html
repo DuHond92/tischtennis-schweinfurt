@@ -314,13 +314,10 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
-      <div class="settings-item">
+      <div class="settings-item" onclick="openPushSettingsSheet()">
         <div class="si-icon" style="background:var(--primary-bg);color:var(--primary);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
-        <div class="si-text">Benachrichtigungen<div class="si-sub">Spielrunden & Events</div></div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="notif-toggle" onchange="toggleNotifications(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="si-text">Benachrichtigungen<div class="si-sub" id="push-settings-sub">Push & In-App</div></div>
+        <span class="si-arrow">›</span>
       </div>
       <div class="settings-item">
         <div class="si-icon" style="background:var(--surface2);color:var(--text-dim);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
@@ -511,7 +508,7 @@
   </div>
   <div class="sheet-body" style="padding:8px 16px 20px;">
     <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="onAvatarFileSelected(event)">
-    <div class="av-option" onclick="document.getElementById('avatar-file-input').click()">
+    <div class="av-option" onclick="openAvatarPhotoLibrary()">
       <div class="av-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
       <div class="av-option-text">Foto hochladen</div>
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim)"><path d="m9 18 6-6-6-6"/></svg>
@@ -734,7 +731,7 @@
           <span class="event-create-image-source" id="event-create-image-source"></span>
           <button class="sug-photo-remove" id="event-create-image-remove" onclick="removeCreateEventImage()" type="button" aria-label="Eigenes Spielbild entfernen">×</button>
         </div>
-        <button class="sug-photo-add event-create-image-add" id="event-create-image-add" type="button" onclick="document.getElementById('event-create-image-input').click()">
+        <button class="sug-photo-add event-create-image-add" id="event-create-image-add" type="button" onclick="openCreateEventPhotoLibrary()">
           <span class="sug-photo-add-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
           <span id="event-create-image-add-label">Spielbild hinzufügen</span>
         </button>
@@ -1390,39 +1387,7 @@
   </div>
 </div>
 
-<!-- FOTO QUELLE AUSWÄHLEN -->
-<div id="photo-source-sheet" class="photo-src-overlay" onclick="_closePhotoSourcePicker()">
-  <div class="photo-src-card" onclick="event.stopPropagation()">
-    <div class="photo-src-title">Foto hinzufügen</div>
-    <button class="photo-src-btn" onclick="document.getElementById('ds-file-camera').click();_closePhotoSourcePicker()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>Foto aufnehmen
-    </button>
-    <button class="photo-src-btn" onclick="document.getElementById('ds-file-gallery').click();_closePhotoSourcePicker()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Aus Mediathek
-    </button>
-    <button class="photo-src-btn photo-src-btn--cancel" onclick="_closePhotoSourcePicker()">
-      Abbrechen
-    </button>
-  </div>
-</div>
-
-<!-- FOTO QUELLE AUSWÄHLEN (Platte vorschlagen) -->
-<div id="sug-photo-source-sheet" class="photo-src-overlay" onclick="_closeSuggestPhotoPicker()">
-  <div class="photo-src-card" onclick="event.stopPropagation()">
-    <div class="photo-src-title">Foto hinzufügen</div>
-    <button class="photo-src-btn" onclick="document.getElementById('sug-file-gallery').click();_closeSuggestPhotoPicker()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Aus Mediathek
-    </button>
-    <button class="photo-src-btn" onclick="document.getElementById('sug-file-camera').click();_closeSuggestPhotoPicker()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>Foto aufnehmen
-    </button>
-    <button class="photo-src-btn photo-src-btn--cancel" onclick="_closeSuggestPhotoPicker()">
-      Abbrechen
-    </button>
-  </div>
-</div>
 <input type="file" id="sug-file-gallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" style="display:none" onchange="_handleSuggestImageSelect(this)">
-<input type="file" id="sug-file-camera"  accept="image/*" capture="environment" style="display:none" onchange="_handleSuggestImageSelect(this)">
 
 <!-- ACCOUNT LÖSCHEN SHEET -->
 <div class="bottom-sheet da-sheet" id="delete-account-sheet">
@@ -1829,6 +1794,7 @@
 <script src="js/profile.js"></script>
 <script src="js/ps-detail.js"></script>
 <script src="js/notifications.js"></script>
+<script src="js/push.js"></script>
 <script src="js/my-suggestions.js"></script>
 <script src="js/main.js"></script>
 <script src="js/suggest.js"></script>
@@ -1984,6 +1950,142 @@
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px;">
       <button class="btn btn-primary btn-full" onclick="closeSuggestSheet()">Zu den Platten</button>
       <button class="btn btn-secondary btn-full" id="sug-restart-btn" onclick="suggestRestartFlow()">Weitere Platte vorschlagen</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUSH-BENACHRICHTIGUNGEN EINSTELLUNGEN -->
+<div class="bottom-sheet fullscreen-sheet slide-right-sheet" id="push-settings-sheet">
+  <div class="sheet-header sheet-header--nav">
+    <button class="sheet-back" onclick="closeAllSheets()" aria-label="Zurück">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    </button>
+    <div class="sheet-title">Benachrichtigungen</div>
+  </div>
+  <div class="detail-scroll" style="padding:0 20px 40px;">
+
+    <!-- Systemeinstellungs-Hinweis: nur sichtbar wenn Permission verweigert -->
+    <div id="push-permission-hint" class="push-permission-hint" hidden>
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Push-Benachrichtigungen sind in den Systemeinstellungen deaktiviert.</span>
+      <button onclick="Capacitor?.Plugins?.NativeSettings?.open?.({optionIOS:'APP'})">Einstellungen öffnen</button>
+    </div>
+
+    <div class="push-settings-section">
+      <!-- Hauptschalter -->
+      <div class="push-settings-item push-settings-item--main">
+        <div class="psi-text">
+          <div class="psi-label">Push-Benachrichtigungen</div>
+          <div class="psi-sub">Benachrichtigungen außerhalb der App erhalten</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-main"
+            onchange="onPushPrefChange('push_enabled', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div id="push-sub-prefs" class="push-settings-section push-settings-section--sub">
+      <div class="push-settings-section-title">Einzelne Kategorien</div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Nachrichten</div>
+          <div class="psi-sub">Chat-Nachrichten in Spielrunden und Gesuchen</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-msgs"
+            onchange="onPushPrefChange('pref_messages', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Spielpartner-Anfragen</div>
+          <div class="psi-sub">Neue Anfragen und Antworten</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-conn"
+            onchange="onPushPrefChange('pref_connections', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Aktivitäten bei eigenen Spielen</div>
+          <div class="psi-sub">Beitritt, Austritt und andere Änderungen</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-game"
+            onchange="onPushPrefChange('pref_game_activity', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Kommentare</div>
+          <div class="psi-sub">Kommentare in Spielrunden, an denen du teilnimmst</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-comment"
+            onchange="onPushPrefChange('pref_comments', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Spielerinnerungen</div>
+          <div class="psi-sub">Erinnerung 24 Stunden vor deinen Spielen</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-remind"
+            onchange="onPushPrefChange('pref_reminders', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Plattenmoderation</div>
+          <div class="psi-sub">Freigabe, Änderungen oder Ablehnung deiner Plattenvorschläge</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-mod"
+            onchange="onPushPrefChange('pref_moderation', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="push-settings-item">
+        <div class="psi-text">
+          <div class="psi-label">Community-Hinweise</div>
+          <div class="psi-sub">Allgemeine Neuigkeiten aus der Plattentreff-Community</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="push-toggle-comm"
+            onchange="onPushPrefChange('pref_community', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PUSH-BERECHTIGUNGS-PROMPT (kontextuell, kein Overlay) -->
+<div id="push-permission-prompt" class="push-prompt" hidden aria-live="polite">
+  <div class="push-prompt-inner">
+    <div class="push-prompt-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    </div>
+    <p class="push-prompt-msg" id="push-prompt-msg">Möchtest du informiert werden, wenn jemand deinem Spiel beitritt oder dir schreibt?</p>
+    <div class="push-prompt-actions">
+      <button class="btn btn-primary push-prompt-yes" onclick="acceptPushPrompt()">Benachrichtigungen aktivieren</button>
+      <button class="push-prompt-later" onclick="dismissPushPrompt()">Später</button>
     </div>
   </div>
 </div>

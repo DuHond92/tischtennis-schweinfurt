@@ -158,6 +158,7 @@ window.addEventListener('load', async () => {
       startNotifPolling();
       if (typeof checkDmNotifications === 'function') checkDmNotifications();
       if (typeof loadMySuggestions   === 'function') loadMySuggestions();
+      if (typeof initPush            === 'function') initPush();
     }
     if (typeof ptLog === 'function') ptLog('startup', 'INIT COMPLETE');
     // UI mit echten Daten aktualisieren
@@ -165,6 +166,7 @@ window.addEventListener('load', async () => {
     renderHome();
     renderEvents();
     hideSplash();
+    if (typeof handlePendingPushNav === 'function') handlePendingPushNav();
     // 2b. Deep-Link auflösen — nach allen Daten, URL danach säubern
     if (_dlTable || _dlEvent || _dlSearch) {
       history.replaceState(null, '', window.location.pathname);

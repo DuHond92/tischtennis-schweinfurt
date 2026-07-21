@@ -499,6 +499,7 @@ async function joinEvent(eventId, btn) {
     _patchEventParticipantJoin(eventId);
     renderHome();
     renderEvents();
+    setTimeout(() => { if (typeof showPushPermissionPrompt === 'function') showPushPermissionPrompt('game_joined'); }, 1500);
   }
 }
 
@@ -1433,6 +1434,16 @@ function handleCreateEventImageSelect(input) {
   const file = input?.files?.[0];
   if (!file) return;
   input.value = '';
+  handleCreateEventImageFile(file);
+}
+
+async function openCreateEventPhotoLibrary() {
+  const file = await pickImageFromPhotoLibrary('event-create-image-input');
+  if (file) handleCreateEventImageFile(file);
+}
+
+function handleCreateEventImageFile(file) {
+  if (!file) return;
   if (file.type && !file.type.startsWith('image/')) {
     showToast('Bitte wähle eine Bilddatei aus.', 'warning');
     return;
@@ -1661,6 +1672,7 @@ async function submitCreateEvent() {
   } else {
     PTAnalytics.track('game_created', { mode });
     closeCreateEventSheet(false);
+    setTimeout(() => { if (typeof showPushPermissionPrompt === 'function') showPushPermissionPrompt('game_created'); }, 1500);
   }
   showToast(
     imageUploadFailed
