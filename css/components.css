@@ -3693,3 +3693,66 @@
 .admin-candidates-filters input[type="search"]::placeholder {
   color: var(--text-xdim);
 }
+
+/* ── Batch-Review UI ──────────────────────────────────────────────────────── */
+.admin-candidates-batch-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px 6px;
+}
+.admin-candidates-batch-hint {
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.admin-batch-result {
+  margin: 0 16px 10px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+}
+.batch-header {
+  font-size: 0.8rem; font-weight: 600; margin-bottom: 10px;
+  color: var(--text);
+}
+.batch-section { margin-top: 10px; }
+.batch-section-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.batch-section--promote .batch-section-label { color: #16a34a; }
+.batch-section--error   .batch-section-label { color: #dc2626; }
+.batch-item {
+  font-size: 0.8rem; padding: 2px 0;
+  display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+}
+.batch-reason {
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.batch-empty {
+  font-size: 0.8rem; color: var(--text-dim); padding: 4px 0;
+}
+.admin-batch-action-bar {
+  flex-direction: column; margin-top: 12px;
+}
+.admin-batch-warning {
+  font-size: 0.73rem; color: #ca8a04;
+  background: rgba(234,179,8,.1); border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* ── Nearby-Kandidaten-Anzeige ────────────────────────────────────────────── */
+.cand-nearby-block {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 4px 0 8px;
+}
+.cand-nearby-entry {
+  font-size: 0.73rem; padding: 4px 8px;
+  border-radius: 6px; display: block;
+}
+.cand-nearby-blocking {
+  background: rgba(239, 68, 68, .11); color: var(--text);
+  border: 1px solid rgba(239, 68, 68, .22);
+}
+.cand-nearby-context {
+  font-size: 0.7rem; color: var(--text-dim);
+  padding: 2px 0;
+}

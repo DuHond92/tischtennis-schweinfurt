@@ -1051,14 +1051,40 @@ function _renderCandidateCard(c) {
 async function _loadNearbyCandidateTables(c) {
   const el = document.getElementById(`cand-nearby-${escAttr(c.id)}`);
   if (!el) return;
-  const bbox = 0.003; // ~300 m Bounding-Box
-  const url = `${SUPABASE_URL}/rest/v1/tables?select=id,name`
+  // Vorfilter ±0.005° (~555 m) — dann exakte Haversine-Distanz per calcDistance().
+  // calcDistance() ist in map.js global verfügbar (atan2-Variante, Erdradius 6371000 m).
+  const bbox = 0.005;
+  const url = `${SUPABASE_URL}/rest/v1/tables?select=id,name,lat,lng`
     + `&lat=gte.${c.lat - bbox}&lat=lte.${c.lat + bbox}`
-    + `&lng=gte.${c.lng - bbox}&lng=lte.${c.lng + bbox}&limit=3`;
+    + `&lng=gte.${c.lng - bbox}&lng=lte.${c.lng + bbox}&limit=15`;
   const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
   if (!data || !data.length) return;
-  el.innerHTML = `<div style="font-size:0.73rem;padding:5px 8px;background:rgba(234,179,8,.1);border-radius:8px;color:var(--text-dim);margin-bottom:6px;">`
-    + `⚠ Nahe Platten: ${data.map(t => `<strong>${escHtml(t.name)}</strong> (ID ${t.id})`).join(', ')}</div>`;
+
+  // Exakte Distanz berechnen und sortieren
+  const nearby = data
+    .map(t => ({ ...t, dist: calcDistance(+c.lat, +c.lng, +t.lat, +t.lng) }))
+    .filter(t => t.dist != null && t.dist <= 500)
+    .sort((a, b) => a.dist - b.dist);
+  if (!nearby.length) return;
+
+  const blocking = nearby.filter(t => t.dist <= 100);
+  const context  = nearby.filter(t => t.dist > 100).slice(0, 2);
+
+  let html = '';
+  if (blocking.length) {
+    html += blocking.map(t =>
+      `<div class="cand-nearby-entry cand-nearby-blocking">`
+      + `⛔ Mögliche Dublette — ${t.dist} m: <strong>${escHtml(t.name)}</strong> (ID ${t.id})`
+      + `</div>`
+    ).join('');
+  }
+  if (context.length) {
+    html += `<div class="cand-nearby-context">`
+      + `Weitere im Umkreis: `
+      + context.map(t => `<strong>${escHtml(t.name)}</strong> (${t.dist} m)`).join(', ')
+      + `</div>`;
+  }
+  el.innerHTML = `<div class="cand-nearby-block">${html}</div>`;
 }
 
 function candidateCancelAction(cid) {
@@ -1139,6 +1165,180 @@ async function candidateMarkDuplicateConfirm(cid) {
       }
       if (card) { card.classList.add('admin-card-done'); setTimeout(() => card.remove(), 400); }
       showToast('Als Duplikat markiert');
+    }
+  });
+}
+
+// ── Batch-Review ──────────────────────────────────────────────────────────────
+
+const _BATCH_SIZE = 25;
+let _batchDryRunResults = null;
+let _batchCandidateIds  = null;
+
+async function _batchPreview() {
+  const btn   = document.getElementById('cand-batch-btn');
+  const panel = document.getElementById('admin-batch-result');
+  if (!panel) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird geprüft…'; }
+  panel.style.display = 'none';
+
+  // Kandidaten-IDs laden (pending_review, aktuelle Typ- und Suchfilter, max. 25)
+  const type   = document.getElementById('cand-filter-type')?.value   || '';
+  const search = document.getElementById('cand-filter-search')?.value.trim() || '';
+  let url = `${SUPABASE_URL}/rest/v1/table_candidates?select=id&review_status=eq.pending_review`;
+  if (type)   url += `&type=eq.${encodeURIComponent(type)}`;
+  if (search) { const q = encodeURIComponent(search); url += `&or=(name.ilike.*${q}*,external_id.ilike.*${q}*)`; }
+  url += `&order=imported_at.asc&limit=${_BATCH_SIZE}`;
+
+  const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+  if (!data || !data.length) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Batch-Vorschau'; }
+    showToast('Keine offenen Kandidaten in aktueller Auswahl', 'warning');
+    return;
+  }
+  _batchCandidateIds = data.map(c => c.id);
+
+  // Dry-Run
+  let r;
+  try {
+    const token = await sb.getValidToken();
+    r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/batch_promote_candidates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ p_candidate_ids: _batchCandidateIds, p_dry_run: true })
+    });
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Batch-Vorschau'; }
+    showToast('Netzwerkfehler beim Dry-Run', 'error');
+    return;
+  }
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    if (btn) { btn.disabled = false; btn.textContent = 'Batch-Vorschau'; }
+    showToast(err?.message || 'Fehler beim Dry-Run', 'error');
+    return;
+  }
+
+  _batchDryRunResults = await r.json().catch(() => []);
+  if (btn) { btn.disabled = false; btn.textContent = 'Batch-Vorschau'; }
+
+  _renderBatchResults(_batchDryRunResults, true);
+  panel.style.display = '';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function _renderBatchResults(results, isDryRun) {
+  const body       = document.getElementById('admin-batch-result-body');
+  const actionBar  = document.getElementById('admin-batch-action-bar');
+  const doneBar    = document.getElementById('admin-batch-done-bar');
+  const confirmBtn = document.getElementById('cand-batch-confirm-btn');
+  if (!body) return;
+
+  const wouldPromote = results.filter(r => r.status === 'would_promote' || r.status === 'promoted');
+  const skipped      = results.filter(r => r.status === 'skipped');
+  const errors       = results.filter(r => r.status === 'error');
+
+  let html = `<div class="batch-header">${isDryRun ? `Dry-Run — ${results.length} Kandidaten geprüft` : `Batch abgeschlossen — ${results.length} verarbeitet`}</div>`;
+
+  if (wouldPromote.length) {
+    const label = isDryRun ? `Würde freigegeben (${wouldPromote.length})` : `Freigegeben (${wouldPromote.length})`;
+    html += `<div class="batch-section batch-section--promote"><div class="batch-section-label">${label}</div>`;
+    html += wouldPromote.map(r => {
+      const idSuffix = r.new_table_id ? ` → Platte #${r.new_table_id}` : '';
+      return `<div class="batch-item">${escHtml(r.name || r.id)}${idSuffix}</div>`;
+    }).join('');
+    html += `</div>`;
+  }
+  if (skipped.length) {
+    html += `<div class="batch-section batch-section--skip"><div class="batch-section-label">Übersprungen (${skipped.length})</div>`;
+    html += skipped.map(r =>
+      `<div class="batch-item">${escHtml(r.name || r.id)}<span class="batch-reason">${escHtml(r.reason || '')}</span></div>`
+    ).join('');
+    html += `</div>`;
+  }
+  if (errors.length) {
+    html += `<div class="batch-section batch-section--error"><div class="batch-section-label">Fehler (${errors.length})</div>`;
+    html += errors.map(r =>
+      `<div class="batch-item">${escHtml(r.name || r.id)}<span class="batch-reason">${escHtml(r.reason || '')}</span></div>`
+    ).join('');
+    html += `</div>`;
+  }
+  if (!results.length) {
+    html += `<div class="batch-empty">Keine Kandidaten verarbeitet.</div>`;
+  }
+
+  body.innerHTML = html;
+
+  if (actionBar && doneBar && confirmBtn) {
+    if (isDryRun && wouldPromote.length > 0) {
+      confirmBtn.textContent = `${wouldPromote.length} Platte${wouldPromote.length === 1 ? '' : 'n'} jetzt freigeben`;
+      actionBar.style.display = 'flex';
+      doneBar.style.display   = 'none';
+    } else {
+      actionBar.style.display = 'none';
+      doneBar.style.display   = 'block';
+    }
+  }
+}
+
+function _batchClose() {
+  const panel = document.getElementById('admin-batch-result');
+  if (panel) panel.style.display = 'none';
+  _batchDryRunResults = null;
+  _batchCandidateIds  = null;
+}
+
+async function _batchExecute() {
+  const wouldCount = (_batchDryRunResults || []).filter(r => r.status === 'would_promote').length;
+  if (!wouldCount || !_batchCandidateIds?.length) return;
+
+  showConfirmDialog({
+    title: `${wouldCount} Platte${wouldCount === 1 ? '' : 'n'} freigeben?`,
+    body: `Dieser Vorgang ist nicht rückgängig zu machen. Die Platten werden sofort in der App sichtbar.`,
+    confirmLabel: `${wouldCount} Platten freigeben`,
+    danger: true,
+    onConfirm: async () => {
+      const actionBar = document.getElementById('admin-batch-action-bar');
+      if (actionBar) actionBar.style.display = 'none';
+
+      let r;
+      try {
+        const token = await sb.getValidToken();
+        r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/batch_promote_candidates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ p_candidate_ids: _batchCandidateIds, p_dry_run: false })
+        });
+      } catch (e) {
+        if (actionBar) actionBar.style.display = 'flex';
+        showToast('Netzwerkfehler beim Batch', 'error');
+        return;
+      }
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        if (actionBar) actionBar.style.display = 'flex';
+        showToast(err?.message || 'Fehler beim Batch', 'error');
+        return;
+      }
+
+      const finalResults = await r.json().catch(() => []);
+      _renderBatchResults(finalResults, false);
+      _batchDryRunResults = null;
+      _batchCandidateIds  = null;
+
+      const promoted = finalResults.filter(r => r.status === 'promoted');
+      if (promoted.length) {
+        showToast(`${promoted.length} Platte${promoted.length === 1 ? '' : 'n'} freigegeben ✓`);
+        try {
+          await loadTables();
+          if (typeof _applyMapFilters === 'function') _applyMapFilters();
+        } catch (e) {
+          showToast('Karte wird beim nächsten Öffnen aktualisiert', 'warning');
+        }
+        _candidateOffset = 0;
+        _loadCandidates();
+      }
     }
   });
 }

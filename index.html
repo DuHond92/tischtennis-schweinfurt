@@ -476,6 +476,23 @@
           </select>
           <input type="search" id="cand-filter-search" placeholder="Name oder OSM-ID…" oninput="_candidateSearchDebounced()">
         </div>
+        <div class="admin-candidates-batch-bar">
+          <button id="cand-batch-btn" class="btn btn-secondary btn-sm" onclick="_batchPreview()">Batch-Vorschau (max. 25)</button>
+          <span class="admin-candidates-batch-hint">Dry-Run für bis zu 25 ausstehende Kandidaten</span>
+        </div>
+        <div id="admin-batch-result" class="admin-batch-result" style="display:none;">
+          <div id="admin-batch-result-body"></div>
+          <div id="admin-batch-action-bar" class="admin-batch-action-bar" style="display:none;">
+            <div class="admin-batch-warning">Nicht rückgängig zu machen — Platten erscheinen sofort in der App.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-secondary btn-sm" onclick="_batchClose()">Abbrechen</button>
+              <button id="cand-batch-confirm-btn" class="btn btn-sm admin-approve-btn" onclick="_batchExecute()"></button>
+            </div>
+          </div>
+          <div id="admin-batch-done-bar" style="display:none;padding:8px 0 4px;">
+            <button class="btn btn-secondary btn-sm" onclick="_batchClose()">Schließen</button>
+          </div>
+        </div>
         <div id="admin-candidates-list" class="admin-list"></div>
         <div id="admin-candidates-pagination" style="display:none;padding:10px 0;text-align:center;">
           <button class="btn btn-secondary btn-sm" onclick="_loadMoreCandidates()">Weitere laden</button>
