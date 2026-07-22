@@ -2044,6 +2044,7 @@
   margin-bottom: 6px;
 }
 .admin-card-name  { font-weight: 700; font-size: var(--text-title); color: var(--text); }
+.admin-card-name-orig { font-size: 0.72rem; color: var(--text-xdim); margin-top: 2px; }
 .admin-card-date  { font-size: var(--text-meta); color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
 .admin-card-row   { font-size: var(--text-meta); color: var(--text-dim); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
 .admin-card-coords { font-size: var(--text-meta); color: var(--text-xdim); font-family: monospace; margin: 4px 0 6px; }

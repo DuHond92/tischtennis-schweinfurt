@@ -991,6 +991,34 @@ async function _loadCandidates(append = false) {
   data.forEach(c => _loadNearbyCandidateTables(c));
 }
 
+function _deriveCandidateName(tags) {
+  const tr = v => (typeof v === 'string' ? v.trim() : '') || null;
+  const n  = tr(tags.name);
+  const nd = tr(tags['name:de']);
+  const op = tr(tags.operator);
+  const st = tr(tags['addr:street']);
+  const ci = tr(tags['addr:city']);
+  const generic = new Set([
+    'tischtennisplatte','tischtennis','tischtennisfeld','tischtennistisch',
+    'tt-platte','tt platte','tt-tisch','table tennis','ping pong'
+  ]);
+  if (n  && !generic.has(n.toLowerCase()))  return { name: n,                            source: 'osm_name' };
+  if (nd && !generic.has(nd.toLowerCase())) return { name: nd,                           source: 'osm_name_de' };
+  if (op) return { name: `Tischtennis bei ${op}`,                     source: 'osm_operator' };
+  if (st) return { name: `Tischtennisplatte an der ${st}`,            source: 'osm_addr_street' };
+  if (ci) return { name: `Tischtennisplatte in ${ci}`,                source: 'osm_addr_city' };
+  return { name: 'Tischtennisplatte', source: 'fallback' };
+}
+
+const _SOURCE_LABELS = {
+  osm_name:        'echter Name',
+  osm_name_de:     'Name (de)',
+  osm_operator:    'Betreiber',
+  osm_addr_street: 'Straße',
+  osm_addr_city:   'Ort',
+  fallback:        null,
+};
+
 const _CAND_STATUS_BADGE = {
   pending_review:     '<span class="admin-tag">Offen</span>',
   approved:           '<span class="admin-tag" style="background:rgba(34,197,94,.13);color:#16a34a;">Freigegeben</span>',
@@ -1006,10 +1034,17 @@ function _renderCandidateCard(c) {
   const isPending = c.review_status === 'pending_review';
   const cid       = escAttr(c.id);
 
+  const derived    = _deriveCandidateName(tags);
+  const osmRawName = (c.name || '').trim();
+  const showOsmRaw = osmRawName && osmRawName !== derived.name;
+
   return `
   <div class="admin-card" id="cand-card-${cid}">
     <div class="admin-card-header">
-      <div class="admin-card-name">${escHtml(c.name || '—')}</div>
+      <div>
+        <div class="admin-card-name">${escHtml(derived.name)}</div>
+        ${showOsmRaw ? `<div class="admin-card-name-orig">OSM: ${escHtml(osmRawName)}</div>` : ''}
+      </div>
       ${badge}
     </div>
     ${c.address ? `<div class="admin-card-row">${ic('pin',12)} ${escHtml(c.address)}</div>` : ''}
@@ -1245,8 +1280,14 @@ function _renderBatchResults(results, isDryRun) {
     const label = isDryRun ? `Würde freigegeben (${wouldPromote.length})` : `Freigegeben (${wouldPromote.length})`;
     html += `<div class="batch-section batch-section--promote"><div class="batch-section-label">${label}</div>`;
     html += wouldPromote.map(r => {
-      const idSuffix = r.new_table_id ? ` → Platte #${r.new_table_id}` : '';
-      return `<div class="batch-item">${escHtml(r.name || r.id)}${idSuffix}</div>`;
+      const displayName = r.derived_name || r.name || r.id;
+      const showOrig    = r.name && r.name !== r.derived_name;
+      const srcLabel    = _SOURCE_LABELS[r.name_source] || null;
+      const idSuffix    = r.new_table_id ? ` → ID ${r.new_table_id}` : '';
+      const meta = [showOrig ? `OSM: ${r.name}` : null, srcLabel].filter(Boolean).join(' · ');
+      return `<div class="batch-item">${escHtml(displayName)}${idSuffix}`
+        + (meta ? `<span class="batch-reason">${escHtml(meta)}</span>` : '')
+        + `</div>`;
     }).join('');
     html += `</div>`;
   }

@@ -1,46 +1,21 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- batch_promote_candidates — kontrollierter Admin-Batch für OSM-Kandidaten
+-- Batch-Review RPC v2: ruft promote_table_candidate (v4) direkt auf.
 --
--- Zweck:
---   Mehrere pending_review-Kandidaten in einem Aufruf prüfen und optional
---   promovieren. Unterstützt Dry-Run (Vorschau ohne DML) und echte Ausführung.
+-- NOCH NICHT in Supabase ausgeführt.
+-- Setzt Migration 20260722230000 voraus (_candidate_derive_name, promote v4).
 --
--- Sicherheitsdesign:
---   • SECURITY DEFINER, SET search_path = '' — identisch mit Einzel-RPCs.
---   • Admin-Gate als ERSTE Operation (auth.uid() + profiles.role = 'admin').
---   • Kein GRANT an PUBLIC oder anon.
---   • Maximale Batchgröße: 25 Kandidaten pro Aufruf (serverseitig erzwungen).
---   • Per-Kandidat-EXCEPTION-Blöcke: Fehler eines Kandidaten rollen nur
---     dessen Subtransaktion zurück — andere Kandidaten sind nicht betroffen.
+-- Änderungen gegenüber v1-Entwurf:
+--   • Echter Lauf: promote_table_candidate(v_cid) statt inline-DML
+--     → Namenslogik, county, Duplikatprüfung aus promote v4 automatisch mit
+--   • Rückgabe enthält: derived_name, name_source (aus dry-run-Logik bzw. promote)
+--   • P0001-Exceptions (Duplikat-Block aus promote) → status='skipped'
 --
--- Skip-Kriterien (Kandidat wird übersprungen, nicht als Fehler gewertet):
---   • review_status != 'pending_review'
---   • matched_table_id IS NOT NULL (bereits promoviert — Idempotenz)
---   • access-Tag ist 'private' oder 'no'
---   • Duplikat < 100 m in public.tables (dieselbe Haversine-Logik wie Einzel-RPC)
---
--- Dry-Run (p_dry_run = true, Standard):
---   Führt alle Prüfungen durch, aber kein INSERT/UPDATE.
---   Kandidaten die alle Prüfungen bestehen → status = 'would_promote'.
---
--- Echte Ausführung (p_dry_run = false):
---   Wie Dry-Run, aber mit INSERT in public.tables + UPDATE table_candidates.
---   Ergebnisse: status = 'promoted' | 'skipped' | 'error'.
---
--- Rückgabe: jsonb-Array, ein Objekt pro Kandidat:
---   {"id": "uuid", "name": "...", "status": "...", "reason": null|"...",
---    "new_table_id": null|integer}
---
--- Wiederverwendung der Einzel-RPC:
---   Die Logik wird hier inline repliziert (nicht als Funktionsaufruf) weil:
---   - PL/pgSQL-Funktionsaufrufe sind keine Subtransaktionen.
---   - SECURITY DEFINER-Aufruf innerhalb einer anderen SECURITY DEFINER-Funktion
---     kann auth.uid()-Kontext verlieren.
---   - Per-Kandidat-Exception-Handling erfordert BEGIN...EXCEPTION...END,
---     das nur auf PL/pgSQL-Blöcke anwendbar ist, nicht auf Funktionsaufrufe.
---
--- Rollback (Funktion entfernen):
---   DROP FUNCTION IF EXISTS public.batch_promote_candidates(uuid[], boolean);
+-- Abdeckung Namens-Tiers (Grundlage: 19.206 Kandidaten, Stand 2026-07-22):
+--   osm_name/osm_name_de: ~0,6 %  — Bsp.: "Freibad Tischtennis", "Mehrgenerationenplatz"
+--   osm_operator:         ~0,6 %  — Bsp.: "Tischtennis bei Freibad Ettenheim"
+--   osm_addr_street:      ~0,3 %  — Bsp.: "Tischtennisplatte an der Siebenkniestraße"
+--   osm_addr_city:        ~0,2 %  — Bsp.: "Tischtennisplatte in Murrhardt"
+--   fallback:            ~98,3 %  — "Tischtennisplatte" (keine Laufnummer mehr)
 -- ════════════════════════════════════════════════════════════════════════════
 
 CREATE OR REPLACE FUNCTION public.batch_promote_candidates(
@@ -53,18 +28,16 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_caller_uid   uuid;
-  v_caller_role  text;
-  v_results      jsonb := '[]'::jsonb;
-  v_cid          uuid;
-  v_cand         public.table_candidates%ROWTYPE;
-  v_nearby_id    integer;
-  v_nearby_dist  integer;
-  v_access       text;
-  v_access_type  text;
-  v_tables_count integer;
-  v_new_id       integer;
-  v_item         jsonb;
+  v_caller_uid    uuid;
+  v_caller_role   text;
+  v_results       jsonb := '[]'::jsonb;
+  v_cid           uuid;
+  v_cand          public.table_candidates%ROWTYPE;
+  v_derived       record;
+  v_access        text;
+  v_nearby_id     integer;
+  v_nearby_dist   integer;
+  v_new_id        integer;
 BEGIN
   -- ── Admin-Gate: ERSTE Operation ─────────────────────────────────────────────
   v_caller_uid := auth.uid();
@@ -78,81 +51,71 @@ BEGIN
       USING ERRCODE = 'insufficient_privilege';
   END IF;
 
-  -- ── Leerprüfung ─────────────────────────────────────────────────────────────
-  IF p_candidate_ids IS NULL OR array_length(p_candidate_ids, 1) IS NULL THEN
+  -- ── Eingabe-Validierung ──────────────────────────────────────────────────────
+  IF array_length(p_candidate_ids, 1) IS NULL THEN
     RETURN '[]'::jsonb;
   END IF;
 
-  -- ── Batchgröße ──────────────────────────────────────────────────────────────
   IF array_length(p_candidate_ids, 1) > 25 THEN
-    RAISE EXCEPTION 'Batch-Größe überschritten: maximal 25 Kandidaten pro Aufruf erlaubt.'
+    RAISE EXCEPTION 'Maximal 25 Kandidaten pro Batch-Aufruf (übergeben: %).',
+      array_length(p_candidate_ids, 1)
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- ── Hauptschleife ───────────────────────────────────────────────────────────
+  -- ── Hauptschleife ────────────────────────────────────────────────────────────
   FOREACH v_cid IN ARRAY p_candidate_ids LOOP
-    -- Lokale Variablen für jeden Durchlauf zurücksetzen
-    v_cand         := NULL;
-    v_nearby_id    := NULL;
-    v_nearby_dist  := NULL;
-    v_access       := NULL;
-    v_access_type  := NULL;
-    v_tables_count := NULL;
-    v_new_id       := NULL;
 
-    BEGIN  -- Subtransaktion: Fehler werden pro Kandidat isoliert
+    BEGIN  -- Subtransaktion: Fehler eines Kandidaten isolieren
 
-      -- Kandidat laden (mit FOR UPDATE nur bei echtem Lauf — Dry-Run braucht kein Lock)
-      IF p_dry_run THEN
-        SELECT * INTO v_cand FROM public.table_candidates WHERE id = v_cid;
-      ELSE
-        SELECT * INTO v_cand FROM public.table_candidates WHERE id = v_cid FOR UPDATE;
-      END IF;
+      SELECT * INTO v_cand
+        FROM public.table_candidates
+       WHERE id = v_cid;
 
       IF NOT FOUND THEN
         v_results := v_results || jsonb_build_array(jsonb_build_object(
-          'id', v_cid, 'name', null,
-          'status', 'error', 'reason', 'Kandidat nicht gefunden', 'new_table_id', null
+          'id', v_cid, 'name', NULL,
+          'status', 'skipped', 'reason', 'Kandidat nicht gefunden'
         ));
         CONTINUE;
       END IF;
 
-      -- Nur pending_review verarbeiten
-      IF v_cand.review_status != 'pending_review' THEN
-        v_results := v_results || jsonb_build_array(jsonb_build_object(
-          'id', v_cid, 'name', v_cand.name,
-          'status', 'skipped',
-          'reason', format('Status ist bereits „%s"', v_cand.review_status),
-          'new_table_id', null
-        ));
-        CONTINUE;
-      END IF;
-
-      -- Idempotenz: bereits promoviert
+      -- Skip: Bereits promoviert
       IF v_cand.matched_table_id IS NOT NULL THEN
         v_results := v_results || jsonb_build_array(jsonb_build_object(
           'id', v_cid, 'name', v_cand.name,
           'status', 'skipped',
-          'reason', format('Bereits promoviert → public.tables.id %s', v_cand.matched_table_id),
-          'new_table_id', v_cand.matched_table_id
+          'reason', format('Bereits promoviert (tables.id = %s)', v_cand.matched_table_id)
         ));
         CONTINUE;
       END IF;
 
-      -- Privater Zugang → überspringen
+      -- Skip: Status nicht verarbeitbar
+      IF v_cand.review_status NOT IN ('pending_review', 'approved') THEN
+        v_results := v_results || jsonb_build_array(jsonb_build_object(
+          'id', v_cid, 'name', v_cand.name,
+          'status', 'skipped',
+          'reason', format('Status "%s": Batch verarbeitet nur pending_review/approved',
+                           v_cand.review_status)
+        ));
+        CONTINUE;
+      END IF;
+
+      -- Skip: Access=private oder no
       v_access := v_cand.raw_tags->>'access';
       IF v_access IN ('private', 'no') THEN
         v_results := v_results || jsonb_build_array(jsonb_build_object(
           'id', v_cid, 'name', v_cand.name,
           'status', 'skipped',
-          'reason', format('Zugang: %s — nicht öffentlich zugänglich', v_access),
-          'new_table_id', null
+          'reason', format('access=%s — nicht öffentlich zugänglich', v_access)
         ));
         CONTINUE;
       END IF;
 
-      -- Duplikatprüfung: Haversine gegen public.tables, Schwelle 100 m
-      -- Vorfilter ±0.002° (~220 m) nutzt lat/lng-Index; LEAST(1.0,…) für asin-Stabilität.
+      -- Namen ableiten (für Dry-Run-Anzeige und echte Rückgabe)
+      SELECT * INTO v_derived FROM public._candidate_derive_name(v_cand.raw_tags);
+
+      -- Duplikat-Vorprüfung: Haversine < 100 m, Vorfilter ±0.002°
+      -- Im echten Lauf: promote_table_candidate prüft nochmals autoritativ.
       SELECT id, dist_m
         INTO v_nearby_id, v_nearby_dist
         FROM (
@@ -169,7 +132,7 @@ BEGIN
             FROM public.tables
            WHERE lat BETWEEN v_cand.lat - 0.002 AND v_cand.lat + 0.002
              AND lng BETWEEN v_cand.lng - 0.002 AND v_cand.lng + 0.002
-        ) _n
+        ) _near
        WHERE dist_m < 100
        ORDER BY dist_m
        LIMIT 1;
@@ -177,81 +140,59 @@ BEGIN
       IF v_nearby_id IS NOT NULL THEN
         v_results := v_results || jsonb_build_array(jsonb_build_object(
           'id', v_cid, 'name', v_cand.name,
+          'derived_name', v_derived.derived_name,
+          'name_source',  v_derived.derived_name_source,
           'status', 'skipped',
-          'reason', format('Mögliches Duplikat: public.tables.id %s (%s m entfernt)', v_nearby_id, v_nearby_dist),
-          'new_table_id', null
+          'reason', format('Duplikat: tables.id=%s ca. %s m entfernt',
+                           v_nearby_id, v_nearby_dist)
         ));
         CONTINUE;
       END IF;
 
-      -- Alle Prüfungen bestanden
+      -- ── Dry-Run: alle Prüfungen bestanden, kein DML ─────────────────────────
       IF p_dry_run THEN
         v_results := v_results || jsonb_build_array(jsonb_build_object(
           'id', v_cid, 'name', v_cand.name,
-          'status', 'would_promote', 'reason', null, 'new_table_id', null
+          'derived_name', v_derived.derived_name,
+          'name_source',  v_derived.derived_name_source,
+          'status', 'would_promote', 'reason', NULL, 'new_table_id', NULL
         ));
         CONTINUE;
       END IF;
 
-      -- ── Echter Lauf: INSERT + UPDATE ─────────────────────────────────────────
-
-      v_access_type := CASE v_access
-        WHEN 'yes'        THEN 'public'
-        WHEN 'public'     THEN 'public'
-        WHEN 'permissive' THEN 'public'
-        WHEN 'customers'  THEN 'limited'
-        WHEN 'private'    THEN 'private_or_unclear'
-        WHEN 'no'         THEN 'private_or_unclear'
-        ELSE 'public'
-      END;
-
-      IF (v_cand.raw_tags->>'capacity') ~ '^\d+$' THEN
-        v_tables_count := (v_cand.raw_tags->>'capacity')::integer;
-      END IF;
-
-      INSERT INTO public.tables
-        (name, address, lat, lng, type, icon, tables_count, access_type,
-         city, county, region, status, source)
-      VALUES (
-        v_cand.name,
-        v_cand.address,
-        v_cand.lat,
-        v_cand.lng,
-        v_cand.type,
-        '🏓',
-        v_tables_count,
-        v_access_type,
-        v_cand.raw_tags->>'addr:city',
-        v_cand.raw_tags->>'addr:county',  -- NULL wenn Tag fehlt
-        NULL,                              -- region: kein verlässlicher OSM-Tag
-        'approved',
-        'osm'
-      )
-      RETURNING id INTO v_new_id;
-
-      UPDATE public.table_candidates
-         SET matched_table_id = v_new_id,
-             review_status    = 'approved',
-             reviewed_by      = v_caller_uid,
-             reviewed_at      = now()
-       WHERE id = v_cid;
+      -- ── Echter Lauf: promote_table_candidate (v4) aufrufen ──────────────────
+      -- promote v4 prüft intern nochmals: Admin-Gate, FOR UPDATE, Idempotenz,
+      -- Haversine-Duplikat, bevor INSERT + UPDATE ausgeführt wird.
+      -- Diese bewusste Redundanz sichert Korrektheit auch bei Race Conditions.
+      v_new_id := public.promote_table_candidate(v_cid);
 
       v_results := v_results || jsonb_build_array(jsonb_build_object(
         'id', v_cid, 'name', v_cand.name,
-        'status', 'promoted', 'reason', null, 'new_table_id', v_new_id
+        'derived_name', v_derived.derived_name,
+        'name_source',  v_derived.derived_name_source,
+        'status', 'promoted', 'reason', NULL, 'new_table_id', v_new_id
       ));
 
-    EXCEPTION WHEN OTHERS THEN
-      -- Subtransaktion dieses Kandidaten wird zurückgerollt.
-      -- Fehler wird protokolliert; die Schleife läuft weiter.
-      v_results := v_results || jsonb_build_array(jsonb_build_object(
-        'id', v_cid,
-        'name', COALESCE(v_cand.name, '(unbekannt)'),
-        'status', 'error',
-        'reason', SQLERRM,
-        'new_table_id', null
-      ));
-    END;  -- Ende Subtransaktion
+    EXCEPTION
+      -- P0001: Duplikat-Exception aus promote_table_candidate
+      WHEN SQLSTATE 'P0001' THEN
+        v_results := v_results || jsonb_build_array(jsonb_build_object(
+          'id', v_cid, 'name', v_cand.name,
+          'status', 'skipped', 'reason', SQLERRM
+        ));
+
+      -- Berechtigungs-Exception: nicht schlucken, nach oben weitergeben
+      WHEN insufficient_privilege THEN
+        RAISE;
+
+      -- Alle anderen Fehler: im Ergebnis protokollieren, Schleife fortsetzen
+      WHEN OTHERS THEN
+        v_results := v_results || jsonb_build_array(jsonb_build_object(
+          'id', v_cid,
+          'name', COALESCE(v_cand.name, v_cid::text),
+          'status', 'error', 'reason', SQLERRM
+        ));
+    END;
 
   END LOOP;
 
@@ -262,9 +203,8 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.batch_promote_candidates(uuid[], boolean) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.batch_promote_candidates(uuid[], boolean) FROM anon;
 GRANT  EXECUTE ON FUNCTION public.batch_promote_candidates(uuid[], boolean) TO authenticated;
--- service_role bewusst ausgelassen (auth.uid() = NULL → Admin-Gate weist ab).
 
 COMMENT ON FUNCTION public.batch_promote_candidates(uuid[], boolean) IS
-  'Admin-Batch-Promotion (max. 25). p_dry_run=true (Standard) für Vorschau ohne DML. '
-  'Rückgabe: jsonb-Array mit status=would_promote|promoted|skipped|error pro Kandidat. '
-  'Privater Zugang und Haversine-Duplikate < 100 m werden automatisch übersprungen.';
+  'v2: Dry-Run und echter Lauf für bis zu 25 Kandidaten. '
+  'Echter Lauf: delegate an promote_table_candidate v4 (Namenslogik, county, Duplikatcheck). '
+  'Gibt derived_name + name_source im Ergebnis-Array zurück.';

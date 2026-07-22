@@ -1,48 +1,142 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- county aus OSM addr:county-Tag bei Promotion befüllen
+-- v4: name_source-Spalte + kontextbezogene Namenslogik + county aus OSM
 --
--- Hintergrund:
---   promote_table_candidate v2 (20260722220000) ließ county und region immer NULL.
---   Diese Migration ersetzt die Funktion, um county aus raw_tags->>'addr:county'
---   zu befüllen, sofern der Tag vorhanden ist.
+-- NOCH NICHT in Supabase ausgeführt (ersetzt den ursprünglichen v3-Entwurf).
 --
--- Warum addr:county?
---   OSM-Standard für Landkreis-Information in Deutschland.
---   Beispiel: "Landkreis Schweinfurt", "Stadt Schweinfurt".
---   Hinweis: Dieser Tag ist bei Tischtennisplatten selten befüllt —
---   bei den meisten importierten Kandidaten bleibt county weiterhin NULL.
+-- Datengrundlage (19.206 Kandidaten, Stand 2026-07-22):
+--   name/name:de vorhanden:   118  (0,6 %)
+--   operator vorhanden:       108  (0,6 %)
+--   addr:street vorhanden:     63  (0,3 %)
+--   addr:city vorhanden:       35  (0,2 %)
+--   addr:county vorhanden:      0  (0,0 %) — kein Wert in diesem Import
 --
--- Warum region = NULL bleibt:
---   Für Regierungsbezirke (Unterfranken etc.) gibt es keinen verlässlichen
---   OSM-Standard-Tag. Eine automatische Ableitung aus Koordinaten würde
---   Nominatim oder eine lokale Verwaltungsgrenzen-Tabelle erfordern.
---   Bis dahin bleibt region NULL und wird manuell gepflegt.
+-- Namenslogik (5 Prioritätsstufen):
+--   1. name / name:de — sofern nicht generisch (z. B. „Tischtennisplatte")
+--   2. operator       → „Tischtennis bei [operator]"
+--   3. addr:street    → „Tischtennisplatte an der [Straße]"
+--   4. addr:city      → „Tischtennisplatte in [Stadt]"
+--   5. Fallback       → „Tischtennisplatte"
 --
--- Nachpflege bereits promotierter OSM-Platten (nur NULL-Werte auffüllen):
---   Nach Ausführung dieser Migration können bereits promovierte Platten
---   mit fehlendem county gezielt nachgepflegt werden — ohne manuelle Werte
---   zu überschreiben (WHERE t.county IS NULL ist Pflicht):
+-- Ergebnis: Laufnummern (Tischtennisplatte #N) verschwinden vollständig.
+-- Gleiche Namen für mehrere Platten am selben Standort sind zulässig.
+-- Technische Eindeutigkeit: tables.id + table_candidates.external_id.
 --
--- /*
--- UPDATE public.tables t
---    SET county = (tc.raw_tags->>'addr:county')
---   FROM public.table_candidates tc
---  WHERE t.source = 'osm'
---    AND t.county IS NULL
---    AND tc.matched_table_id = t.id
---    AND (tc.raw_tags->>'addr:county') IS NOT NULL;
--- */
+-- Was sich gegenüber v2 (220000) nicht ändert:
+--   • Admin-Gate (auth.uid() + profiles.role = 'admin' — NULL-sicher)
+--   • SECURITY DEFINER + SET search_path = ''
+--   • 100-m-Duplikatblock (Haversine + LEAST(1.0,...))
+--   • REVOKE PUBLIC/anon + GRANT authenticated (kein service_role)
+--   • Idempotenz: matched_table_id IS NOT NULL → existing id zurückgeben
+--   • SELECT FOR UPDATE vor DML
 --
--- Hinweis: Nur ausführen wenn addr:county in den Kandidatendaten
--- zuverlässig befüllt und verifiziert ist. Nicht ohne ausdrückliche Freigabe.
+-- Nachpflege bereits promotierter OSM-Platten (Laufnummern ersetzen):
+-- Erst mit SELECT prüfen, dann UPDATE ausführen. Nur source='osm'.
+-- Manuell gepflegte Namen (source='manual' oder manuell geändert) NIE ändern.
+/*
+SELECT t.id, t.name AS name_alt, dn.derived_name, dn.derived_name_source
+  FROM public.tables t
+  JOIN public.table_candidates tc ON tc.matched_table_id = t.id
+  CROSS JOIN LATERAL public._candidate_derive_name(tc.raw_tags) dn
+ WHERE t.source = 'osm'
+   AND (t.name ~ '^Tischtennisplatte #[0-9]'
+        OR t.name ~ '^Tischtennis-Platte [0-9]'
+        OR t.name = 'Tischtennisplatte')
+   AND dn.derived_name_source != 'fallback'  -- nur wo echter Kontext vorhanden
+ ORDER BY t.id
+ LIMIT 50;
+
+-- UPDATE erst nach Prüfung:
+UPDATE public.tables t
+   SET name = dn.derived_name,
+       name_source = dn.derived_name_source
+  FROM public.table_candidates tc
+  CROSS JOIN LATERAL public._candidate_derive_name(tc.raw_tags) dn
+ WHERE tc.matched_table_id = t.id
+   AND t.source = 'osm'
+   AND (t.name ~ '^Tischtennisplatte #[0-9]'
+        OR t.name ~ '^Tischtennis-Platte [0-9]'
+        OR t.name = 'Tischtennisplatte')
+   AND dn.derived_name_source != 'fallback';
+*/
 --
--- Entsprechendes für region existiert nicht — kein verlässlicher OSM-Tag.
--- region-Werte nur manuell oder per gesichertem Gebietsschlüssel befüllen.
---
--- Rollback:
---   Vorige Version wiederherstellen, indem 20260722220000 erneut ausgeführt
---   wird (nur die promote_table_candidate-Funktion darin).
+-- county-Nachpflege (addr:county=0 in aktuellem Import, trotzdem für künftige):
+/*
+UPDATE public.tables t
+   SET county = (tc.raw_tags->>'addr:county')
+  FROM public.table_candidates tc
+ WHERE t.source = 'osm' AND t.county IS NULL
+   AND tc.matched_table_id = t.id
+   AND (tc.raw_tags->>'addr:county') IS NOT NULL;
+*/
 -- ════════════════════════════════════════════════════════════════════════════
+
+
+-- ── 0. name_source-Spalte ────────────────────────────────────────────────────
+-- Nullable: bestehende Zeilen (manuelle Einträge) behalten NULL.
+ALTER TABLE public.tables
+  ADD COLUMN IF NOT EXISTS name_source text;
+
+COMMENT ON COLUMN public.tables.name_source IS
+  'Herkunft des Anzeigenamens bei OSM-Importen. '
+  'NULL = manuell gepflegt oder unbekannt. '
+  'Werte: osm_name | osm_name_de | osm_operator | osm_addr_street | osm_addr_city | fallback';
+
+
+-- ── 1. Namens-Hilfsfunktion ──────────────────────────────────────────────────
+-- Reine, zustandslose Funktion. STABLE: gleiche Eingabe → gleiche Ausgabe.
+-- Kein DML, kein Datenbankzugriff — nur jsonb-Transformation.
+-- Vollständig schema-qualifiziert (SET search_path = '').
+
+CREATE OR REPLACE FUNCTION public._candidate_derive_name(p_raw_tags jsonb)
+RETURNS TABLE(derived_name text, derived_name_source text)
+LANGUAGE sql
+STABLE
+SET search_path = ''
+AS $$
+WITH
+  t(name, name_de, operator, street, city) AS (
+    SELECT
+      NULLIF(TRIM(p_raw_tags->>'name'),        ''),
+      NULLIF(TRIM(p_raw_tags->>'name:de'),     ''),
+      NULLIF(TRIM(p_raw_tags->>'operator'),    ''),
+      NULLIF(TRIM(p_raw_tags->>'addr:street'), ''),
+      NULLIF(TRIM(p_raw_tags->>'addr:city'),   '')
+  ),
+  -- Generische Platzhalter, die keinen echten Standortnamen tragen
+  g(vals) AS (
+    SELECT ARRAY[
+      'tischtennisplatte', 'tischtennis', 'tischtennisfeld',
+      'tischtennistisch', 'tt-platte', 'tt platte', 'tt-tisch',
+      'table tennis', 'ping pong'
+    ]
+  )
+SELECT
+  CASE
+    WHEN t.name    IS NOT NULL AND lower(t.name)    != ALL(g.vals) THEN t.name
+    WHEN t.name_de IS NOT NULL AND lower(t.name_de) != ALL(g.vals) THEN t.name_de
+    WHEN t.operator IS NOT NULL THEN 'Tischtennis bei ' || t.operator
+    WHEN t.street   IS NOT NULL THEN 'Tischtennisplatte an der ' || t.street
+    WHEN t.city     IS NOT NULL THEN 'Tischtennisplatte in ' || t.city
+    ELSE 'Tischtennisplatte'
+  END,
+  CASE
+    WHEN t.name    IS NOT NULL AND lower(t.name)    != ALL(g.vals) THEN 'osm_name'
+    WHEN t.name_de IS NOT NULL AND lower(t.name_de) != ALL(g.vals) THEN 'osm_name_de'
+    WHEN t.operator IS NOT NULL THEN 'osm_operator'
+    WHEN t.street   IS NOT NULL THEN 'osm_addr_street'
+    WHEN t.city     IS NOT NULL THEN 'osm_addr_city'
+    ELSE 'fallback'
+  END
+FROM t, g;
+$$;
+
+COMMENT ON FUNCTION public._candidate_derive_name(jsonb) IS
+  'Leitet aus OSM raw_tags einen anzeigbaren Namen + Herkunft ab. '
+  'Priorität: name > name:de > operator > addr:street > addr:city > Fallback. '
+  'Generische Platzhalter (z.B. "Tischtennisplatte") werden übersprungen.';
+
+
+-- ── 2. promote_table_candidate v4 ───────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.promote_table_candidate(
   p_candidate_id uuid
@@ -61,13 +155,12 @@ DECLARE
   v_nearby_dist  integer;
   v_access_type  text;
   v_tables_count integer;
+  v_derived      record;
   v_new_id       integer;
 BEGIN
-  -- ── Admin-Gate: ERSTE Operation, vor jeglichem DML oder FOR UPDATE ──────────
-  -- SECURITY DEFINER → RLS auf public.profiles deaktiviert → keine Rekursion.
-  -- auth.uid() liest request.jwt.claim.sub; NULL wenn kein gültiger JWT vorhanden.
-  -- NULL IS DISTINCT FROM 'admin' = TRUE → korrektes Abweisen ohne JWT.
-  v_caller_uid  := auth.uid();
+  -- ── Admin-Gate: ERSTE Operation ─────────────────────────────────────────────
+  -- auth.uid() = NULL ohne gültigen JWT → IS DISTINCT FROM 'admin' = TRUE → abgewiesen.
+  v_caller_uid := auth.uid();
 
   SELECT role INTO v_caller_role
     FROM public.profiles
@@ -102,11 +195,9 @@ BEGIN
     RETURN v_cand.matched_table_id;
   END IF;
 
-  -- ── Duplikatprüfung: exakte Haversine-Distanz in Metern ────────────────────
-  -- Vorfilter ±0.002° (~220 m) nutzt den lat/lng-Index (vermeidet Full Scan).
-  -- Haversine (Erdradius 6 371 000 m) → exakte Luftliniendistanz. Schwelle: 100 m.
-  -- PostGIS ist auf diesem Projekt nicht aktiviert → kein ST_DWithin verfügbar.
-  -- LEAST(1.0, sqrt(h)) klemmt den asin()-Eingang auf maximal 1.0.
+  -- ── Duplikatprüfung: Haversine 100 m ────────────────────────────────────────
+  -- Vorfilter ±0.002° (~220 m) nutzt lat/lng-Index.
+  -- LEAST(1.0, sqrt(h)) verhindert NaN bei Floating-Point h > 1.0.
   SELECT id, name, dist_m
     INTO v_nearby_id, v_nearby_name, v_nearby_dist
     FROM (
@@ -131,38 +222,41 @@ BEGIN
   IF v_nearby_id IS NOT NULL THEN
     RAISE EXCEPTION
       'Mögliches Duplikat: "%" (ID %, ca. % m entfernt) liegt bereits in public.tables. '
-      'Falls die Kandidatenplatte trotzdem ein anderer Standort ist, '
-      'verbinde sie zunächst mit mark_candidate_duplicate(''%'', %) und entscheide dann.',
-      v_nearby_name, v_nearby_id, v_nearby_dist,
-      p_candidate_id, v_nearby_id
+      'Falls dies ein anderer Standort ist, verbinde zunächst mit mark_candidate_duplicate.',
+      v_nearby_name, v_nearby_id, v_nearby_dist
       USING ERRCODE = 'P0001';
   END IF;
+
+  -- ── Namen ableiten ──────────────────────────────────────────────────────────
+  SELECT * INTO v_derived FROM public._candidate_derive_name(v_cand.raw_tags);
 
   -- ── access_type mappen ──────────────────────────────────────────────────────
   v_access_type := CASE v_cand.raw_tags->>'access'
     WHEN 'yes'        THEN 'public'
     WHEN 'public'     THEN 'public'
     WHEN 'permissive' THEN 'public'
+    WHEN 'customers'  THEN 'limited'
     WHEN 'private'    THEN 'private_or_unclear'
     WHEN 'no'         THEN 'private_or_unclear'
-    WHEN 'customers'  THEN 'limited'
     ELSE 'public'
   END;
 
-  -- ── tables_count aus OSM capacity-Tag ───────────────────────────────────────
+  -- ── tables_count aus capacity-Tag ───────────────────────────────────────────
   IF (v_cand.raw_tags->>'capacity') ~ '^\d+$' THEN
     v_tables_count := (v_cand.raw_tags->>'capacity')::integer;
   END IF;
 
-  -- ── In public.tables einfügen ───────────────────────────────────────────────
-  -- Explizite Spaltenliste: Pflicht wegen access_type CHECK-Constraint.
-  -- county: aus raw_tags->>'addr:county' (NULL wenn Tag fehlt — kein Fallback).
-  -- region: NULL — kein verlässlicher OSM-Tag; manuelle Pflege erforderlich.
+  -- ── INSERT in public.tables ─────────────────────────────────────────────────
+  -- Explizite Spaltenliste (Pflicht wegen access_type CHECK-Constraint).
+  -- name:        aus _candidate_derive_name (nie laufende Nummer).
+  -- name_source: Herkunft des Namens für Nachvollziehbarkeit.
+  -- county:      aus addr:county-Tag (in aktuellem Import 0 vorhanden → meist NULL).
+  -- region:      NULL — kein verlässlicher OSM-Tag.
   INSERT INTO public.tables
     (name, address, lat, lng, type, icon, tables_count, access_type,
-     city, county, region, status, source)
+     city, county, region, status, source, name_source)
   VALUES (
-    v_cand.name,
+    v_derived.derived_name,
     v_cand.address,
     v_cand.lat,
     v_cand.lng,
@@ -171,10 +265,11 @@ BEGIN
     v_tables_count,
     v_access_type,
     v_cand.raw_tags->>'addr:city',
-    v_cand.raw_tags->>'addr:county',  -- NEU: aus OSM-Tag, oft NULL
-    NULL,                              -- region: kein verlässlicher OSM-Tag
+    v_cand.raw_tags->>'addr:county',
+    NULL,
     'approved',
-    'osm'
+    'osm',
+    v_derived.derived_name_source
   )
   RETURNING id INTO v_new_id;
 
@@ -190,12 +285,10 @@ BEGIN
 END;
 $$;
 
--- Berechtigungen bleiben unverändert (CREATE OR REPLACE erhält bestehende Grants).
--- Zur Sicherheit explizit wiederholen:
 REVOKE EXECUTE ON FUNCTION public.promote_table_candidate(uuid) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.promote_table_candidate(uuid) FROM anon;
 GRANT  EXECUTE ON FUNCTION public.promote_table_candidate(uuid) TO authenticated;
 
 COMMENT ON FUNCTION public.promote_table_candidate(uuid) IS
-  'v3: county aus raw_tags->>(''addr:county''), region bleibt NULL. '
-  'Sonst identisch mit v2 (search_path='''', Haversine 100m, REVOKE PUBLIC).';
+  'v4: kontextbezogene Namenslogik (_candidate_derive_name) + name_source + county. '
+  'Alle Sicherheitseigenschaften von v2 unverändert.';

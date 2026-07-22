@@ -58,6 +58,25 @@ async function _loadApprovedTableImagesForTables(tableItems) {
   }
 }
 
+const _TT_GENERIC_NAMES = new Set([
+  'tischtennisplatte','tischtennis','tischtennisfeld','tischtennistisch',
+  'tt-platte','tt platte','tt-tisch','table tennis','ping pong'
+]);
+function _deriveTTName(tags) {
+  const tr = v => (typeof v === 'string' ? v.trim() : '') || null;
+  const n  = tr(tags.name);
+  const nd = tr(tags['name:de']);
+  const op = tr(tags.operator);
+  const st = tr(tags['addr:street']);
+  const ci = tr(tags['addr:city']);
+  if (n  && !_TT_GENERIC_NAMES.has(n.toLowerCase()))  return n;
+  if (nd && !_TT_GENERIC_NAMES.has(nd.toLowerCase())) return nd;
+  if (op) return `Tischtennis bei ${op}`;
+  if (st) return `Tischtennisplatte an der ${st}`;
+  if (ci) return `Tischtennisplatte in ${ci}`;
+  return 'Tischtennisplatte';
+}
+
 async function loadOSMTables() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -87,7 +106,7 @@ async function loadOSMTables() {
       const lat = el.lat || el.center?.lat;
       const lng = el.lon || el.center?.lon;
       const tags = el.tags || {};
-      const name = tags.name || tags['name:de'] || `Tischtennis-Platte ${i+1}`;
+      const name = _deriveTTName(tags);
       const isIndoor = tags.indoor === 'yes' || tags.location === 'indoor';
       const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null;
       return {
