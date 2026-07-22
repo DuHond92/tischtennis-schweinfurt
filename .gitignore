@@ -6,3 +6,15 @@ www/
 # Node
 node_modules/
 package-lock.json
+
+# OSM-Daten und Enrichment — niemals committen oder deployen
+# (zu groß für Git, enthält keine relevanten Produktivdaten)
+db/*.osm.pbf
+db/*.osm.pbf.part
+db/osm-context-cache.pkl
+db/enrichment-*.csv
+db/enrichment-*.json
+db/enrichment-*.sql
+db/export.json
+db/export.geojson
+db/osm_import_*.sql
