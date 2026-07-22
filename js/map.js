@@ -754,7 +754,7 @@ function renderTableListCardHtml(t, { mode = 'map', eager = false, selected = fa
           <div class="map-list-name">${escHtml(t.name || 'Unbenannte Platte')}</div>
           ${_communityGamesTag(evCount)}
         </div>
-        <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Schweinfurt')}</div>
+        <div class="map-list-sub">${ic('pin', 10)} ${escHtml(t.addr || 'Adresse nicht verfügbar')}</div>
         <div class="mli-compact-meta" id="${escAttr(metaId)}">${_tableCompactMeta(t)}</div>
         ${_communityTags(t, 0)}
       </div>
@@ -1009,7 +1009,7 @@ function _mapPreviewCardHtml(t, { metaId, showClose = true, selected = false, ac
   const today = _localTodayISO();
   const evCount = (t.events || []).filter(e => (e.dateStr || '') >= today).length;
   const thumbHtml = _mapThumbHtml(t, 'eager');
-  const shortAddr = (t.addr || 'Schweinfurt').split(',')[0];
+  const shortAddr = (t.addr || 'Adresse nicht verfügbar').split(',')[0];
   return `
     <div class="mfp-card${selected ? ' is-selection-confirmed' : ''}" role="button" tabindex="0"
          aria-label="${escAttr(actionLabel ? `${t.name}: ${actionLabel}` : t.name)}">

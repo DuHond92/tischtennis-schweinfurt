@@ -84,11 +84,16 @@ async function loadAdminPage() {
   _loadImageModerations();
   _loadReports();
   _loadModLog();
+  const isAdmin = currentUser?.role === 'admin';
   const userSection = document.getElementById('admin-user-section');
   if (userSection) {
-    const isAdmin = currentUser?.role === 'admin';
     userSection.style.display = isAdmin ? '' : 'none';
     if (isAdmin) _loadUserManagement();
+  }
+  const candidatesSection = document.getElementById('admin-candidates-section');
+  if (candidatesSection) {
+    candidatesSection.style.display = isAdmin ? '' : 'none';
+    if (isAdmin) _loadCandidates();
   }
 }
 
@@ -910,4 +915,284 @@ async function submitReport() {
 
 function closeReportSheet() {
   closeAllSheets();
+}
+
+// ── OSM-Kandidaten Review ──────────────────────────────────────────────────────
+
+const _CAND_LIMIT = 20;
+let _candidateOffset = 0;
+let _candidateHasMore = false;
+let _candidateSearchTimer = null;
+
+function _candidateFilterChanged() {
+  _candidateOffset = 0;
+  _loadCandidates();
+}
+
+function _candidateSearchDebounced() {
+  clearTimeout(_candidateSearchTimer);
+  _candidateSearchTimer = setTimeout(() => {
+    _candidateOffset = 0;
+    _loadCandidates();
+  }, 350);
+}
+
+function _loadMoreCandidates() {
+  _candidateOffset += _CAND_LIMIT;
+  _loadCandidates(true);
+}
+
+async function _loadCandidates(append = false) {
+  const list  = document.getElementById('admin-candidates-list');
+  const pager = document.getElementById('admin-candidates-pagination');
+  if (!list) return;
+
+  const status = document.getElementById('cand-filter-status')?.value ?? 'pending_review';
+  const type   = document.getElementById('cand-filter-type')?.value || '';
+  const search = document.getElementById('cand-filter-search')?.value.trim() || '';
+
+  if (!append) {
+    list.innerHTML = skeletonList('admin', 3);
+    if (pager) pager.style.display = 'none';
+  }
+
+  let url = `${SUPABASE_URL}/rest/v1/table_candidates`
+    + `?select=id,source,external_id,name,address,lat,lng,type,raw_tags,review_status,matched_table_id`;
+
+  if (status) url += `&review_status=eq.${encodeURIComponent(status)}`;
+  if (type)   url += `&type=eq.${encodeURIComponent(type)}`;
+  if (search) {
+    const q = encodeURIComponent(search);
+    url += `&or=(name.ilike.*${q}*,external_id.ilike.*${q}*)`;
+  }
+  url += `&order=imported_at.asc&limit=${_CAND_LIMIT}&offset=${_candidateOffset}`;
+
+  const { data, error } = await fetchWithRefresh(url, { headers: dbHeaders() });
+
+  if (error || !data) {
+    if (!append) list.innerHTML = '<div class="admin-empty">Fehler beim Laden — RLS-Policy prüfen</div>';
+    return;
+  }
+
+  _candidateHasMore = data.length === _CAND_LIMIT;
+
+  if (!append) {
+    if (!data.length) {
+      list.innerHTML = '<div class="admin-empty">Keine Kandidaten gefunden</div>';
+      if (pager) pager.style.display = 'none';
+      return;
+    }
+    list.innerHTML = data.map(_renderCandidateCard).join('');
+  } else {
+    data.forEach(c => { list.insertAdjacentHTML('beforeend', _renderCandidateCard(c)); });
+  }
+
+  if (pager) pager.style.display = _candidateHasMore ? '' : 'none';
+  data.forEach(c => _loadNearbyCandidateTables(c));
+}
+
+const _CAND_STATUS_BADGE = {
+  pending_review:     '<span class="admin-tag">Offen</span>',
+  approved:           '<span class="admin-tag" style="background:rgba(34,197,94,.13);color:#16a34a;">Freigegeben</span>',
+  rejected:           '<span class="admin-tag" style="background:rgba(239,68,68,.13);color:#dc2626;">Abgelehnt</span>',
+  possible_duplicate: '<span class="admin-tag" style="background:rgba(234,179,8,.13);color:#ca8a04;">Duplikat</span>',
+};
+
+function _renderCandidateCard(c) {
+  const osmUrl    = `https://www.openstreetmap.org/${c.external_id}`;
+  const tags      = c.raw_tags || {};
+  const capacity  = tags.capacity ? `${tags.capacity} Tisch${Number(tags.capacity) === 1 ? '' : 'e'}` : null;
+  const badge     = _CAND_STATUS_BADGE[c.review_status] || '';
+  const isPending = c.review_status === 'pending_review';
+  const cid       = escAttr(c.id);
+
+  return `
+  <div class="admin-card" id="cand-card-${cid}">
+    <div class="admin-card-header">
+      <div class="admin-card-name">${escHtml(c.name || '—')}</div>
+      ${badge}
+    </div>
+    ${c.address ? `<div class="admin-card-row">${ic('pin',12)} ${escHtml(c.address)}</div>` : ''}
+    <div class="admin-card-coords">${Number(c.lat).toFixed(6)}, ${Number(c.lng).toFixed(6)}</div>
+    <div class="admin-card-tags" style="margin:5px 0;">
+      <span class="admin-tag">${c.type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
+      ${capacity ? `<span class="admin-tag">${escHtml(capacity)}</span>` : ''}
+      ${tags.access ? `<span class="admin-tag">Zugang: ${escHtml(tags.access)}</span>` : ''}
+    </div>
+    <div style="margin:2px 0 6px;">
+      <a href="${osmUrl}" target="_blank" rel="noopener" style="font-size:0.73rem;color:var(--accent);text-decoration:none;">${escHtml(c.external_id)} ↗</a>
+    </div>
+    <div id="cand-nearby-${cid}"></div>
+    ${isPending ? `
+    <div class="admin-card-actions" id="cand-actions-${cid}">
+      <button class="btn btn-secondary btn-sm" onclick="candidateReject('${cid}')">Ablehnen</button>
+      <button class="btn btn-secondary btn-sm" onclick="candidateMarkDuplicate('${cid}')">Duplikat</button>
+      <button class="btn btn-sm admin-approve-btn" onclick="candidatePromote('${cid}')" style="flex:1;">Freigeben ✓</button>
+    </div>
+    <div id="cand-reject-box-${cid}" style="display:none;">
+      <textarea id="cand-reject-note-${cid}" class="admin-reject-textarea" placeholder="Ablehnungsgrund (optional)" maxlength="200" rows="2"></textarea>
+      <div class="admin-card-actions" style="margin-top:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="candidateCancelAction('${cid}')">Abbrechen</button>
+        <button class="btn btn-sm admin-reject-btn" onclick="candidateRejectConfirm('${cid}')" style="flex:1;">Ablehnung bestätigen</button>
+      </div>
+    </div>
+    <div id="cand-dup-box-${cid}" style="display:none;">
+      <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:6px;">ID der vorhandenen Platte (aus public.tables):</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="cand-dup-id-${cid}" placeholder="z.B. 18" min="1"
+          style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:var(--bg-card);color:var(--text);">
+        <button class="btn btn-secondary btn-sm" onclick="candidateCancelAction('${cid}')">✕</button>
+        <button class="btn btn-sm admin-approve-btn" onclick="candidateMarkDuplicateConfirm('${cid}')">Verbinden</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+async function _loadNearbyCandidateTables(c) {
+  const el = document.getElementById(`cand-nearby-${escAttr(c.id)}`);
+  if (!el) return;
+  const bbox = 0.003; // ~300 m Bounding-Box
+  const url = `${SUPABASE_URL}/rest/v1/tables?select=id,name`
+    + `&lat=gte.${c.lat - bbox}&lat=lte.${c.lat + bbox}`
+    + `&lng=gte.${c.lng - bbox}&lng=lte.${c.lng + bbox}&limit=3`;
+  const { data } = await fetchWithRefresh(url, { headers: dbHeaders() });
+  if (!data || !data.length) return;
+  el.innerHTML = `<div style="font-size:0.73rem;padding:5px 8px;background:rgba(234,179,8,.1);border-radius:8px;color:var(--text-dim);margin-bottom:6px;">`
+    + `⚠ Nahe Platten: ${data.map(t => `<strong>${escHtml(t.name)}</strong> (ID ${t.id})`).join(', ')}</div>`;
+}
+
+function candidateCancelAction(cid) {
+  const actions    = document.getElementById(`cand-actions-${cid}`);
+  const rejectBox  = document.getElementById(`cand-reject-box-${cid}`);
+  const dupBox     = document.getElementById(`cand-dup-box-${cid}`);
+  if (rejectBox) rejectBox.style.display = 'none';
+  if (dupBox)    dupBox.style.display    = 'none';
+  if (actions)   actions.style.display   = 'flex';
+}
+
+function candidateReject(cid) {
+  const actions   = document.getElementById(`cand-actions-${cid}`);
+  const rejectBox = document.getElementById(`cand-reject-box-${cid}`);
+  if (!rejectBox) return;
+  if (actions) actions.style.display = 'none';
+  rejectBox.style.display = 'block';
+  rejectBox.querySelector('textarea')?.focus();
+}
+
+async function candidateRejectConfirm(cid) {
+  const card = document.getElementById(`cand-card-${cid}`);
+  const note = document.getElementById(`cand-reject-note-${cid}`)?.value.trim() || null;
+  if (!card) return;
+  _setCardLoading(card, true);
+
+  const token = await sb.getValidToken();
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/reject_table_candidate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ p_candidate_id: cid, p_note: note })
+  });
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    _setCardLoading(card, false);
+    showToast(err?.message || 'Fehler beim Ablehnen', 'error');
+    return;
+  }
+  card.classList.add('admin-card-done');
+  setTimeout(() => card.remove(), 400);
+  showToast('Kandidat abgelehnt');
+}
+
+function candidateMarkDuplicate(cid) {
+  const actions = document.getElementById(`cand-actions-${cid}`);
+  const dupBox  = document.getElementById(`cand-dup-box-${cid}`);
+  if (!dupBox) return;
+  if (actions) actions.style.display = 'none';
+  dupBox.style.display = 'block';
+  document.getElementById(`cand-dup-id-${cid}`)?.focus();
+}
+
+async function candidateMarkDuplicateConfirm(cid) {
+  const existingId = parseInt(document.getElementById(`cand-dup-id-${cid}`)?.value || '', 10);
+  if (!existingId || existingId <= 0) { showToast('Ungültige Tabellen-ID', 'warning'); return; }
+
+  showConfirmDialog({
+    title: 'Als Duplikat markieren?',
+    body: `Kandidat wird mit public.tables ID ${existingId} verknüpft und als Duplikat markiert.`,
+    confirmLabel: 'Verbinden',
+    onConfirm: async () => {
+      const card = document.getElementById(`cand-card-${cid}`);
+      if (card) _setCardLoading(card, true);
+
+      const token = await sb.getValidToken();
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_candidate_duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ p_candidate_id: cid, p_existing_table_id: existingId })
+      });
+
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        if (card) _setCardLoading(card, false);
+        showToast(err?.message || 'Fehler', 'error');
+        return;
+      }
+      if (card) { card.classList.add('admin-card-done'); setTimeout(() => card.remove(), 400); }
+      showToast('Als Duplikat markiert');
+    }
+  });
+}
+
+async function candidatePromote(cid) {
+  showConfirmDialog({
+    title: 'Kandidat freigeben?',
+    body: 'Die Platte wird in public.tables übernommen und sofort in der App sichtbar.',
+    confirmLabel: 'Freigeben und veröffentlichen',
+    onConfirm: async () => {
+      const card = document.getElementById(`cand-card-${cid}`);
+      if (card) _setCardLoading(card, true);
+
+      let r, err;
+      try {
+        const token = await sb.getValidToken();
+        r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/promote_table_candidate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ p_candidate_id: cid })
+        });
+      } catch (e) {
+        if (card) _setCardLoading(card, false);
+        showToast('Netzwerkfehler bei der Promotion', 'error');
+        return;
+      }
+
+      if (!r.ok) {
+        err = await r.json().catch(() => ({}));
+        if (card) _setCardLoading(card, false);
+        showToast(err?.message || err?.hint || 'Fehler bei der Promotion', 'error');
+        return;
+      }
+
+      const newId = await r.json().catch(() => null);
+      if (newId === null) {
+        if (card) _setCardLoading(card, false);
+        showToast('Promotion ausgeführt, Antwort nicht lesbar', 'warning');
+        return;
+      }
+
+      // Kandidat sofort aus der Adminliste entfernen (Promotion war erfolgreich)
+      if (card) { card.classList.add('admin-card-done'); setTimeout(() => card.remove(), 400); }
+      showToast(`Platte #${newId} veröffentlicht ✓`);
+
+      // Karte aktualisieren: loadTables ersetzt das globale tables-Array,
+      // _applyMapFilters synct Marker (keine Duplikate: _syncMapMarkers prüft
+      // existierende IDs) und aktualisiert die Kartenliste.
+      try {
+        await loadTables();
+        if (typeof _applyMapFilters === 'function') _applyMapFilters();
+      } catch (e) {
+        showToast('Karte konnte nicht sofort aktualisiert werden — beim nächsten Öffnen sichtbar', 'warning');
+      }
+    }
+  });
 }

@@ -89,7 +89,7 @@ async function loadOSMTables() {
       const tags = el.tags || {};
       const name = tags.name || tags['name:de'] || `Tischtennis-Platte ${i+1}`;
       const isIndoor = tags.indoor === 'yes' || tags.location === 'indoor';
-      const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || 'Schweinfurt';
+      const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null;
       return {
         id: 10000 + el.id % 9000,
         osmId: el.id,

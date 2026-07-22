@@ -69,7 +69,7 @@ function showTableDetail(id) {
     <!-- Basisinfos -->
     <div class="eds-section eds-section--info">
       <div class="ds-name">${t.name}</div>
-      <div class="ds-address">${icPlate(13)} ${t.addr||'Schweinfurt'}</div>
+      <div class="ds-address">${icPlate(13)} ${t.addr || 'Adresse nicht verfügbar'}</div>
       ${metaLine ? `<div class="tds-meta-line">${metaLine}</div>` : ''}
       <div class="plt-badge-row" style="margin-top:6px;">${distHtml}${osmHtml}</div>
     </div>
@@ -188,10 +188,9 @@ function buildPhotoSlider(t, photos) {
       </div>
       <div class="ds-thumbs">
         ${thumbs}
-        <div class="ds-thumb-add" title="Bild hinzufügen" onclick="_openPhotoSourcePicker()">+</div>
+        <div class="ds-thumb-add" title="Bild hinzufügen" onclick="openTablePhotoLibrary()">+</div>
       </div>
     </div>
-    <input type="file" id="ds-file-camera"  accept="image/*" capture="environment" style="display:none" onchange="handleTableImageUpload(this)">
     <input type="file" id="ds-file-gallery" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" style="display:none" onchange="handleTableImageUpload(this)">`;
 }
 
@@ -295,9 +294,20 @@ async function uploadEventImageFile(file, eventId) {
 // Event-Bild Upload aus der Detailansicht
 async function handleDetailImageUpload(input) {
   if (!input.files || !input.files[0]) return;
-  if (!sb.isLoggedIn()) { input.value = ''; closeAllSheets(); openSheet('auth-sheet'); return; }
   const file = input.files[0];
   input.value = '';
+  await handleDetailImageFile(file);
+}
+
+async function openEventDetailPhotoLibrary() {
+  if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
+  const file = await pickImageFromPhotoLibrary('ev-file-input');
+  if (file) await handleDetailImageFile(file);
+}
+
+async function handleDetailImageFile(file) {
+  if (!file) return;
+  if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
   showToast('Bild wird hochgeladen…', '⏳');
   try {
     const result = await uploadEventImageFile(file, currentEventId);
@@ -308,13 +318,10 @@ async function handleDetailImageUpload(input) {
   }
 }
 
-// ── Foto-Quelle Action Sheet ──────────────────────────────────
-function _openPhotoSourcePicker() {
+async function openTablePhotoLibrary() {
   if (!sb.isLoggedIn()) { closeAllSheets(); openSheet('auth-sheet'); return; }
-  document.getElementById('photo-source-sheet')?.classList.add('open');
-}
-function _closePhotoSourcePicker() {
-  document.getElementById('photo-source-sheet')?.classList.remove('open');
+  const file = await pickImageFromPhotoLibrary('ds-file-gallery');
+  if (file) await handleTableImageFile(file);
 }
 
 // ── Platten-Bild Upload ───────────────────────────────────────
@@ -322,16 +329,19 @@ let _tableImgUploading = false;
 
 async function handleTableImageUpload(input) {
   if (!input.files || !input.files[0]) return;
-  if (_tableImgUploading) { input.value = ''; return; }
+  const file = input.files[0];
+  input.value = '';
+  await handleTableImageFile(file);
+}
+
+async function handleTableImageFile(file) {
+  if (!file || _tableImgUploading) return;
   if (!sb.isLoggedIn()) {
-    input.value = '';
     closeAllSheets();
     openSheet('auth-sheet');
     return;
   }
   _tableImgUploading = true;
-  const file = input.files[0];
-  input.value = '';
   showToast('Bild wird komprimiert und hochgeladen…', '⏳');
   try {
     const blob     = await _resizeTableImage(file);
