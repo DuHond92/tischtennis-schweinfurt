@@ -956,18 +956,20 @@ async function _loadCandidates(append = false) {
     if (pager) pager.style.display = 'none';
   }
 
-  let url = `${SUPABASE_URL}/rest/v1/table_candidates`
-    + `?select=id,source,external_id,name,address,lat,lng,type,raw_tags,review_status,matched_table_id`;
-
-  if (status) url += `&review_status=eq.${encodeURIComponent(status)}`;
-  if (type)   url += `&type=eq.${encodeURIComponent(type)}`;
-  if (search) {
-    const q = encodeURIComponent(search);
-    url += `&or=(name.ilike.*${q}*,external_id.ilike.*${q}*)`;
-  }
-  url += `&order=imported_at.asc&limit=${_CAND_LIMIT}&offset=${_candidateOffset}`;
-
-  const { data, error } = await fetchWithRefresh(url, { headers: dbHeaders() });
+  // list_candidates_for_review RPC: liefert Enrichment-Spalten und umgeht RLS
+  const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/list_candidates_for_review`;
+  const rpcBody = JSON.stringify({
+    p_status: status || null,
+    p_type:   type   || null,
+    p_search: search || null,
+    p_limit:  _CAND_LIMIT,
+    p_offset: _candidateOffset,
+  });
+  const { data, error } = await fetchWithRefresh(rpcUrl, {
+    method: 'POST',
+    headers: { ...dbHeaders(), 'Content-Type': 'application/json' },
+    body: rpcBody,
+  });
 
   if (error || !data) {
     if (!append) list.innerHTML = '<div class="admin-empty">Fehler beim Laden — RLS-Policy prüfen</div>';
@@ -991,7 +993,12 @@ async function _loadCandidates(append = false) {
   data.forEach(c => _loadNearbyCandidateTables(c));
 }
 
-function _deriveCandidateName(tags) {
+function _deriveCandidateName(c) {
+  // Enrichment aus DB hat Vorrang vor Tag-Ableitung
+  if (c.enriched_display_name) {
+    return { name: c.enriched_display_name, source: c.enriched_name_source || 'enriched' };
+  }
+  const tags = c.raw_tags || {};
   const tr = v => (typeof v === 'string' ? v.trim() : '') || null;
   const n  = tr(tags.name);
   const nd = tr(tags['name:de']);
@@ -1002,11 +1009,11 @@ function _deriveCandidateName(tags) {
     'tischtennisplatte','tischtennis','tischtennisfeld','tischtennistisch',
     'tt-platte','tt platte','tt-tisch','table tennis','ping pong'
   ]);
-  if (n  && !generic.has(n.toLowerCase()))  return { name: n,                            source: 'osm_name' };
-  if (nd && !generic.has(nd.toLowerCase())) return { name: nd,                           source: 'osm_name_de' };
-  if (op) return { name: `Tischtennis bei ${op}`,                     source: 'osm_operator' };
-  if (st) return { name: `Tischtennisplatte an der ${st}`,            source: 'osm_addr_street' };
-  if (ci) return { name: `Tischtennisplatte in ${ci}`,                source: 'osm_addr_city' };
+  if (n  && !generic.has(n.toLowerCase()))  return { name: n,                         source: 'osm_name' };
+  if (nd && !generic.has(nd.toLowerCase())) return { name: nd,                        source: 'osm_name_de' };
+  if (op) return { name: `Tischtennis bei ${op}`,                  source: 'osm_operator' };
+  if (st) return { name: `Tischtennisplatte an der ${st}`,         source: 'osm_addr_street' };
+  if (ci) return { name: `Tischtennisplatte in ${ci}`,             source: 'osm_addr_city' };
   return { name: 'Tischtennisplatte', source: 'fallback' };
 }
 
@@ -1016,7 +1023,26 @@ const _SOURCE_LABELS = {
   osm_operator:    'Betreiber',
   osm_addr_street: 'Straße',
   osm_addr_city:   'Ort',
+  osm_park:        'Park',
+  osm_playground:  'Spielplatz',
+  osm_school:      'Schule',
+  osm_kindergarten:'Kindergarten',
+  osm_sports:      'Sportanlage',
+  osm_pool:        'Schwimmbad',
+  osm_camping:     'Camping',
+  osm_recreation:  'Erholungsfläche',
+  osm_square:      'Platz',
+  osm_street:      'Straße',
+  osm_suburb:      'Stadtteil',
+  enriched:        'räumlicher Kontext',
   fallback:        null,
+};
+
+const _METHOD_LABELS = {
+  contains:       'enthält',
+  nearest:        'Nähe',
+  street:         'Straße',
+  administrative: 'Stadtteil',
 };
 
 const _CAND_STATUS_BADGE = {
@@ -1034,9 +1060,27 @@ function _renderCandidateCard(c) {
   const isPending = c.review_status === 'pending_review';
   const cid       = escAttr(c.id);
 
-  const derived    = _deriveCandidateName(tags);
+  const derived    = _deriveCandidateName(c);
   const osmRawName = (c.name || '').trim();
   const showOsmRaw = osmRawName && osmRawName !== derived.name;
+
+  // Enrichment-Kontext anzeigen (wenn vorhanden)
+  const srcLabel  = _SOURCE_LABELS[derived.source];
+  const methLabel = c.context_method ? _METHOD_LABELS[c.context_method] : null;
+  let enrichBadge = '';
+  if (c.enriched_display_name && c.context_type) {
+    const distStr = (c.context_distance_m != null && c.context_distance_m > 0)
+      ? ` · ${c.context_distance_m} m`
+      : (c.context_method === 'contains' ? ' · enthält' : '');
+    const conf    = c.context_confidence != null
+      ? ` · ${Math.round(c.context_confidence * 100)} %`
+      : '';
+    enrichBadge = `<div class="cand-enrichment-badge">`
+      + `<span class="admin-tag cand-enrich-tag">${escHtml(_SOURCE_LABELS[`osm_${c.context_type}`] || c.context_type)}</span>`
+      + `<span class="cand-enrich-meta">${escHtml(methLabel || c.context_method || '')}${distStr}${conf}</span>`
+      + (c.context_name ? ` <span class="cand-enrich-ctx">${escHtml(c.context_name)}</span>` : '')
+      + `</div>`;
+  }
 
   return `
   <div class="admin-card" id="cand-card-${cid}">
@@ -1044,9 +1088,11 @@ function _renderCandidateCard(c) {
       <div>
         <div class="admin-card-name">${escHtml(derived.name)}</div>
         ${showOsmRaw ? `<div class="admin-card-name-orig">OSM: ${escHtml(osmRawName)}</div>` : ''}
+        ${srcLabel ? `<div class="admin-card-name-orig">Quelle: ${escHtml(srcLabel)}</div>` : ''}
       </div>
       ${badge}
     </div>
+    ${enrichBadge}
     ${c.address ? `<div class="admin-card-row">${ic('pin',12)} ${escHtml(c.address)}</div>` : ''}
     <div class="admin-card-coords">${Number(c.lat).toFixed(6)}, ${Number(c.lng).toFixed(6)}</div>
     <div class="admin-card-tags" style="margin:5px 0;">
@@ -1284,7 +1330,18 @@ function _renderBatchResults(results, isDryRun) {
       const showOrig    = r.name && r.name !== r.derived_name;
       const srcLabel    = _SOURCE_LABELS[r.name_source] || null;
       const idSuffix    = r.new_table_id ? ` → ID ${r.new_table_id}` : '';
-      const meta = [showOrig ? `OSM: ${r.name}` : null, srcLabel].filter(Boolean).join(' · ');
+      // Enrichment-Kontext im Batch-Ergebnis anzeigen
+      const ctxLabel    = r.context_type ? (_SOURCE_LABELS[`osm_${r.context_type}`] || r.context_type) : null;
+      const ctxMeta     = [
+        ctxLabel,
+        r.context_method ? (_METHOD_LABELS[r.context_method] || r.context_method) : null,
+        r.context_dist != null && r.context_dist > 0 ? `${r.context_dist} m` : null,
+      ].filter(Boolean).join(' · ');
+      const meta = [
+        showOrig ? `OSM: ${r.name}` : null,
+        srcLabel && !r.context_type ? srcLabel : null,
+        ctxMeta || null,
+      ].filter(Boolean).join(' · ');
       return `<div class="batch-item">${escHtml(displayName)}${idSuffix}`
         + (meta ? `<span class="batch-reason">${escHtml(meta)}</span>` : '')
         + `</div>`;

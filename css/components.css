@@ -3757,3 +3757,19 @@
   font-size: 0.7rem; color: var(--text-dim);
   padding: 2px 0;
 }
+
+/* Enrichment-Badge in der Kandidatenkarte */
+.cand-enrichment-badge {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 4px 0 6px;
+}
+.cand-enrich-tag {
+  background: rgba(var(--accent-rgb, 255, 107, 26), 0.12);
+  color: var(--accent); font-size: 0.7rem; font-weight: 600;
+}
+.cand-enrich-meta {
+  font-size: 0.7rem; color: var(--text-dim);
+}
+.cand-enrich-ctx {
+  font-size: 0.7rem; color: var(--text-xdim); font-style: italic;
+}

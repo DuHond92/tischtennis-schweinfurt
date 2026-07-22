@@ -1,64 +1,97 @@
 #!/usr/bin/env python3
 """
-db/osm-enrich.py  v1
+db/osm-enrich.py  v2
 ====================
 Räumliche Kontextanreicherung für table_candidates.
 
-Warum dieses Skript:
-  _candidate_derive_name() liest nur Tags des TT-Knotens selbst.
-  Parks, Schulen, Spielplätze usw. sind ANDERE OSM-Objekte — ihr Name
-  findet sich nicht in raw_tags. Dieses Skript holt diese Kontextobjekte
-  räumlich und speichert den abgeleiteten Namen in table_candidates.
+DATENQUELLEN
+------------
+Produktiver Lauf:
+  Geofabrik-Deutschland-PBF (germany-latest.osm.pbf, ~3,8 GB).
+  Download: curl -L -o db/germany-latest.osm.pbf \\
+                 https://download.geofabrik.de/europe/germany-latest.osm.pbf
 
-Modi:
-  --mode overpass  Targeted Overpass-Abfragen (Standard, kein Download nötig)
-  --mode pbf       Lokale Geofabrik-PBF (Vollläufe, benötigt: pip install osmium shapely)
+  Der PBF wird einmal geparst; extrahierte Geodaten werden als Cache
+  (db/osm-context-cache.pkl) gespeichert. Während der eigentlichen
+  Kandidatenverarbeitung entstehen NULL Netzwerkaufrufe.
 
-Verwendung:
-  # Dry-Run (100 Kandidaten, Overpass, keine DB-Schreibzugriffe):
-  python3 db/osm-enrich.py --mode overpass --limit 100
+Testlauf (wenige Kandidaten, kein PBF-Download):
+  --mode overpass  Überpass-API, eine Abfrage pro Kandidat (around:1600 m).
+  NUR für Tests. Für 19.206 Kandidaten nicht geeignet (= 19.206 Requests).
 
-  # Vollständiger Lauf nach PBF-Download:
+MODI
+----
+  pbf      Produktiv — lokal, deterministisch, null Netzwerkaufrufe
+  overpass Test — nützlich für schnelle Stichproben (<= 20 Kandidaten)
+
+VERWENDUNG
+----------
+  # 1. Cache aus PBF bauen (einmalig, dauert ~5–15 min):
+  python3 db/osm-enrich.py --mode pbf --pbf db/germany-latest.osm.pbf --build-cache
+
+  # 2. 200-Kandidaten-Testlauf (kein DB-Schreiben):
+  python3 db/osm-enrich.py --mode pbf --pbf db/germany-latest.osm.pbf --limit 200 \\
+      --out db/enrichment-test-200.csv
+
+  # 3. Vollständiger Lauf (alle 19.206, kein DB-Schreiben, CSV zur Prüfung):
   python3 db/osm-enrich.py --mode pbf --pbf db/germany-latest.osm.pbf \\
+      --out db/enrichment-all.csv
+
+  # 4. Nach manueller Prüfung der CSV: in DB schreiben
+  python3 db/osm-enrich.py --mode pbf --pbf db/germany-latest.osm.pbf \\
+      --out db/enrichment-all.csv --write \\
       --supabase-url https://xxx.supabase.co --supabase-key SERVICE_ROLE_KEY
 
-  # Echte Schreibzugriffe aktivieren (Standard ist Dry-Run):
-  python3 db/osm-enrich.py --mode overpass --limit 100 --write
+  # 5. Lauf fortsetzbar: bereits geschriebene external_ids werden übersprungen
+  python3 db/osm-enrich.py --mode pbf --pbf db/germany-latest.osm.pbf \\
+      --out db/enrichment-all.csv --resume --write ...
 
-PBF-Download (~3,8 GB):
-  curl -L -o db/germany-latest.osm.pbf \\
-       https://download.geofabrik.de/europe/germany-latest.osm.pbf
+NAMENS-PRIORITÄT
+----------------
+  1. Echte Polygon-Enthaltensein: Park, Spielplatz, Schule, Sportanlage, Freibad, Camping
+  2. Nächstes benanntes Polygon (Mittelpunkt-Näherung) innerhalb Typ-spezifischer Grenze
+  3. Straße: kürzeste Distanz Punkt→Linie ≤ 60 m
+  4. Administrative Grenze (place=suburb/neighbourhood/…): nur via Polygon-Enthaltensein
+  5. Fallback "Tischtennisplatte" (keine Anreicherung)
 
-Namens-Priorität:
-  1. Enthaltensein in benanntem Polygon (Park, Schule, Spielplatz, Sportanlage …)
-  2. Benannter Kontext in plausibler Nähe
-  3. Nächste Straße (≤ 60 m)
-  4. Stadtteil / Gemeinde (≤ 1500 m)
-  5. Fallback "Tischtennisplatte"
+KONFIDENZ
+---------
+  contains:      0.90 – 0.10*(dist/max_dist_m) → 0.80–0.90
+  nearest:       0.70 – 0.30*(dist/max_dist_m) → 0.40–0.70
+  street:        0.70 – 0.30*(dist/max_dist_m) → 0.40–0.70  (dist = Punkt→Linie)
+  administrative:0.50 (fix; Polygon-Enthaltensein aber große unspezifische Fläche)
 
-Namens-Vorlagen:
-  park/recreation  → "Tischtennis im {name}"
-  playground       → "Tischtennis am {name}"
-  school/sports    → "Tischtennis an der {name}"
-  pool/camping     → "Tischtennis bei {name}"
-  street           → "Tischtennisplatte an der {name}"
-  suburb/city      → "Tischtennisplatte in {name}"
+ABHÄNGIGKEITEN
+--------------
+  pip install osmium shapely   (für --mode pbf)
+  pip install requests          (für --mode overpass, optional)
+
+PBF-QUELLE
+----------
+  Geofabrik Deutschland: https://download.geofabrik.de/europe/germany-latest.osm.pbf
+  Letzte OSM-Daten: Versionsdatum steht im PBF-Header (osmium fileinfo --extended).
+  Wird im Cache als pbf_source und pbf_timestamp gespeichert.
 """
 
 import argparse
+import csv
 import json
 import math
+import os
+import pickle
 import random
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections import defaultdict
+from pathlib import Path
 
-# ── Haversine ─────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HAVERSINE
+# ══════════════════════════════════════════════════════════════════════════════
 
 def haversine_m(lat1, lng1, lat2, lng2):
+    """Luftlinien-Distanz in Metern (Haversine, Erdradius 6 371 000 m)."""
     R = 6_371_000
     d_lat = math.radians(lat2 - lat1)
     d_lng = math.radians(lng2 - lng1)
@@ -66,139 +99,242 @@ def haversine_m(lat1, lng1, lat2, lng2):
          + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2))
          * math.sin(d_lng / 2) ** 2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1.0 - a)))
-    return int(round(R * c))
+    return R * c
 
-# ── Kontext-Konfiguration ─────────────────────────────────────────────────────
-# Format: (priority, max_dist_m, contain_radius_m, name_template)
-# priority:        kleiner = besser
-# max_dist_m:      Maximale Distanz für "nearby"-Treffer (Mittelpunkt→Mittelpunkt)
-# contain_radius_m: Wenn Distanz ≤ contain_radius → method='contains' (Näherung für Overpass-Mode)
-# name_template:   {name} wird ersetzt
 
-CONTEXT_CONFIG = {
-    'park':       (1, 200,  100, 'Tischtennis im {name}'),
-    'playground': (1,  80,   30, 'Tischtennis am {name}'),
-    'school':     (1, 100,   60, 'Tischtennis an der {name}'),
-    'sports':     (1, 150,   80, 'Tischtennis an der {name}'),
-    'pool':       (2,  65,   40, 'Tischtennis bei {name}'),
-    'camping':    (2, 100,   80, 'Tischtennis bei {name}'),
-    'recreation': (2, 150,  100, 'Tischtennis im {name}'),
-    'square':     (2,  50,   25, 'Tischtennis am {name}'),
-    'street':     (3,  60,    0, 'Tischtennisplatte an der {name}'),
-    'suburb':     (4, 1500,   0, 'Tischtennisplatte in {name}'),
-}
+# ══════════════════════════════════════════════════════════════════════════════
+# KONTEXT-KLASSIFIZIERUNG
+# ══════════════════════════════════════════════════════════════════════════════
 
-# Generische TT-Namen, die übersprungen werden sollen (identisch mit SQL-Funktion)
-_GENERIC_TT = {
+# Generische TT-Namen — identisch mit SQL-Funktion und JS-Helper
+_GENERIC_TT = frozenset({
     'tischtennisplatte', 'tischtennis', 'tischtennisfeld', 'tischtennistisch',
     'tt-platte', 'tt platte', 'tt-tisch', 'table tennis', 'ping pong',
-}
+})
 
-# Straßentypen, die für Kontextnamen geeignet sind
-_STREET_INCLUDE = {
+# Straßentypen, die für Kontext geeignet sind (keine Autobahnen / Bundesstraßen)
+_STREET_HIGHWAY = frozenset({
     'residential', 'living_street', 'service', 'footway', 'pedestrian',
     'unclassified', 'tertiary', 'track', 'path', 'cycleway', 'secondary',
-}
+    'steps',
+})
 
 def classify_osm_tags(tags):
-    """Gibt den Kontexttyp zurück oder None."""
-    leisure  = tags.get('leisure', '')
-    amenity  = tags.get('amenity', '')
-    landuse  = tags.get('landuse', '')
-    tourism  = tags.get('tourism', '')
-    place    = tags.get('place', '')
-    highway  = tags.get('highway', '')
+    """
+    Klassifiziert OSM-Tags in einen Kontexttyp.
+    Rückgabe: 'park'|'playground'|'school'|'kindergarten'|'sports'|
+              'pool'|'camping'|'recreation'|'square'|'street'|'suburb'|None
+    """
+    leisure = tags.get('leisure', '')
+    amenity = tags.get('amenity', '')
+    landuse = tags.get('landuse', '')
+    tourism = tags.get('tourism', '')
+    place   = tags.get('place', '')
+    highway = tags.get('highway', '')
+    natural = tags.get('natural', '')
 
-    if leisure in ('park', 'garden') or landuse == 'park':
+    # Parks und Gärten (Priorität 1)
+    if leisure in ('park', 'garden') or (landuse == 'recreation_ground' and tags.get('name')):
         return 'park'
+    if landuse == 'park':
+        return 'park'
+
+    # Spielplätze (Priorität 1)
     if leisure == 'playground':
         return 'playground'
-    if amenity in ('school', 'university', 'college', 'kindergarten'):
+
+    # Schulen ohne Kindergarten (Priorität 1)
+    if amenity in ('school', 'university', 'college'):
         return 'school'
-    if leisure == 'sports_centre' or landuse == 'sport':
+
+    # Kindergärten / Kitas (Priorität 1, eigener Typ wegen Namensvorlage)
+    if amenity == 'kindergarten':
+        return 'kindergarten'
+
+    # Sportanlagen (Priorität 1)
+    if leisure in ('sports_centre', 'stadium', 'sports_hall'):
         return 'sports'
-    if leisure == 'swimming_pool' or amenity == 'swimming_pool':
+    if landuse == 'sport':
+        return 'sports'
+
+    # Schwimmbäder / Freibäder (Priorität 1)
+    if leisure == 'swimming_pool' or amenity in ('swimming_pool',):
         return 'pool'
+
+    # Campingplätze (Priorität 2)
     if tourism == 'camp_site':
         return 'camping'
+
+    # Erholungsflächen (Priorität 2)
     if leisure == 'recreation_ground':
         return 'recreation'
+
+    # Plätze / Squares (Priorität 2)
+    if leisure == 'pitch' and tags.get('name'):
+        return 'square'
     if place == 'square':
         return 'square'
-    if highway in _STREET_INCLUDE and tags.get('name'):
+
+    # Straßen (Priorität 3) — nur wenn benannt
+    if highway in _STREET_HIGHWAY and tags.get('name'):
         return 'street'
-    if place in ('suburb', 'neighbourhood', 'quarter', 'village', 'town', 'city'):
+
+    # Administrative Grenzen / Stadtteile (Priorität 4)
+    # NUR über Polygon-Enthaltensein, nie über Distanz
+    if place in ('suburb', 'neighbourhood', 'quarter', 'borough'):
         return 'suburb'
+
     return None
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NAMENS-VORLAGEN  (grammatisch korrekt, ohne Duplikate)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Straßen-Endungen und ihr bestimmter Artikel
+_STREET_FEMININE = (
+    'straße', 'allee', 'gasse', 'brücke', 'promenade',
+    'reihe', 'zeile', 'passage', 'chaussee', 'heide', 'aue',
+)
+_STREET_MASC_NEUT = (
+    'weg', 'platz', 'damm', 'ring', 'berg', 'pfad', 'stieg', 'steig',
+    'park', 'feld', 'tal', 'horn', 'tor', 'graben', 'bach', 'ufer',
+    'dorf', 'gut', 'hof', 'rain', 'anger', 'grund',
+)
+
+def _street_name(name):
+    """Wählt die richtige Artikel-Form für den Straßennamen."""
+    lower = name.lower()
+    if any(lower.endswith(s) for s in _STREET_FEMININE):
+        return f'Tischtennisplatte an der {name}'
+    if any(lower.endswith(s) for s in _STREET_MASC_NEUT):
+        return f'Tischtennisplatte am {name}'
+    # Unbekannter Typ (Ortsname, Abkürzung, fremdsprachlich): neutral
+    return f'Tischtennisplatte – {name}'
+
+# Bezeichnungen, die Freibäder / Hallenbäder in ihrem Namen tragen
+_POOL_PREFIXES = (
+    'freibad', 'hallenbad', 'schwimmbad', 'naturbad', 'waldbad',
+    'strandbad', 'erlebnisbad', 'flussbad', 'seebad', 'thermalbad',
+    'bad ',
+)
+
+def _pool_name(name):
+    lower = name.lower()
+    if any(lower.startswith(p) for p in _POOL_PREFIXES) or lower.endswith('bad'):
+        return f'Tischtennis im {name}'
+    return f'Tischtennis im Freibad {name}'
+
+# Campingplatz-Bezeichnungen — verhindert "Campingplatz Campingplatz …"
+_CAMPING_PREFIXES = ('campingplatz', 'camping-platz', 'camping ', 'zeltplatz')
+
+def _camping_name(name):
+    lower = name.lower()
+    if any(lower.startswith(p) for p in _CAMPING_PREFIXES):
+        return f'Tischtennis auf dem {name}'
+    return f'Tischtennis auf dem Campingplatz {name}'
+
+# Kindergarten-Bezeichnungen
+_KINDER_PREFIXES = (
+    'kindergarten', 'kita', 'kinderhaus', 'kinderkrippe',
+    'kindertagesstätte', 'kinder', 'kiga',
+)
+
+def _school_name(name):
+    """Wählt Vorlage: Kindergarten-ähnlich → 'am'; Schule → 'an der'."""
+    lower = name.lower()
+    if any(lower.startswith(p) for p in _KINDER_PREFIXES):
+        return f'Tischtennis am {name}'
+    return f'Tischtennis an der {name}'
+
 def derive_display_name(ctx_type, ctx_name):
-    config = CONTEXT_CONFIG.get(ctx_type)
-    if not config:
-        return 'Tischtennisplatte'
-    return config[3].format(name=ctx_name)
+    """Erzeugt den Anzeigenamen aus Kontexttyp und OSM-Name."""
+    if ctx_type == 'park':
+        return f'Tischtennis im {ctx_name}'
+    if ctx_type == 'playground':
+        return f'Tischtennis am {ctx_name}'
+    if ctx_type in ('school', 'kindergarten'):
+        return _school_name(ctx_name)
+    if ctx_type == 'sports':
+        return f'Tischtennis an der {ctx_name}'
+    if ctx_type == 'pool':
+        return _pool_name(ctx_name)
+    if ctx_type == 'camping':
+        return _camping_name(ctx_name)
+    if ctx_type == 'recreation':
+        return f'Tischtennis im {ctx_name}'
+    if ctx_type == 'square':
+        return f'Tischtennis am {ctx_name}'
+    if ctx_type == 'street':
+        return _street_name(ctx_name)
+    if ctx_type == 'suburb':
+        return f'Tischtennisplatte in {ctx_name}'
+    return 'Tischtennisplatte'
 
-# ── Bestes Kontext-Match finden ───────────────────────────────────────────────
 
-METHOD_RANK = {'contains': 0, 'nearest': 1, 'street': 2, 'administrative': 3}
+# ══════════════════════════════════════════════════════════════════════════════
+# KONFIDENZ
+# ══════════════════════════════════════════════════════════════════════════════
 
-def find_best_context(cand_lat, cand_lng, context_objects):
+def compute_confidence(method, dist_m, max_dist_m):
     """
-    Findet den besten Kontext für einen Kandidaten.
-    context_objects: Liste von {'name', 'type', 'osm_id', 'lat', 'lng'}
-    Gibt ein Enrichment-Dict zurück oder None bei Fallback.
+    Konfidenzwert 0.0–1.0.
+
+    contains:       0.90 – 0.10*(dist/max_dist)
+      Basis-Konfidenz hoch weil echter Point-in-Polygon (PBF-Modus)
+      bzw. Näherung durch contain_radius (Overpass-Modus).
+      Kleiner Abzug bei sehr großen Polygonen (Mittelpunkt weit weg).
+
+    nearest/street: 0.70 – 0.30*(dist/max_dist)
+      Nahe Objekte haben hohe Konfidenz; lineare Abstufung nach Distanz.
+      street: dist = echte Punkt→Linie-Distanz (PBF), nicht Centroid-Distanz.
+
+    administrative: 0.50 (fest)
+      Polygon-Enthaltensein bestätigt, aber Stadtteile sind oft groß und
+      wenig spezifisch → niedrige Basisconfidenz.
     """
-    candidates = []
+    if method == 'contains':
+        ratio = min(1.0, dist_m / max(1, max_dist_m))
+        return round(max(0.10, 0.90 - 0.10 * ratio), 2)
+    if method in ('nearest', 'street'):
+        ratio = min(1.0, dist_m / max(1, max_dist_m))
+        return round(max(0.10, 0.70 - 0.30 * ratio), 2)
+    if method == 'administrative':
+        return 0.50
+    return 0.10
 
-    for obj in context_objects:
-        ctx_type = obj.get('type')
-        if not ctx_type or ctx_type not in CONTEXT_CONFIG:
-            continue
 
-        priority, max_dist, contain_radius, _ = CONTEXT_CONFIG[ctx_type]
-        dist = haversine_m(cand_lat, cand_lng, obj['lat'], obj['lng'])
+# ══════════════════════════════════════════════════════════════════════════════
+# KONTEXT-KONFIGURATION  (priority, max_dist_m)
+# ══════════════════════════════════════════════════════════════════════════════
+# priority: 1 = höchste Priorität (gewinnt bei gleichem method-rank)
+# max_dist_m: maximale Distanz Kandidat→Objekt-Mittelpunkt für 'nearest';
+#             für 'contains' wird dieser Wert nur für die Konfidenzberechnung
+#             verwendet (Polygon-Enthaltensein hat keine Distanz-Obergrenze).
+# administrative hat max_dist_m=None → nie via Distanz, nur via Polygon.
 
-        if dist > max_dist:
-            continue
+CONTEXT_CONFIG = {
+    # Typ           priority  max_dist_m
+    'park':         (1,  300),
+    'playground':   (1,   80),
+    'school':       (1,  150),
+    'kindergarten': (1,   80),
+    'sports':       (1,  150),
+    'pool':         (1,  100),
+    'camping':      (2,  150),
+    'recreation':   (2,  200),
+    'square':       (2,   80),
+    'street':       (3,   60),   # Distanz = Punkt→Linie (nicht Centroid)
+    'suburb':       (4, None),   # nur via Polygon-Enthaltensein
+}
 
-        # Method bestimmen (Overpass-Mode: Näherungslösung für contains)
-        if contain_radius > 0 and dist <= contain_radius:
-            method = 'contains'
-            confidence = round(0.95 - 0.25 * (dist / max(1, contain_radius)), 2)
-        elif ctx_type == 'suburb':
-            method = 'administrative'
-            confidence = 0.4
-        elif ctx_type == 'street':
-            method = 'street'
-            confidence = round(0.75 - 0.25 * (dist / max_dist), 2)
-        else:
-            method = 'nearest'
-            confidence = round(0.65 - 0.25 * (dist / max_dist), 2)
 
-        candidates.append((
-            METHOD_RANK[method], priority, dist,
-            {
-                'context_name':          obj['name'],
-                'context_type':          ctx_type,
-                'context_osm_id':        obj['osm_id'],
-                'context_distance_m':    dist,
-                'context_method':        method,
-                'context_confidence':    max(0.1, confidence),
-                'enriched_display_name': derive_display_name(ctx_type, obj['name']),
-                'enriched_name_source':  f'osm_{ctx_type}',
-            }
-        ))
-
-    if not candidates:
-        return None
-
-    # Sortierung: method_rank ASC, priority ASC, Distanz ASC
-    candidates.sort(key=lambda x: (x[0], x[1], x[2]))
-    return candidates[0][3]
-
-# ── Stichproben-Auswahl ───────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# STICHPROBE
+# ══════════════════════════════════════════════════════════════════════════════
 
 def sample_candidates(elements, limit, seed=42):
-    """Stratifizierte Stichprobe nach 2°×2°-Rasterzellen."""
+    """Stratifizierte Stichprobe nach 2°×2°-Rasterzellen über ganz Deutschland."""
     random.seed(seed)
 
     def _coords(el):
@@ -211,7 +347,7 @@ def sample_candidates(elements, limit, seed=42):
         lat, lon = _coords(el)
         if lat is None or lon is None:
             continue
-        cell = (int(lat // 2), int(lon // 2))
+        cell = (int(float(lat) // 2), int(float(lon) // 2))
         by_cell[cell].append(el)
 
     cells = sorted(by_cell.keys())
@@ -226,113 +362,9 @@ def sample_candidates(elements, limit, seed=42):
     random.shuffle(result)
     return result[:limit]
 
-# ── Overpass-Abfragen ─────────────────────────────────────────────────────────
-
-_OVERPASS_ENDPOINTS = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass.openstreetmap.fr/api/interpreter',
-]
-
-# around: Radius in Metern — muss ≥ max(CONTEXT_CONFIG max_dist_m) sein.
-# Lokale Filterung in find_best_context übernimmt den Rest.
-_OVERPASS_AROUND_RADIUS = 1600
-
-# Overpass-around-Abfrage für einen einzelnen Punkt.
-# {lat}, {lng}, {r} werden per .format() ersetzt.
-_OVERPASS_AROUND_TMPL = (
-    '[out:json][timeout:20];'
-    '('
-    # Parks, Gärten, Spielplätze, Sportanlagen, Bäder, Camping
-    '  nwr["leisure"~"^(park|playground|sports_centre|swimming_pool|garden|recreation_ground)$"]'
-    '     ["name"](around:{r},{lat},{lng});'
-    # Schulen, Unis, Kitas
-    '  nwr["amenity"~"^(school|university|college|kindergarten)$"]["name"](around:{r},{lat},{lng});'
-    # Landnutzung Sport/Park
-    '  nwr["landuse"~"^(park|sport)$"]["name"](around:{r},{lat},{lng});'
-    # Campingplätze
-    '  nwr["tourism"="camp_site"]["name"](around:{r},{lat},{lng});'
-    # Lokale Straßen
-    '  way["highway"~"^(residential|living_street|service|footway|pedestrian|'
-    '      unclassified|tertiary|track|path|cycleway|secondary)$"]'
-    '     ["name"](around:80,{lat},{lng});'
-    # Stadtteile / Ortschaften
-    '  nwr["place"~"^(suburb|neighbourhood|quarter|village|town)$"]'
-    '     ["name"](around:{r},{lat},{lng});'
-    ');'
-    'out center;'
-)
-
-def _overpass_request(query, retries=2, delay=5):
-    body = ('data=' + urllib.parse.quote(query)).encode()
-    last_err = None
-    for endpoint in _OVERPASS_ENDPOINTS:
-        for attempt in range(retries):
-            try:
-                req = urllib.request.Request(
-                    endpoint, data=body, method='POST',
-                    headers={
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'User-Agent':   'PlattenTreff-Enrich/1.0',
-                    }
-                )
-                with urllib.request.urlopen(req, timeout=25) as resp:
-                    data = json.loads(resp.read().decode('utf-8'))
-                    remark = data.get('remark', '')
-                    if remark:
-                        print(f'   [Overpass remark: {remark[:120]}]', file=sys.stderr)
-                    return data
-            except Exception as e:
-                last_err = e
-                if attempt < retries - 1:
-                    time.sleep(delay)
-        time.sleep(delay)
-    raise RuntimeError(f'Overpass fehlgeschlagen: {last_err}')
-
-def _parse_overpass_context(data):
-    """Extrahiert Kontextobjekte aus Overpass-Ergebnis."""
-    objects = []
-    for el in data.get('elements', []):
-        tags = el.get('tags') or {}
-        name = tags.get('name') or tags.get('name:de') or ''
-        name = name.strip()
-        if not name:
-            continue
-
-        ctx_type = classify_osm_tags(tags)
-        if not ctx_type:
-            continue
-
-        el_type = el.get('type', 'node')
-        el_id   = el.get('id', 0)
-        center  = el.get('center') or {}
-
-        lat = el.get('lat') or center.get('lat')
-        lon = el.get('lon') or center.get('lon')
-        if lat is None or lon is None:
-            continue
-
-        objects.append({
-            'name':   name,
-            'type':   ctx_type,
-            'osm_id': f'{el_type}/{el_id}',
-            'lat':    float(lat),
-            'lng':    float(lon),
-        })
-    return objects
-
-def fetch_context_for_point(lat, lng, request_delay=2.5):
-    """Holt alle Kontextobjekte in _OVERPASS_AROUND_RADIUS Metern um einen Punkt."""
-    query = _OVERPASS_AROUND_TMPL.format(
-        lat=f'{lat:.6f}', lng=f'{lng:.6f}', r=_OVERPASS_AROUND_RADIUS
-    )
-    data = _overpass_request(query)
-    time.sleep(request_delay)
-    return _parse_overpass_context(data)
-
-# ── Originalname aus OSM-Tags ─────────────────────────────────────────────────
 
 def original_osm_name(tags):
+    """Gibt den Roh-OSM-Namen des TT-Knotens zurück (für den Report)."""
     n  = (tags.get('name', '') or '').strip()
     nd = (tags.get('name:de', '') or '').strip()
     if n and n.lower() not in _GENERIC_TT:
@@ -344,126 +376,112 @@ def original_osm_name(tags):
         return f'[Betreiber: {op}]'
     return '(kein Name)'
 
-# ── Overpass-Modus ────────────────────────────────────────────────────────────
 
-def run_overpass_mode(args):
-    print('── Lade Kandidaten …', file=sys.stderr)
-    with open(args.input) as f:
-        raw = json.load(f)
-    elements = raw.get('elements', raw) if isinstance(raw, dict) else raw
+# ══════════════════════════════════════════════════════════════════════════════
+# PBF-MODUS  (kein Netzwerkaufruf während Kandidaten-Verarbeitung)
+# ══════════════════════════════════════════════════════════════════════════════
 
-    sample = sample_candidates(elements, args.limit)
-    n_total = len(elements)
-    print(f'── Stichprobe: {len(sample)} Kandidaten aus {n_total} Gesamtkandidaten', file=sys.stderr)
-    print(f'── {len(sample)} around-Abfragen (~{len(sample) * 2.5:.0f}s mit Rate-Limit)', file=sys.stderr)
+_DEFAULT_CACHE = Path('db/osm-context-cache.pkl')
 
-    results = []
-    for i, el in enumerate(sample, 1):
-        cand_lat = el.get('lat') or (el.get('center') or {}).get('lat')
-        cand_lon = el.get('lon') or (el.get('center') or {}).get('lon')
-        if cand_lat is None or cand_lon is None:
-            continue
-        cand_lat = float(cand_lat)
-        cand_lng = float(cand_lon)
+def _pbf_timestamp(pbf_path):
+    """Liest das OSM-Versionsdatum aus dem PBF-Header (optional, via osmium)."""
+    try:
+        import osmium
+        rf = osmium.io.Reader(str(pbf_path))
+        h = rf.header()
+        ts = h.get('osmosis_replication_timestamp', '')
+        rf.close()
+        return ts or 'unbekannt'
+    except Exception:
+        return 'unbekannt'
 
-        el_type  = el.get('type', 'node')
-        el_id    = el.get('id', 0)
-        tags     = el.get('tags') or {}
-        osm_name = original_osm_name(tags)
 
-        print(f'   [{i:3d}/{len(sample)}] {el_type}/{el_id} '
-              f'({cand_lat:.4f},{cand_lng:.4f}) …', file=sys.stderr, end='')
-
-        try:
-            ctx_objects = fetch_context_for_point(cand_lat, cand_lng)
-            enrichment  = find_best_context(cand_lat, cand_lng, ctx_objects)
-            tag = (f' → {enrichment["enriched_display_name"][:45]}'
-                   if enrichment else ' → (kein Kontext)')
-            print(tag, file=sys.stderr)
-        except Exception as e:
-            print(f' FEHLER: {e}', file=sys.stderr)
-            enrichment = None
-
-        results.append({
-            'external_id': f'{el_type}/{el_id}',
-            'lat': cand_lat,
-            'lng': cand_lng,
-            'osm_name':   osm_name,
-            'enrichment': enrichment,
-        })
-
-    _print_report(results, args)
-
-    if args.write:
-        if not args.supabase_url or not args.supabase_key:
-            print('\nFEHLER: --supabase-url und --supabase-key erforderlich für --write', file=sys.stderr)
-            sys.exit(1)
-        _write_to_supabase(results, args)
-
-# ── PBF-Modus ─────────────────────────────────────────────────────────────────
-
-def run_pbf_mode(args):
+def build_context_cache(pbf_path, cache_path=_DEFAULT_CACHE):
     """
-    Vollständiger Lauf mit lokalem Geofabrik-PBF.
-    Benötigt: pip install osmium shapely
+    Phase 1: PBF einmalig parsen und Kontextobjekte als Cache speichern.
 
-    Download (~3,8 GB):
-      curl -L -o db/germany-latest.osm.pbf \\
-           https://download.geofabrik.de/europe/germany-latest.osm.pbf
+    Extrahiert:
+      polygons: [(name, ctx_type, osm_id, shapely_polygon)]
+                Parks, Spielplätze, Schulen, Sportanlagen, Bäder, Camping,
+                Stadtteile (als Polygone, nicht Punkte)
+      streets:  [(name, ctx_type, osm_id, shapely_linestring)]
+      points:   [(name, ctx_type, osm_id, lat, lng)]
+                Punkte (z.B. einzelne benannte Nodes), nur als Fallback
+
+    Kein Netzwerkaufruf — ausschließlich lokale PBF-Verarbeitung.
     """
     try:
         import osmium
         from osmium.geom import WKBFactory
-    except ImportError:
-        print('FEHLER: pyosmium nicht installiert. pip install osmium', file=sys.stderr)
-        sys.exit(1)
-
-    try:
         import shapely.wkb
-        from shapely.geometry import Point
-        from shapely.strtree import STRtree
+        from shapely.geometry import Point, LineString
     except ImportError:
-        print('FEHLER: shapely nicht installiert. pip install shapely', file=sys.stderr)
+        print('FEHLER: pip install osmium shapely', file=sys.stderr)
         sys.exit(1)
 
-    if not args.pbf:
-        print('FEHLER: --pbf PATH erforderlich im PBF-Modus.', file=sys.stderr)
-        sys.exit(1)
+    print(f'── PBF: {pbf_path}', file=sys.stderr)
+    pbf_ts = _pbf_timestamp(pbf_path)
+    print(f'── OSM-Datenstand: {pbf_ts}', file=sys.stderr)
 
-    print('── Lade Kandidaten …', file=sys.stderr)
-    with open(args.input) as f:
-        raw = json.load(f)
-    elements = raw.get('elements', raw) if isinstance(raw, dict) else raw
+    wkb_fac = WKBFactory()
 
-    sample = sample_candidates(elements, args.limit) if args.limit else elements
-    print(f'── {len(sample)} Kandidaten', file=sys.stderr)
-
-    # PBF parsen — Polygone und Punkte getrennt sammeln
-    wkb_factory = WKBFactory()
-
-    class ContextHandlerArea(osmium.SimpleHandler):
+    class _Handler(osmium.SimpleHandler):
         def __init__(self):
             super().__init__()
-            self.polygons  = []  # [(name, ctx_type, osm_id, shapely_geom)]
-            self.points    = []  # [(name, ctx_type, osm_id, lat, lng)]
+            self.polygons = []   # (name, ctx_type, osm_id, geom)
+            self.streets  = []   # (name, 'street', osm_id, geom)
+            self.points   = []   # (name, ctx_type, osm_id, lat, lng)
+            self._n_areas = 0
+            self._n_ways  = 0
+            self._n_nodes = 0
 
         def area(self, a):
+            """Wege und Relations als Polygon-Geometrie."""
+            self._n_areas += 1
+            if self._n_areas % 100_000 == 0:
+                print(f'   … {self._n_areas:,} Flächen verarbeitet …', file=sys.stderr)
             tags = dict(a.tags)
             name = (tags.get('name') or tags.get('name:de') or '').strip()
             if not name:
                 return
             ctx_type = classify_osm_tags(tags)
-            if not ctx_type or ctx_type in ('street', 'suburb'):
+            if not ctx_type:
                 return
+            if ctx_type == 'street':
+                return   # Straßen als Way, nicht als Area
             try:
-                wkb  = wkb_factory.create_multipolygon(a)
+                wkb  = wkb_fac.create_multipolygon(a)
                 geom = shapely.wkb.loads(wkb, hex=True)
-                oid  = f'{"relation" if not a.from_way() else "way"}/{a.orig_id()}'
+                if not geom.is_valid or geom.is_empty:
+                    return
+                oid = f'{"way" if a.from_way() else "relation"}/{a.orig_id()}'
                 self.polygons.append((name, ctx_type, oid, geom))
             except Exception:
                 pass
 
+        def way(self, w):
+            """Straßen als Linestring-Geometrie."""
+            self._n_ways += 1
+            tags = dict(w.tags)
+            if not tags.get('highway') in _STREET_HIGHWAY:
+                return
+            name = (tags.get('name') or tags.get('name:de') or '').strip()
+            if not name:
+                return
+            try:
+                coords = [(n.location.lon, n.location.lat)
+                          for n in w.nodes if n.location.valid()]
+                if len(coords) < 2:
+                    return
+                from shapely.geometry import LineString
+                geom = LineString(coords)
+                self.streets.append((name, 'street', f'way/{w.id}', geom))
+            except Exception:
+                pass
+
         def node(self, n):
+            """Benannte Punkte (Schulen, Parks als Nodes, Stadtteile)."""
+            self._n_nodes += 1
             tags = dict(n.tags)
             name = (tags.get('name') or tags.get('name:de') or '').strip()
             if not name:
@@ -471,104 +489,279 @@ def run_pbf_mode(args):
             ctx_type = classify_osm_tags(tags)
             if not ctx_type:
                 return
+            if ctx_type == 'street':
+                return   # Straßen nur als Way
+            if ctx_type == 'suburb':
+                return   # Stadtteile nur als Polygon (Node = nur Centroid, keine Grenze)
             self.points.append((name, ctx_type, f'node/{n.id}',
                                  n.location.lat, n.location.lon))
 
-        def way(self, w):
-            tags = dict(w.tags)
-            name = (tags.get('name') or tags.get('name:de') or '').strip()
-            if not name:
-                return
-            ctx_type = classify_osm_tags(tags)
-            if ctx_type not in ('street', 'suburb'):
-                return
-            # Für Straßen reicht der erste Knoten als Näherungspunkt
-            try:
-                first = w.nodes[0]
-                self.points.append((name, ctx_type, f'way/{w.id}',
-                                     first.location.lat, first.location.lon))
-            except Exception:
-                pass
+    print('── Parsing PBF … (Polygone, Straßen, Punkte)', file=sys.stderr)
+    h = _Handler()
+    h.apply_file(str(pbf_path), locations=True, idx='flex_mem')
 
-    print('── Lese PBF …', file=sys.stderr)
-    handler = ContextHandlerArea()
-    handler.apply_file(args.pbf, locations=True, idx='flex_mem')
-    print(f'── {len(handler.polygons)} Polygone, {len(handler.points)} Punkte extrahiert',
-          file=sys.stderr)
+    print(f'── Extrahiert: {len(h.polygons):,} Polygone  '
+          f'{len(h.streets):,} Straßen  {len(h.points):,} Punkte', file=sys.stderr)
 
-    # Räumliche Indizes
-    polygon_geoms = [p[3] for p in handler.polygons]
-    polygon_tree  = STRtree(polygon_geoms) if polygon_geoms else None
+    cache = {
+        'pbf_source': str(pbf_path),
+        'pbf_timestamp': pbf_ts,
+        'polygons': h.polygons,
+        'streets':  h.streets,
+        'points':   h.points,
+    }
+    with open(cache_path, 'wb') as f:
+        pickle.dump(cache, f, protocol=5)
+    print(f'── Cache gespeichert: {cache_path}', file=sys.stderr)
+    return cache
 
-    point_geoms = [Point(p[4], p[3]) for p in handler.points]  # lon,lat → x,y
-    point_tree  = STRtree(point_geoms) if point_geoms else None
 
-    results = []
-    for el in sample:
-        lat = float(el.get('lat') or (el.get('center') or {}).get('lat'))
-        lng = float(el.get('lon') or (el.get('center') or {}).get('lon'))
-        tags = el.get('tags') or {}
-        osm_name = original_osm_name(tags)
-        cand_pt  = Point(lng, lat)
+def load_context_cache(cache_path=_DEFAULT_CACHE):
+    """Lädt den PBF-Cache und gibt (cache_dict, polygon_tree, street_tree, point_tree) zurück."""
+    try:
+        from shapely.strtree import STRtree
+    except ImportError:
+        print('FEHLER: pip install shapely', file=sys.stderr)
+        sys.exit(1)
 
-        ctx_objects = []
+    with open(cache_path, 'rb') as f:
+        cache = pickle.load(f)
 
-        # Polygon-Enthaltensein prüfen (genaue Containment-Prüfung)
-        if polygon_tree:
-            bbox = cand_pt.buffer(0.002)  # ~220m
-            for idx in polygon_tree.query(bbox):
-                pg = handler.polygons[idx]
-                if polygon_geoms[idx].contains(cand_pt):
-                    ctx_objects.append({
-                        'name':   pg[0], 'type': pg[1], 'osm_id': pg[2],
-                        'lat': lat, 'lng': lng,  # Enthaltensein → Distanz 0
-                    })
-                    # Dist 0 garantiert method='contains'
+    print(f'── Cache geladen: {cache_path}', file=sys.stderr)
+    print(f'   PBF-Quelle:   {cache["pbf_source"]}', file=sys.stderr)
+    print(f'   OSM-Datenstand: {cache["pbf_timestamp"]}', file=sys.stderr)
+    print(f'   Polygone: {len(cache["polygons"]):,}  '
+          f'Straßen: {len(cache["streets"]):,}  '
+          f'Punkte: {len(cache["points"]):,}', file=sys.stderr)
 
-        # Nahe Punkte (Straßen, Stadtteile, Punkt-POIs)
-        if point_tree:
-            search_buf = cand_pt.buffer(0.015)  # ~1.5km grob
-            for idx in point_tree.query(search_buf):
-                pg = handler.points[idx]
-                ctx_objects.append({
-                    'name': pg[0], 'type': pg[1], 'osm_id': pg[2],
-                    'lat': pg[3], 'lng': pg[4],
-                })
+    poly_geoms  = [p[3] for p in cache['polygons']]
+    street_geoms = [s[3] for s in cache['streets']]
+    point_geoms  = []  # für Punkte verwenden wir Bounding-Box-Suche
 
-        enrichment = find_best_context(lat, lng, ctx_objects)
-        results.append({
-            'external_id': f"{el.get('type','node')}/{el.get('id',0)}",
-            'lat': lat, 'lng': lng,
-            'osm_name':   osm_name,
-            'enrichment': enrichment,
-        })
+    poly_tree   = STRtree(poly_geoms)   if poly_geoms   else None
+    street_tree = STRtree(street_geoms) if street_geoms else None
 
-    _print_report(results, args)
+    return cache, poly_tree, street_tree
 
-    if args.write:
-        if not args.supabase_url or not args.supabase_key:
-            print('\nFEHLER: --supabase-url und --supabase-key erforderlich für --write',
-                  file=sys.stderr)
-            sys.exit(1)
-        _write_to_supabase(results, args)
 
-# ── Auswertung ────────────────────────────────────────────────────────────────
+def _deg_per_meter():
+    """Näherung: 1 m ≈ 0.000009° (gilt für Deutschland gut genug für Bbox-Vorfilter)."""
+    return 0.000009
 
-def _print_report(results, args):
-    total     = len(results)
-    enriched  = [r for r in results if r['enrichment']]
-    fallback  = [r for r in results if not r['enrichment']]
+
+def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
+    """
+    Findet den besten Kontext für einen Kandidaten — ausschließlich lokal.
+
+    Priorität:
+      1. Polygon-Enthaltensein (contains)      — höchste Priorität
+      2. Nächstes benanntes Polygon/Punkt (nearest) innerhalb max_dist_m
+      3. Nächste Straße (street) Punkt→Linie ≤ 60 m
+      4. Stadtteile nur via Polygon-Enthaltensein (administrative)
+         → KEIN Distanz-Fallback für suburb
+
+    Restaurants, Geschäfte, allgemeine POIs werden nicht berücksichtigt
+    (classify_osm_tags() gibt None zurück).
+    """
+    from shapely.geometry import Point
+
+    cand_pt  = Point(cand_lng, cand_lat)
+    deg      = _deg_per_meter()
+
+    candidates = []   # (method_rank, priority, dist_m, enrichment_dict)
+    METHOD_RANK = {'contains': 0, 'nearest': 1, 'street': 2, 'administrative': 3}
+
+    # ── 1. Polygon-Enthaltensein ───────────────────────────────────────────────
+    if poly_tree:
+        polys = cache['polygons']
+        # Suchbox: groß genug für alle Polygon-Typen (max max_dist_m = 300 m)
+        search_box = cand_pt.buffer(300 * deg * 2)
+        for idx in poly_tree.query(search_box):
+            name, ctx_type, oid, geom = polys[idx]
+            cfg = CONTEXT_CONFIG.get(ctx_type)
+            if not cfg:
+                continue
+
+            priority, max_dist_m = cfg
+
+            if geom.contains(cand_pt):
+                # Echtes Enthaltensein — Distanz = Centroid zum Kandidaten (für Konfidenz)
+                centroid    = geom.centroid
+                dist_deg    = centroid.distance(cand_pt)
+                dist_m      = dist_deg / deg
+                method      = 'contains' if ctx_type != 'suburb' else 'administrative'
+                conf_dist_m = max_dist_m if max_dist_m else 5000
+                confidence  = compute_confidence(method, dist_m, conf_dist_m)
+                candidates.append((
+                    METHOD_RANK[method], priority, dist_m,
+                    {
+                        'context_name':          name,
+                        'context_type':          ctx_type,
+                        'context_osm_id':        oid,
+                        'context_distance_m':    int(dist_m),
+                        'context_method':        method,
+                        'context_confidence':    confidence,
+                        'enriched_display_name': derive_display_name(ctx_type, name),
+                        'enriched_name_source':  f'osm_{ctx_type}',
+                    }
+                ))
+                continue
+
+            # ── 2. Nearest (kein Enthaltensein, aber in der Nähe) ─────────────
+            if ctx_type == 'suburb':
+                continue   # suburb: NUR via Enthaltensein, kein nearest
+
+            if max_dist_m is None:
+                continue
+
+            centroid = geom.centroid
+            dist_m   = haversine_m(cand_lat, cand_lng,
+                                    centroid.y, centroid.x)
+            if dist_m > max_dist_m:
+                continue
+
+            confidence = compute_confidence('nearest', dist_m, max_dist_m)
+            candidates.append((
+                METHOD_RANK['nearest'], priority, dist_m,
+                {
+                    'context_name':          name,
+                    'context_type':          ctx_type,
+                    'context_osm_id':        oid,
+                    'context_distance_m':    int(dist_m),
+                    'context_method':        'nearest',
+                    'context_confidence':    confidence,
+                    'enriched_display_name': derive_display_name(ctx_type, name),
+                    'enriched_name_source':  f'osm_{ctx_type}',
+                }
+            ))
+
+    # ── 3. Punkt-POIs (Schulen, Parks als Nodes) ──────────────────────────────
+    for name, ctx_type, oid, pt_lat, pt_lng in cache['points']:
+        cfg = CONTEXT_CONFIG.get(ctx_type)
+        if not cfg:
+            continue
+        priority, max_dist_m = cfg
+        if max_dist_m is None:
+            continue
+        dist_m = haversine_m(cand_lat, cand_lng, pt_lat, pt_lng)
+        if dist_m > max_dist_m:
+            continue
+        confidence = compute_confidence('nearest', dist_m, max_dist_m)
+        candidates.append((
+            METHOD_RANK['nearest'], priority, dist_m,
+            {
+                'context_name':          name,
+                'context_type':          ctx_type,
+                'context_osm_id':        oid,
+                'context_distance_m':    int(dist_m),
+                'context_method':        'nearest',
+                'context_confidence':    confidence,
+                'enriched_display_name': derive_display_name(ctx_type, name),
+                'enriched_name_source':  f'osm_{ctx_type}',
+            }
+        ))
+
+    # ── 4. Straßen: Punkt→Linie-Distanz ──────────────────────────────────────
+    street_max = CONTEXT_CONFIG['street'][1]  # 60 m
+    if street_tree:
+        streets   = cache['streets']
+        box_deg   = street_max * deg * 1.5
+        search_box = cand_pt.buffer(box_deg)
+        for idx in street_tree.query(search_box):
+            name, _, oid, geom = streets[idx]
+            # Echte Punkt→Linie-Distanz (Lot-Abstand, nicht Centroid)
+            dist_deg = geom.distance(cand_pt)
+            dist_m   = dist_deg / deg
+            if dist_m > street_max:
+                continue
+            confidence = compute_confidence('street', dist_m, street_max)
+            candidates.append((
+                METHOD_RANK['street'], CONTEXT_CONFIG['street'][0], dist_m,
+                {
+                    'context_name':          name,
+                    'context_type':          'street',
+                    'context_osm_id':        oid,
+                    'context_distance_m':    int(dist_m),
+                    'context_method':        'street',
+                    'context_confidence':    confidence,
+                    'enriched_display_name': derive_display_name('street', name),
+                    'enriched_name_source':  'osm_street',
+                }
+            ))
+
+    if not candidates:
+        return None
+
+    # Sortierung: method_rank ASC, priority ASC, dist_m ASC
+    candidates.sort(key=lambda x: (x[0], x[1], x[2]))
+    return candidates[0][3]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AUSGABE  (CSV + JSON)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_CSV_FIELDS = [
+    'external_id', 'lat', 'lng', 'osm_name',
+    'context_name', 'context_type', 'context_osm_id',
+    'context_distance_m', 'context_method', 'context_confidence',
+    'enriched_display_name', 'enriched_name_source',
+]
+
+def _write_csv_row(writer, r):
+    e = r.get('enrichment') or {}
+    writer.writerow({
+        'external_id':          r['external_id'],
+        'lat':                  f"{r['lat']:.6f}",
+        'lng':                  f"{r['lng']:.6f}",
+        'osm_name':             r['osm_name'],
+        'context_name':         e.get('context_name', ''),
+        'context_type':         e.get('context_type', ''),
+        'context_osm_id':       e.get('context_osm_id', ''),
+        'context_distance_m':   e.get('context_distance_m', ''),
+        'context_method':       e.get('context_method', ''),
+        'context_confidence':   e.get('context_confidence', ''),
+        'enriched_display_name': e.get('enriched_display_name', ''),
+        'enriched_name_source': e.get('enriched_name_source', ''),
+    })
+
+
+def load_already_done(out_path):
+    """Liest externe IDs aus bestehender CSV (für --resume)."""
+    done = set()
+    p = Path(out_path)
+    if not p.exists():
+        return done
+    with open(p, newline='', encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            if row.get('external_id'):
+                done.add(row['external_id'])
+    return done
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# REPORT
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _print_report(results):
+    total    = len(results)
+    enriched = [r for r in results if r['enrichment']]
+    fallback = [r for r in results if not r['enrichment']]
 
     by_type   = defaultdict(list)
     by_method = defaultdict(list)
+    dists_by_type = defaultdict(list)
     for r in enriched:
         e = r['enrichment']
         by_type[e['context_type']].append(r)
         by_method[e['context_method']].append(r)
+        d = e['context_distance_m']
+        if d is not None:
+            dists_by_type[e['context_type']].append(d)
 
-    print('\n' + '═' * 72)
-    print(f'ENRICHMENT DRY-RUN  —  {total} Kandidaten')
-    print('═' * 72)
+    print('\n' + '═' * 78)
+    print(f'ENRICHMENT AUSWERTUNG  —  {total} Kandidaten')
+    print('═' * 78)
 
     print(f'\n■ Ergebnis gesamt')
     print(f'  Mit Kontext: {len(enriched)} ({100*len(enriched)/max(1,total):.0f} %)')
@@ -578,43 +771,381 @@ def _print_report(results, args):
     for method in ('contains', 'nearest', 'street', 'administrative'):
         n = len(by_method.get(method, []))
         if n:
-            print(f'  {method:15s} {n:4d} ({100*n/max(1,total):.0f} %)')
+            print(f'  {method:16s} {n:5d} ({100*n/max(1,total):.0f} %)')
 
-    print('\n■ Kontexttypen')
+    print('\n■ Kontexttypen + Distanzstatistik')
+    hdr = f'  {"Typ":<14} {"Anzahl":>6}  {"min_m":>6}  {"med_m":>6}  {"max_m":>6}'
+    print(hdr)
+    print('  ' + '─' * 46)
     for ctx_type in sorted(by_type, key=lambda t: -len(by_type[t])):
-        n = len(by_type[ctx_type])
-        print(f'  {ctx_type:12s} {n:4d} ({100*n/max(1,total):.0f} %)')
+        n    = len(by_type[ctx_type])
+        ds   = sorted(dists_by_type.get(ctx_type, []))
+        if ds:
+            med  = ds[len(ds) // 2]
+            s_dist = f'{ds[0]:>6.0f}  {med:>6.0f}  {ds[-1]:>6.0f}'
+        else:
+            s_dist = f'{"—":>6}  {"—":>6}  {"—":>6}'
+        print(f'  {ctx_type:<14} {n:>6}  {s_dist}')
 
-    print('\n■ Stichprobe — mit Kontext')
-    header = f'  {"Orig.Name":<22} {"Kontexttyp":<12} {"Methode":<13} {"Dist":>5}  {"Konfidenz":>9}  Anzeigename'
-    print(header)
-    print('  ' + '─' * 90)
+    print('\n■ Stichprobe — Treffer (erste 30)')
+    hdr2 = (f'  {"OSM-Name":<22} {"Typ":<13} {"Methode":<15} {"Dist":>5}  '
+            f'{"Konf":>5}  Anzeigename')
+    print(hdr2)
+    print('  ' + '─' * 100)
     for r in enriched[:30]:
         e = r['enrichment']
-        orig_col = r['osm_name'][:21]
-        dist_str = f"{e['context_distance_m']} m" if e['context_distance_m'] else 'enthält'
-        print(f"  {orig_col:<22} {e['context_type']:<12} {e['context_method']:<13} "
-              f"{dist_str:>6}  {e['context_confidence']:>9.2f}  "
-              f"{e['enriched_display_name']}")
+        orig = r['osm_name'][:21]
+        dist_str = f"{e['context_distance_m']:4d}m" if e['context_distance_m'] is not None else 'enth.'
+        print(f"  {orig:<22} {e['context_type']:<13} {e['context_method']:<15} "
+              f"{dist_str:>6}  {e['context_confidence']:>5.2f}  "
+              f"{e['enriched_display_name'][:50]}")
 
     if fallback:
-        print('\n■ Stichprobe — Fallback (kein Kontext gefunden)')
-        for r in fallback[:10]:
-            print(f"  {r['external_id']}  lat={r['lat']:.4f}  lng={r['lng']:.4f}  "
-                  f"({r['osm_name']})")
+        print(f'\n■ Fallback — kein Kontext ({len(fallback)} Kandidaten)')
+        for r in fallback[:15]:
+            print(f"  {r['external_id']}  {r['lat']:.4f},{r['lng']:.4f}  ({r['osm_name']})")
 
-    print('\n' + '═' * 72)
+    # Grammatisch verdächtige Namen
+    suspicious = []
+    for r in enriched:
+        dn = r['enrichment']['enriched_display_name']
+        # Prüfung auf häufige Dopplungen und Fehlformen
+        issues = []
+        lower = dn.lower()
+        if 'campingplatz campingplatz' in lower:
+            issues.append('Dopplung "Campingplatz"')
+        if 'an der ' in lower:
+            # Prüfe, ob das Wort nach "an der" ein bekanntes Maskulinum/Neutrum ist
+            rest = dn.split('an der ', 1)[-1].lower()
+            bad_endings = ('weg', 'platz', 'park', 'feld', 'damm', 'ring', 'berg',
+                           'pfad', 'stieg', 'hof', 'dorf')
+            if any(rest.endswith(e2) for e2 in bad_endings):
+                issues.append(f'"an der" bei mask./neutr. Suffix')
+        if issues:
+            suspicious.append((dn, ', '.join(issues)))
+
+    if suspicious:
+        print(f'\n■ Grammatisch prüfenswert ({len(suspicious)})')
+        for name, issue in suspicious[:20]:
+            print(f'  [{issue}] {name}')
+
+    print('\n' + '═' * 78)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PBF-MODUS  (Hauptlauf)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def run_pbf_mode(args):
+    cache_path = Path(args.cache or _DEFAULT_CACHE)
+
+    # Cache bauen oder laden
+    if args.build_cache or not cache_path.exists():
+        if not args.pbf:
+            print('FEHLER: --pbf PATH ist erforderlich.', file=sys.stderr)
+            sys.exit(1)
+        build_context_cache(args.pbf, cache_path)
+
+    cache, poly_tree, street_tree = load_context_cache(cache_path)
+
+    # Kandidaten laden
+    print(f'── Lade Kandidaten aus {args.input} …', file=sys.stderr)
+    with open(args.input, encoding='utf-8') as f:
+        raw = json.load(f)
+    elements = raw.get('elements', raw) if isinstance(raw, dict) else raw
+
+    sample = sample_candidates(elements, args.limit) if args.limit else elements
+    print(f'── {len(sample)} Kandidaten', file=sys.stderr)
+
+    # Resume: bereits verarbeitete überspringen
+    already_done = set()
+    if args.resume and args.out:
+        already_done = load_already_done(args.out)
+        if already_done:
+            print(f'── Resume: {len(already_done)} bereits verarbeitet, werden übersprungen.',
+                  file=sys.stderr)
+
+    # CSV öffnen (append wenn resume, sonst neu)
+    csv_file   = None
+    csv_writer = None
+    if args.out:
+        mode = 'a' if (args.resume and Path(args.out).exists()) else 'w'
+        csv_file = open(args.out, mode, newline='', encoding='utf-8')
+        csv_writer = csv.DictWriter(csv_file, fieldnames=_CSV_FIELDS)
+        if mode == 'w':
+            csv_writer.writeheader()
+
+    results = []
+    n_skip  = 0
+    try:
+        for i, el in enumerate(sample, 1):
+            cand_lat = el.get('lat') or (el.get('center') or {}).get('lat')
+            cand_lon = el.get('lon') or (el.get('center') or {}).get('lon')
+            if cand_lat is None or cand_lon is None:
+                continue
+            cand_lat = float(cand_lat)
+            cand_lng = float(cand_lon)
+
+            el_type    = el.get('type', 'node')
+            el_id      = el.get('id', 0)
+            external_id = f'{el_type}/{el_id}'
+            tags       = el.get('tags') or {}
+            osm_name   = original_osm_name(tags)
+
+            if external_id in already_done:
+                n_skip += 1
+                continue
+
+            enrichment = find_best_context_pbf(
+                cand_lat, cand_lng, cache, poly_tree, street_tree
+            )
+
+            r = {
+                'external_id': external_id,
+                'lat': cand_lat, 'lng': cand_lng,
+                'osm_name': osm_name,
+                'enrichment': enrichment,
+            }
+            results.append(r)
+
+            if csv_writer:
+                _write_csv_row(csv_writer, r)
+
+            if i % 500 == 0:
+                print(f'   … {i}/{len(sample)} verarbeitet …', file=sys.stderr)
+
+    finally:
+        if csv_file:
+            csv_file.close()
+
+    if n_skip:
+        print(f'── {n_skip} Kandidaten übersprungen (--resume).', file=sys.stderr)
+
+    if args.out:
+        print(f'── Ergebnisse gespeichert: {args.out}', file=sys.stderr)
+
+    _print_report(results)
 
     if args.write:
-        print(f'\n→ --write aktiv: {len(enriched)} Datensätze werden in Supabase geschrieben …')
-    else:
-        print(f'\n→ Dry-Run. Erneut mit --write ausführen um nach Supabase zu schreiben.')
+        if not args.supabase_url or not args.supabase_key:
+            print('\nFEHLER: --supabase-url und --supabase-key erforderlich für --write',
+                  file=sys.stderr)
+            sys.exit(1)
+        _write_to_supabase(results, args)
 
-# ── Supabase-Schreiben ────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# OVERPASS-MODUS  (nur für kleine Tests, NICHT für Produktionslauf)
+# ══════════════════════════════════════════════════════════════════════════════
+# Für 19.206 Kandidaten nicht geeignet — erzeugt 19.206 Netzwerkabfragen.
+# Datenqualität eingeschränkt: around: liefert nur Mittelpunkte, keine
+# echten Polygon-Geometrien → 'contains' ist eine Näherung.
+
+import socket as _socket
+import urllib.error
+import urllib.parse
+import urllib.request
+
+_OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.fr/api/interpreter',
+]
+
+_OVERPASS_AROUND_RADIUS = 1600
+
+_OVERPASS_AROUND_TMPL = (
+    '[out:json][timeout:20];'
+    '('
+    'nwr["leisure"~"^(park|playground|sports_centre|swimming_pool|garden|recreation_ground)$"]'
+    '   ["name"](around:{r},{lat},{lng});'
+    'nwr["amenity"~"^(school|university|college|kindergarten)$"]["name"](around:{r},{lat},{lng});'
+    'nwr["landuse"~"^(park|sport)$"]["name"](around:{r},{lat},{lng});'
+    'nwr["tourism"="camp_site"]["name"](around:{r},{lat},{lng});'
+    'way["highway"~"^(residential|living_street|service|footway|pedestrian|'
+    '    unclassified|tertiary|track|path|cycleway|secondary)$"]'
+    '   ["name"](around:80,{lat},{lng});'
+    'nwr["place"~"^(suburb|neighbourhood|quarter)$"]["name"](around:{r},{lat},{lng});'
+    ');'
+    'out center;'
+)
+
+def _overpass_request(query, delay=3):
+    body = ('data=' + urllib.parse.quote(query)).encode()
+    last_err = None
+    for endpoint in _OVERPASS_ENDPOINTS:
+        try:
+            req = urllib.request.Request(
+                endpoint, data=body, method='POST',
+                headers={
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'User-Agent':   'PlattenTreff-Enrich/2.0',
+                }
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                remark = data.get('remark', '')
+                if remark:
+                    print(f'   [Overpass: {remark[:80]}]', file=sys.stderr)
+                time.sleep(delay)
+                return data
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code == 429:
+                time.sleep(10)
+        except (_socket.timeout, OSError) as e:
+            last_err = e
+    raise RuntimeError(f'Overpass fehlgeschlagen: {last_err}')
+
+
+def _parse_overpass_context(data):
+    objects = []
+    for el in data.get('elements', []):
+        tags = el.get('tags') or {}
+        name = (tags.get('name') or tags.get('name:de') or '').strip()
+        if not name:
+            continue
+        ctx_type = classify_osm_tags(tags)
+        if not ctx_type:
+            continue
+        center = el.get('center') or {}
+        lat = el.get('lat') or center.get('lat')
+        lon = el.get('lon') or center.get('lon')
+        if lat is None or lon is None:
+            continue
+        ot  = el.get('type', 'node')
+        eid = el.get('id', 0)
+        objects.append({
+            'name': name, 'type': ctx_type,
+            'osm_id': f'{ot}/{eid}',
+            'lat': float(lat), 'lng': float(lon),
+        })
+    return objects
+
+
+def _find_best_context_overpass(cand_lat, cand_lng, ctx_objects):
+    """Overpass-Näherung: keine echten Polygone; contains = Abstand ≤ contain_radius."""
+    _CONTAIN_RADIUS = {'park': 150, 'playground': 40, 'school': 80, 'kindergarten': 50,
+                       'sports': 100, 'pool': 60, 'camping': 100, 'recreation': 120,
+                       'square': 40}
+    METHOD_RANK = {'contains': 0, 'nearest': 1, 'street': 2, 'administrative': 3}
+
+    candidates = []
+    for obj in ctx_objects:
+        ctx_type = obj['type']
+        cfg = CONTEXT_CONFIG.get(ctx_type)
+        if not cfg:
+            continue
+        priority, max_dist_m = cfg
+        if max_dist_m is None:
+            continue
+        dist_m = haversine_m(cand_lat, cand_lng, obj['lat'], obj['lng'])
+        if dist_m > max_dist_m:
+            continue
+        cr = _CONTAIN_RADIUS.get(ctx_type, 0)
+        if cr > 0 and dist_m <= cr:
+            method = 'contains'
+        elif ctx_type == 'suburb':
+            method = 'administrative'
+        elif ctx_type == 'street':
+            method = 'street'
+        else:
+            method = 'nearest'
+        conf = compute_confidence(method, dist_m, max_dist_m)
+        candidates.append((METHOD_RANK[method], priority, dist_m, {
+            'context_name':          obj['name'],
+            'context_type':          ctx_type,
+            'context_osm_id':        obj['osm_id'],
+            'context_distance_m':    int(dist_m),
+            'context_method':        method,
+            'context_confidence':    conf,
+            'enriched_display_name': derive_display_name(ctx_type, obj['name']),
+            'enriched_name_source':  f'osm_{ctx_type}',
+        }))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: (x[0], x[1], x[2]))
+    return candidates[0][3]
+
+
+def run_overpass_mode(args):
+    print('HINWEIS: Overpass-Modus — nur für Tests mit wenigen Kandidaten geeignet.',
+          file=sys.stderr)
+    print(f'         {args.limit} Kandidaten → {args.limit} HTTP-Abfragen an öffentliche API.',
+          file=sys.stderr)
+
+    with open(args.input, encoding='utf-8') as f:
+        raw = json.load(f)
+    elements = raw.get('elements', raw) if isinstance(raw, dict) else raw
+
+    sample = sample_candidates(elements, args.limit)
+    print(f'── {len(sample)} Kandidaten', file=sys.stderr)
+
+    csv_file   = None
+    csv_writer = None
+    if args.out:
+        csv_file = open(args.out, 'w', newline='', encoding='utf-8')
+        csv_writer = csv.DictWriter(csv_file, fieldnames=_CSV_FIELDS)
+        csv_writer.writeheader()
+
+    results = []
+    try:
+        for i, el in enumerate(sample, 1):
+            cand_lat = el.get('lat') or (el.get('center') or {}).get('lat')
+            cand_lon = el.get('lon') or (el.get('center') or {}).get('lon')
+            if cand_lat is None or cand_lon is None:
+                continue
+            cand_lat = float(cand_lat)
+            cand_lng = float(cand_lon)
+            el_type  = el.get('type', 'node')
+            el_id    = el.get('id', 0)
+            tags     = el.get('tags') or {}
+            osm_name = original_osm_name(tags)
+
+            print(f'   [{i:3d}/{len(sample)}] {el_type}/{el_id} …', file=sys.stderr, end='')
+            try:
+                q = _OVERPASS_AROUND_TMPL.format(
+                    lat=f'{cand_lat:.6f}', lng=f'{cand_lng:.6f}', r=_OVERPASS_AROUND_RADIUS
+                )
+                ctx_objects = _parse_overpass_context(_overpass_request(q))
+                enrichment  = _find_best_context_overpass(cand_lat, cand_lng, ctx_objects)
+                tag = (f' → {enrichment["enriched_display_name"][:55]}'
+                       if enrichment else ' → (kein Kontext)')
+                print(tag, file=sys.stderr)
+            except Exception as e:
+                print(f' FEHLER: {e}', file=sys.stderr)
+                enrichment = None
+
+            r = {
+                'external_id': f'{el_type}/{el_id}',
+                'lat': cand_lat, 'lng': cand_lng,
+                'osm_name': osm_name, 'enrichment': enrichment,
+            }
+            results.append(r)
+            if csv_writer:
+                _write_csv_row(csv_writer, r)
+    finally:
+        if csv_file:
+            csv_file.close()
+
+    if args.out:
+        print(f'── Ergebnisse: {args.out}', file=sys.stderr)
+
+    _print_report(results)
+
+    if args.write:
+        print('FEHLER: --write im Overpass-Modus nicht unterstützt. '
+              'Bitte PBF-Modus verwenden.', file=sys.stderr)
+        sys.exit(1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SUPABASE SCHREIBEN  (nach manueller Prüfung der CSV)
+# ══════════════════════════════════════════════════════════════════════════════
 
 def _write_to_supabase(results, args):
-    """Schreibt Enrichment-Felder in table_candidates (PATCH per external_id)."""
-    import urllib.error
+    """PATCH enriched_* Felder in table_candidates per external_id."""
+    import datetime
 
     base_url = args.supabase_url.rstrip('/')
     headers  = {
@@ -626,11 +1157,11 @@ def _write_to_supabase(results, args):
 
     ok_count  = 0
     err_count = 0
+    ts_now    = datetime.datetime.utcnow().isoformat() + 'Z'
 
     for r in results:
         if not r.get('enrichment'):
             continue
-
         e   = r['enrichment']
         eid = r['external_id']
 
@@ -643,7 +1174,7 @@ def _write_to_supabase(results, args):
             'context_confidence':    e['context_confidence'],
             'enriched_display_name': e['enriched_display_name'],
             'enriched_name_source':  e['enriched_name_source'],
-            'enriched_at':           'now()',
+            'enriched_at':           ts_now,
         }, ensure_ascii=False).encode()
 
         url = (f"{base_url}/rest/v1/table_candidates"
@@ -658,41 +1189,55 @@ def _write_to_supabase(results, args):
             print(f'  FEHLER {eid}: {exc.code} {body}', file=sys.stderr)
             err_count += 1
 
-        if (ok_count + err_count) % 50 == 0:
+        if (ok_count + err_count) % 500 == 0:
             print(f'  … {ok_count} OK, {err_count} Fehler', file=sys.stderr)
-            time.sleep(0.2)
 
-    print(f'Supabase: {ok_count} geschrieben, {err_count} Fehler.')
+    print(f'── Supabase: {ok_count} geschrieben, {err_count} Fehler.')
 
-# ── main ──────────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# main
+# ══════════════════════════════════════════════════════════════════════════════
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Räumliche Kontextanreicherung für TT-Kandidaten'
+    p = argparse.ArgumentParser(
+        description='Räumliche Kontextanreicherung für TT-Kandidaten (v2)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
     )
-    parser.add_argument('--mode', choices=['overpass', 'pbf'], default='overpass',
-        help='Datenquelle (Standard: overpass)')
-    parser.add_argument('--limit', type=int, default=100, metavar='N',
-        help='Maximale Kandidatenzahl (Standard: 100; 0 = alle)')
-    parser.add_argument('--input', default='db/export.json', metavar='PATH',
-        help='Eingabedatei (Standard: db/export.json)')
-    parser.add_argument('--write', action='store_true',
-        help='Ergebnisse nach Supabase schreiben (Standard: Dry-Run)')
-    parser.add_argument('--supabase-url', metavar='URL',
-        help='Supabase-URL (für --write)')
-    parser.add_argument('--supabase-key', metavar='KEY',
-        help='Service-Role-Key (für --write; NICHT in Commits einchecken!)')
-
-    # PBF-Modus
-    parser.add_argument('--pbf', metavar='PATH',
+    p.add_argument('--mode', choices=['pbf', 'overpass'], default='pbf',
+        help='Datenquelle (Standard: pbf)')
+    p.add_argument('--pbf', metavar='PATH',
         help='Geofabrik-PBF-Datei (für --mode pbf)')
+    p.add_argument('--build-cache', action='store_true',
+        help='PBF-Cache (db/osm-context-cache.pkl) neu bauen auch wenn vorhanden')
+    p.add_argument('--cache', metavar='PATH',
+        help=f'Cache-Pfad (Standard: {_DEFAULT_CACHE})')
+    p.add_argument('--input', default='db/export.json', metavar='PATH',
+        help='Kandidaten-JSON (Standard: db/export.json)')
+    p.add_argument('--limit', type=int, default=0, metavar='N',
+        help='Maximale Kandidatenzahl (0 = alle, Standard: 0)')
+    p.add_argument('--out', metavar='PATH',
+        help='Ausgabe-CSV (empfohlen; ohne: nur Konsolenreport)')
+    p.add_argument('--resume', action='store_true',
+        help='Bereits in --out vorhandene external_ids überspringen')
+    p.add_argument('--write', action='store_true',
+        help='Ergebnisse in Supabase schreiben (Standard: Dry-Run)')
+    p.add_argument('--supabase-url', metavar='URL',
+        help='Supabase REST URL (für --write)')
+    p.add_argument('--supabase-key', metavar='KEY',
+        help='Service-Role-Key (für --write; NIE committen!)')
 
-    args = parser.parse_args()
+    args = p.parse_args()
 
-    if args.mode == 'pbf':
-        run_pbf_mode(args)
-    else:
+    if args.mode == 'overpass':
+        if not args.limit:
+            args.limit = 20
+            print(f'HINWEIS: --limit auf {args.limit} gesetzt (Overpass-Modus).',
+                  file=sys.stderr)
         run_overpass_mode(args)
+    else:
+        run_pbf_mode(args)
 
 
 if __name__ == '__main__':
