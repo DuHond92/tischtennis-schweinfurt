@@ -110,7 +110,7 @@ async function loadOSMTables() {
       const isIndoor = tags.indoor === 'yes' || tags.location === 'indoor';
       const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null;
       return {
-        id: 10000 + el.id % 9000,
+        id: -(el.id),
         osmId: el.id,
         name, addr, lat, lng,
         type: isIndoor ? 'indoor' : 'outdoor',

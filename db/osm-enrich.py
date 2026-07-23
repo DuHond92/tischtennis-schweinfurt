@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-db/osm-enrich.py  v2
+db/osm-enrich.py  v4
 ====================
 Räumliche Kontextanreicherung für table_candidates.
 
@@ -179,7 +179,7 @@ def classify_osm_tags(tags):
 
     # Plätze / Squares (Priorität 2)
     if leisure == 'pitch' and tags.get('name'):
-        return 'square'
+        return 'sports'
     if place == 'square':
         return 'square'
 
@@ -296,7 +296,7 @@ _PARK_AM_ENDINGS = (
     'platz', 'hof', 'see', 'berg', 'damm', 'ring',
 )
 _PARK_AN_DER_ENDINGS = (
-    'insel', 'wiese', 'aue', 'allee', 'promenade',
+    'insel', 'wiese', 'aue', 'allee', 'promenade', 'anlage',
 )
 _PARK_PLURAL_ENDINGS = (
     'anlagen', 'wiesen', 'auen', 'höfe', 'gründe', 'felder',
@@ -637,9 +637,11 @@ def load_context_cache(cache_path=_DEFAULT_CACHE):
     return cache, poly_tree, street_tree
 
 
-def _deg_per_meter():
-    """Näherung: 1 m ≈ 0.000009° (gilt für Deutschland gut genug für Bbox-Vorfilter)."""
-    return 0.000009
+def _deg_per_meter(lat=51.0):
+    """Gibt (lat_dpm, lng_dpm) zurück — cosinus-korrigiert für Längengrad."""
+    lat_dpm = 0.000009          # ≈ 1/111111 (Breitengrad, konstant)
+    lng_dpm = lat_dpm / math.cos(math.radians(lat))
+    return lat_dpm, lng_dpm
 
 
 def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
@@ -656,10 +658,10 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
     Restaurants, Geschäfte, allgemeine POIs werden nicht berücksichtigt
     (classify_osm_tags() gibt None zurück).
     """
-    from shapely.geometry import Point
+    from shapely.geometry import Point, box as make_box
 
-    cand_pt  = Point(cand_lng, cand_lat)
-    deg      = _deg_per_meter()
+    cand_pt       = Point(cand_lng, cand_lat)
+    lat_dpm, lng_dpm = _deg_per_meter(cand_lat)
 
     candidates = []   # (method_rank, priority, dist_m, enrichment_dict)
     # Priorität: contains > nearest ≤ 100m > street ≤ 150m > administrative
@@ -669,14 +671,19 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
     # Straße: normale Konfidenz + Artikel ≤ 60m; Gedankenstrich + niedrigere Konfidenz 60-150m
     STREET_NORMAL_MAX_M = 60
 
-    # Suchbox: max(max_dist_m) aller Typen = 500 m → Buffer 600 m für Randschärfe
+    # Rechteckige Suchbox: cos-korrigiert, kein redundanter *2-Faktor
     _max_search_m = max(v[1] for v in CONTEXT_CONFIG.values() if v[1])
-    _box_buf = (_max_search_m + 100) * deg * 2
+    _margin_m     = _max_search_m + 100
+    _lat_buf      = _margin_m * lat_dpm
+    _lng_buf      = _margin_m * lng_dpm
 
     # ── 1. Polygon-Enthaltensein ───────────────────────────────────────────────
     if poly_tree:
         polys = cache['polygons']
-        search_box = cand_pt.buffer(_box_buf)
+        search_box = make_box(
+            cand_pt.x - _lng_buf, cand_pt.y - _lat_buf,
+            cand_pt.x + _lng_buf, cand_pt.y + _lat_buf,
+        )
         for idx in poly_tree.query(search_box):
             name, ctx_type, oid, geom = polys[idx]
             cfg = CONTEXT_CONFIG.get(ctx_type)
@@ -686,10 +693,9 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
             priority, max_dist_m = cfg
 
             if geom.contains(cand_pt):
-                # Echtes Enthaltensein — Distanz = Centroid zum Kandidaten
+                # Echtes Enthaltensein — Distanz = Centroid zum Kandidaten (haversine)
                 centroid    = geom.centroid
-                dist_deg    = centroid.distance(cand_pt)
-                dist_m      = dist_deg / deg
+                dist_m      = haversine_m(cand_lat, cand_lng, centroid.y, centroid.x)
                 # Centroid-Distanz-Cap: sehr große Polygone (z.B. riesige Uni-Campus)
                 # werden übersprungen wenn Centroid weiter als max_dist_m entfernt ist
                 if max_dist_m and dist_m > max_dist_m:
@@ -772,13 +778,17 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
     street_max = CONTEXT_CONFIG['street'][1]  # 150 m
     if street_tree:
         streets    = cache['streets']
-        box_deg    = street_max * deg * 1.5
-        search_box = cand_pt.buffer(box_deg)
+        _s_lat_buf = street_max * 1.5 * lat_dpm
+        _s_lng_buf = street_max * 1.5 * lng_dpm
+        search_box = make_box(
+            cand_pt.x - _s_lng_buf, cand_pt.y - _s_lat_buf,
+            cand_pt.x + _s_lng_buf, cand_pt.y + _s_lat_buf,
+        )
         for idx in street_tree.query(search_box):
             name, _, oid, geom = streets[idx]
-            # Echte Punkt→Linie-Distanz (Lot-Abstand, nicht Centroid)
-            dist_deg = geom.distance(cand_pt)
-            dist_m   = dist_deg / deg
+            # Echte Punkt→Linie-Distanz via nächstem Punkt (haversine)
+            nearest_pt = geom.interpolate(geom.project(cand_pt))
+            dist_m = haversine_m(cand_lat, cand_lng, nearest_pt.y, nearest_pt.x)
             if dist_m > street_max:
                 continue
             is_extended = dist_m > STREET_NORMAL_MAX_M

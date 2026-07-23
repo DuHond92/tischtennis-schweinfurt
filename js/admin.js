@@ -1018,24 +1018,26 @@ function _deriveCandidateName(c) {
 }
 
 const _SOURCE_LABELS = {
-  osm_name:        'echter Name',
-  osm_name_de:     'Name (de)',
-  osm_operator:    'Betreiber',
-  osm_addr_street: 'Straße (addr-Tag)',
-  osm_addr_city:   'Ort',
-  osm_park:        'Park',
-  osm_playground:  'Spielplatz',
-  osm_school:      'Schule',
-  osm_kindergarten:'Kindergarten',
-  osm_sports:      'Sportanlage',
-  osm_pool:        'Schwimmbad',
-  osm_camping:     'Camping',
-  osm_recreation:  'Erholungsfläche',
-  osm_square:      'Platz',
-  osm_street:      'Straße (Nearest)',
-  osm_suburb:      'Stadtteil',
-  enriched:        'räumlicher Kontext',
-  fallback:        null,
+  osm_name:            'echter Name',
+  osm_name_de:         'Name (de)',
+  osm_operator:        'Betreiber',
+  osm_addr_street:     'Straße (addr-Tag)',
+  osm_addr_city:       'Ort',
+  osm_park:            'Park',
+  osm_playground:      'Spielplatz',
+  osm_school:          'Schule',
+  osm_kindergarten:    'Kindergarten',
+  osm_sports:          'Sportanlage',
+  osm_pool:            'Schwimmbad',
+  osm_camping:         'Camping',
+  osm_recreation:      'Erholungsfläche',
+  osm_square:          'Platz',
+  osm_cemetery:        'Friedhof',
+  osm_street:          'Straße (Nearest)',
+  osm_street_extended: 'Straße (erweitert)',
+  osm_suburb:          'Stadtteil',
+  enriched:            'räumlicher Kontext',
+  fallback:            null,
 };
 
 const _METHOD_LABELS = {
@@ -1101,7 +1103,7 @@ function _renderCandidateCard(c) {
       ${tags.access ? `<span class="admin-tag">Zugang: ${escHtml(tags.access)}</span>` : ''}
     </div>
     <div style="margin:2px 0 6px;">
-      <a href="${osmUrl}" target="_blank" rel="noopener" style="font-size:0.73rem;color:var(--accent);text-decoration:none;">${escHtml(c.external_id)} ↗</a>
+      <a href="${escAttr(osmUrl)}" target="_blank" rel="noopener" style="font-size:0.73rem;color:var(--accent);text-decoration:none;">${escHtml(c.external_id)} ↗</a>
     </div>
     <div id="cand-nearby-${cid}"></div>
     ${isPending ? `
