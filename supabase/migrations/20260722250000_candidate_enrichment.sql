@@ -51,14 +51,17 @@ COMMENT ON COLUMN public.table_candidates.context_osm_id IS
   'OSM-ID des Kontextobjekts, z.B. "way/12345678"';
 COMMENT ON COLUMN public.table_candidates.context_distance_m IS
   'Distanz TT-Platte ↔ Kontextobjekt-Mittelpunkt in Metern (0 bei contains)';
+COMMENT ON COLUMN public.table_candidates.context_type IS
+  'Typ: park | playground | school | kindergarten | sports | pool | camping | recreation | square | cemetery | street | suburb';
 COMMENT ON COLUMN public.table_candidates.context_method IS
-  'contains = TT-Platte liegt im Polygon; nearest = nächstes benanntes Objekt; street/administrative';
+  'contains = TT-Platte liegt im Polygon; nearest = nächstes Objekt ≤ 100m; street = nächste Straße ≤ 150m; administrative';
 COMMENT ON COLUMN public.table_candidates.context_confidence IS
   '0.0–1.0: Konfidenz der Zuordnung';
 COMMENT ON COLUMN public.table_candidates.enriched_display_name IS
   'Abgeleiteter Anzeigename aus räumlichem Kontext, z.B. "Tischtennis im Stadtpark"';
 COMMENT ON COLUMN public.table_candidates.enriched_name_source IS
-  'Quelle: osm_park | osm_playground | osm_school | osm_sports | osm_street | osm_suburb …';
+  'Quelle: osm_park | osm_playground | osm_school | osm_kindergarten | osm_sports | osm_pool | '
+  'osm_camping | osm_recreation | osm_square | osm_cemetery | osm_street | osm_street_extended | osm_suburb';
 COMMENT ON COLUMN public.table_candidates.enriched_at IS
   'Zeitstempel der letzten Anreicherung durch db/osm-enrich.py';
 
@@ -494,3 +497,41 @@ GRANT  EXECUTE ON FUNCTION public.list_candidates_for_review(text,text,text,inte
 
 COMMENT ON FUNCTION public.list_candidates_for_review(text,text,text,integer,integer) IS
   'Admin-RPC: Kandidaten mit Enrichment-Feldern — sicherer als direkter REST-Zugriff auf table_candidates.';
+
+
+-- ── 5. backfill_enriched_names_to_tables ─────────────────────────────────────
+-- Aktualisiert public.tables.name für bereits promovierte Kandidaten,
+-- wenn der bisherige name_source ein automatisch erzeugter Fallback ist.
+-- Echte Namen (osm_name, osm_name_de, osm_operator) werden NIE überschrieben.
+-- Wird nach dem Enrichment-Write-Schritt ausgeführt (db/osm-enrich.py).
+
+CREATE OR REPLACE FUNCTION public.backfill_enriched_names_to_tables()
+RETURNS integer
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  WITH updated AS (
+    UPDATE public.tables t
+       SET name        = tc.enriched_display_name,
+           name_source = tc.enriched_name_source
+      FROM public.table_candidates tc
+     WHERE t.id        = tc.matched_table_id
+       AND tc.enriched_display_name IS NOT NULL
+       AND tc.enriched_name_source NOT IN ('fallback')
+       AND t.name_source NOT IN (
+             'osm_name', 'osm_name_de', 'osm_operator', 'admin_input'
+           )
+    RETURNING 1
+  )
+  SELECT count(*)::integer FROM updated;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.backfill_enriched_names_to_tables() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.backfill_enriched_names_to_tables() FROM anon;
+GRANT  EXECUTE ON FUNCTION public.backfill_enriched_names_to_tables() TO authenticated;
+
+COMMENT ON FUNCTION public.backfill_enriched_names_to_tables() IS
+  'Aktualisiert public.tables.name für bereits promovierte Kandidaten mit '
+  'enriched_display_name, sofern name_source kein echter/manueller Name ist. '
+  'Sicher: osm_name, osm_name_de, osm_operator, admin_input werden nie überschrieben.';

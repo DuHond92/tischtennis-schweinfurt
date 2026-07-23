@@ -614,9 +614,9 @@ function eventCreatorInlineHtml(event) {
 }
 
 function renderEventCard(e, idx = 0) {
-  const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.png'
-    : e.type === 'training'  ? 'images/placeholders/game_training.png'
-    : 'images/placeholders/game_fun.png';
+  const thumbFallback = e.type === 'punktspiel' ? 'images/placeholders/game_tournament.webp'
+    : e.type === 'training'  ? 'images/placeholders/game_training.webp'
+    : 'images/placeholders/game_fun.webp';
   const loadAttr = idx < 2 ? 'eager' : 'lazy';
   const hasImage = Boolean(e.photos && e.photos.length);
 
@@ -1173,8 +1173,10 @@ function _renderEventTablePickerUserLocation(center = false) {
   if (center) _eventTablePickerMap.setView([userLat, userLng], 14, { animate: true });
 }
 
-function _initEventTablePickerMap() {
-  if (_eventTablePickerMap || typeof L === 'undefined') return;
+async function _initEventTablePickerMap() {
+  if (_eventTablePickerMap) return;
+  if (typeof _loadMapLibraries === 'function') await _loadMapLibraries();
+  if (_eventTablePickerMap) return;
   _eventTablePickerMap = L.map('event-table-picker-map', {
     center: [50.0490, 10.2310], zoom: 13, maxZoom: 19, zoomControl: false
   });
@@ -1203,8 +1205,8 @@ function setEventTablePickerMode(mode) {
   if (mapPanel) mapPanel.hidden = !mapActive;
   if (listPanel) listPanel.hidden = mapActive;
   if (mapActive) {
-    requestAnimationFrame(() => {
-      _initEventTablePickerMap();
+    requestAnimationFrame(async () => {
+      await _initEventTablePickerMap();
       _eventTablePickerMapLayer?.getMaplibreMap()?.setStyle(_currentMapStyle());
       _eventTablePickerMap?.invalidateSize();
       _renderEventTablePickerMarkers(false);

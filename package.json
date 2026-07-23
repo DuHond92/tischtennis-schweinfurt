@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@fontsource/bricolage-grotesque": "^5.2.10",
-    "@fontsource/figtree": "^5.2.10"
+    "@fontsource/figtree": "^5.2.10",
+    "esbuild": "^0.28.1"
   }
 }

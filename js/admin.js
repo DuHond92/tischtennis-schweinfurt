@@ -337,7 +337,7 @@ function _renderImageCard(img, tableName, uploaderName) {
   <div class="admin-card admin-img-card" id="admin-img-card-${imgId}">
     <div class="admin-img-preview-wrap">
       <img class="admin-img-preview" src="${escAttr(img.image_url)}"
-        onerror="this.src='images/placeholders/plate_outdoor.png'" loading="lazy">
+        onerror="this.src='images/placeholders/plate_outdoor.webp'" loading="lazy">
     </div>
     <div class="admin-card-header" style="margin-top:8px;">
       <div class="admin-card-name">${ic('pin',12)} ${escHtml(tableName)}</div>

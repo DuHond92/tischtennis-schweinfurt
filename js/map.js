@@ -642,7 +642,7 @@ function _buildStatusLine(filtered) {
 }
 
 function _mapThumbHtml(t, loadAttr) {
-  const fb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+  const fb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
   if (t.photos && t.photos.length)
     return `<img src="${escAttr(t.photos[0])}" onerror="this.src='${fb}'" loading="${loadAttr || 'lazy'}" decoding="async">`;
   return `<img src="${fb}" loading="${loadAttr || 'lazy'}" decoding="async" class="thumb-placeholder-img">`;

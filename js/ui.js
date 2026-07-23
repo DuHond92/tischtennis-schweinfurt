@@ -5,12 +5,44 @@ const pages = ['home','map','events','profile','admin'];
 let currentPage = 'home';
 let mapInit = false;
 
+function _loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function _injectCSS(href) {
+  const l = document.createElement('link');
+  l.rel = 'stylesheet'; l.href = href;
+  document.head.appendChild(l);
+}
+
+let _mapLibsLoaded = false;
+
+async function _loadMapLibraries() {
+  if (_mapLibsLoaded) return;
+  _injectCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+  _injectCSS('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css');
+  _injectCSS('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css');
+  await Promise.all([
+    _loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
+    _loadScript('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'),
+  ]);
+  await Promise.all([
+    _loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'),
+    _loadScript('https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js'),
+  ]);
+  _mapLibsLoaded = true;
+}
+
 // Wartet per rAF bis der Map-Container echte Dimensionen hat, dann initMap()
 // Verhindert Leaflet 0×0px-Mount auf langsamen iOS-Geräten
 function _initMapWhenReady() {
   const el = document.getElementById('map');
   if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
-    initMap();
+    _loadMapLibraries().then(() => initMap());
   } else {
     requestAnimationFrame(_initMapWhenReady);
   }
@@ -96,6 +128,50 @@ function openLegalPage(url) {
   PTAnalytics.track('legal_page_opened');
   const target = (typeof window.Capacitor !== 'undefined') ? '_system' : '_blank';
   window.open(url, target, 'noopener,noreferrer');
+}
+
+// Öffnet in der nativen App direkt die Fotomediathek. Der HTML-Dateipicker
+// bleibt ausschließlich als Web-Fallback erhalten.
+let _photoLibraryPicking = false;
+
+async function pickImageFromPhotoLibrary(fallbackInputId) {
+  const capacitor = window.Capacitor;
+  const isNative = !!capacitor?.isNativePlatform?.();
+  const camera = capacitor?.Plugins?.Camera;
+  if (!isNative || !camera?.chooseFromGallery) {
+    document.getElementById(fallbackInputId)?.click();
+    return null;
+  }
+  if (_photoLibraryPicking) return null;
+  _photoLibraryPicking = true;
+
+  try {
+    const selection = await camera.chooseFromGallery({
+      mediaType: 0,
+      allowMultipleSelection: false,
+      editable: 'no',
+      presentationStyle: 'fullscreen',
+      quality: 100,
+      correctOrientation: true
+    });
+    const photo = selection?.results?.[0];
+    if (!photo) return null;
+    const source = photo.webPath || (photo.uri ? capacitor.convertFileSrc(photo.uri) : '');
+    if (!source) throw new Error('Das ausgewählte Foto konnte nicht gelesen werden.');
+    const response = await fetch(source);
+    if (!response.ok) throw new Error('Das ausgewählte Foto konnte nicht geladen werden.');
+    const blob = await response.blob();
+    const mime = blob.type || 'image/jpeg';
+    const extension = mime.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+    return new File([blob], `foto-${Date.now()}.${extension}`, { type: mime });
+  } catch (error) {
+    if (/cancel/i.test(error?.message || '')) return null;
+    console.error('Native photo picker error:', error);
+    showToast('Die Fotomediathek konnte nicht geöffnet werden.', 'error');
+    return null;
+  } finally {
+    _photoLibraryPicking = false;
+  }
 }
 
 // ── TDS SUBPAGE NAVIGATION ────────────────────────────────────────

@@ -21,7 +21,7 @@ function _closeEventDetail() {
   }
 }
 
-const EVENT_FALLBACK = 'images/placeholders/game_fun.png';
+const EVENT_FALLBACK = 'images/placeholders/game_fun.webp';
 
 // ── Standort-Karte ────────────────────────────────────────────────
 function _destroyEdsMap() {
@@ -31,10 +31,12 @@ function _destroyEdsMap() {
   }
 }
 
-function _initEdsMapPreview(lat, lng) {
+async function _initEdsMapPreview(lat, lng) {
   _destroyEdsMap();
   const container = document.getElementById('eds-map-preview');
   if (!container) return;
+
+  if (typeof _loadMapLibraries === 'function') await _loadMapLibraries();
 
   _edsMapInstance = L.map(container, {
     center: [lat, lng],
@@ -101,7 +103,7 @@ function buildEventSlider(images) {
   const thumbs = hasImgs
     ? images.map((src, i) =>
         `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-          <img src="${escAttr(src)}" onerror="this.src='${f}'">
+          <img src="${escAttr(src)}" onerror="this.src='${f}'" loading="lazy">
         </div>`
       ).join('')
     : '';
@@ -119,7 +121,7 @@ function buildEventSlider(images) {
       </div>
       <div class="ds-thumbs">
         ${thumbs}
-        <div class="ds-thumb-add" onclick="document.getElementById('ev-file-input').click()">+</div>
+        <div class="ds-thumb-add" onclick="openEventDetailPhotoLibrary()">+</div>
       </div>
     </div>
     <input type="file" id="ev-file-input" accept="image/*" style="display:none" onchange="handleDetailImageUpload(this)">`;
@@ -712,7 +714,7 @@ function _appendDbImagesToEventSlider(dbImages) {
     thumb.className = 'ds-thumb ds-db-thumb';
     const i = currentCount;
     thumb.onclick = () => detailSliderGo(slider, i);
-    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${EVENT_FALLBACK}'">`;
+    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${EVENT_FALLBACK}'" loading="lazy">`;
     thumbsRow.insertBefore(thumb, addBtn);
   });
 

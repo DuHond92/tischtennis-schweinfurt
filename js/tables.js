@@ -144,11 +144,11 @@ function _refreshTableDetailEvents(tableId) {
   sec.innerHTML = `<div class="eds-section-title">Kommende Spiele</div>${evHtml}`;
 }
 
-const PLATE_FALLBACK = 'images/placeholders/plate_outdoor.png';
+const PLATE_FALLBACK = 'images/placeholders/plate_outdoor.webp';
 
 function buildPhotoSlider(t, photos) {
   const hasPhotos = photos && photos.length;
-  const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+  const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
 
   const slides = hasPhotos
     ? photos.map((src, i) => {
@@ -159,14 +159,14 @@ function buildPhotoSlider(t, photos) {
         </div>`;
       }).join('')
     : `<div class="ds-slide ds-slide-empty">
-        <img src="${escAttr(plateFb)}" class="thumb-placeholder-img">
+        <img src="${escAttr(plateFb)}" class="thumb-placeholder-img" loading="lazy">
         <div class="ds-no-img-hint">Noch kein Bild</div>
       </div>`;
 
   const thumbs = hasPhotos
     ? photos.map((src, i) =>
         `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-          <img src="${src}" onerror="this.src='${plateFb}'">
+          <img src="${src}" onerror="this.src='${plateFb}'" loading="lazy">
         </div>`
       ).join('')
     : '';

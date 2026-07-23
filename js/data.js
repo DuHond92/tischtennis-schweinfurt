@@ -148,78 +148,95 @@ async function loadEvents() {
   const {data: evData} = await qbE.order('event_date').execute();
   if(!evData || !evData.length) return;
 
-  // 2. Teilnehmer-Anzahl + Profile für Avatar-Stack (zweistufig — kein nested join)
-  const pCounts       = {};
-  const pParticipants = {};
-  try {
-    // 2a. Teilnehmer-Rows (nur IDs, kein Join der 400 wirft)
-    const qbP = new QueryBuilder('event_participants');
-    qbP._select = 'event_id,user_id';
-    const {data: pData} = await qbP.order('event_id').execute();
-    if(pData && pData.length) {
-      // 2b. Unique user_ids → Profile separat laden
-      const userIds = [...new Set(pData.map(p => p.user_id).filter(Boolean))];
-      const profMap = {};
-      if(userIds.length) {
+  const eventIds = evData.map(e => e.id).filter(Boolean);
+
+  // 2–5. Alle unabhängigen Fetches parallel nach dem Events-Request
+  const [
+    { pCounts, pParticipants },
+    tableMap,
+    profileMap,
+    eventImageMap,
+  ] = await Promise.all([
+
+    // 2. Teilnehmer + Avatar-Profile (zweistufig, aber als Einheit parallel zu 3–5)
+    (async () => {
+      const pCounts = {}, pParticipants = {};
+      try {
+        const qbP = new QueryBuilder('event_participants');
+        qbP._select = 'event_id,user_id';
+        const {data: pData} = await qbP.order('event_id').execute();
+        if (pData && pData.length) {
+          const userIds = [...new Set(pData.map(p => p.user_id).filter(Boolean))];
+          const profMap = {};
+          if (userIds.length) {
+            try {
+              const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
+              const {data: profs} = await fetchWithRefresh(url, { headers: dbHeaders() });
+              if (Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
+            } catch(e) { console.warn('Profil-Fetch fehlgeschlagen', e); }
+          }
+          pData.forEach(p => {
+            pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
+            if (!pParticipants[p.event_id]) pParticipants[p.event_id] = [];
+            const prof = profMap[p.user_id];
+            if (prof) pParticipants[p.event_id].push(prof);
+          });
+        }
+      } catch(e) { console.warn('Teilnehmer laden fehlgeschlagen', e); }
+      return { pCounts, pParticipants };
+    })(),
+
+    // 3. Tischbilder (mutiert Objekte im globalen tables-Array in-place)
+    (async () => {
+      const tableMap = Object.fromEntries((tables || []).map(t => [t.id, t]));
+      const tableItems = Object.values(tableMap);
+      if (tableItems.length) {
+        const needPhotos = tableItems.filter(t => !Array.isArray(t.photos) || !t.photos.length);
+        if (needPhotos.length) await _loadApprovedTableImagesForTables(needPhotos);
+      } else {
         try {
-          const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,username,avatar_emoji,avatar_url&id=in.(${userIds.join(',')})`;
-          const {data: profs} = await fetchWithRefresh(url, { headers: dbHeaders() });
-          if(Array.isArray(profs)) profs.forEach(p => { profMap[p.id] = p; });
-        } catch(e) { console.warn('Profil-Fetch fehlgeschlagen', e); }
+          const qbT = new QueryBuilder('tables');
+          qbT._select = 'id,name,icon';
+          const {data: tData} = await qbT.execute();
+          if (tData) tData.forEach(t => { tableMap[t.id] = t; });
+          await _loadApprovedTableImagesForTables(Object.values(tableMap));
+        } catch(e) {}
       }
-      // 2c. Counts + Avatar-Arrays aufbauen
-      pData.forEach(p => {
-        pCounts[p.event_id] = (pCounts[p.event_id] || 0) + 1;
-        if(!pParticipants[p.event_id]) pParticipants[p.event_id] = [];
-        const prof = profMap[p.user_id];
-        if(prof) pParticipants[p.event_id].push(prof);
-      });
-    }
-  } catch(e) { console.warn('Teilnehmer laden fehlgeschlagen', e); }
+      return tableMap;
+    })(),
 
-  // 3. Platten-Info für Name, Icon und Bilder aus bereits geladenen Tabellen sammeln
-  const tableMap = Object.fromEntries((tables || []).map(t => [t.id, t]));
-  const tableItems = Object.values(tableMap);
-  if (tableItems.length) {
-    const needPhotos = tableItems.filter(t => !Array.isArray(t.photos) || !t.photos.length);
-    if (needPhotos.length) await _loadApprovedTableImagesForTables(needPhotos);
-  } else {
-    try {
-      const qbT = new QueryBuilder('tables');
-      qbT._select = 'id,name,icon';
-      const {data: tData} = await qbT.execute();
-      if(tData) tData.forEach(t => { tableMap[t.id] = t; });
-      await _loadApprovedTableImagesForTables(Object.values(tableMap));
-    } catch(e) {}
-  }
+    // 4. Creator-Profile
+    (async () => {
+      const profileMap = {};
+      try {
+        const qbProf = new QueryBuilder('profiles');
+        qbProf._select = 'id,username,avatar_emoji,avatar_url,skill_level';
+        const {data: pData} = await qbProf.execute();
+        if (pData) pData.forEach(p => { profileMap[p.id] = p; });
+      } catch(e) {}
+      return profileMap;
+    })(),
 
-  // 4. Profile für Ersteller-Usernamen (einfacher Select)
-  const profileMap = {};
-  try {
-    const qbProf = new QueryBuilder('profiles');
-    qbProf._select = 'id,username,avatar_emoji,avatar_url,skill_level';
-    const {data: pData} = await qbProf.execute();
-    if(pData) pData.forEach(p => { profileMap[p.id] = p; });
-  } catch(e) {}
-
-  // 5. Eigene Eventbilder haben Vorrang vor dem Bild der ausgewählten Platte.
-  // RLS liefert öffentliche/freigegebene Bilder sowie eigene noch ausstehende Uploads.
-  const eventImageMap = {};
-  try {
-    const eventIds = evData.map(event => event.id).filter(Boolean);
-    if (eventIds.length) {
-      const url = `${SUPABASE_URL}/rest/v1/event_images?select=event_id,image_url,status,uploaded_by,created_at&event_id=in.(${eventIds.join(',')})&order=created_at.desc`;
-      const { data: imageData } = await fetchWithRefresh(url, { headers: dbHeaders() });
-      if (Array.isArray(imageData)) imageData.forEach(image => {
-        if (!image.event_id || !image.image_url) return;
-        const visible = image.status === 'approved' ||
-          (image.status === 'pending' && image.uploaded_by === sb.getUserId());
-        if (!visible) return;
-        eventImageMap[image.event_id] = eventImageMap[image.event_id] || [];
-        eventImageMap[image.event_id].push(image.image_url);
-      });
-    }
-  } catch(e) { console.warn('Eventbilder laden fehlgeschlagen', e); }
+    // 5. Event-Bilder
+    (async () => {
+      const eventImageMap = {};
+      try {
+        if (eventIds.length) {
+          const url = `${SUPABASE_URL}/rest/v1/event_images?select=event_id,image_url,status,uploaded_by,created_at&event_id=in.(${eventIds.join(',')})&order=created_at.desc`;
+          const { data: imageData } = await fetchWithRefresh(url, { headers: dbHeaders() });
+          if (Array.isArray(imageData)) imageData.forEach(image => {
+            if (!image.event_id || !image.image_url) return;
+            const visible = image.status === 'approved' ||
+              (image.status === 'pending' && image.uploaded_by === sb.getUserId());
+            if (!visible) return;
+            eventImageMap[image.event_id] = eventImageMap[image.event_id] || [];
+            eventImageMap[image.event_id].push(image.image_url);
+          });
+        }
+      } catch(e) { console.warn('Eventbilder laden fehlgeschlagen', e); }
+      return eventImageMap;
+    })(),
+  ]);
 
   // 6. Daten im JS zusammensetzen
   const months = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];

@@ -95,7 +95,7 @@ function showMySuggestionDetail(id) {
   const status  = _suggestionStatusInfo(s);
   const dateStr = new Date(s.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const typeTag = s.type === 'indoor' ? 'Indoor' : 'Outdoor';
-  const plateFb = `images/placeholders/plate_${s.type === 'indoor' ? 'indoor' : 'outdoor'}.png`;
+  const plateFb = `images/placeholders/plate_${s.type === 'indoor' ? 'indoor' : 'outdoor'}.webp`;
   const imgSrc  = s.image_url || plateFb;
 
   let statusMsg  = '';

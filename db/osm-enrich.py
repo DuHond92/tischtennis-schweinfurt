@@ -48,11 +48,12 @@ VERWENDUNG
 
 NAMENS-PRIORITÄT
 ----------------
-  1. Echte Polygon-Enthaltensein: Park, Spielplatz, Schule, Sportanlage, Freibad, Camping
-  2. Nächstes benanntes Polygon (Mittelpunkt-Näherung) innerhalb Typ-spezifischer Grenze
-  3. Straße: kürzeste Distanz Punkt→Linie ≤ 60 m
-  4. Administrative Grenze (place=suburb/neighbourhood/…): nur via Polygon-Enthaltensein
-  5. Fallback "Tischtennisplatte" (keine Anreicherung)
+  1. Polygon-Enthaltensein (alle Typen, Centroid-Distanz ≤ max_dist_m)
+  2. Straße: kürzeste Distanz Punkt→Linie ≤ 60 m
+  3. Schule / Kindergarten: Centroid-Distanz ≤ 500 m
+  4. Park: Centroid-Distanz ≤ 500 m
+  5. Administrative Grenze (place=suburb/neighbourhood/…): nur via Polygon-Enthaltensein
+  6. Fallback "Tischtennisplatte" (kein plausibler Kontext)
 
 KONFIDENZ
 ---------
@@ -133,6 +134,13 @@ def classify_osm_tags(tags):
     highway = tags.get('highway', '')
     natural = tags.get('natural', '')
 
+    # Friedhöfe: eigener Kontexttyp, nur via contains erlaubt
+    name_lower = (tags.get('name', '') or '').lower()
+    if amenity == 'grave_yard' or landuse == 'cemetery':
+        return 'cemetery' if name_lower else None  # nur benannte Friedhöfe
+    if 'friedhof' in name_lower:
+        return 'cemetery'  # fängt Fälle wo Friedhof als Park/Garten getaggt ist
+
     # Parks und Gärten (Priorität 1)
     if leisure in ('park', 'garden') or (landuse == 'recreation_ground' and tags.get('name')):
         return 'park'
@@ -202,15 +210,31 @@ _STREET_MASC_NEUT = (
     'dorf', 'gut', 'hof', 'rain', 'anger', 'grund',
 )
 
+# Straßen/Objektnamen die bereits einen Artikel enthalten → Gedankenstrich
+_ARTICLE_PREFIXES = (
+    'am ', 'an der ', 'an den ', 'auf dem ', 'auf der ',
+    'im ', 'in der ', 'in den ', 'zum ', 'zur ', 'beim ',
+)
+
 def _street_name(name):
     """Wählt die richtige Artikel-Form für den Straßennamen."""
     lower = name.lower()
+    # Doppelten Artikel verhindern: "Am Rothhügel" → Gedankenstrichform
+    if any(lower.startswith(p) for p in _ARTICLE_PREFIXES):
+        return f'Tischtennisplatte – {name}'
     if any(lower.endswith(s) for s in _STREET_FEMININE):
         return f'Tischtennisplatte an der {name}'
     if any(lower.endswith(s) for s in _STREET_MASC_NEUT):
         return f'Tischtennisplatte am {name}'
     # Unbekannter Typ (Ortsname, Abkürzung, fremdsprachlich): neutral
     return f'Tischtennisplatte – {name}'
+
+
+def _playground_name(name):
+    """Spielplatz: 'beim Spielplatz „Name„' außer Name beginnt bereits mit Spielplatz."""
+    if name.lower().startswith('spielplatz'):
+        return f'Tischtennis am {name}'
+    return f'Tischtennis beim Spielplatz „{name}“'
 
 # Bezeichnungen, die Freibäder / Hallenbäder in ihrem Namen tragen
 _POOL_PREFIXES = (
@@ -234,35 +258,100 @@ def _camping_name(name):
         return f'Tischtennis auf dem {name}'
     return f'Tischtennis auf dem Campingplatz {name}'
 
-# Kindergarten-Bezeichnungen
-_KINDER_PREFIXES = (
-    'kindergarten', 'kita', 'kinderhaus', 'kinderkrippe',
-    'kindertagesstätte', 'kinder', 'kiga',
+# Substantive die auf feminine Institutionsnamen hinweisen → "an der"
+_FEMININE_INSTITUTIONS = (
+    'schule', 'halle', 'universität', 'akademie', 'hochschule',
+    'einrichtung', 'stätte', 'kirche', 'klinik', 'bibliothek',
+)
+# Substantive die auf maskuline/neutrale Institutionsnamen hinweisen → "am"
+_MASC_NEUT_INSTITUTIONS = (
+    'kindergarten', 'hort', 'heim', 'haus', 'garten', 'hof',
+    'treff', 'zentrum', 'park', 'forum', 'campus', 'stadion',
+    'gelände', 'platz',
 )
 
-def _school_name(name):
-    """Wählt Vorlage: Kindergarten-ähnlich → 'am'; Schule → 'an der'."""
+def _article_for_institution(name):
+    """Gibt 'an der' (feminin) oder 'am' (maskulin/neutral/unbekannt) zurück."""
     lower = name.lower()
-    if any(lower.startswith(p) for p in _KINDER_PREFIXES):
+    if any(s in lower for s in _FEMININE_INSTITUTIONS):
+        return 'an der'
+    if any(s in lower for s in _MASC_NEUT_INSTITUTIONS):
+        return 'am'
+    return 'am'   # Im Zweifel neutrale Form
+
+def _school_name(name):
+    art = _article_for_institution(name)
+    return f'Tischtennis {art} {name}'
+
+# Park-Endungen — nur sichere Fälle; unbekannte Endungen → Gedankenstrich.
+# Genus-Regel: Deutsch bestimmt Genus durch den Kopf (letztes Wort im Kompositum).
+# Für Bindestrich-Namen ("Seinäjoki-Park") ist das letzte Segment maßgeblich.
+# Für Leerzeichen-Namen ohne Treffer im letzten Segment ("Ringpark Sanderglacis")
+# wird als Fallback das gesamte Wortfeld auf "im"-Endungen geprüft.
+_PARK_IM_ENDINGS = (
+    'park', 'garten', 'wäldchen', 'wald', 'hain', 'tälchen', 'tal',
+    'holz', 'forst',
+)
+_PARK_AM_ENDINGS = (
+    'platz', 'hof', 'see', 'berg', 'damm', 'ring',
+)
+_PARK_AN_DER_ENDINGS = (
+    'insel', 'wiese', 'aue', 'allee', 'promenade',
+)
+_PARK_PLURAL_ENDINGS = (
+    'anlagen', 'wiesen', 'auen', 'höfe', 'gründe', 'felder',
+)
+
+
+def _park_name(name):
+    """Artikel für Park/Grünfläche — nur wenn sicher bestimmbar, sonst Gedankenstrich."""
+    lower = name.lower()
+    # Pluralformen → Gedankenstrich
+    if any(lower.endswith(s) for s in _PARK_PLURAL_ENDINGS):
+        return f'Tischtennis – {name}'
+    # Namen mit eingebettetem Artikel → kein weiterer Artikel (doppelter Artikel)
+    if any(lower.startswith(p) for p in _ARTICLE_PREFIXES):
+        return f'Tischtennis – {name}'
+
+    # Genus: letztes Wort des letzten Bindestrich-Segments entscheidet
+    last_seg  = lower.split('-')[-1].strip()
+    last_word = last_seg.split()[-1] if last_seg.split() else lower
+
+    if any(last_word.endswith(s) for s in _PARK_IM_ENDINGS):
+        return f'Tischtennis im {name}'
+    if any(last_word.endswith(s) for s in _PARK_AM_ENDINGS):
         return f'Tischtennis am {name}'
-    return f'Tischtennis an der {name}'
+    if any(last_word.endswith(s) for s in _PARK_AN_DER_ENDINGS):
+        return f'Tischtennis an der {name}'
+
+    # Fallback: alle Wörter auf "im"-Endungen prüfen
+    # (fängt "Ringpark Sanderglacis" — "park" steckt im ersten Wort)
+    all_words = lower.replace('-', ' ').split()
+    if any(w.endswith(s) for w in all_words for s in _PARK_IM_ENDINGS):
+        return f'Tischtennis im {name}'
+
+    # Unbekanntes Geschlecht → neutral
+    return f'Tischtennis – {name}'
+
 
 def derive_display_name(ctx_type, ctx_name):
     """Erzeugt den Anzeigenamen aus Kontexttyp und OSM-Name."""
+    if ctx_type == 'cemetery':
+        return f'Tischtennisplatte – {ctx_name}'
     if ctx_type == 'park':
-        return f'Tischtennis im {ctx_name}'
+        return _park_name(ctx_name)
     if ctx_type == 'playground':
-        return f'Tischtennis am {ctx_name}'
+        return _playground_name(ctx_name)
     if ctx_type in ('school', 'kindergarten'):
         return _school_name(ctx_name)
     if ctx_type == 'sports':
-        return f'Tischtennis an der {ctx_name}'
+        return f'Tischtennis {_article_for_institution(ctx_name)} {ctx_name}'
     if ctx_type == 'pool':
         return _pool_name(ctx_name)
     if ctx_type == 'camping':
         return _camping_name(ctx_name)
     if ctx_type == 'recreation':
-        return f'Tischtennis im {ctx_name}'
+        return _park_name(ctx_name)
     if ctx_type == 'square':
         return f'Tischtennis am {ctx_name}'
     if ctx_type == 'street':
@@ -315,17 +404,21 @@ def compute_confidence(method, dist_m, max_dist_m):
 
 CONTEXT_CONFIG = {
     # Typ           priority  max_dist_m
-    'park':         (1,  300),
-    'playground':   (1,   80),
-    'school':       (1,  150),
+    # priority: bestimmt die Reihenfolge innerhalb gleicher Methode (niedriger = besser)
+    # Prioritätsreihenfolge gesamt: contains > nearest ≤ 100m > street ≤ 150m > administrative
+    # Für nearest: 1=Schule/Kita, 2=Spielplatz/Sport/Pool, 3=Camping/Recreation/Square/Cemetery, 4=Park
+    'school':       (1,  500),   # centroid-cap für contains; nearest ≤ NEAREST_HARD_CAP_M
     'kindergarten': (1,   80),
-    'sports':       (1,  150),
-    'pool':         (1,  100),
-    'camping':      (2,  150),
-    'recreation':   (2,  200),
-    'square':       (2,   80),
-    'street':       (3,   60),   # Distanz = Punkt→Linie (nicht Centroid)
-    'suburb':       (4, None),   # nur via Polygon-Enthaltensein
+    'playground':   (2,   80),
+    'sports':       (2,  150),
+    'pool':         (2,  100),
+    'camping':      (3,  150),
+    'recreation':   (3,  200),
+    'square':       (3,   80),
+    'cemetery':     (3, None),   # nur via contains; nearest nie erlaubt
+    'park':         (4,  500),
+    'street':       (1,  150),   # 0–60m: normale Konfidenz + Artikel; 60–150m: street_extended
+    'suburb':       (5, None),   # nur via Polygon-Enthaltensein
 }
 
 
@@ -569,13 +662,21 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
     deg      = _deg_per_meter()
 
     candidates = []   # (method_rank, priority, dist_m, enrichment_dict)
+    # Priorität: contains > nearest ≤ 100m > street ≤ 150m > administrative
     METHOD_RANK = {'contains': 0, 'nearest': 1, 'street': 2, 'administrative': 3}
+    # Maximale Distanz für nearest-Kontext — unabhängig vom Typ
+    NEAREST_HARD_CAP_M = 100
+    # Straße: normale Konfidenz + Artikel ≤ 60m; Gedankenstrich + niedrigere Konfidenz 60-150m
+    STREET_NORMAL_MAX_M = 60
+
+    # Suchbox: max(max_dist_m) aller Typen = 500 m → Buffer 600 m für Randschärfe
+    _max_search_m = max(v[1] for v in CONTEXT_CONFIG.values() if v[1])
+    _box_buf = (_max_search_m + 100) * deg * 2
 
     # ── 1. Polygon-Enthaltensein ───────────────────────────────────────────────
     if poly_tree:
         polys = cache['polygons']
-        # Suchbox: groß genug für alle Polygon-Typen (max max_dist_m = 300 m)
-        search_box = cand_pt.buffer(300 * deg * 2)
+        search_box = cand_pt.buffer(_box_buf)
         for idx in poly_tree.query(search_box):
             name, ctx_type, oid, geom = polys[idx]
             cfg = CONTEXT_CONFIG.get(ctx_type)
@@ -585,10 +686,14 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
             priority, max_dist_m = cfg
 
             if geom.contains(cand_pt):
-                # Echtes Enthaltensein — Distanz = Centroid zum Kandidaten (für Konfidenz)
+                # Echtes Enthaltensein — Distanz = Centroid zum Kandidaten
                 centroid    = geom.centroid
                 dist_deg    = centroid.distance(cand_pt)
                 dist_m      = dist_deg / deg
+                # Centroid-Distanz-Cap: sehr große Polygone (z.B. riesige Uni-Campus)
+                # werden übersprungen wenn Centroid weiter als max_dist_m entfernt ist
+                if max_dist_m and dist_m > max_dist_m:
+                    continue
                 method      = 'contains' if ctx_type != 'suburb' else 'administrative'
                 conf_dist_m = max_dist_m if max_dist_m else 5000
                 confidence  = compute_confidence(method, dist_m, conf_dist_m)
@@ -608,8 +713,8 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
                 continue
 
             # ── 2. Nearest (kein Enthaltensein, aber in der Nähe) ─────────────
-            if ctx_type == 'suburb':
-                continue   # suburb: NUR via Enthaltensein, kein nearest
+            if ctx_type in ('suburb', 'cemetery'):
+                continue   # nur via Polygon-Enthaltensein, nie nearest
 
             if max_dist_m is None:
                 continue
@@ -617,7 +722,7 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
             centroid = geom.centroid
             dist_m   = haversine_m(cand_lat, cand_lng,
                                     centroid.y, centroid.x)
-            if dist_m > max_dist_m:
+            if dist_m > min(max_dist_m, NEAREST_HARD_CAP_M):
                 continue
 
             confidence = compute_confidence('nearest', dist_m, max_dist_m)
@@ -644,7 +749,7 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
         if max_dist_m is None:
             continue
         dist_m = haversine_m(cand_lat, cand_lng, pt_lat, pt_lng)
-        if dist_m > max_dist_m:
+        if dist_m > min(max_dist_m, NEAREST_HARD_CAP_M):
             continue
         confidence = compute_confidence('nearest', dist_m, max_dist_m)
         candidates.append((
@@ -661,11 +766,13 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
             }
         ))
 
-    # ── 4. Straßen: Punkt→Linie-Distanz ──────────────────────────────────────
-    street_max = CONTEXT_CONFIG['street'][1]  # 60 m
+    # ── 4. Straßen: Punkt→Linie-Distanz (bis 150 m) ─────────────────────────
+    # 0–60m:   normale Konfidenz + Artikel-Formatierung
+    # 60–150m: Gedankenstrich-Form + niedrigere Konfidenz + source=street_extended
+    street_max = CONTEXT_CONFIG['street'][1]  # 150 m
     if street_tree:
-        streets   = cache['streets']
-        box_deg   = street_max * deg * 1.5
+        streets    = cache['streets']
+        box_deg    = street_max * deg * 1.5
         search_box = cand_pt.buffer(box_deg)
         for idx in street_tree.query(search_box):
             name, _, oid, geom = streets[idx]
@@ -674,7 +781,17 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
             dist_m   = dist_deg / deg
             if dist_m > street_max:
                 continue
-            confidence = compute_confidence('street', dist_m, street_max)
+            is_extended = dist_m > STREET_NORMAL_MAX_M
+            if is_extended:
+                display_name = f'Tischtennisplatte – {name}'
+                name_source  = 'osm_street_extended'
+                # Niedrigere Konfidenz: 0.40 → 0.30 über 60–150m
+                confidence = round(max(0.10, 0.40 - 0.10 * (dist_m - STREET_NORMAL_MAX_M)
+                                       / max(1, street_max - STREET_NORMAL_MAX_M)), 2)
+            else:
+                display_name = derive_display_name('street', name)
+                name_source  = 'osm_street'
+                confidence   = compute_confidence('street', dist_m, STREET_NORMAL_MAX_M)
             candidates.append((
                 METHOD_RANK['street'], CONTEXT_CONFIG['street'][0], dist_m,
                 {
@@ -684,8 +801,8 @@ def find_best_context_pbf(cand_lat, cand_lng, cache, poly_tree, street_tree):
                     'context_distance_m':    int(dist_m),
                     'context_method':        'street',
                     'context_confidence':    confidence,
-                    'enriched_display_name': derive_display_name('street', name),
-                    'enriched_name_source':  'osm_street',
+                    'enriched_display_name': display_name,
+                    'enriched_name_source':  name_source,
                 }
             ))
 
@@ -809,18 +926,18 @@ def _print_report(results):
     suspicious = []
     for r in enriched:
         dn = r['enrichment']['enriched_display_name']
-        # Prüfung auf häufige Dopplungen und Fehlformen
         issues = []
         lower = dn.lower()
         if 'campingplatz campingplatz' in lower:
             issues.append('Dopplung "Campingplatz"')
         if 'an der ' in lower:
-            # Prüfe, ob das Wort nach "an der" ein bekanntes Maskulinum/Neutrum ist
-            rest = dn.split('an der ', 1)[-1].lower()
-            bad_endings = ('weg', 'platz', 'park', 'feld', 'damm', 'ring', 'berg',
-                           'pfad', 'stieg', 'hof', 'dorf')
-            if any(rest.endswith(e2) for e2 in bad_endings):
-                issues.append(f'"an der" bei mask./neutr. Suffix')
+            # Nur das ERSTE Wort nach "an der" prüfen (nicht verschachtelte Präpositionen)
+            rest = dn.split('an der ', 1)[-1]
+            first_word = rest.split()[0].lower().rstrip('.,;') if rest.split() else ''
+            masc_neut = ('weg', 'damm', 'ring', 'berg', 'hof', 'hort',
+                         'heim', 'treff', 'park', 'platz', 'garten', 'campus')
+            if any(first_word.endswith(s) for s in masc_neut):
+                issues.append(f'"an der" vor mask./neutr.: {first_word}')
         if issues:
             suspicious.append((dn, ', '.join(issues)))
 
@@ -927,11 +1044,15 @@ def run_pbf_mode(args):
     _print_report(results)
 
     if args.write:
-        if not args.supabase_url or not args.supabase_key:
-            print('\nFEHLER: --supabase-url und --supabase-key erforderlich für --write',
-                  file=sys.stderr)
+        if not args.supabase_url:
+            print('\nFEHLER: --supabase-url erforderlich für --write', file=sys.stderr)
             sys.exit(1)
-        _write_to_supabase(results, args)
+        ok, err, skipped, n_tables = _write_to_supabase(results, args)
+        print(f'\n── WRITE-ZUSAMMENFASSUNG ─────────────────────────────────────────')
+        print(f'   table_candidates geschrieben : {ok:>6,}')
+        print(f'   table_candidates Fehler      : {err:>6,}')
+        print(f'   übersprungen (Resume)        : {skipped:>6,}')
+        print(f'   public.tables nachgepflegt   : {n_tables:>6,}')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1143,28 +1264,186 @@ def run_overpass_mode(args):
 # SUPABASE SCHREIBEN  (nach manueller Prüfung der CSV)
 # ══════════════════════════════════════════════════════════════════════════════
 
+_FALLBACK_SOURCES = frozenset({
+    'fallback', 'enriched', 'osm_addr_street', 'osm_addr_city',
+    'osm_park', 'osm_playground', 'osm_school', 'osm_kindergarten',
+    'osm_sports', 'osm_pool', 'osm_camping', 'osm_recreation',
+    'osm_square', 'osm_suburb', 'osm_street', 'osm_street_extended',
+    'osm_cemetery',
+})
+
+
+def _backup_before_write(base_url, headers, external_ids, backup_path):
+    """Sicherungsexport: aktuelle Enrichment-Felder vor dem Schreiben."""
+    gh = {**headers, 'Prefer': '', 'Accept': 'application/json'}
+    fields = ('external_id,matched_table_id,enriched_display_name,'
+              'enriched_name_source,context_type,context_name,context_method')
+    all_rows = []
+    CHUNK = 400
+    for i in range(0, len(external_ids), CHUNK):
+        batch = external_ids[i:i + CHUNK]
+        ids_str = ','.join(batch)
+        url = (f"{base_url}/rest/v1/table_candidates"
+               f"?source=eq.osm&external_id=in.({urllib.parse.quote(ids_str)})"
+               f"&select={fields}")
+        try:
+            req = urllib.request.Request(url, headers=gh)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                all_rows.extend(json.loads(resp.read().decode()))
+        except Exception as exc:
+            print(f'  BACKUP-WARNUNG (Chunk {i}): {exc}', file=sys.stderr)
+
+    backup_fields = ['external_id', 'matched_table_id', 'enriched_display_name',
+                     'enriched_name_source', 'context_type', 'context_name', 'context_method']
+    with open(backup_path, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=backup_fields, extrasaction='ignore')
+        w.writeheader()
+        w.writerows(all_rows)
+    return len(all_rows), {r['external_id']: r for r in all_rows}
+
+
+def _load_write_done(path):
+    done = set()
+    p = Path(path)
+    if p.exists():
+        with open(p, encoding='utf-8') as f:
+            for line in f:
+                s = line.strip()
+                if s:
+                    done.add(s)
+        print(f'── Resume-Schreiben: {len(done)} bereits erledigt aus {p}', file=sys.stderr)
+    return done
+
+
+def _save_write_done(done, path):
+    with open(path, 'w', encoding='utf-8') as f:
+        for eid in sorted(done):
+            f.write(eid + '\n')
+
+
+def _update_promoted_tables(base_url, headers, backup_rows, enriched_map, ts_now):
+    """
+    Aktualisiert public.tables.name für bereits promovierte Kandidaten,
+    wenn der bisherige name_source ein automatisch erzeugter Fallback ist.
+    Echte und manuelle Namen (osm_name, osm_name_de, osm_operator, admin_input)
+    werden NIE überschrieben.
+    """
+    NEVER_OVERWRITE = frozenset({'osm_name', 'osm_name_de', 'osm_operator', 'admin_input'})
+
+    promoted = {
+        row['external_id']: row['matched_table_id']
+        for row in backup_rows.values()
+        if row.get('matched_table_id')
+    }
+    if not promoted:
+        return 0
+
+    # Aktuelle name_source aus public.tables holen
+    gh = {**headers, 'Prefer': '', 'Accept': 'application/json'}
+    table_ids = list(set(promoted.values()))
+    CHUNK = 400
+    tables_info = {}
+    for i in range(0, len(table_ids), CHUNK):
+        batch = table_ids[i:i + CHUNK]
+        ids_str = ','.join(str(tid) for tid in batch)
+        url = (f"{base_url}/rest/v1/tables"
+               f"?id=in.({ids_str})&select=id,name_source")
+        try:
+            req = urllib.request.Request(url, headers=gh)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                for row in json.loads(resp.read().decode()):
+                    tables_info[row['id']] = row['name_source']
+        except Exception as exc:
+            print(f'  TABLES-ABFRAGE-WARNUNG: {exc}', file=sys.stderr)
+
+    ph = {**headers, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'}
+    updated = 0
+    for ext_id, table_id in promoted.items():
+        current_source = tables_info.get(table_id)
+        if current_source in NEVER_OVERWRITE:
+            continue
+        enrichment = enriched_map.get(ext_id)
+        if not enrichment:
+            continue
+        new_name   = enrichment.get('enriched_display_name')
+        new_source = enrichment.get('enriched_name_source')
+        if not new_name or new_source == 'fallback':
+            continue
+        payload = json.dumps(
+            {'name': new_name, 'name_source': new_source},
+            ensure_ascii=False
+        ).encode()
+        url = f"{base_url}/rest/v1/tables?id=eq.{table_id}"
+        try:
+            req = urllib.request.Request(url, data=payload, method='PATCH', headers=ph)
+            with urllib.request.urlopen(req, timeout=15):
+                updated += 1
+        except Exception as exc:
+            print(f'  TABLES-UPDATE-WARNUNG {table_id}: {exc}', file=sys.stderr)
+
+    return updated
+
+
 def _write_to_supabase(results, args):
-    """PATCH enriched_* Felder in table_candidates per external_id."""
+    """
+    Schreibt Enrichment-Daten nach Supabase.
+
+    Schritt 1: Sicherungsexport (betroffene IDs + bisherige Werte)
+    Schritt 2: PATCH table_candidates — wiederholbar (Write-Done-Tracking)
+    Schritt 3: UPDATE public.tables für generische Namen (nachpflegen)
+    """
     import datetime
 
     base_url = args.supabase_url.rstrip('/')
-    headers  = {
+    key      = args.supabase_key or os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
+    if not key:
+        print('FEHLER: Kein Supabase Service-Role-Key. '
+              'Übergebe --supabase-key KEY oder setze SUPABASE_SERVICE_ROLE_KEY.',
+              file=sys.stderr)
+        sys.exit(1)
+
+    headers = {
         'Content-Type':  'application/json',
-        'apikey':        args.supabase_key,
-        'Authorization': f'Bearer {args.supabase_key}',
+        'apikey':        key,
+        'Authorization': f'Bearer {key}',
         'Prefer':        'return=minimal',
     }
 
-    ok_count  = 0
-    err_count = 0
-    ts_now    = datetime.datetime.utcnow().isoformat() + 'Z'
+    ts_now      = datetime.datetime.utcnow().isoformat() + 'Z'
+    batch_size  = getattr(args, 'batch_size', 1000)
+    out_base    = (args.out or 'enrichment').replace('.csv', '')
+    ts_stamp    = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+    backup_path = f'{out_base}.backup-{ts_stamp}.csv'
+    done_path   = f'{out_base}.write-done'
 
-    for r in results:
-        if not r.get('enrichment'):
-            continue
-        e   = r['enrichment']
+    # Alle IDs mit Enrichment
+    to_enrich   = [r for r in results if r.get('enrichment')]
+    external_ids = [r['external_id'] for r in to_enrich]
+
+    # ── 1. Backup ──────────────────────────────────────────────────────────────
+    print(f'── Sicherungsexport läuft … ({len(external_ids):,} IDs)', file=sys.stderr)
+    n_backup, backup_rows = _backup_before_write(
+        base_url, headers, external_ids, backup_path)
+    print(f'── Backup: {n_backup:,} Zeilen → {backup_path}', file=sys.stderr)
+
+    # Map: external_id → enrichment (für tables-Update)
+    enriched_map = {r['external_id']: r['enrichment'] for r in to_enrich}
+
+    # ── 2. PATCH table_candidates ──────────────────────────────────────────────
+    write_done  = _load_write_done(done_path)
+    ok_count    = 0
+    err_count   = 0
+    skip_count  = len([r for r in to_enrich if r['external_id'] in write_done])
+
+    print(f'── Schreiben: {len(to_enrich) - skip_count:,} ausstehend '
+          f'({skip_count:,} übersprungen)', file=sys.stderr)
+
+    for r in to_enrich:
         eid = r['external_id']
+        if eid in write_done:
+            continue
 
+        e       = r['enrichment']
         payload = json.dumps({
             'context_name':          e['context_name'],
             'context_type':          e['context_type'],
@@ -1180,19 +1459,30 @@ def _write_to_supabase(results, args):
         url = (f"{base_url}/rest/v1/table_candidates"
                f"?source=eq.osm&external_id=eq.{urllib.parse.quote(eid)}")
         req = urllib.request.Request(url, data=payload, method='PATCH', headers=headers)
-
         try:
             with urllib.request.urlopen(req, timeout=15):
                 ok_count += 1
+                write_done.add(eid)
         except urllib.error.HTTPError as exc:
             body = exc.read().decode()[:200]
             print(f'  FEHLER {eid}: {exc.code} {body}', file=sys.stderr)
             err_count += 1
 
-        if (ok_count + err_count) % 500 == 0:
-            print(f'  … {ok_count} OK, {err_count} Fehler', file=sys.stderr)
+        if ok_count % batch_size == 0:
+            _save_write_done(write_done, done_path)
+            print(f'  … Charge {ok_count // batch_size}: {ok_count:,} OK, '
+                  f'{err_count} Fehler', file=sys.stderr)
 
-    print(f'── Supabase: {ok_count} geschrieben, {err_count} Fehler.')
+    _save_write_done(write_done, done_path)
+    print(f'── table_candidates: {ok_count:,} OK, {err_count} Fehler, '
+          f'{skip_count:,} übersprungen (Resume).', file=sys.stderr)
+
+    # ── 3. public.tables: generische Namen nachpflegen ─────────────────────────
+    n_tables = _update_promoted_tables(
+        base_url, headers, backup_rows, enriched_map, ts_now)
+    print(f'── public.tables: {n_tables:,} generische Namen aktualisiert.', file=sys.stderr)
+
+    return ok_count, err_count, skip_count, n_tables
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1226,7 +1516,10 @@ def main():
     p.add_argument('--supabase-url', metavar='URL',
         help='Supabase REST URL (für --write)')
     p.add_argument('--supabase-key', metavar='KEY',
-        help='Service-Role-Key (für --write; NIE committen!)')
+        default=os.environ.get('SUPABASE_SERVICE_ROLE_KEY'),
+        help='Service-Role-Key (für --write; Standard: $SUPABASE_SERVICE_ROLE_KEY)')
+    p.add_argument('--batch-size', type=int, default=1000, metavar='N',
+        help='Chargen-Größe für Fortschritts-Tracking beim Schreiben (Standard: 1000)')
 
     args = p.parse_args()
 

@@ -18,3 +18,4 @@ db/enrichment-*.sql
 db/export.json
 db/export.geojson
 db/osm_import_*.sql
+.vercel

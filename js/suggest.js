@@ -262,16 +262,19 @@ function _updateCoordDisplay() {
 
 // ── FOTO PICKER ──────────────────────────────────────────────────────────────
 
-function _openSuggestPhotoPicker() {
-  document.getElementById('sug-photo-source-sheet')?.classList.add('open');
-}
-function _closeSuggestPhotoPicker() {
-  document.getElementById('sug-photo-source-sheet')?.classList.remove('open');
+async function _openSuggestPhotoPicker() {
+  const file = await pickImageFromPhotoLibrary('sug-file-gallery');
+  if (file) _handleSuggestImageFile(file);
 }
 function _handleSuggestImageSelect(input) {
   if (!input.files || !input.files[0]) return;
-  _suggestImageFile = input.files[0];
+  const file = input.files[0];
   input.value = '';
+  _handleSuggestImageFile(file);
+}
+function _handleSuggestImageFile(file) {
+  if (!file) return;
+  _suggestImageFile = file;
   const reader = new FileReader();
   reader.onload = ev => {
     const img  = document.getElementById('sug-img-preview');
@@ -281,7 +284,7 @@ function _handleSuggestImageSelect(input) {
     if (prev) prev.style.display = '';
     if (add)  add.style.display  = 'none';
   };
-  reader.readAsDataURL(_suggestImageFile);
+  reader.readAsDataURL(file);
 }
 function _removeSuggestImage() {
   _suggestImageFile         = null;
@@ -492,12 +495,12 @@ async function _submitSuggestion() {
 function _buildSuggestPreviewCard(name, address, count, type, imageUrl) {
   const previewCard = document.getElementById('sug-preview-card');
   if (!previewCard) return;
-  const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.png' : 'images/placeholders/plate_outdoor.png';
+  const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
   const thumbSrc   = imageUrl || plateFb;
   const typeLabel  = type === 'indoor' ? 'Indoor' : 'Outdoor';
   const countLabel = count ? `${count} ${count === 1 ? 'Tisch' : 'Tische'} · ` : '';
   previewCard.innerHTML = `
-    <div class="sug-preview-thumb"><img src="${thumbSrc}" alt=""></div>
+    <div class="sug-preview-thumb"><img src="${thumbSrc}" alt="" loading="lazy"></div>
     <div class="sug-preview-info">
       <div class="sug-preview-name">${escHtml(name)}</div>
       ${address ? `<div class="sug-preview-addr">${escHtml(address)}</div>` : ''}

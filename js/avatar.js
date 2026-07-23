@@ -90,6 +90,16 @@ async function onAvatarFileSelected(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   event.target.value = '';
+  await uploadAvatarFile(file);
+}
+
+async function openAvatarPhotoLibrary() {
+  const file = await pickImageFromPhotoLibrary('avatar-file-input');
+  if (file) await uploadAvatarFile(file);
+}
+
+async function uploadAvatarFile(file) {
+  if (!file) return;
   closeAllSheets();
   showToast('Bild wird hochgeladen…', '⏳');
   try {

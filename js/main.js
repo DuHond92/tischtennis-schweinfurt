@@ -137,21 +137,19 @@ window.addEventListener('load', async () => {
 
   // 2. Supabase-Daten laden (OSM wird parallel im Hintergrund geladen)
   try {
-    if (typeof ptLog === 'function') ptLog('startup', 'loadTables START');
-    await loadTables();
-    if (typeof ptLog === 'function') ptLog('startup', 'loadTables DONE', { count: tables?.length });
-    if(mapInit) _applyMapFilters();
-    if (typeof ptLog === 'function') ptLog('startup', 'loadEvents START');
-    await Promise.all([loadEvents()]);
-    if (typeof ptLog === 'function') ptLog('startup', 'loadEvents DONE');
+    if (typeof ptLog === 'function') ptLog('startup', 'loadTables + loadEvents START');
+    await Promise.all([loadTables(), loadEvents()]);
+    if (typeof ptLog === 'function') ptLog('startup', 'loadTables + loadEvents DONE', { count: tables?.length });
     if(mapInit) { _applyMapFilters(); _refreshMarkerIcons(); }
-    // Wenn eingeloggt: User-Daten laden
+    // Wenn eingeloggt: User-Daten parallel laden
     if(sb.isLoggedIn()) {
-      if (typeof ptLog === 'function') ptLog('startup', 'loadCurrentUser START');
-      await loadCurrentUser();
-      if (typeof ptLog === 'function') ptLog('startup', 'loadCurrentUser DONE', { userId: sb.getUserId() });
-      if (typeof loadMyConnections === 'function') await loadMyConnections();
-      if (typeof loadBlockedUsers  === 'function') await loadBlockedUsers();
+      if (typeof ptLog === 'function') ptLog('startup', 'loadUserData START');
+      await Promise.all([
+        loadCurrentUser(),
+        typeof loadMyConnections === 'function' ? loadMyConnections() : Promise.resolve(),
+        typeof loadBlockedUsers  === 'function' ? loadBlockedUsers()  : Promise.resolve(),
+      ]);
+      if (typeof ptLog === 'function') ptLog('startup', 'loadUserData DONE', { userId: sb.getUserId() });
       updateTopBarForUser();
       if (typeof renderProfile === 'function') renderProfile();
       checkNotifications();
