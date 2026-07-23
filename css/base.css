@@ -224,6 +224,36 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
 }
 
 /* ── APP SPLASH (nur Appstart) ───────────────────────────────── */
+@keyframes splash-pin-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+
+.splash-lockup {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+.splash-pin {
+  width: 60px; height: auto;
+  animation: splash-pin-float 2.6s ease-in-out infinite;
+}
+.splash-wordmark {
+  width: min(198px, 72vw); height: auto; display: block;
+}
+.splash-wordmark--dark { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  .splash-wordmark--light { display: none; }
+  .splash-wordmark--dark  { display: block; }
+}
+:root[data-theme="light"] .splash-wordmark--light { display: block !important; }
+:root[data-theme="light"] .splash-wordmark--dark  { display: none  !important; }
+:root[data-theme="dark"]  .splash-wordmark--light { display: none  !important; }
+:root[data-theme="dark"]  .splash-wordmark--dark  { display: block !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-pin { animation: none; }
+}
+
 #app-splash {
   position: fixed; inset: 0; z-index: 99999;
   background: var(--bg);
@@ -231,9 +261,6 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
   transition: opacity 0.4s ease;
 }
 #app-splash.hidden { opacity: 0; pointer-events: none; }
-#app-splash .pt-loader-text {
-  font-size: var(--text-title); font-weight: 800; color: var(--primary); margin-top: 14px; letter-spacing: -0.01em;
-}
 
 /* ── SKELETON LOADER ─────────────────────────────────────────── */
 @keyframes shimmer {
