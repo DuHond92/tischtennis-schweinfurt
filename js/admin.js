@@ -1054,8 +1054,12 @@ const _CAND_STATUS_BADGE = {
   possible_duplicate: '<span class="admin-tag" style="background:rgba(234,179,8,.13);color:#ca8a04;">Duplikat</span>',
 };
 
+// Erlaubte OSM-Elementreferenzen — verhindert unerwartete URL-Inhalte.
+const _EXT_ID_RE = /^(node|way|relation)\/\d+$/;
+
 function _renderCandidateCard(c) {
-  const osmUrl    = `https://www.openstreetmap.org/${c.external_id}`;
+  const extIdOk = _EXT_ID_RE.test(c.external_id || '');
+  const osmUrl  = extIdOk ? `https://www.openstreetmap.org/${c.external_id}` : null;
   const tags      = c.raw_tags || {};
   const capacity  = tags.capacity ? `${tags.capacity} Tisch${Number(tags.capacity) === 1 ? '' : 'e'}` : null;
   const badge     = _CAND_STATUS_BADGE[c.review_status] || '';
@@ -1102,9 +1106,7 @@ function _renderCandidateCard(c) {
       ${capacity ? `<span class="admin-tag">${escHtml(capacity)}</span>` : ''}
       ${tags.access ? `<span class="admin-tag">Zugang: ${escHtml(tags.access)}</span>` : ''}
     </div>
-    <div style="margin:2px 0 6px;">
-      <a href="${escAttr(osmUrl)}" target="_blank" rel="noopener" style="font-size:0.73rem;color:var(--accent);text-decoration:none;">${escHtml(c.external_id)} ↗</a>
-    </div>
+    ${osmUrl ? `<div style="margin:2px 0 6px;"><a href="${escAttr(osmUrl)}" target="_blank" rel="noopener" style="font-size:0.73rem;color:var(--accent);text-decoration:none;">${escHtml(c.external_id)} ↗</a></div>` : ''}
     <div id="cand-nearby-${cid}"></div>
     ${isPending ? `
     <div class="admin-card-actions" id="cand-actions-${cid}">

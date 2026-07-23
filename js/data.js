@@ -1,4 +1,25 @@
 // ╔══════════════════════════════════════════════════════════════╗
+// ║           OSM TEMP-ID — kollisionsfrei, Typ-kodiert          ║
+// ╚══════════════════════════════════════════════════════════════╝
+// Negative Ganzzahlen, getrennt nach Elementtyp:
+//   node:     -(id)                       Bereich ≈ (-14 × 10⁹,       0)
+//   way:      -(id + 100 × 10⁹)          Bereich ≈ (-101.5 × 10⁹, -100 × 10⁹)
+//   relation: -(id + 200 × 10⁹)          Bereich ≈ (-200 × 10⁹ − max, -200 × 10⁹)
+// Alle Bereiche überlappen sich nicht und kollidieren nicht mit positiven Supabase-IDs.
+const _OSM_WAY_OFFSET = 100_000_000_000;
+const _OSM_REL_OFFSET = 200_000_000_000;
+function osmTempId(type, numericId) {
+  const offset = type === 'way'      ? _OSM_WAY_OFFSET
+               : type === 'relation' ? _OSM_REL_OFFSET
+               : 0;
+  const result = -(numericId + offset);
+  if (!Number.isSafeInteger(result)) {
+    console.warn(`osmTempId: unsicherer Integer ${type}/${numericId}`);
+  }
+  return result;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
 // ║           DATEN LADEN (Supabase)                             ║
 // ╚══════════════════════════════════════════════════════════════╝
 async function loadTables() {
@@ -110,7 +131,7 @@ async function loadOSMTables() {
       const isIndoor = tags.indoor === 'yes' || tags.location === 'indoor';
       const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null;
       return {
-        id: -(el.id),
+        id: osmTempId(el.type, el.id),
         osmId: el.id,
         name, addr, lat, lng,
         type: isIndoor ? 'indoor' : 'outdoor',
