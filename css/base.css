@@ -236,6 +236,17 @@ body.has-open-sheet .leaflet-control-attribution { visibility: hidden; pointer-e
   width: 60px; height: auto;
   animation: splash-pin-float 2.6s ease-in-out infinite;
 }
+.splash-pin--dark { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  .splash-pin--light { display: none; }
+  .splash-pin--dark  { display: block; }
+}
+:root[data-theme="light"] .splash-pin--light { display: block !important; }
+:root[data-theme="light"] .splash-pin--dark  { display: none  !important; }
+:root[data-theme="dark"]  .splash-pin--light { display: none  !important; }
+:root[data-theme="dark"]  .splash-pin--dark  { display: block !important; }
+
 .splash-wordmark {
   width: min(198px, 72vw); height: auto; display: block;
 }
