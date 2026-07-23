@@ -21,6 +21,7 @@ const INCLUDE = [
   'css',
   'js',
   'images',
+  'vendor',
   'datenschutz',
   'impressum',
   'nutzungsbedingungen',

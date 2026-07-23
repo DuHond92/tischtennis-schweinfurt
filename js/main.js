@@ -138,7 +138,8 @@ window.addEventListener('load', async () => {
   // 2. Supabase-Daten laden (OSM wird parallel im Hintergrund geladen)
   try {
     if (typeof ptLog === 'function') ptLog('startup', 'loadTables + loadEvents START');
-    await Promise.all([loadTables(), loadEvents()]);
+    await loadTables();
+    await loadEvents();
     if (typeof ptLog === 'function') ptLog('startup', 'loadTables + loadEvents DONE', { count: tables?.length });
     if(mapInit) { _applyMapFilters(); _refreshMarkerIcons(); }
     // Wenn eingeloggt: User-Daten parallel laden
