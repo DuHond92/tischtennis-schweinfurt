@@ -311,7 +311,7 @@ DECLARE
   v_new_id       integer;
 BEGIN
   v_caller_uid := auth.uid();
-  SELECT role INTO v_caller_role FROM public.profiles WHERE id = v_caller_uid;
+  SELECT p.role INTO v_caller_role FROM public.profiles p WHERE p.id = v_caller_uid;
   IF v_caller_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'Zugriff verweigert.' USING ERRCODE = 'insufficient_privilege';
   END IF;
@@ -468,7 +468,7 @@ DECLARE
   v_caller_role text;
 BEGIN
   v_caller_uid := auth.uid();
-  SELECT role INTO v_caller_role FROM public.profiles WHERE id = v_caller_uid;
+  SELECT p.role INTO v_caller_role FROM public.profiles p WHERE p.id = v_caller_uid;
   IF v_caller_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'Zugriff verweigert.' USING ERRCODE = 'insufficient_privilege';
   END IF;
