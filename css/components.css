@@ -182,6 +182,7 @@
   object-fit: cover; object-position: center;
   background: var(--image-placeholder);
   display: block;
+  filter: grayscale(62%) brightness(1.1);
 }
 
 .map-thumb-badge {

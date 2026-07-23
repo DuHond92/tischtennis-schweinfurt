@@ -757,8 +757,12 @@
   background: var(--surface2);
 }
 .ds-no-img-hint {
-  text-align: center; color: var(--text-xdim);
-  font-size: var(--text-ui); line-height: 1.6; pointer-events: none;
+  position: absolute; top: 10px; left: 10px;
+  font-size: var(--text-ui); font-weight: 600; line-height: 1;
+  color: rgba(255,255,255,.82);
+  background: rgba(0,0,0,.52); backdrop-filter: blur(4px);
+  padding: 4px 10px; border-radius: 100px;
+  pointer-events: none;
 }
 .nimg-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
 
