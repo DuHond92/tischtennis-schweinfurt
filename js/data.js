@@ -26,7 +26,7 @@ async function loadTables() {
   selectableEventTables = [];
   try {
     const qb = new QueryBuilder('tables');
-    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours,created_at';
+    qb._select = 'id,name,address,lat,lng,type,icon,description,tables_count,access_type,access_note,opening_hours,osm_id,created_at';
     const {data} = await qb.order('name').execute();
     // Auch leeres Array [] ist ein gültiges Supabase-Ergebnis — nicht mit "nicht geladen" gleichsetzen
     if(data) {
@@ -40,7 +40,7 @@ async function loadTables() {
         accessNote: t.access_note || null,
         openingHours: t.opening_hours || null,
         createdAt: t.created_at || null,
-        photos: [], comments: [], osmId: null, events: []
+        photos: [], comments: [], osmId: t.osm_id || null, events: []
       }));
       selectableEventTables = [...tables];
     }
@@ -132,7 +132,7 @@ async function loadOSMTables() {
       const addr = [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']].filter(Boolean).join(' ') || null;
       return {
         id: osmTempId(el.type, el.id),
-        osmId: el.id,
+        osmId: `${el.type}/${el.id}`,
         name, addr, lat, lng,
         type: isIndoor ? 'indoor' : 'outdoor',
         

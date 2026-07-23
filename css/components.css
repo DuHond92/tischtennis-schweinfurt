@@ -1352,6 +1352,13 @@
 .tds-access-closed   { background: rgba(239,68,68,0.1); color: #dc2626; }
 .tds-access-row { font-size: var(--text-ui); color: var(--text-dim); display: flex; align-items: center; gap: 5px; }
 .tds-access-note { font-size: var(--text-ui); color: var(--text-dim); font-style: italic; }
+.tds-description {
+  padding: 12px 16px;
+  font-size: var(--text-ui);
+  color: var(--text-dim);
+  line-height: 1.55;
+  border-top: 1px solid var(--border);
+}
 .tds-section-label {
   display: flex; align-items: center; gap: 6px;
   font-size: var(--text-label); font-weight: 800; color: var(--text-dim);

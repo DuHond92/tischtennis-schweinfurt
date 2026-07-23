@@ -31,6 +31,10 @@ function showTableDetail(id) {
       ${t.accessNote   ? `<div class="tds-access-note">${escHtml(t.accessNote)}</div>` : ''}
     </div>` : '';
 
+  // Beschreibung (aus OSM raw_tags oder manuell gepflegt)
+  const descHtml = t.description
+    ? `<div class="tds-description">${escHtml(t.description)}</div>` : '';
+
   // Events direkt aus globalem allEvents filtern — nie Demo-Daten
   const evArr = allEvents.filter(e => e.tid === id);
   const evHtml = evArr.length===0
@@ -77,6 +81,8 @@ function showTableDetail(id) {
     <div id="tds-community-rating-${t.id}"></div>
     <!-- Zugang (optional, Detailinformationen) -->
     ${accessHtml}
+    <!-- Beschreibung (OSM oder manuell) -->
+    ${descHtml}
     <!-- Kommende Spiele -->
     <div class="eds-section tds-events-section">
       <div class="eds-section-title">Kommende Spiele</div>
