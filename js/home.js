@@ -277,11 +277,11 @@ function renderHomeTablesSection() {
 
   const _today = typeof _localTodayISO === 'function' ? _localTodayISO() : new Date().toISOString().slice(0, 10);
   const cardsHtml = items.map(({ t, distM }, i) => {
-    const plateFb    = t.type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
+    const plateFb    = 'images/placeholders/tischtennisplatte-outdoor-512x512.webp';
     const loadAttr   = i < 2 ? 'eager' : 'lazy';
     const thumbInner = (t.photos && t.photos.length)
       ? `<img src="${t.photos[0]}" onerror="this.src='${plateFb}'" loading="${loadAttr}" decoding="async">`
-      : `<img src="${plateFb}" loading="${loadAttr}" decoding="async" class="thumb-placeholder-img">`;
+      : `<img src="${plateFb}" alt="Kein Foto verfügbar" loading="${loadAttr}" decoding="async" class="thumb-placeholder-img">`;
     const addr     = t.addr || '';
     const metaHtml = typeof _tableCompactMeta === 'function' ? _tableCompactMeta(t) : '';
     const evCount  = (t.events || []).filter(e => (e.dateStr || '') >= _today).length;

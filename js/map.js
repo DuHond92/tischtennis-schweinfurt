@@ -642,10 +642,10 @@ function _buildStatusLine(filtered) {
 }
 
 function _mapThumbHtml(t, loadAttr) {
-  const fb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
+  const fb = 'images/placeholders/tischtennisplatte-outdoor-512x512.webp';
   if (t.photos && t.photos.length)
     return `<img src="${escAttr(t.photos[0])}" onerror="this.src='${fb}'" loading="${loadAttr || 'lazy'}" decoding="async">`;
-  return `<img src="${fb}" loading="${loadAttr || 'lazy'}" decoding="async" class="thumb-placeholder-img">`;
+  return `<img src="${fb}" alt="Kein Foto verfügbar" loading="${loadAttr || 'lazy'}" decoding="async" class="thumb-placeholder-img">`;
 }
 
 // ── SHARED PLATE CARD HELPERS (used by map.js + tables.js) ───────────────────

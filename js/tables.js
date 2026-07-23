@@ -144,11 +144,12 @@ function _refreshTableDetailEvents(tableId) {
   sec.innerHTML = `<div class="eds-section-title">Kommende Spiele</div>${evHtml}`;
 }
 
-const PLATE_FALLBACK = 'images/placeholders/plate_outdoor.webp';
+const PLATE_FALLBACK        = 'images/placeholders/tischtennisplatte-outdoor-860x520.webp';
+const PLATE_FALLBACK_SQUARE = 'images/placeholders/tischtennisplatte-outdoor-512x512.webp';
 
 function buildPhotoSlider(t, photos) {
   const hasPhotos = photos && photos.length;
-  const plateFb = t.type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
+  const plateFb = 'images/placeholders/tischtennisplatte-outdoor-860x520.webp';
 
   const slides = hasPhotos
     ? photos.map((src, i) => {
@@ -159,14 +160,14 @@ function buildPhotoSlider(t, photos) {
         </div>`;
       }).join('')
     : `<div class="ds-slide ds-slide-empty">
-        <img src="${escAttr(plateFb)}" class="thumb-placeholder-img" loading="lazy">
+        <img src="${escAttr(plateFb)}" alt="Kein Foto verfügbar" class="thumb-placeholder-img" loading="lazy">
         <div class="ds-no-img-hint">Noch kein Bild</div>
       </div>`;
 
   const thumbs = hasPhotos
     ? photos.map((src, i) =>
         `<div class="ds-thumb${i===0?' active':''}" onclick="detailSliderGo(this.closest('.detail-slider'),${i})">
-          <img src="${src}" onerror="this.src='${plateFb}'" loading="lazy">
+          <img src="${src}" onerror="this.src='${PLATE_FALLBACK_SQUARE}'" loading="lazy">
         </div>`
       ).join('')
     : '';
@@ -504,7 +505,7 @@ function _appendDbImagesToSlider(dbImages, uploaderMap, isMod) {
     thumb.className = 'ds-thumb ds-db-thumb';
     const idx = currentCount;
     thumb.onclick   = () => detailSliderGo(slider, idx);
-    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK}'" loading="lazy">`;
+    thumb.innerHTML = `<img src="${escAttr(img.image_url)}" onerror="this.src='${PLATE_FALLBACK_SQUARE}'" loading="lazy">`;
     thumbsRow.insertBefore(thumb, addBtn);
   });
 

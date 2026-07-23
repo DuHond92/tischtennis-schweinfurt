@@ -495,7 +495,7 @@ async function _submitSuggestion() {
 function _buildSuggestPreviewCard(name, address, count, type, imageUrl) {
   const previewCard = document.getElementById('sug-preview-card');
   if (!previewCard) return;
-  const plateFb    = type === 'indoor' ? 'images/placeholders/plate_indoor.webp' : 'images/placeholders/plate_outdoor.webp';
+  const plateFb    = 'images/placeholders/tischtennisplatte-outdoor-512x512.webp';
   const thumbSrc   = imageUrl || plateFb;
   const typeLabel  = type === 'indoor' ? 'Indoor' : 'Outdoor';
   const countLabel = count ? `${count} ${count === 1 ? 'Tisch' : 'Tische'} · ` : '';
