@@ -18,6 +18,7 @@ const INCLUDE = [
   'favicon-32.png',
   'apple-touch-icon.png',
   'manifest.webmanifest',
+  'THIRD_PARTY_LICENSES',
   'css',
   'js',
   'images',
