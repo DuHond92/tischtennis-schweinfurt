@@ -23,12 +23,6 @@
     .back:hover { text-decoration: underline; }
     h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; color: #111; }
     .stand { font-size: 0.82rem; color: #888; margin-bottom: 32px; }
-    .notice {
-      background: #FFF9E6; border: 1.5px solid #F9C94C;
-      border-radius: 8px; padding: 12px 16px;
-      font-size: 0.85rem; color: #7A5E00;
-      margin-bottom: 32px; line-height: 1.5;
-    }
     h2 {
       font-size: 1.1rem; font-weight: 700; margin: 32px 0 10px;
       padding-bottom: 6px; border-bottom: 1px solid #eee; color: #111;
@@ -38,7 +32,6 @@
     ul { margin: 8px 0 12px 20px; }
     li { margin-bottom: 5px; font-size: 0.93rem; }
     a { color: #16A35B; }
-    .todo { color: #c0392b; font-weight: 700; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.87rem; }
     th, td { text-align: left; padding: 8px 10px; border: 1px solid #ddd; vertical-align: top; }
     th { background: #f5f5f5; font-weight: 700; }
@@ -56,12 +49,7 @@
   <a class="back" href="/">← Zurück zur App</a>
 
   <h1>Datenschutzerklärung</h1>
-  <p class="stand">Stand: Juli 2026 &nbsp;·&nbsp; PlattenTreff</p>
-
-  <div class="notice">
-    ⚠️ <strong>Hinweis:</strong> Diese Datenschutzerklärung ist ein Entwurf und muss vor
-    Veröffentlichung der App juristisch geprüft werden.
-  </div>
+  <p class="stand">Stand: 24. Juli 2026 &nbsp;·&nbsp; PlattenTreff</p>
 
   <!-- ── 1. Verantwortlicher ───────────────────────────────── -->
   <h2>1. Verantwortlicher</h2>
@@ -159,6 +147,8 @@
     <li><strong>Spielername (Nickname)</strong> – wird anderen Nutzern angezeigt</li>
     <li><strong>Spielstärke</strong> (optional) – Einsteiger, Fortgeschritten, Profi</li>
     <li><strong>Wohnort</strong> (optional, freitextlich) – wird im Profil angezeigt</li>
+    <li><strong>Geschlecht und Geburtsdatum</strong> (optional) – werden im Profil gespeichert</li>
+    <li><strong>Verein und Profilbeschreibung</strong> (optional) – werden im Profil gespeichert</li>
     <li><strong>Profilfoto</strong> (optional) – wird anderen Nutzern angezeigt</li>
     <li><strong>Avatar-Emoji</strong> (optional) – als Profilbild-Alternative</li>
   </ul>
@@ -166,6 +156,17 @@
     E-Mail-Adresse und Passwort-Hash werden von Supabase Auth verwaltet.
     Das Passwort wird nicht im Klartext gespeichert.
     Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.
+  </p>
+  <p>
+    Alternativ kannst du dich freiwillig über „Mit Google fortfahren“ oder
+    „Mit Apple fortfahren“ anmelden. Dabei verarbeitet der ausgewählte Anbieter
+    die zur Authentifizierung erforderlichen Angaben und übermittelt eine
+    Anbieter-Kennung sowie – abhängig von deiner Auswahl – deine
+    E-Mail-Adresse an Supabase Auth. Bei Apple kannst du deine persönliche
+    E-Mail-Adresse verbergen; PlattenTreff erhält dann eine von Apple erzeugte
+    Relay-Adresse. PlattenTreff nutzt diese Anmeldung nicht für Werbung oder
+    anbieterübergreifendes Tracking. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b
+    DSGVO.
   </p>
   <p>
     Für den Versand von Auth-E-Mails (Registrierungsbestätigung, Passwort-Reset,
@@ -184,10 +185,13 @@
     oder „GPS-Standort verwenden" beim Plattenvorschlag).
   </p>
   <p>
-    Der Standort wird <strong>nicht</strong> dauerhaft gespeichert und
-    <strong>nicht</strong> an Server übertragen. Er wird lokal im Gerät gehalten
-    (localStorage), um die zuletzt genutzte Suchregion zu merken.
-    Die lokalen Standortdaten werden beim Abmelden gelöscht.
+    Für die reine Umkreissuche auf der Karte wird der zuletzt genutzte Standort
+    lokal auf dem Gerät gespeichert (localStorage) und beim Abmelden gelöscht.
+    Wenn du den Standort dagegen für ein Mitspieler-Gesuch, eine Spielrunde oder
+    einen Plattenvorschlag übernimmst, werden die ausgewählten Koordinaten und
+    die Ortsbezeichnung zusammen mit dem jeweiligen Inhalt in Supabase
+    gespeichert und deinem Nutzerkonto zugeordnet. Diese Inhalte können je nach
+    Funktion für andere Nutzer sichtbar sein.
   </p>
   <p>
     Die Nutzung ist ohne Standortfreigabe vollständig möglich.
@@ -215,11 +219,13 @@
   <p>
     Für Ortssuchen wird <strong>Nominatim</strong>
     (OpenStreetMap Foundation) genutzt. Suchanfragen werden an
-    nominatim.openstreetmap.org übertragen.
+    nominatim.openstreetmap.org übertragen. Dabei verarbeitet der Dienst die
+    eingegebene Suchanfrage und technisch bedingt die IP-Adresse.
   </p>
   <p>
-    Leaflet.js wird bei der ersten App-Nutzung von <strong>unpkg.com</strong>
-    (Cloudflare CDN) geladen, wobei technisch die IP-Adresse übertragen wird.
+    Leaflet.js und MapLibre GL JS werden zusammen mit PlattenTreff lokal
+    ausgeliefert. Für diese Programmbibliotheken erfolgt keine Anfrage an ein
+    externes CDN.
   </p>
 
   <!-- ── 7. Plattenvorschläge ─────────────────────────────── -->
@@ -298,12 +304,21 @@
   <p>
     PlattenTreff zeigt In-App-Benachrichtigungen über neue Kommentare in
     Spielrunden, Spielpartner-Anfragen und den Status von Plattenvorschlägen.
-    Diese werden durch regelmäßige Abfragen an die Supabase-Datenbank ermittelt
-    (Polling). Es werden <strong>keine Push-Benachrichtigungen</strong> über
-    Apple APNs oder Google FCM verwendet.
+    Wenn du Push-Benachrichtigungen in der App und anschließend in der
+    Systemabfrage ausdrücklich aktivierst, kann PlattenTreff zusätzlich
+    Mitteilungen über den Apple Push Notification Service (APNs) bzw. den
+    entsprechenden Android-Dienst senden.
   </p>
   <p>
-    Benachrichtigungen werden beim Account-Löschen dauerhaft entfernt.
+    Hierfür werden ein app- und gerätebezogener Push-Token, die Plattform und
+    deine gewählten Benachrichtigungseinstellungen deinem Nutzerkonto
+    zugeordnet in Supabase gespeichert. Der Token dient ausschließlich der
+    technischen Zustellung der von dir aktivierten Benachrichtigungen und wird
+    nicht für Werbung oder Tracking verwendet. Beim Abmelden wird der aktuelle
+    Push-Token entfernt; beim Löschen des Accounts werden Push-Tokens,
+    Einstellungen und Benachrichtigungen dauerhaft gelöscht. Du kannst
+    Push-Benachrichtigungen jederzeit in der App oder in den
+    Systemeinstellungen deaktivieren.
   </p>
 
   <!-- ── 14. Meldungen & Moderation ───────────────────────── -->
@@ -332,7 +347,8 @@
   </p>
   <p>
     Bei eingeloggten Nutzern werden Ereignisse <strong>pseudonym</strong> mit einer
-    zufälligen Nutzer-ID (UUID) verknüpft — kein Name, keine E-Mail, kein Klarbezug.
+    zufälligen Nutzer-ID (UUID) verknüpft — Namen und E-Mail-Adressen werden nicht
+    in den Analyseereignissen gespeichert.
     Nicht eingeloggte Nutzer werden <strong>anonym</strong> (ohne Nutzer-ID) erfasst.
     Der Nutzerbezug (Nutzer-ID) wird bei Account-Löschung automatisch entfernt
     (Nutzer-ID wird auf NULL gesetzt).
@@ -422,14 +438,19 @@
         <td><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">osmfoundation.org</a></td>
       </tr>
       <tr>
-        <td>Cloudflare / unpkg.com</td>
-        <td>Auslieferung von Leaflet.js und MapLibre GL JS (CDN)</td>
-        <td><a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">cloudflare.com</a></td>
-      </tr>
-      <tr>
         <td>Resend Inc.</td>
         <td>Versand von transaktionalen Auth-E-Mails (Registrierungsbestätigung, Passwort-Reset); Datenverarbeitung in EU (eu-west-1, Irland); Auftragsverarbeitungsvertrag vorhanden</td>
         <td><a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">resend.com/legal/privacy-policy</a></td>
+      </tr>
+      <tr>
+        <td>Apple Inc.</td>
+        <td>Freiwillige Anmeldung mit Apple und Zustellung von Push-Benachrichtigungen</td>
+        <td><a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">apple.com/legal/privacy</a></td>
+      </tr>
+      <tr>
+        <td>Google LLC</td>
+        <td>Freiwillige Anmeldung mit Google</td>
+        <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></td>
       </tr>
     </tbody>
   </table>
@@ -463,6 +484,7 @@
     <li>Teilnahmen an Spielrunden</li>
     <li>Zukünftige eigene Spielrunden (inkl. Teilnehmerliste)</li>
     <li>Benachrichtigungen</li>
+    <li>Push-Tokens und Benachrichtigungseinstellungen</li>
   </ul>
   <p>Folgende Daten bleiben ohne Personenbezug erhalten:</p>
   <ul>

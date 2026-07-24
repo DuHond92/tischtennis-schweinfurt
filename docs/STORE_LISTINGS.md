@@ -2,7 +2,7 @@
 
 **Bundle ID / Package:** de.plattentreff.app  
 **Kategorie:** Sport (Apple) / Sport (Google)  
-**Stand:** 2026-07-07
+**Stand:** 2026-07-24
 
 ---
 
@@ -43,7 +43,7 @@ Chatte direkt mit anderen Spielern, verabrede dich und bau dir dein Tischtennisn
 PlattenTreff richtet sich an Freizeitspieler genauso wie an ambitionierte Tischtennisspieler. Egal ob Park, Vereinsheim oder Sporthalle – alle Platten sind willkommen.
 
 🔒 DATENSCHUTZ
-Keine Werbung. Kein Tracking. Keine Weitergabe deiner Daten an Dritte. Standortzugriff nur wenn du ihn aktiv nutzt.
+Keine Werbung. Kein Tracking. Kein Verkauf deiner Daten. Standortzugriff nur wenn du ihn aktiv nutzt.
 ```
 
 ### Keywords (max. 100 Zeichen, kommagetrennt)
@@ -68,13 +68,19 @@ https://plattentreff.app/datenschutz/
 
 ### Altersbeschränkung
 ```
-4+ (keine anstößigen Inhalte, kein WLAN-Multiplayer-Gaming)
+16+ (Override wegen Mindestalter 16 in den Nutzungsbedingungen)
 ```
+
+Im Fragebogen „User-Generated Content“ und „Messaging and Chat“ jeweils mit
+„Ja“ angeben. Auf Betriebssystemen vor iOS 26 kann Apple die entsprechende
+ältere Altersstufe anzeigen.
 
 ### Copyright
 ```
-© 2026 Michael Tröster
+2026 Michael Tröster
 ```
+
+App Store Connect ergänzt das Copyright-Zeichen automatisch.
 
 ---
 
@@ -110,7 +116,7 @@ Chatte direkt mit anderen Spielern, verabrede dich und bau dir dein Tischtennisn
 PlattenTreff richtet sich an Freizeitspieler genauso wie an ambitionierte Tischtennisspieler. Egal ob Park, Vereinsheim oder Sporthalle – alle Platten sind willkommen.
 
 🔒 DATENSCHUTZ
-Keine Werbung. Kein Tracking. Keine Weitergabe deiner Daten an Dritte. Standortzugriff nur wenn du ihn aktiv nutzt. Account jederzeit in der App löschbar.
+Keine Werbung. Kein Tracking. Kein Verkauf deiner Daten. Standortzugriff nur wenn du ihn aktiv nutzt. Account jederzeit in der App löschbar.
 ```
 
 ### Kategorie
@@ -146,9 +152,9 @@ kontakt@plattentreff.app
 ### Apple App Store
 | Format | Größe | Pflicht |
 |---|---|---|
-| iPhone 6.9" (iPhone 16 Pro Max) | 1320 × 2868 px | ✅ Pflicht |
-| iPhone 6.5" (iPhone 14 Plus) | 1284 × 2778 px | ✅ Pflicht |
-| iPad Pro 13" (optional) | 2064 × 2752 px | Optional |
+| iPhone 6.9" | 1320 × 2868, 1290 × 2796 oder 1260 × 2736 px | ✅ Pflicht |
+| iPhone 6.5" | 1284 × 2778 oder 1242 × 2688 px | Nur falls kein 6.9"-Set vorhanden |
+| iPad Pro 13" | 2064 × 2752 oder 2048 × 2732 px | Nicht erforderlich – Xcode-Target ist iPhone-only |
 
 ### Google Play
 | Format | Größe | Pflicht |
